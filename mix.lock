@@ -1,5 +1,5 @@
 %{
-  "elixir_make": {:hex, :elixir_make, "0.6.2", "7dffacd77dec4c37b39af867cedaabb0b59f6a871f89722c25b28fcd4bd70530", [:mix], [], "hexpm", "03e49eadda22526a7e5279d53321d1cced6552f344ba4e03e619063de75348d9"},
+  "elixir_make": {:hex, :elixir_make, "0.6.3", "bc07d53221216838d79e03a8019d0839786703129599e9619f4ab74c8c096eac", [:mix], [], "hexpm", "f5cbd651c5678bcaabdbb7857658ee106b12509cd976c2c2fca99688e1daf716"},
   "sweet_xml": {:hex, :sweet_xml, "0.7.1", "a2cac8e2101237e617dfa9d427d44b8aff38ba6294f313ffb4667524d6b71b98", [:mix], [], "hexpm", "8bc7b7b584a6a87113071d0d2fd39fe2251cf2224ecaeed7093bdac1b9c1555f"},
-  "vix": {:hex, :vix, "0.6.0", "dd5f2c95bcd478bd694e66e0ddd69156bb66d499b235372f7fbaef97c0e561aa", [:make, :mix], [{:elixir_make, "~> 0.6", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm", "a6f71bc4d413c5412eddce8207c3498479c0ece2bf41ebcf661d13843782a6f4"},
+  "vix": {:hex, :vix, "0.8.0", "a5e7be5e005643ec9bd0bc7322d2bd91d6d7f12884ea0db7699de7eb5b456df7", [:make, :mix], [{:elixir_make, "~> 0.6", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm", "cca3ab9283b6535bc267fd94810c5f4fe1bd491ea0808a8aa0b73a5d08806078"},
 }
