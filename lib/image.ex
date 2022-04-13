@@ -1,15 +1,20 @@
 defmodule Image do
   import SweetXml
+  alias Vix.Vips.{Operation, MutableImage}
+  alias Vix.Vips.Image, as: Vimage
+  alias Image.Exif
+  import Image.Math
 
   # @default_image "test/Hong-Kong-2015-07-1998.jpg"
-  @default_image "test/Kamchatka-2019-8754.jpg"
+  @default_image "test/support/images/Kamchatka-2019-8754.jpg"
+  @default_round_corner_radius 50
 
   def exif(image \\ @default_image) do
-    with {:ok, img} <- Vix.Vips.Image.new_from_file(image),
-         {:ok, exif_blob} <- Vix.Vips.Image.header_value(img, "exif-data"),
+    with {:ok, img} <- Vimage.new_from_file(image),
+         {:ok, exif_blob} <- Vimage.header_value(img, "exif-data"),
          <<"Exif"::binary, 0::16, exif::binary>> <- exif_blob do
       exif
-      |> Image.Exif.extract_exif()
+      |> Exif.extract_exif()
       |> wrap(:ok)
     else
       other -> IO.inspect other, label: "error: "
@@ -17,8 +22,8 @@ defmodule Image do
   end
 
   def xmp(image \\ @default_image) do
-    with {:ok, img} <- Vix.Vips.Image.new_from_file(image),
-         {:ok, xmp_blob} <- Vix.Vips.Image.header_value_as_string(img, "xmp-data"),
+    with {:ok, img} <- Vimage.new_from_file(image),
+         {:ok, xmp_blob} <- Vimage.header_value_as_string(img, "xmp-data"),
          {:ok, xmp_binary} <- Base.decode64(xmp_blob) do
       xmp_binary
       |> SweetXml.parse(dtd: :none)
@@ -74,38 +79,38 @@ defmodule Image do
     {atom, item}
   end
 
-  @image "~/Desktop/Kip_small.jpg"
-  @circle Path.expand("~/Desktop/circle_crop.png")
-  @rounded Path.expand("~/Desktop/rounded_crop.png")
-  @exif Path.expand("~/Desktop/with_simple_exif.jpg")
+  def width(%Vimage{} = image) do
+    Vimage.width(image)
+  end
+
+  def height(%Vimage{} = image) do
+    Vimage.height(image)
+  end
+
+  @image "test/support/images/Kip_small.jpg"
+  @circle Path.expand("test/support/output/circle_crop.png")
+  @rounded Path.expand("test/support/output/rounded_crop.png")
+  @exif Path.expand("test/support/output/with_simple_exif.jpg")
   @alpha_channel 3
   @copyright "exif-ifd0-Copyright"
 
-  alias Vix.Vips.{Image, Operation, MutableImage}
-
-  def circle(image \\ @image) do
-    {:ok, img} = Image.new_from_file(image)
-    width = Image.width(img)
-    height = Image.height(img)
+  def circle(%Vimage{} = image) do
+    width = width(image)
+    height = height(image)
     size = min(width, height)
 
-    {:ok, thumb} = Operation.thumbnail_image(img, size, crop: :VIPS_INTERESTING_ATTENTION)
+    {:ok, thumb} = Operation.thumbnail_image(image, size, crop: :VIPS_INTERESTING_ATTENTION)
     {:ok, mask} = mask(:circle, size, size)
-    {:ok, cropped} = Operation.bandjoin([thumb, mask])
-
-    Image.write_to_file(cropped, @circle)
+    Operation.bandjoin([thumb, mask])
   end
 
-  def round(image \\ @image) do
-    {:ok, img} = Image.new_from_file(image)
-    width = Image.width(img)
-    height = Image.height(img)
+  def round(%Vimage{} = image) do
+    width = width(image)
+    height = height(image)
 
     {:ok, thumb} = Operation.thumbnail_image(img, width, crop: :VIPS_INTERESTING_ATTENTION)
     {:ok, mask} = mask(:rounded_corners, width, height)
-    {:ok, cropped} = Operation.bandjoin([thumb, mask])
-
-    Image.write_to_file(cropped, @rounded)
+    Operation.bandjoin([thumb, mask])
   end
 
   def mask(:circle, diameter, _) do
@@ -122,7 +127,7 @@ defmodule Image do
     Operation.extract_band(circle, @alpha_channel)
   end
 
-  def mask(:rounded_corners, width, height, radius \\ 50) do
+  def mask(:rounded_corners, width, height, radius \\ @default_round_corner_radius) do
     svg =
       """
       <svg viewBox="0 0 #{width} #{height}">
@@ -149,16 +154,16 @@ defmodule Image do
   # iptc data
 
   def add_exif(image \\ @image) do
-    {:ok, img} = Image.new_from_file(image)
-    {:ok, fields} = Image.header_field_names(img)
+    {:ok, img} = Vimage.new_from_file(image)
+    {:ok, fields} = Vimage.header_field_names(img)
 
     {:ok, img} =
-      Image.mutate(img, fn mut_img ->
+      Vimage.mutate(img, fn mut_img ->
         :ok = remove_metadata(mut_img, fields)
         :ok = MutableImage.set(mut_img, "exif-data", :VipsBlob, <<0>>)
         :ok = MutableImage.set(mut_img, @copyright, :gchararray, "Copyright (c) 2008 Kip Cole")
       end)
-    Image.write_to_file(img, @exif)
+    Vimage.write_to_file(img, @exif)
   end
 
   def remove_metadata(img, fields) do
@@ -166,16 +171,16 @@ defmodule Image do
   end
 
   def lambo do
-    {:ok, lambo} = Image.new_from_file("~/Desktop/lambo.jpg")
-    {:ok, grad} = I.gradient(lambo)
+    {:ok, lambo} = Vimage.new_from_file("~/Desktop/lambo.jpg")
+    {:ok, grad} = gradient(lambo)
     {:ok, composite} = Operation.composite2(lambo, grad, :VIPS_BLEND_MODE_OVER)
-    Image.write_to_file composite, Path.expand("~/Desktop/composite.png")
+    Vimage.write_to_file composite, Path.expand("~/Desktop/composite.png")
   end
 
   @y_band 1
   def gradient(image, start \\ [0, 0, 0, 0], finish \\ [0, 0, 0, 255]) do
-    width = Image.width(image)
-    height = Image.height(image)
+    width = width(image)
+    height = height(image)
 
     {:ok, xyz} = Operation.xyz(width, height)
     {:ok, y} = Operation.extract_band(xyz, @y_band)
@@ -222,7 +227,7 @@ defmodule Image do
 
 
     {:ok, out} = Operation.copy(out, interpretation: :VIPS_INTERPRETATION_LAB)
-    Image.write_to_file(out, Path.expand("~/Desktop/x.png"))
+    Vimage.write_to_file(out, Path.expand("~/Desktop/x.png"))
   end
 
   def grad2 do
@@ -254,72 +259,12 @@ defmodule Image do
       |> add!(multiply!(d, -1) |> add!(1) |> multiply!(start))
 
     {:ok, out} = Operation.copy(out, interpretation: :VIPS_INTERPRETATION_sRGB)
-    Image.write_to_file(out, Path.expand("~/Desktop/x2.png"))
-  end
-
-  def pow(image, value) when is_number(value) do
-    Operation.math2_const(image, :VIPS_OPERATION_MATH2_POW, [value])
-  end
-
-  def pow(%Image{} = image, %Image{} = image2) do
-    Operation.math2(image, image2, :VIPS_OPERATION_MATH2_POW)
-  end
-
-  def cos(%Image{} = image) do
-    Operation.math(image, :VIPS_OPERATION_MATH_COS)
-  end
-
-  def add(%Image{} = image, %Image{} = image2) do
-    Operation.add(image, image2)
-  end
-
-  def add(%Image{} = image, value) when is_number(value) do
-    add(image, [value])
-  end
-
-  def add(%Image{} = image, value) when is_list(value) do
-    Operation.linear(image, [1], value)
-  end
-
-  def subtract(%Image{} = image, %Image{} = image2) do
-    Operation.subtract(image, image2)
-  end
-
-  def subtract(%Image{} = image, value) when is_number(value) do
-    subtract(image, [value])
-  end
-
-  def subtract(%Image{} = image, value) when is_list(value) do
-    Operation.linear(image, [1], Enum.map(value, &(-&1)))
-  end
-
-  def multiply(%Image{} = image, %Image{} = image2) do
-    Operation.multiply(image, image2)
-  end
-
-  def multiply(%Image{} = image, value) when is_number(value) do
-    multiply(image, [value])
-  end
-
-  def multiply(%Image{} = image, value) when is_list(value) do
-    Operation.linear(image, value, [0])
-  end
-
-  def divide(%Image{} = image, %Image{} = image2) do
-    Operation.divide(image, image2)
-  end
-
-  def divide(%Image{} = image, value) when is_number(value) do
-    divide(image, [value])
-  end
-
-  def divide(%Image{} = image, value) when is_list(value) do
-    Operation.linear(image, Enum.map(value, &(1.0 / &1)), [0])
+    Vimage.write_to_file(out, Path.expand("~/Desktop/x2.png"))
   end
 
   @max_band_value 256
 
-  def dominant_colour(%Image{} = image, options \\ []) do
+  def dominant_colour(%Vimage{} = image, options \\ []) do
     bins = Keyword.get(options, :bins, 10)
     bin_size = @max_band_value / bins
 
@@ -335,67 +280,7 @@ defmodule Image do
     [trunc(r), trunc(g), trunc(b)]
   end
 
-  def maxpos(%Image{} = image, options \\ []) do
-    size = Keyword.get(options, :size, 10)
 
-    {:ok, {v, opts}} = Operation.max(image, size: size)
-    {v, opts[:x], opts[:y]}
-  end
-
-  def minpos(%Image{} = image, options \\ []) do
-    size = Keyword.get(options, :size, 10)
-
-    {:ok, {v, opts}} = Operation.min(image, size: size)
-    {v, opts[:x], opts[:y]}
-  end
-
-  def add!(%Image{} = image, value) do
-    case add(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
-    end
-  end
-
-  def subtract!(%Image{} = image, value) do
-    case subtract(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
-    end
-  end
-
-  def multiply!(%Image{} = image, value) do
-    case multiply(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
-    end
-  end
-
-  def divide!(%Image{} = image, value) do
-    case divide(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
-    end
-  end
-
-  def pow!(%Image{} = image, value) do
-    case pow(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
-    end
-  end
-
-  def cos!(%Image{} = image) do
-    case cos(image) do
-      {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
-    end
-  end
-
-  def list_height([first | _rest] = list) when is_list(first), do: length(list)
-  def list_height(_other), do: 0
-
-  def list_width([first | _rest]) when is_list(first), do: length(first)
-  def list_width(list) when is_list(list), do: length(list)
 
 end
 

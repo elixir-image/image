@@ -19,9 +19,9 @@ defmodule Image.MixProject do
 
   defp deps do
     [
-      # {:vix, github: "akash-akya/vix", branch: "vips-blob" },
-      {:vix, "~> 0.6"},
-      {:sweet_xml, "~> 0.7"}
+      {:vix, "~> 0.8"},
+      {:sweet_xml, "~> 0.7"},
+      {:nx, "~> 0.1", optional: true}
     ]
   end
 end
