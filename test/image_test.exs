@@ -15,14 +15,19 @@ defmodule ImageTest do
 
   test "Minimise metadata", %{dir: dir} do
     image = image_path("Kip_small.jpg")
+    {:ok, input_info} = File.stat(image)
     {:ok, kip} = Vimage.new_from_file(image)
 
     {:ok, minimised} = Image.add_minimal_exif(kip)
 
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
-    assert :ok = Vimage.write_to_file(minimised, out_path)
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    validate_path = validate_path("Kip_small_with_simple_exif.jpg")
 
-    assert_files_equal(out_path, validate_path("Kip_small_with_simple_exif.png"))
+    assert :ok = Vimage.write_to_file(minimised, out_path)
+    {:ok, output_info} = File.stat(validate_path)
+
+    assert_files_equal(out_path, validate_path("Kip_small_with_simple_exif.jpg"))
+    assert input_info.size > output_info.size * 2
   end
 
   test "Circular Image", %{dir: dir} do
