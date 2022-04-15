@@ -2,39 +2,12 @@ defmodule Image do
   alias Vix.Vips.{Operation, MutableImage}
   alias Vix.Vips.Image, as: Vimage
   alias Image.{Exif, Xmp}
-  import Image.Math
+  use Image.Math
 
   @default_round_corner_radius 50
   @default_open_options [access: :sequential]
   @alpha_channel 3
   @copyright "exif-ifd0-Copyright"
-
-  defmacro __using__(_opts) do
-    quote do
-      import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2]
-      import Image.math()
-
-      def a + b do
-        Image.Math.add!(a, b)
-      end
-
-      def a - b do
-        Image.Math.subtract!(a, b)
-      end
-
-      def a * b do
-        Image.Math.miltiply!(a, b)
-      end
-
-      def a / b do
-        Image.Math.divide!(a, b)
-      end
-
-      def a ** b do
-        Image.Math.pow!(a, b)
-      end
-    end
-  end
 
   def open(image_path, options \\ []) do
     options = Keyword.merge(@default_open_options, options)
@@ -133,9 +106,11 @@ defmodule Image do
     height = height(image)
     size = min(width, height)
 
-    {:ok, thumb} = Operation.thumbnail_image(image, size, crop: :VIPS_INTERESTING_ATTENTION)
+    {:ok, thumb} =
+      Operation.thumbnail_image(image, size, crop: :VIPS_INTERESTING_ATTENTION)
 
-    {:ok, mask} = mask(:circle, size, size)
+    {:ok, mask} =
+      mask(:circle, size, size)
 
     Operation.bandjoin([thumb, mask])
   end
@@ -149,9 +124,11 @@ defmodule Image do
     width = width(image)
     height = height(image)
 
-    {:ok, thumb} = Operation.thumbnail_image(image, width, crop: :VIPS_INTERESTING_ATTENTION)
+    {:ok, thumb} =
+      Operation.thumbnail_image(image, width, crop: :VIPS_INTERESTING_ATTENTION)
 
-    {:ok, mask} = mask(:rounded_corners, width, height, options)
+    {:ok, mask} =
+      mask(:rounded_corners, width, height, options)
 
     Operation.bandjoin([thumb, mask])
   end
@@ -266,21 +243,12 @@ defmodule Image do
     {:ok, y} = Operation.extract_band(xyz, @y_band)
 
     # the distance image: 0 - 1 for the start to the end of the gradient
-    {:ok, d} = divide(y, height)
+    d = y / height
 
     # and use it to fade the quads ... we need to tag the result as an RGB
     # image
-    d
-    |> multiply!(finish)
-    |> add!(fun(d, start))
+    (d * finish) + (1 - d) * start
     |> Operation.copy(interpretation: :VIPS_INTERPRETATION_sRGB)
-  end
-
-  defp fun(d, start) do
-    d
-    |> multiply!(-1)
-    |> add!(1)
-    |> multiply!(start)
   end
 
   @doc """
