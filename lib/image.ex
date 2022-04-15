@@ -1,142 +1,188 @@
 defmodule Image do
-  import SweetXml
   alias Vix.Vips.{Operation, MutableImage}
   alias Vix.Vips.Image, as: Vimage
-  alias Image.Exif
+  alias Image.{Exif, Xmp}
   import Image.Math
 
-  # @default_image "test/Hong-Kong-2015-07-1998.jpg"
-  @default_image "test/support/images/Kamchatka-2019-8754.jpg"
   @default_round_corner_radius 50
+  @default_open_options [access: :sequential]
+  @alpha_channel 3
+  @copyright "exif-ifd0-Copyright"
 
-  def exif(image \\ @default_image) do
-    with {:ok, img} <- Vimage.new_from_file(image),
-         {:ok, exif_blob} <- Vimage.header_value(img, "exif-data"),
+  defmacro __using__(_opts) do
+    quote do
+      import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2]
+      import Image.math()
+
+      def a + b do
+        Image.Math.add!(a, b)
+      end
+
+      def a - b do
+        Image.Math.subtract!(a, b)
+      end
+
+      def a * b do
+        Image.Math.miltiply!(a, b)
+      end
+
+      def a / b do
+        Image.Math.divide!(a, b)
+      end
+
+      def a ** b do
+        Image.Math.pow!(a, b)
+      end
+    end
+  end
+
+  def open(image_path, options \\ []) do
+    options = Keyword.merge(@default_open_options, options)
+
+    image_path
+    |> String.split("[", parts: 2)
+    |> do_open(options)
+  end
+
+  defp do_open([path], options) do
+    if File.exists?(path) do
+      options = build_option_string(options)
+      Vimage.new_from_file(path <> options)
+    else
+      {:error, :enoent}
+    end
+  end
+
+  defp do_open([path, open_options], options) do
+    if File.exists?(path) do
+      open_options = String.trim_trailing(open_options, "]")
+      options = build_option_string(open_options, options)
+      Vimage.new_from_file(path <> options)
+    else
+      {:error, :enoent}
+    end
+  end
+
+  defp build_option_string(options, other_options) do
+    "[" <> options <> "," <> join_options(other_options) <> "]"
+  end
+
+  defp build_option_string(options) do
+    "[" <> join_options(options) <> "]"
+  end
+
+  defp join_options(options) do
+    Enum.map_join(options, ",", fn {k, v} -> "#{k}=#{v}" end)
+  end
+
+  @doc """
+  Retruns the EXIF data for an image as a
+  keyword list.
+
+  Only a limited set of EXIF data is returned.
+
+  """
+  def exif(%Vimage{} = image) do
+    with {:ok, exif_blob} <- Vimage.header_value(image, "exif-data"),
          <<"Exif"::binary, 0::16, exif::binary>> <- exif_blob do
       exif
       |> Exif.extract_exif()
       |> wrap(:ok)
-    else
-      other -> IO.inspect other, label: "error: "
     end
   end
 
-  def xmp(image \\ @default_image) do
-    with {:ok, img} <- Vimage.new_from_file(image),
-         {:ok, xmp_blob} <- Vimage.header_value_as_string(img, "xmp-data"),
+  @doc """
+  Retruns the XMP data for an image as a
+  keyword list.
+
+  Only a limited set of XMP data is returned.
+
+  """
+  def xmp(%Vimage{} = image) do
+    with {:ok, xmp_blob} <- Vimage.header_value_as_string(image, "xmp-data"),
          {:ok, xmp_binary} <- Base.decode64(xmp_blob) do
       xmp_binary
       |> SweetXml.parse(dtd: :none)
-      |> extract_xmp()
+      |> Xmp.extract_xmp()
       |> wrap(:ok)
     end
   end
 
-  def extract_xmp(xmp) do
-    SweetXml.xpath(xmp, ~x"//x:xmpmeta",
-      title: [
-        ~x".//dc:title/rdf:Alt",
-        text: ~x"./rdf:li/text()"s,
-        language: ~x"./rdf:li/@xml:lang"s
-        ],
+  @doc """
+  Returns the eidth of an image.
 
-      description: [
-        ~x".//dc:description/rdf:Alt",
-        text: ~x"./rdf:li/text()"s,
-        language: ~x"./rdf:li/@xml:lang"s
-        ],
-
-      keywords: ~x".//dc:subject/rdf:Bag/rdf:li/text()"ls,
-      created_at: ~x".//rdf:Description/xmp:CreateDate"s |> transform_by(&to_date_time/1),
-      rating: ~x".//rdf:Description/@xmp:Rating"s |> transform_by(&to_integer/1),
-      location: [
-        ~x".//rdf:Description",
-        city: ~x"./@photoshop:City"s,
-        state: ~x"./@photoshop:State"s,
-        territory: ~x"./@photoshop:Country"s,
-        territory_code: ~x"./Iptc4xmpCore:CountryCode"s
-      ]
-    )
-  end
-
-  defp to_date_time(string) do
-    string = if String.contains?(string, "+"), do: string, else: string <> "+00:00"
-
-    case NaiveDateTime.from_iso8601(string) do
-      {:ok, date_time} -> date_time
-      _other -> string
-    end
-  end
-
-  defp to_integer(string) do
-    case Integer.parse(string) do
-      {integer, ""} -> integer
-      _other -> string
-    end
-  end
-
-  defp wrap(item, atom) do
-    {atom, item}
-  end
-
+  """
   def width(%Vimage{} = image) do
     Vimage.width(image)
   end
 
+  @doc """
+  Returns the height of an image.
+
+  """
   def height(%Vimage{} = image) do
     Vimage.height(image)
   end
 
-  @image "test/support/images/Kip_small.jpg"
-  @circle Path.expand("test/support/output/circle_crop.png")
-  @rounded Path.expand("test/support/output/rounded_crop.png")
-  @exif Path.expand("test/support/output/with_simple_exif.jpg")
-  @alpha_channel 3
-  @copyright "exif-ifd0-Copyright"
+  @doc """
+  Apply a circular mask to an image.
 
-  def circle(%Vimage{} = image) do
+  """
+  def circle(%Vimage{} = image, _options \\ []) do
     width = width(image)
     height = height(image)
     size = min(width, height)
 
     {:ok, thumb} = Operation.thumbnail_image(image, size, crop: :VIPS_INTERESTING_ATTENTION)
+
     {:ok, mask} = mask(:circle, size, size)
+
     Operation.bandjoin([thumb, mask])
   end
 
-  def round(%Vimage{} = image) do
+  @doc """
+  Apply rounded corners to an image.
+
+  """
+  def rounded(%Vimage{} = image, options \\ []) do
+    options = Keyword.put_new(options, :radius, @default_round_corner_radius)
     width = width(image)
     height = height(image)
 
-    {:ok, thumb} = Operation.thumbnail_image(img, width, crop: :VIPS_INTERESTING_ATTENTION)
-    {:ok, mask} = mask(:rounded_corners, width, height)
+    {:ok, thumb} = Operation.thumbnail_image(image, width, crop: :VIPS_INTERESTING_ATTENTION)
+
+    {:ok, mask} = mask(:rounded_corners, width, height, options)
+
     Operation.bandjoin([thumb, mask])
   end
 
-  def mask(:circle, diameter, _) do
+  @doc """
+  Create an image mask.
+
+  """
+  def mask(type, width, height, options \\ [])
+
+  def mask(:circle, diameter, diameter, _options) do
     centre = div(diameter, 2)
 
-    svg =
-      """
-      <svg viewBox="0 0 #{diameter} #{diameter}">
-        <circle style="fill: black; stroke: none" cx="#{centre}" cy="#{centre}" r="#{centre}"/>
-      </svg>
-      """
+    svg = """
+    <svg viewBox="0 0 #{diameter} #{diameter}">
+      <circle style="fill: black; stroke: none" cx="#{centre}" cy="#{centre}" r="#{centre}"/>
+    </svg>
+    """
 
     {:ok, {circle, _flags}} = Operation.svgload_buffer(svg)
     Operation.extract_band(circle, @alpha_channel)
   end
 
-  def mask(:rounded_corners, width, height, radius \\ @default_round_corner_radius) do
-    svg =
-      """
-      <svg viewBox="0 0 #{width} #{height}">
-        <rect rx="#{radius}" ry="#{radius}"
-         x="0" y="0"
-         width="#{width}" height="#{height}"
-         fill=black/>
-      </svg>
-      """
+  def mask(:rounded_corners, width, height, options) do
+    radius = Keyword.get(options, :radius, @default_round_corner_radius)
+
+    svg = """
+    <svg viewBox="0 0 #{width} #{height}">
+      <rect rx="#{radius}" ry="#{radius}" x="0" y="0" width="#{width}" height="#{height}" fill="black" />
+    </svg>
+    """
 
     {:ok, {mask, _flags}} = Operation.svgload_buffer(svg)
     Operation.extract_band(mask, @alpha_channel)
@@ -153,32 +199,66 @@ defmodule Image do
   # xmp data
   # iptc data
 
-  def add_exif(image \\ @image) do
-    {:ok, img} = Vimage.new_from_file(image)
-    {:ok, fields} = Vimage.header_field_names(img)
-
-    {:ok, img} =
-      Vimage.mutate(img, fn mut_img ->
-        :ok = remove_metadata(mut_img, fields)
+  def add_minimal_exif(%Vimage{} = image) do
+    with {:ok, _exif} <- exif(image),
+         # {:ok, xmp} <- xmp(image),
+         {:ok, image} <- remove_metadata(image) do
+      Vimage.mutate(image, fn mut_img ->
         :ok = MutableImage.set(mut_img, "exif-data", :VipsBlob, <<0>>)
         :ok = MutableImage.set(mut_img, @copyright, :gchararray, "Copyright (c) 2008 Kip Cole")
       end)
-    Vimage.write_to_file(img, @exif)
+    end
   end
 
-  def remove_metadata(img, fields) do
-    Enum.each(fields, &MutableImage.remove(img, &1))
+  @doc """
+  Remove all metadata from an image.
+
+  This can significant;y reduce the size of
+  an image file.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`
+
+  * `fields` is a list of metadata binary
+    field names. The default is all known
+    field names.
+
+  ## Returns
+
+  * An image without the specified metadata
+    fields.
+
+  """
+  def remove_metadata(image, fields \\ [])
+
+  def remove_metadata(image, []) do
+    {:ok, fields} = Vimage.header_field_names(image)
+    remove_metadata(image, fields)
   end
 
-  def lambo do
-    {:ok, lambo} = Vimage.new_from_file("~/Desktop/lambo.jpg")
-    {:ok, grad} = gradient(lambo)
-    {:ok, composite} = Operation.composite2(lambo, grad, :VIPS_BLEND_MODE_OVER)
-    Vimage.write_to_file composite, Path.expand("~/Desktop/composite.png")
+  def remove_metadata(%Vimage{} = image, fields) when is_list(fields) do
+    Vimage.mutate(image, fn mut_img ->
+      Enum.each(fields, &MutableImage.remove(mut_img, &1))
+    end)
   end
 
+  @doc """
+  Create an image gradient of the same size as
+  the given image.
+
+  The gradient will interpolate from the `start`
+  value to the `end` value. The default `start`
+  value is black with 100% transparency. The
+  default `finish` value is black with 100% opacity.
+
+  `start` and `finish` are given as an `rgb` triplet
+  or quadruplet list of integers between `0` and `255`.
+
+  """
   @y_band 1
-  def gradient(image, start \\ [0, 0, 0, 0], finish \\ [0, 0, 0, 255]) do
+
+  def linear_gradient(image, start \\ [0, 0, 0, 0], finish \\ [0, 0, 0, 255]) do
     width = width(image)
     height = height(image)
 
@@ -203,65 +283,12 @@ defmodule Image do
     |> multiply!(start)
   end
 
-  def grad do
-    start = [100, 50, 0]
-    finish = [50, 0, 50]
-    size = 512
+  @doc """
+  Returns the dominant color of an image
+  as an RBG triplet value in an integer
+  list.
 
-    {:ok, x} = Operation.xyz(size, size)
-    {:ok, x} = subtract(x, [Image.width(x) / 2, Image.height(x) / 2])
-
-    {:ok, x0} = Operation.extract_band(x, 0)
-    {:ok, x1} = Operation.extract_band(x, 1)
-
-    d =
-      pow!(x0, 2)
-      |> add!(pow!(x1, 2))
-      |> pow!(0.5)
-      |> divide!(2 ** 0.5 * size / 2)
-
-    out =
-      d
-      |> multiply!(finish)
-      |> add!(multiply!(d, -1) |> add!(1) |> multiply!(start))
-
-
-    {:ok, out} = Operation.copy(out, interpretation: :VIPS_INTERPRETATION_LAB)
-    Vimage.write_to_file(out, Path.expand("~/Desktop/x.png"))
-  end
-
-  def grad2 do
-    start = [255, 0, 0]
-    finish = [0, 0, 255]
-
-    {:ok, x} = Operation.xyz(100, 200)
-    {:ok, x} = subtract(x, [Image.width(x) / 2, Image.height(x) / 2])
-
-    {:ok, x0} = Operation.extract_band(x, 0)
-    {:ok, x1} = Operation.extract_band(x, 1)
-
-    d =
-      x0
-      |> pow!(2)
-      |> add!(pow!(x1, 2))
-      |> pow!(0.5)
-
-    d =
-      d
-      |> multiply!(10)
-      |> cos!()
-      |> divide!(2)
-      |> add!(0.5)
-
-    out =
-      d
-      |> multiply!(finish)
-      |> add!(multiply!(d, -1) |> add!(1) |> multiply!(start))
-
-    {:ok, out} = Operation.copy(out, interpretation: :VIPS_INTERPRETATION_sRGB)
-    Vimage.write_to_file(out, Path.expand("~/Desktop/x2.png"))
-  end
-
+  """
   @max_band_value 256
 
   def dominant_colour(%Vimage{} = image, options \\ []) do
@@ -273,15 +300,14 @@ defmodule Image do
     {:ok, pixel} = Operation.getpoint(histogram, x, y)
     band = Enum.find_index(pixel, &(&1 == v))
 
-    r = (x * bin_size) + (bin_size / 2)
-    g = (y * bin_size) + (bin_size / 2)
-    b = (band * bin_size) + (bin_size / 2)
+    r = x * bin_size + bin_size / 2
+    g = y * bin_size + bin_size / 2
+    b = band * bin_size + bin_size / 2
 
     [trunc(r), trunc(g), trunc(b)]
   end
 
-
-
+  defp wrap(item, atom) do
+    {atom, item}
+  end
 end
-
-

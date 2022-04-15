@@ -23,7 +23,7 @@ defmodule Image.Exif.Decode do
   def tag(:tiff, 0x011B, value), do: {:y_resolution, value}
   def tag(:tiff, 0x0128, value), do: {:resolution_units, resolution(value)}
   def tag(:tiff, 0x0131, value), do: {:software, value}
-  def tag(:tiff, 0x0132, value), do: {:modify_date, value}
+  def tag(:tiff, 0x0132, value), do: {:modify_date, date_time(value)}
 
   def tag(:tiff, 0x8769, value), do: {:exif, value}
   def tag(:tiff, 0x8825, value), do: {:gps, value}
@@ -41,8 +41,8 @@ defmodule Image.Exif.Decode do
   def tag(_, 0x8831, value), do: {:standard_output_sensitivity, value}
   def tag(_, 0x8832, value), do: {:recommended_exposure, value}
   def tag(_, 0x9000, value), do: {:exif_version, version(value)}
-  def tag(_, 0x9003, value), do: {:datetime_original, value}
-  def tag(_, 0x9004, value), do: {:datetime_digitized, value}
+  def tag(_, 0x9003, value), do: {:datetime_original, date_time(value)}
+  def tag(_, 0x9004, value), do: {:datetime_digitized, date_time(value)}
   def tag(_, 0x9101, value), do: {:component_configuration, component_configuration(value)}
   def tag(_, 0x9102, value), do: {:compressed_bits_per_pixel, value}
   def tag(_, 0x9201, value), do: {:shutter_speed_value, value}
@@ -99,7 +99,7 @@ defmodule Image.Exif.Decode do
   def tag(_, 0xA435, value), do: {:lens_serial_number, value}
 
   def tag(_, 0x8298, value), do: {:copyright, value}
-  def tag(_, 0x13B, value),  do: {:artist, value}
+  def tag(_, 0x13B, value), do: {:artist, value}
   def tag(_, 0x9010, value), do: {:time_offset, value}
   def tag(_, 0xA431, value), do: {:body_serial_number, value}
 
@@ -115,6 +115,20 @@ defmodule Image.Exif.Decode do
   end
 
   # Value decodes
+
+  @spec date_time(binary()) :: NaiveDateTime.t()
+  defp date_time(date_time) do
+    case String.split(date_time, [":", "-", "T", " "]) do
+      [y, m, d, h, mm, s] ->
+        NaiveDateTime.new!(int(y), int(m), int(d), int(h), int(mm), int(s))
+
+      _other ->
+        date_time
+    end
+  end
+
+  @compile {:inline, int: 1}
+  defp int(string), do: String.to_integer(string)
 
   @spec orientation(non_neg_integer()) :: binary()
   defp orientation(1), do: "Horizontal (normal)"

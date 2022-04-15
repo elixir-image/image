@@ -1,5 +1,4 @@
 defmodule Image.Exif do
-
   alias Image.Exif.{Decode, Tag}
   alias Image.Exif.{Gps, Thumbnail}
 
@@ -55,7 +54,7 @@ defmodule Image.Exif do
 
     read_unsigned = &:binary.decode_unsigned(&1, endian)
 
-      # sanity check
+    # sanity check
     with 42 <- read_unsigned.(forty_two) do
       offset = read_unsigned.(offset)
       reshape(read_ifd({exif, offset, read_unsigned}))
