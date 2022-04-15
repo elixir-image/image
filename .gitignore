@@ -24,3 +24,6 @@ image-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Mac metadata
+.DS_store
