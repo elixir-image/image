@@ -4,6 +4,7 @@ defmodule ImageTest do
   import Image.Math
   alias Vix.Vips.Operation
   alias Vix.Vips.Image, as: Vimage
+  use Image.Math
 
   doctest Image
 
@@ -48,7 +49,7 @@ defmodule ImageTest do
 
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     assert :ok = Vimage.write_to_file(rounded, out_path)
-    Vimage.write_to_file(rounded, validate_path("Kip_small_rounded_mask.png"))
+
     assert_files_equal(out_path, validate_path("Kip_small_rounded_mask.png"))
   end
 
@@ -130,5 +131,26 @@ defmodule ImageTest do
     assert :ok = Vimage.write_to_file(out, out_path)
 
     assert_files_equal(out_path, validate_path("radial_gradient_2.png"))
+  end
+
+  # This test validates the expected operation of infix operators
+  # working on Image data. This behaviour is driven by `use Image.Math`.
+
+  test "Math operators to create a white circle", %{dir: dir} do
+    {:ok, im} = Operation.xyz(200, 200)
+
+    # move the origin to the centre
+    im = im - [Image.width(im) / 2, Image.height(im) / 2]
+
+    # a one-band image where pixels are distance from the centre
+    im = (im[0] ** 2 + im[1] ** 2) ** 0.5
+
+    # relational operations make uchar images with 0 for false, 255 for true
+    im = im < Image.width(im) / 3
+
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    assert :ok = Vimage.write_to_file(im, out_path)
+
+    assert_files_equal out_path, validate_path("image_circle_white.png")
   end
 end
