@@ -1,13 +1,51 @@
 defmodule Image do
   alias Vix.Vips.{Operation, MutableImage}
   alias Vix.Vips.Image, as: Vimage
-  alias Image.{Exif, Xmp}
+  alias Image.{Exif, Xmp, Complex}
+
   use Image.Math
 
   @default_round_corner_radius 50
   @default_open_options [access: :sequential]
   @alpha_channel 3
   @copyright "exif-ifd0-Copyright"
+
+  @typedoc """
+  The options applicable to rotating an
+  image.
+
+  """
+  @type rotation_options :: [
+    {:idy, float()},
+    {:idx, float()},
+    {:ody, float()},
+    {:odx, float()},
+    {:background, pixel()}
+  ]
+
+  @typedoc """
+  Error messages returned by `libvips`
+  """
+  @type error_message :: binary()
+
+  @typedoc """
+  A pixel is represented as a list of float values.
+  The number of list elements is determined by
+  the colorspace interpreations. For example:
+
+  * `RGB` colorspace would be represented by
+    a list of three floats like `[0.0, 0,0, 0.0]` for black.
+
+  * `CMYK` colorspace would be represented by a
+    list of four floats.
+
+  * A `PNG` image can be in any appropriate
+    colorspace but may also have an `alpha` band
+    and therefore have three, four or five floats
+    in a list to represent the pixel.
+
+  """
+  @type pixel :: [float()]
 
   def open(image_path, options \\ []) do
     options = Keyword.merge(@default_open_options, options)
@@ -49,12 +87,22 @@ defmodule Image do
   end
 
   @doc """
-  Retruns the EXIF data for an image as a
+  Returns the EXIF data for an image as a
   keyword list.
 
-  Only a limited set of EXIF data is returned.
+  Only a selected set of EXIF data is returned.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`
+
+  ## Returns
+
+  * `{:ok, exif_map}` where `exif_map` is a map
+    of selected EXIF data
 
   """
+  @spec exif(Vimage.t()) :: {:ok, map()}
   def exif(%Vimage{} = image) do
     with {:ok, exif_blob} <- Vimage.header_value(image, "exif-data"),
          <<"Exif"::binary, 0::16, exif::binary>> <- exif_blob do
@@ -68,9 +116,19 @@ defmodule Image do
   Retruns the XMP data for an image as a
   keyword list.
 
-  Only a limited set of XMP data is returned.
+  Only a selected set of XMP data is returned.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`
+
+  ## Returns
+
+  * `{:ok, xmp_map}` where `xmp_map` is a map
+    of selected XMP data
 
   """
+  @spec xmp(Vimage.t()) :: {:ok, map()}
   def xmp(%Vimage{} = image) do
     with {:ok, xmp_blob} <- Vimage.header_value_as_string(image, "xmp-data"),
          {:ok, xmp_binary} <- Base.decode64(xmp_blob) do
@@ -82,9 +140,18 @@ defmodule Image do
   end
 
   @doc """
-  Returns the eidth of an image.
+  Returns the width of an image.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`
+
+  ## Returns
+
+  * The image width as an integer
 
   """
+  @spec width(Vimage.t()) :: integer()
   def width(%Vimage{} = image) do
     Vimage.width(image)
   end
@@ -92,9 +159,182 @@ defmodule Image do
   @doc """
   Returns the height of an image.
 
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`
+
+  ## Returns
+
+  * The image height as an integer
+
   """
+  @spec height(Vimage.t()) :: integer()
   def height(%Vimage{} = image) do
     Vimage.height(image)
+  end
+
+  @doc """
+  Return the number of bands in an image.
+
+  A band is sometimes referred to as a
+  channel.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  ## Returns
+
+  * An integer number of bands in the image.
+
+  """
+  @spec bands(Vimage.t()) :: integer
+  def bands(%Vimage{} = image) do
+    Vimage.bands(image)
+  end
+
+  @doc """
+  Flip an image horizontally or
+  vertically.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  * `direction` is either `:horitzontal` or
+    `:vertical`.
+
+  """
+  @spec flip(image :: Vimage.t(), direction :: :vertical | :horizontal) :: {:ok, Vimage.t()}
+  def flip(%Vimage{} = image, :vertical) do
+    Operation.flip(image, :VIPS_DIRECTION_VERTICAL)
+  end
+
+  def flip(%Vimage{} = image, :horizontal) do
+    Operation.flip(image, :VIPS_DIRECTION_HORIZONTAL)
+  end
+
+  @doc """
+  Rotate an image clockwise (to the
+  right) by a number of degrees.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  * Angle is a `float` number of degrees
+    to rotate in a clockwise direction.
+
+  * `options` is a keyword list of options.
+
+  ## Options
+
+  * `:idy` is the vertical input displacement. Default: `0.0`
+
+  * `:idx` is the horizontal input displacement. Default: `0.0`
+
+  * `:ody` is the vertical output displacement. Default: `0.0`
+
+  * `:odx` is the horizontal output displacement. Default: `0.0`
+
+  * `:background` is the background color to be used for filling
+    the blank areas of the image. The background is specified as
+    a list of 3 or 4 float values.
+
+  ## Notes
+
+  The displacement parameters cause the image canvas to be
+  expanded and the image displaced (relative to the top left
+  corner of the image) but the amount specified.
+
+  The rules defining how the image canvas is expanded
+  is not known to the author of `Image`. Experimentation will
+  be required if you explore these options.
+
+  ## Returns
+
+  * `{:ok, rotated_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @spec rotate(image :: Vimage.t(), angle :: float(), options :: rotation_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def rotate(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
+    options = Keyword.merge(default_rotation_options(), options)
+    Operation.rotate(image, angle, options)
+  end
+
+  defp default_rotation_options do
+    []
+  end
+
+  @doc """
+  Convert image to polar coordinates.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  ## Returns
+
+  * `{:ok, image_in_polar_coordiantes}` or
+
+  * `{:error, reason}`
+
+  """
+  def to_polar_coordinates(%Vimage{} = image) do
+    width = width(image)
+    height = height(image)
+
+    {:ok, xy} = Operation.xyz(width, height)
+    xy = xy - [width / 2.0, height / 2.0]
+
+    scale = min(width, height) / width
+    xy = xy * 2.0 / scale
+
+    {:ok, index} = Complex.polar(xy)
+    index = index * [1, height / 360.0]
+
+    Operation.mapim(image, index)
+  end
+
+  @doc """
+  Convert image to rectangular coordinates.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  ## Notes
+
+  Roundtrip to polar and back to rectangular
+  coordinates displays some image distortion,
+  likely due to rounding errors in float
+  arithmetic. Further study is required.
+
+  ## Returns
+
+  * `{:ok, image_in_polar_coordiantes}` or
+
+  * `{:error, reason}`
+
+  """
+  def to_rectangular_coordinates(%Vimage{} = image) do
+    width = width(image)
+    height = height(image)
+
+    {:ok, xy} = Operation.xyz(width, height)
+    xy = xy * [1, 360.0 / height]
+
+    {:ok, index} = Complex.rectangular(xy)
+    scale = min(width, height) / width
+
+    index = index * scale / 2.0
+    index = index + [width / 2.0, height / 2.0]
+
+    Operation.mapim(image, index)
   end
 
   @doc """

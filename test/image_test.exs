@@ -153,4 +153,81 @@ defmodule ImageTest do
 
     assert_files_equal out_path, validate_path("image_circle_white.png")
   end
+
+  test "Rotating an image 90 degrees", %{dir: dir} do
+    image = image_path("Kip_small.jpg")
+    {:ok, kip} = Vimage.new_from_file(image)
+    {:ok, rotated} = Image.rotate(kip, 90.0)
+
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    assert :ok = Vimage.write_to_file(rotated, out_path)
+
+    assert_files_equal(out_path, validate_path("Kip_small_rotate90.jpg"))
+  end
+
+  test "Rotating an image -90 degrees", %{dir: dir} do
+    image = image_path("Kip_small.jpg")
+    {:ok, kip} = Vimage.new_from_file(image)
+    {:ok, rotated} = Image.rotate(kip, -90.0)
+
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    assert :ok = Vimage.write_to_file(rotated, out_path)
+
+    assert_files_equal(out_path, validate_path("Kip_small_rotate-90.jpg"))
+  end
+
+  test "Rotating an image 45 degrees", %{dir: dir} do
+    image = image_path("Kip_small.jpg")
+    {:ok, kip} = Vimage.new_from_file(image)
+    {:ok, rotated} = Image.rotate(kip, 45)
+
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    assert :ok = Vimage.write_to_file(rotated, out_path)
+
+    assert_files_equal(out_path, validate_path("Kip_small_rotate45.jpg"))
+  end
+
+  test "Rotating an image 45 degrees with white background", %{dir: dir} do
+    image = image_path("Kip_small.jpg")
+    {:ok, kip} = Vimage.new_from_file(image)
+    {:ok, rotated} = Image.rotate(kip, 45, background: [255,255,255])
+
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    assert :ok = Vimage.write_to_file(rotated, out_path)
+
+    assert_files_equal(out_path, validate_path("Kip_small_rotate45_white.jpg"))
+  end
+
+  test "Rotating an image 45 degrees with displacement", %{dir: dir} do
+    image = image_path("Kip_small.jpg")
+    {:ok, kip} = Vimage.new_from_file(image)
+    {:ok, rotated} = Image.rotate(kip, 45, odx: 10, ody: 10, background: [255,255,255])
+
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    assert :ok = Vimage.write_to_file(rotated, out_path)
+
+    assert_files_equal out_path, validate_path("Kip_small_rotate45_displaced.jpg")
+  end
+
+  test "Convert to polar coordinates", %{dir: dir} do
+    image = image_path("San-Francisco-2018-04-2549.jpg")
+    {:ok, image} = Vimage.new_from_file(image)
+    {:ok, polar} = Image.to_polar_coordinates(image)
+
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    assert :ok = Vimage.write_to_file(polar, out_path)
+
+    assert_files_equal out_path, validate_path("polar.jpg")
+  end
+
+  test "Convert to rectangular coordinates", %{dir: dir} do
+    image = validate_path("polar.jpg")
+    {:ok, image} = Vimage.new_from_file(image)
+    {:ok, polar} = Image.to_rectangular_coordinates(image)
+
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    assert :ok = Vimage.write_to_file(polar, out_path)
+
+    assert_files_equal out_path, validate_path("rectangular.jpg")
+  end
 end
