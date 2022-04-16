@@ -23,6 +23,22 @@ defmodule Image do
     {:background, pixel()}
   ]
 
+  @type resize_options :: [
+
+  ]
+
+  @type thumbnail_options :: [
+
+  ]
+
+  @type avatar_options :: [
+
+  ]
+
+  @type crop_options :: [
+
+  ]
+
   @typedoc """
   Error messages returned by `libvips`
   """
@@ -84,6 +100,15 @@ defmodule Image do
 
   defp join_options(options) do
     Enum.map_join(options, ",", fn {k, v} -> "#{k}=#{v}" end)
+  end
+
+  @doc """
+  Write an image to a file.
+
+  """
+  def write(%Vimage{} = image, target, options \\ []) do
+    # Start by writing to a file but allow
+    # target to be a stream with updated Vix
   end
 
   @doc """
@@ -201,17 +226,70 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t()`.
 
-  * `direction` is either `:horitzontal` or
+  * `direction` is either `:horizontal` or
     `:vertical`.
 
   """
-  @spec flip(image :: Vimage.t(), direction :: :vertical | :horizontal) :: {:ok, Vimage.t()}
+  @spec flip(image :: Vimage.t(), direction :: :vertical | :horizontal) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
   def flip(%Vimage{} = image, :vertical) do
     Operation.flip(image, :VIPS_DIRECTION_VERTICAL)
   end
 
   def flip(%Vimage{} = image, :horizontal) do
     Operation.flip(image, :VIPS_DIRECTION_HORIZONTAL)
+  end
+
+  def flip(%Vimage{} = image, direction) do
+    {:error,
+      "Invalid flip direction. Must be :vertical or :horizontal.  Found #{inspect direction}"}
+  end
+
+  @doc """
+  Resize an image.
+
+  """
+  @spec resize(Vimage.t(), scale :: float(), options :: resize_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def resize(%Vimage{} = image, scale, options \\ []) do
+    # Resize either by scale or to explicit size
+  end
+
+  @doc """
+  Thumbnail an image.
+
+  """
+  @spec thumbnail(Vimage.t(), size :: float(), options :: thumbnail_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def thumbnail(%Vimage{} = image, size, options \\ []) do
+    # Thumbnail
+    # Remove metadata except title, artist and copyright
+  end
+
+  @doc """
+  Make an avatar image.
+
+  """
+  @spec avatar(Vimage.t(), size :: float(), options :: avatar_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def avatar(%Vimage{} = image, size, options \\ []) do
+    # Thunail with circular mask with a default size of 180px
+    # Remove metadata but preserve title artist and copyright
+  end
+
+  @doc """
+  Crop an image.
+
+  """
+  @spec crop(Vimage.t(), options :: crop_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def crop(%Vimage{} = image, size, options \\ []) do
+    # Operation.extract_area
   end
 
   @doc """
