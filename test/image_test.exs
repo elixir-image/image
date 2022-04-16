@@ -230,4 +230,15 @@ defmodule ImageTest do
 
     assert_files_equal out_path, validate_path("rectangular.jpg")
   end
+
+  test "Ripple Effect", %{dir: dir} do
+    image = image_path("San-Francisco-2018-04-2549.jpg")
+    {:ok, image} = Vimage.new_from_file(image)
+    {:ok, ripple} = Image.ripple(image)
+
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    assert :ok = Vimage.write_to_file(ripple, out_path)
+
+    assert_files_equal out_path, validate_path("ripple.jpg")
+  end
 end

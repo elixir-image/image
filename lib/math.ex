@@ -123,6 +123,14 @@ defmodule Image.Math do
     :math.cos(other)
   end
 
+  def sin(%Vimage{} = image) do
+    Operation.math(image, :VIPS_OPERATION_MATH_SIN)
+  end
+
+  def sin(other) do
+    :math.sin(other)
+  end
+
   def add(%Vimage{} = image, %Vimage{} = image2) do
     Operation.add(image, image2)
   end
@@ -273,6 +281,13 @@ defmodule Image.Math do
     end
   end
 
+  def add!(value, %Vimage{} = image) do
+    case add(image, value) do
+      {:ok, image} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
+  end
+
   def add!(a, b) do
     Kernel.+(a, b)
   end
@@ -296,6 +311,13 @@ defmodule Image.Math do
   end
 
   def multiply!(%Vimage{} = image, value) do
+    case multiply(image, value) do
+      {:ok, image} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
+  end
+
+  def multiply!(value, %Vimage{} = image) do
     case multiply(image, value) do
       {:ok, image} -> image
       {:error, reason} -> raise ArgumentError, reason
@@ -330,6 +352,13 @@ defmodule Image.Math do
 
   def cos!(%Vimage{} = image) do
     case cos(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
+  end
+
+  def sin!(%Vimage{} = image) do
+    case sin(image) do
       {:ok, image} -> image
       {:error, reason} -> raise ArgumentError, reason
     end

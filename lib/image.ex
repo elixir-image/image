@@ -316,7 +316,7 @@ defmodule Image do
 
   ## Returns
 
-  * `{:ok, image_in_polar_coordiantes}` or
+  * `{:ok, image_in_rectuangular_coordinates}` or
 
   * `{:error, reason}`
 
@@ -338,7 +338,60 @@ defmodule Image do
   end
 
   @doc """
+  Adds concentric ripple effect to an image
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  ## Returns
+
+  * `{:ok, image_with_ripple}` or
+
+  * `{:error, reason}`
+
+  """
+  def ripple(%Vimage{} = image) do
+    width = width(image)
+    height = height(image)
+
+    # this makes an image where pixel (0, 0) (at the top-left) has value [0, 0],
+    # and pixel (image.width, image.height) at the bottom-right has value
+    # [image.width, image.height]
+    {:ok, index} = Operation.xyz(width, height)
+
+    # make a version with (0, 0) at the centre, negative values up and left,
+    # positive down and right
+    center = index - [width / 2, height / 2]
+
+    # to polar space, so each pixel is now distance and angle in degrees
+    {:ok, polar} = Complex.polar(center)
+
+    # scale sin(distance) by 1/distance to make a wavey pattern
+    d = 10000 * sin!(polar[0] * 3) / (1 + polar[0])
+
+    # and back to rectangular coordinates again to make a set of vectors we can
+    # apply to the original index image
+    {:ok, joined} = Operation.bandjoin([d, polar[1]])
+    {:ok, rectangular} = Complex.rectangular(joined)
+    index = index + rectangular
+
+    # finally, use our modified index image to distort the input!
+    Operation.mapim(image, index)
+  end
+
+  @doc """
   Apply a circular mask to an image.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  ## Returns
+
+  * `{:ok, circular_image}` or
+
+  * `{:error, reason}
 
   """
   def circle(%Vimage{} = image, _options \\ []) do
@@ -346,13 +399,8 @@ defmodule Image do
     height = height(image)
     size = min(width, height)
 
-    {:ok, thumb} =
-      Operation.thumbnail_image(image, size, crop: :VIPS_INTERESTING_ATTENTION)
-
-    {:ok, mask} =
-      mask(:circle, size, size)
-
-    Operation.bandjoin([thumb, mask])
+    {:ok, mask} = mask(:circle, size, size)
+    Operation.bandjoin([image, mask])
   end
 
   @doc """
@@ -364,13 +412,8 @@ defmodule Image do
     width = width(image)
     height = height(image)
 
-    {:ok, thumb} =
-      Operation.thumbnail_image(image, width, crop: :VIPS_INTERESTING_ATTENTION)
-
-    {:ok, mask} =
-      mask(:rounded_corners, width, height, options)
-
-    Operation.bandjoin([thumb, mask])
+    {:ok, mask} = mask(:rounded_corners, width, height, options)
+    Operation.bandjoin([image, mask])
   end
 
   @doc """
