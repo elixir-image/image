@@ -241,4 +241,16 @@ defmodule ImageTest do
 
     assert_files_equal out_path, validate_path("ripple.jpg")
   end
+
+  test "Autorotate an image", %{dir: dir} do
+    image = image_path("Kip_small_rotated.jpg")
+    {:ok, image} = Vimage.new_from_file(image)
+    {:ok, {autorotated, flags}} = Image.autorotate(image)
+
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    assert :ok = Vimage.write_to_file(autorotated, out_path)
+
+    assert {:ok, 180} = Keyword.fetch(flags, :angle)
+    assert_files_equal out_path, validate_path("autorotated.jpg")
+  end
 end

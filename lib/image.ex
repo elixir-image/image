@@ -271,6 +271,56 @@ defmodule Image do
   end
 
   @doc """
+  Rotate an image based upon the orientation
+  information in an image's EXIF data.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  ## Returns
+
+  * `{:ok, {auto_rotated_image, flags}}` or
+
+  * `{:error, reason}`
+
+  ## Flags
+
+  Two flags are returned indicating what action
+  was taken:
+
+  * `:flip` which is a boolean indicating if the image
+  was flipped or not and
+
+  * `:angle` through which the image was rotated.
+    This value will be one of `0`, `90`, `180` or
+    `270` representing the degrees of rotation.
+
+  """
+  def autorotate(%Vimage{} = image) do
+    case Operation.autorot(image) do
+      {:ok, {image, flags}} ->
+        {:ok, {image, decode_rotation_flags(flags)}}
+      other ->
+        other
+    end
+  end
+
+  @rotation_encoding %{
+    VIPS_ANGLE_D0: 0,
+    VIPS_ANGLE_D90: 90,
+    VIPS_ANGLE_D180: 180,
+    VIPS_ANGLE_D270: 270
+  }
+
+  defp decode_rotation_flags(flags) do
+    angle = Keyword.fetch!(flags, :angle)
+    angle = Map.fetch!(@rotation_encoding, angle)
+
+    Keyword.put(flags, :angle, angle)
+  end
+
+  @doc """
   Convert image to polar coordinates.
 
   ## Arguments
@@ -368,7 +418,7 @@ defmodule Image do
     {:ok, polar} = Complex.polar(center)
 
     # scale sin(distance) by 1/distance to make a wavey pattern
-    d = 10000 * sin!(polar[0] * 3) / (1 + polar[0])
+    d = 10_000 * sin!(polar[0] * 3) / (1 + polar[0])
 
     # and back to rectangular coordinates again to make a set of vectors we can
     # apply to the original index image
