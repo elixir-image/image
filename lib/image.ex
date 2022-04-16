@@ -293,6 +293,18 @@ defmodule Image do
   end
 
   @doc """
+  Returns a boolean based upon whether a given
+  image has an alpha band.
+
+  The determination is a heuristic so certainty
+  cannot be guaranteed.
+
+  """
+  def has_alpha?(%Vimage{} = image) do
+
+  end
+
+  @doc """
   Rotate an image clockwise (to the
   right) by a number of degrees.
 
