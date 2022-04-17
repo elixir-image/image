@@ -20,7 +20,7 @@ defmodule Image.MixProject do
 
   defp deps do
     [
-      {:vix, github: "kipcole9/vix"},
+      {:vix, github: "kipcole9/vix", branch: "vips-conn"},
       {:sweet_xml, "~> 0.7"},
       {:nx, "~> 0.1", optional: true},
       {:temp, "~> 0.4", only: :test, runtime: false}
