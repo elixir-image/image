@@ -190,7 +190,7 @@ defmodule ImageTest do
   test "Rotating an image 45 degrees with white background", %{dir: dir} do
     image = image_path("Kip_small.jpg")
     {:ok, kip} = Vimage.new_from_file(image)
-    {:ok, rotated} = Image.rotate(kip, 45, background: [255,255,255])
+    {:ok, rotated} = Image.rotate(kip, 45, background: [255, 255, 255])
 
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(rotated, out_path)
@@ -201,7 +201,7 @@ defmodule ImageTest do
   test "Rotating an image 45 degrees with displacement", %{dir: dir} do
     image = image_path("Kip_small.jpg")
     {:ok, kip} = Vimage.new_from_file(image)
-    {:ok, rotated} = Image.rotate(kip, 45, odx: 10, ody: 10, background: [255,255,255])
+    {:ok, rotated} = Image.rotate(kip, 45, odx: 10, ody: 10, background: [255, 255, 255])
 
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(rotated, out_path)

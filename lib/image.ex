@@ -1,10 +1,10 @@
 defmodule Image do
   alias Vix.Vips.{Operation, MutableImage}
   alias Vix.Vips.Image, as: Vimage
-  alias Image.{Exif, Xmp, Complex}
+
+  alias Image.{Exif, Xmp, Complex, Options}
 
   @default_round_corner_radius 50
-  @default_open_options [access: :sequential]
   @alpha_channel 3
   @copyright "exif-ifd0-Copyright"
 
@@ -14,41 +14,64 @@ defmodule Image do
 
   """
   @type image_open_options ::
-    jpeg_open_options() |
-    png_open_options() |
-    tiff_open_options() |
-    webp_open_options() |
-    other_open_options()
+          jpeg_open_options()
+          | png_open_options()
+          | tiff_open_options()
+          | webp_open_options()
+          | other_open_options()
 
   @type jpeg_open_options :: [
-    {:shrink, 1..16},
-    {:autorotate, boolean()},
-    {:access, file_access()}
-  ]
+          {:shrink, 1..16},
+          {:autorotate, boolean()},
+          {:access, file_access()},
+          {:fail_on, fail_on()}
+        ]
 
   @type png_open_options :: [
-    {:access, file_access()}
-  ]
+          {:access, file_access()},
+          {:fail_on, fail_on()}
+        ]
 
   @type tiff_open_options :: [
-    {:autorotate, boolean()},
-    {:access, file_access()},
-    {:pages, pos_integer()},
-    {:page, pos_integer()}
-  ]
+          {:autorotate, boolean()},
+          {:access, file_access()},
+          {:fail_on, fail_on()},
+          {:pages, pos_integer()},
+          {:page, 1..100_000}
+        ]
 
   @type webp_open_options :: [
-    {:autorotate, boolean()},
-    {:access, file_access()},
-    {:pages, pos_integer()},
-    {:page, pos_integer()}
-  ]
+          {:autorotate, boolean()},
+          {:access, file_access()},
+          {:fail_on, fail_on()},
+          {:pages, pos_integer()},
+          {:page, 1..100_000},
+          {:scale, 1..1024}
+        ]
 
   @type other_open_options :: [
-    {:access, file_access()}
-  ]
+          {:access, file_access()},
+          {:fail_on, fail_on()}
+        ]
 
+  @typedoc """
+  The file access mode when opening
+  image files. The default in `:sequential`.
+
+  """
   @type file_access :: :sequential | :random
+
+  @typedoc """
+  Stop attempting to load an image file
+  when a level of error is detected.
+  The default is `:none`.
+
+  Each error state implies all the states
+  before it such that `:error` implies
+  also `:truncated`.
+
+  """
+  @type fail_on :: :none | :truncated | :error | :warning
 
   @typedoc """
   The options applicable to rotating an
@@ -56,28 +79,20 @@ defmodule Image do
 
   """
   @type rotation_options :: [
-    {:idy, float()},
-    {:idx, float()},
-    {:ody, float()},
-    {:odx, float()},
-    {:background, pixel()}
-  ]
+          {:idy, float()},
+          {:idx, float()},
+          {:ody, float()},
+          {:odx, float()},
+          {:background, pixel()}
+        ]
 
-  @type resize_options :: [
+  @type resize_options :: []
 
-  ]
+  @type thumbnail_options :: []
 
-  @type thumbnail_options :: [
+  @type avatar_options :: []
 
-  ]
-
-  @type avatar_options :: [
-
-  ]
-
-  @type crop_options :: [
-
-  ]
+  @type crop_options :: []
 
   @typedoc """
   Error messages returned by `libvips`
@@ -112,7 +127,7 @@ defmodule Image do
     file.
 
   * `options` is a keyword list of options. The default is
-    `[]`.
+    `[access: :sequential]`.
 
   ## Options
 
@@ -121,13 +136,64 @@ defmodule Image do
 
   ### All image types
 
-  ### Jpeg options
+  * `:access` is the file access mode, either `:random`
+    or `:sequential`. THe default is `:sequentual`.
+    When `:sequential`, `Image` (via `Vix`) is able
+    to support streaming transformations and optimise
+    memory usage more effectively. Howwevef `:sequenial`
+    also means that some operationas cannot be completed
+    because they would require non-sequential access to
+    the image. In these cases, `:random` access is required.
 
-  ### PNG options
+  * `:fail_on` sets the error level at which image
+    loading and decoding will stop. The default is `:none`.
+    Each error state implies all the states before it such
+    that `:error` implies also `:truncated`.
+
+  ### JPEG image options
+
+  * `:shrink` is an integer factor in the range `1..16` by
+    which the image is reduced upon loading. This is an
+    optimization that can result in improved performance and
+    reduced memory usage if the image is being loaded
+    with the intend to resize it to smaller dimensions. The
+    default value is `1` meaning no shrnk-on-load.
+
+  * `:autorotate` is a boolean value indicating if
+    the image should be rotated according to the orientation
+    data stored in the image metadata. The default is
+    `false`.
+
+  ### Webp options
+
+  * `:scale` will scale the image on load. The value is
+    `1..1024` with a default of `1`.
+
+  * `:page` indicates the image page to be loaded. The
+    value is in the range `0..100_000` with a default
+    value of `0`.
+
+  * `:pages` indicates how many pages to load. THe value is
+    in the range `1..100_000` with a default value of `1`.
 
   ### TIFF options
 
-  ### Webp options
+  * `:autorotate` is a boolean value indicating if
+    the image should be rotated according to the orientation
+    data stored in the image metadata. The default is
+    `false`.
+
+  * `:page` indicates the image page to be loaded. The
+    value is in the range `0..100_000` with a default
+    value of `0`.
+
+  * `:pages` indicates how many pages to load. THe value is
+    in the range `1..100_000` with a default value of `1`.
+
+  ### PNG options
+
+  * There are no PNG-specific image loading
+    options.
 
   ## Returns
 
@@ -137,14 +203,14 @@ defmodule Image do
 
   """
   @spec open(binary(), image_open_options()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def open(image_path, options \\ []) do
-    options = Keyword.merge(@default_open_options, options)
-
-    image_path
-    |> String.split("[", parts: 2)
-    |> do_open(options)
+    with {:ok, options} <- Options.Open.validate_open_options(options) do
+      image_path
+      |> String.split("[", parts: 2)
+      |> do_open(options)
+    end
   end
 
   defp do_open([path], options) do
@@ -199,7 +265,7 @@ defmodule Image do
   """
 
   @spec stream(binary(), pos_integer()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def stream!(path, bytes \\ @default_bytes) do
+  def stream(path, bytes \\ @default_bytes) do
     if File.exists?(path) do
       path
       |> File.stream!([], bytes)
@@ -346,7 +412,7 @@ defmodule Image do
 
   """
   @spec flip(image :: Vimage.t(), direction :: :vertical | :horizontal) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def flip(%Vimage{} = image, :vertical) do
     Operation.flip(image, :VIPS_DIRECTION_VERTICAL)
@@ -358,7 +424,7 @@ defmodule Image do
 
   def flip(%Vimage{} = image, direction) do
     {:error,
-      "Invalid flip direction. Must be :vertical or :horizontal.  Found #{inspect direction}"}
+     "Invalid flip direction. Must be :vertical or :horizontal.  Found #{inspect(direction)}"}
   end
 
   @doc """
@@ -372,7 +438,7 @@ defmodule Image do
 
   """
   @spec resize(Vimage.t(), scale :: float(), options :: resize_options()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def resize(%Vimage{} = image, scale, options \\ []) do
     # Resize either by scale or to explicit size
@@ -401,7 +467,7 @@ defmodule Image do
 
   """
   @spec thumbnail(Vimage.t(), size :: float(), options :: thumbnail_options()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def thumbnail(image, size, options \\ [])
 
@@ -410,7 +476,7 @@ defmodule Image do
   end
 
   @spec thumbnail(binary(), size :: float(), options :: thumbnail_options()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def thumbnail(image_path, size, options) when is_binary(image_path) do
     Operation.thumbnail(image_path, size, options)
@@ -427,7 +493,7 @@ defmodule Image do
 
   """
   @spec avatar(Vimage.t(), size :: float(), options :: avatar_options()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def avatar(%Vimage{} = image, size, options \\ []) do
     # Thunail with circular mask with a default size of 180px
@@ -445,7 +511,7 @@ defmodule Image do
 
   """
   @spec crop(Vimage.t(), options :: crop_options()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def crop(%Vimage{} = image, size, options \\ []) do
     # Operation.extract_area
@@ -460,7 +526,7 @@ defmodule Image do
 
   """
   def has_alpha?(%Vimage{} = image) do
-
+    Vimage.has_alpha?(image)
   end
 
   @doc """
@@ -508,7 +574,7 @@ defmodule Image do
 
   """
   @spec rotate(image :: Vimage.t(), angle :: float(), options :: rotation_options()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def rotate(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
     options = Keyword.merge(default_rotation_options(), options)
@@ -550,6 +616,7 @@ defmodule Image do
     case Operation.autorot(image) do
       {:ok, {image, flags}} ->
         {:ok, {image, decode_rotation_flags(flags)}}
+
       other ->
         other
     end
@@ -837,7 +904,7 @@ defmodule Image do
 
     # and use it to fade the quads ... we need to tag the result as an RGB
     # image
-    (d * finish) + (1 - d) * start
+    (d * finish + (1 - d) * start)
     |> Operation.copy(interpretation: :VIPS_INTERPRETATION_sRGB)
   end
 

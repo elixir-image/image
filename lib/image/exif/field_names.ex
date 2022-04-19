@@ -83,5 +83,4 @@ defmodule Image.Exif.FieldNames do
 
     def vips_header_name(unquote(field)), do: unquote(vips_header_name)
   end
-
 end

@@ -27,12 +27,12 @@ defmodule Image.Complex do
   end
 
   defp to_complex(%Vimage{} = _image, format, bands)
-      when not complex(format) and not even(bands) do
-    {:error, "Not an even number of bands. Found: #{inspect bands}"}
+       when not complex(format) and not even(bands) do
+    {:error, "Not an even number of bands. Found: #{inspect(bands)}"}
   end
 
   defp to_complex(%Vimage{} = image, format, bands)
-      when not complex(format) and not float_format(format) do
+       when not complex(format) and not float_format(format) do
     {:ok, image} = Operation.cast(image, :VIPS_FORMAT_FLOAT)
     Operation.copy(image, format: :VIPS_FORMAT_COMPLEX, bands: div(bands, 2))
   end
@@ -42,11 +42,11 @@ defmodule Image.Complex do
   end
 
   defp to_complex(%Vimage{} = image, _format, bands) do
-     Operation.copy(image, format: :VIPS_FORMAT_COMPLEX, bands: div(bands, 2))
+    Operation.copy(image, format: :VIPS_FORMAT_COMPLEX, bands: div(bands, 2))
   end
 
   defp uncomplex(image, original_format, format, bands)
-      when not complex(original_format) and format === :VIPS_FORMAT_DPCOMPLEX do
+       when not complex(original_format) and format === :VIPS_FORMAT_DPCOMPLEX do
     Operation.copy(image, format: :VIPS_FORMAT_DOUBLE, bands: bands)
   end
 
