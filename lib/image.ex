@@ -11,6 +11,48 @@ defmodule Image do
   @copyright "exif-ifd0-Copyright"
 
   @typedoc """
+  The options applicable to opening an
+  image.
+
+  """
+  @type image_open_options ::
+    jpeg_open_options() |
+    png_open_options() |
+    tiff_open_options() |
+    webp_open_options() |
+    other_open_options()
+
+  @type jpeg_open_options :: [
+    {:shrink, 1..16},
+    {:autorotate, boolean()},
+    {:access, file_access()}
+  ]
+
+  @type png_open_options :: [
+    {:access, file_access()}
+  ]
+
+  @type tiff_open_options :: [
+    {:autorotate, boolean()},
+    {:access, file_access()},
+    {:pages, pos_integer()},
+    {:page, pos_integer()}
+  ]
+
+  @type webp_open_options :: [
+    {:autorotate, boolean()},
+    {:access, file_access()},
+    {:pages, pos_integer()},
+    {:page, pos_integer()}
+  ]
+
+  @type other_open_options :: [
+    {:access, file_access()}
+  ]
+
+  @type file_access :: :sequential | :random
+
+  @typedoc """
   The options applicable to rotating an
   image.
 
@@ -42,7 +84,7 @@ defmodule Image do
   @typedoc """
   Error messages returned by `libvips`
   """
-  @type error_message :: binary()
+  @type error_message :: term()
 
   @typedoc """
   A pixel is represented as a list of float values.
@@ -62,6 +104,42 @@ defmodule Image do
 
   """
   @type pixel :: [float()]
+
+  @doc """
+  Opens an image file for image processing.
+
+  ## Arguments
+
+  * `path` is the file system path to an image
+    file.
+
+  * `options` is a keyword list of options. The default is
+    `[]`.
+
+  ## Options
+
+  The available options depends on the type of image
+  file being opened.
+
+  ### All image types
+
+  ### Jpeg options
+
+  ### PNG options
+
+  ### TIFF options
+
+  ### Webp options
+
+  ## Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, message}`
+
+  """
+  @spec open(binary(), image_open_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
 
   def open(image_path, options \\ []) do
     options = Keyword.merge(@default_open_options, options)
@@ -100,6 +178,37 @@ defmodule Image do
 
   defp join_options(options) do
     Enum.map_join(options, ",", fn {k, v} -> "#{k}=#{v}" end)
+  end
+
+  @default_bytes 65_536
+
+  @doc """
+  Stream an image file.
+
+  ## Arguments
+
+  * `path` is the file system path to an image
+    file.
+
+  * `bytes` is the number of bytes in
+    each stream element. The default is #{@default_bytes}.
+
+  ## Returns
+
+  * `{:ok, enumerable_image}` or
+
+  * `{:error, reason}`
+  """
+
+  @spec stream(binary(), pos_integer()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def stream!(path, bytes \\ @default_bytes) do
+    if File.exists?(path) do
+      path
+      |> File.stream!([], bytes)
+      |> Vimage.new_from_enum()
+    else
+      {:error, :enoent}
+    end
   end
 
   @doc """
@@ -229,6 +338,14 @@ defmodule Image do
   * `direction` is either `:horizontal` or
     `:vertical`.
 
+  ## Returns
+
+  ## Returns
+
+  * `{:ok, flipped_image}` or
+
+  * `{:error, reason}`
+
   """
   @spec flip(image :: Vimage.t(), direction :: :vertical | :horizontal) ::
     {:ok, Vimage.t()} | {:error, error_message()}
@@ -248,6 +365,12 @@ defmodule Image do
 
   @doc """
   Resize an image.
+
+  ## Returns
+
+  * `{:ok, resized_image}` or
+
+  * `{:error, reason}`
 
   """
   @spec resize(Vimage.t(), scale :: float(), options :: resize_options()) ::
@@ -272,6 +395,12 @@ defmodule Image do
   @doc """
   Make an avatar image.
 
+  ## Returns
+
+  * `{:ok, avatar_image}` or
+
+  * `{:error, reason}`
+
   """
   @spec avatar(Vimage.t(), size :: float(), options :: avatar_options()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
@@ -283,6 +412,12 @@ defmodule Image do
 
   @doc """
   Crop an image.
+
+  ## Returns
+
+  * `{:ok, cropped_image}` or
+
+  * `{:error, reason}`
 
   """
   @spec crop(Vimage.t(), options :: crop_options()) ::
