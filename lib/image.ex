@@ -3,8 +3,6 @@ defmodule Image do
   alias Vix.Vips.Image, as: Vimage
   alias Image.{Exif, Xmp, Complex}
 
-  use Image.Math
-
   @default_round_corner_radius 50
   @default_open_options [access: :sequential]
   @alpha_channel 3
@@ -383,13 +381,39 @@ defmodule Image do
   @doc """
   Thumbnail an image.
 
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()` or a filename.
+  * `width` is the target width of the thumbnail. Unless
+    the option `:height` is specified, the image will retain
+    its aspect ratio.
+
+  ## Options
+
+  * `:autorotate` - Use orientation tags to rotate image upright. Default is `true`
+  * `:intent` - Rendering intent. Default is `:relative`
+  * `:export_profile` - Fallback export color profile. Default: `nil`
+  * `:import_profile` - Fallback import color profile. Default: `nil`
+  * `:linear` - Reduce in linear light. Default: false
+  * `crop` - Reduce to fill target rectangle, then crop. Default: :VIPS_INTERESTING_NONE
+  * `:size` - Only upsize, only downsize, or both. Default: :VIPS_SIZE_BOTH
+  * `:height` - Size to this height. Default is to maintain the image aspect ratio.
+
   """
   @spec thumbnail(Vimage.t(), size :: float(), options :: thumbnail_options()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
-  def thumbnail(%Vimage{} = image, size, options \\ []) do
-    # Thumbnail
-    # Remove metadata except title, artist and copyright
+  def thumbnail(image, size, options \\ [])
+
+  def thumbnail(%Vimage{} = image, size, options) do
+    Operation.thumbnail_image(image, size, options)
+  end
+
+  @spec thumbnail(binary(), size :: float(), options :: thumbnail_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def thumbnail(image_path, size, options) when is_binary(image_path) do
+    Operation.thumbnail(image_path, size, options)
   end
 
   @doc """
@@ -560,6 +584,8 @@ defmodule Image do
 
   """
   def to_polar_coordinates(%Vimage{} = image) do
+    use Image.Math
+
     width = width(image)
     height = height(image)
 
@@ -597,6 +623,8 @@ defmodule Image do
 
   """
   def to_rectangular_coordinates(%Vimage{} = image) do
+    use Image.Math
+
     width = width(image)
     height = height(image)
 
@@ -627,6 +655,8 @@ defmodule Image do
 
   """
   def ripple(%Vimage{} = image) do
+    use Image.Math
+
     width = width(image)
     height = height(image)
 
@@ -794,6 +824,8 @@ defmodule Image do
   @y_band 1
 
   def linear_gradient(image, start \\ [0, 0, 0, 0], finish \\ [0, 0, 0, 255]) do
+    use Image.Math
+
     width = width(image)
     height = height(image)
 
@@ -822,7 +854,7 @@ defmodule Image do
     bin_size = @max_band_value / bins
 
     {:ok, histogram} = Operation.hist_find_ndim(image, bins: bins)
-    {v, x, y} = maxpos(histogram)
+    {v, x, y} = Image.Math.maxpos(histogram)
     {:ok, pixel} = Operation.getpoint(histogram, x, y)
     band = Enum.find_index(pixel, &(&1 == v))
 

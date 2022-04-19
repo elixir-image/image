@@ -1,6 +1,13 @@
 defmodule Image.Math do
+  @moduledoc """
+  Math operators for images.
+
+  """
+
   alias Vix.Vips.Operation
   alias Vix.Vips.Image, as: Vimage
+
+  import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
 
   defguard is_pixel(value) when is_number(value) or is_list(value)
 
@@ -8,51 +15,51 @@ defmodule Image.Math do
     quote do
       import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
       import Image.Math
-
-      def a + b do
-        Image.Math.add!(a, b)
-      end
-
-      def a - b do
-        Image.Math.subtract!(a, b)
-      end
-
-      def a * b do
-        Image.Math.multiply!(a, b)
-      end
-
-      def a / b do
-        Image.Math.divide!(a, b)
-      end
-
-      def a ** b do
-        Image.Math.pow!(a, b)
-      end
-
-      def a < b do
-        Image.Math.less_than!(a, b)
-      end
-
-      def a <= b do
-        Image.Math.less_than_or_equal!(a, b)
-      end
-
-      def a > b do
-        Image.Math.greater_than!(a, b)
-      end
-
-      def a >= b do
-        Image.Math.greater_than_or_equal!(a, b)
-      end
-
-      def a == b do
-        Image.Math.equal!(a, b)
-      end
-
-      def a != b do
-        Image.Math.not_equal!(a, b)
-      end
     end
+  end
+
+  def a + b do
+    add!(a, b)
+  end
+
+  def a - b do
+    subtract!(a, b)
+  end
+
+  def a * b do
+    multiply!(a, b)
+  end
+
+  def a / b do
+    divide!(a, b)
+  end
+
+  def a ** b do
+    pow!(a, b)
+  end
+
+  def a < b do
+    less_than!(a, b)
+  end
+
+  def a <= b do
+    less_than_or_equal!(a, b)
+  end
+
+  def a > b do
+    greater_than!(a, b)
+  end
+
+  def a >= b do
+    greater_than_or_equal!(a, b)
+  end
+
+  def a == b do
+    equal!(a, b)
+  end
+
+  def a != b do
+    not_equal!(a, b)
   end
 
   def less_than(%Vimage{} = image, %Vimage{} = other) do
