@@ -1,4 +1,15 @@
 defmodule Image.Color do
+  @typedoc """
+  Reference to an ICC color profile
+
+  * `:none` means no profile
+  * `:cmyk`, `:srgb` and `:p3` refer to the built-in color profiles
+  * `Path.t()` means any file system path. If the path is a relative
+    path then is will be loaded from the systems profile directory.
+
+  """
+  @type icc_profile :: :none | :cmyk | :srgb | :p3 | Path.t()
+
   @inbuilt_profiles [:none, :srgb, :cmyk, :p3]
 
   def inbuilt_profiles, do: @inbuilt_profiles

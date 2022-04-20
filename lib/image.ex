@@ -9,17 +9,6 @@ defmodule Image do
   @copyright "exif-ifd0-Copyright"
 
   @typedoc """
-  Reference to an ICC color profile
-
-  * `:none` means no profile
-  * `:cmyk`, `:srgb` and `:p3` refer to the built-in color profiles
-  * `Path.t()` means any file system path. If the path is a relative
-    path then is will be loaded from the systems profile directory.
-
-  """
-  @type icc_profile :: :none | :cmyk | :srgb | :p3 | Path.t()
-
-  @typedoc """
   The options applicable to rotating an
   image.
 
@@ -178,18 +167,6 @@ defmodule Image do
     end
   end
 
-  defp build_option_string(options, other_options) do
-    "[" <> options <> "," <> join_options(other_options) <> "]"
-  end
-
-  defp build_option_string(options) do
-    "[" <> join_options(options) <> "]"
-  end
-
-  defp join_options(options) do
-    Enum.map_join(options, ",", fn {k, v} -> "#{k}=#{v}" end)
-  end
-
   @default_bytes 65_536
 
   @doc """
@@ -244,7 +221,7 @@ defmodule Image do
   * `:strip` is a boolean indicating if all metadata
     is to be stripped from the image. The default is `false`.
 
-  ### Jpeg images
+  ### JPEG images
 
   * `:background` is the background value to be used
     for any transparent areas of the image. Jpeg does
@@ -253,15 +230,34 @@ defmodule Image do
 
   ### PNG images
 
-  ### TIFF Jpeg images
+  ### TIFF images
 
-  ### webp images
+  * `:background` is the background value to be used
+    for any transparent areas of the image. Jpeg does
+    not support alpha bands so a color value must be
+    assigned.
+
+  ### Webp images
+
 
   """
-  def write(%Vimage{} = image, target, options \\ []) do
+  def write(%Vimage{} = image, image_path, options \\ []) do
     with {:ok, options} <- Options.Write.validate_options(options) do
-
+      image_path
+      |> String.split("[", parts: 2)
+      |> do_write(image, options)
     end
+  end
+
+  defp do_write([image_path], image, options) do
+    options = build_option_string(options)
+    Vimage.write_to_file(image, image_path <> options)
+  end
+
+  defp do_write([image_path, open_options], image, options) do
+    write_options = String.trim_trailing(open_options, "]")
+    options = build_option_string(write_options, options)
+    Vimage.write_to_file(image, image_path <> options)
   end
 
   @doc """
@@ -914,5 +910,17 @@ defmodule Image do
 
   defp wrap(item, atom) do
     {atom, item}
+  end
+
+  defp build_option_string(options, other_options) do
+    "[" <> options <> "," <> join_options(other_options) <> "]"
+  end
+
+  defp build_option_string(options) do
+    "[" <> join_options(options) <> "]"
+  end
+
+  defp join_options(options) do
+    Enum.map_join(options, ",", fn {k, v} -> "#{k}=#{v}" end)
   end
 end
