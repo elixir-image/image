@@ -75,6 +75,15 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
+  defp validate_option({:progressive, progressive?}, options) when is_boolean(progressive?) do
+    options =
+      options
+      |> Keyword.delete(:progressive)
+      |> Keyword.put(:interlace, progressive?)
+
+    {:cont, options}
+  end
+
   defp validate_option({:icc_profile, profile}, options)
       when is_inbuilt_profile(profile) or is_binary(profile) do
     options =

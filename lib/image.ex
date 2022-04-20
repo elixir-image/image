@@ -221,21 +221,45 @@ defmodule Image do
   * `:strip` is a boolean indicating if all metadata
     is to be stripped from the image. The default is `false`.
 
-  ### JPEG images
-
   * `:background` is the background value to be used
     for any transparent areas of the image. Jpeg does
     not support alpha bands so a color value must be
     assigned.
+
+  * `:quality` which influences image compression and
+    is a integer in the range `1..100`. The default for
+    most image formats is `75`. For PNG files it is the
+    quantization quality with a default of `100`.
+
+  ### JPEG images
+
+  * `:progressive` is a boolean indicating if the image
+    should be interleaved rather than baseline. Progressive
+    has the advantage of perceived time for the inital
+    image load and the cost of multiple decoding passes on
+    the client. For many applications `:progressive` is
+    to be preferred but validation of this assumption for
+    specific use cases is required.
 
   ### PNG images
 
+   * `:color_depth` is an integer describing the number
+     of bits for each color. The value can be `1`, `2`,
+     `4`, `8` or `16`.  The default is to use the current
+     color depth of the image.  For web applications, `8`
+     bits would be reasonable for photographic images with
+     lower bit depts for monochromatic images or diagrams.
+
+   * `:progressive` which has the same meaning and values
+      as for JPEG images.
+
+   * `:compression` is the image compression factor as an
+      image between `0..9`. The default is `6`.
+
   ### TIFF images
 
-  * `:background` is the background value to be used
-    for any transparent areas of the image. Jpeg does
-    not support alpha bands so a color value must be
-    assigned.
+  * `:color_depth` which has the same meaning as for
+    PNG images.
 
   ### Webp images
 
