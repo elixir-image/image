@@ -10,6 +10,8 @@ defmodule Image.Color do
   """
   @type icc_profile :: :none | :cmyk | :srgb | :p3 | Path.t()
 
+  @type rgb_color :: [number()]
+
   @inbuilt_profiles [:none, :srgb, :cmyk, :p3]
 
   def inbuilt_profiles, do: @inbuilt_profiles

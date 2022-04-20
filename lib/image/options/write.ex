@@ -34,12 +34,24 @@ defmodule Image.Options.Write do
     {:background, Image.pixel()}
   ]
 
+  @type heif_write_options :: [
+    {:quality, 1..100},
+    {:background, Image.pixel()},
+    {:compression, compression()}
+  ]
+
   @type webp_write_options :: [
     {:quality, 1..100},
     {:icc_profile, Path.t()},
     {:background, Image.pixel()},
     {:strip_metadata, boolean()},
   ]
+
+  @typedoc """
+  Allowble compression types for heif images.
+
+  """
+  @type compression ::  :hevc, :avc, :jpeg, :av1
 
   defguard is_color(color)
     when (is_number(color) and color > 0) or is_list(color) and length(color) == 3

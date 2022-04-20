@@ -2,11 +2,50 @@ defmodule Image do
   alias Vix.Vips.{Operation, MutableImage}
   alias Vix.Vips.Image, as: Vimage
 
-  alias Image.{Exif, Xmp, Complex, Options}
+  alias Image.{Exif, Xmp, Complex, Options, Color}
 
   @default_round_corner_radius 50
   @alpha_channel 3
   @copyright "exif-ifd0-Copyright"
+
+  @typedoc """
+  The valid rendering intent values.
+
+  ## Perceptual Intent
+
+  Perceptual rendering is used to process photographic
+  type images. This intent processes the colors so that
+  the printed reproduction is pleasing. This process
+  tends to change the color from the original, so no
+  guarantee the reproduction will be accurate against
+  the original.
+
+  ## Relative Intent
+
+  Relative colorimetric changes all the colours out
+  of gamut to the nearest colour in gamut, so many
+  colours change to the same one. It DOES NOT change
+  colours in gamut. Perceptual changes ALL the colours
+  in the image in a proportional way so that they lie
+  in the output device gamut.
+
+  ## Saturation Intent
+
+  Saturation moves in-gamut colors toward the edge of the
+  destination gamut for maximum saturation and impact.
+  This intent will make an image more colorful by using
+  the full gamut of the destination device. This intent
+  cares not for the genuine representation of color.
+
+  ## Absolute Intent
+
+  Absolute rendering attempts to reproduce all
+  colors numerically (destination = source). This
+  can cause unexpected results if the source gamut is
+  larger than the destination.
+
+  """
+  @type render_intent :: :perceptual | :relative | :saturation | :absolute
 
   @typedoc """
   The options applicable to rotating an
@@ -21,13 +60,52 @@ defmodule Image do
           {:background, pixel()}
         ]
 
-  @type resize_options :: []
+  @typedoc """
+  Options applicable to Image.resize/3
 
-  @type thumbnail_options :: []
+  """
+  @type resize_options :: [
+    {:autorotate, boolean()},
+    {:intent, render_intent()},
+    {:export_icc_profile, Color.icc_profile()},
+    {:import_icc_profile, Color.icc_profile()},
+    {:linear, boolean()},
+    {:resize, resize_dimension()},
+    {:height, pos_integer()},
+    {:crop, crop_focus()}
+  ]
+
+  @type crop_options :: [
+
+  ]
+
+  @typedoc """
+  Indicates how to determine where to crop
+  an image to fill a target area.
+
+  * `:none` means crop from the top left corner.
+
+  * `:center` means crop from the center of
+    the image
+
+  * `:entropy` uses an entropy measure.
+
+  * `:attention` means crop such the object
+    by look for features likely to draw human
+    attention.
+
+  * `:low` means position the crop towards the
+    low coordinate.
+
+  * `:high` means position the crop towards the
+    high coordinate.
+
+  """
+  @type crop_focus :: :none | :center | :entropy | :attention | :low | :high
+
+  @type resize_dimension :: :width | :height | :both
 
   @type avatar_options :: []
-
-  @type crop_options :: []
 
   @typedoc """
   Error messages returned by `libvips`
@@ -229,7 +307,8 @@ defmodule Image do
   * `:quality` which influences image compression and
     is a integer in the range `1..100`. The default for
     most image formats is `75`. For PNG files it is the
-    quantization quality with a default of `100`.
+    quantization quality with a default of `100`. For
+    HEIF files the default is `50`.
 
   ### JPEG images
 
@@ -261,8 +340,11 @@ defmodule Image do
   * `:color_depth` which has the same meaning as for
     PNG images.
 
-  ### Webp images
+  ### Heif images
 
+  * `:compression` is the compression strategy to
+    be applied. The allowable values are `:hevc`,
+    `:avc`, `:jpeg` and `:av1`. The default is `:hevc`.
 
   """
   def write(%Vimage{} = image, image_path, options \\ []) do
@@ -428,7 +510,59 @@ defmodule Image do
   end
 
   @doc """
-  Resize an image.
+  Resize an image to fit a bounding box.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  * `width` is the width of the resulting
+    image after resizing.
+
+  * `:options` is a keyword list of options.
+
+  ## Options
+
+  * `:crop` determines if the strategy is "resize to fit"
+    (crop is `:none`) or `resize to fill" (when the crop
+    option is not `:none`. The value may be [one of]()
+    `:none`, `:center`, `:entropy`, `:attention`, `:low`
+    or `:high`. The default is `:none`.
+
+  * `:autorotate` is a boolean indicating if the image should
+    be autorated based upon the image metadata. The default
+    is `true`.
+
+  * `:intent` indicates the [rendering intent](). The default
+    is `:relative`.
+
+  * `:export_icc_profile` -Indicates the icc profile to be attached
+    to the resized image. The value may be an inbuilt profile (`:srgb`,
+    `:p3` or `:cmyk`), the name of an icc profile in the systems
+    profile directory or a full path to an icc profile file. The
+    default is to export the icc profile of the resized image if
+    there is one.
+
+  * `:import_icc_profile` -Indicates the icc profile to be attached
+    to the input image. The value may be an inbuilt profile (`:srgb`,
+    `:p3` or `:cmyk`), the name of an icc profile in the systems
+    profile directory or a full path to an icc profile file. The
+    default is to use the icc profile of the input image if
+    there is one.
+
+  * `:linear` is a boolean indicating of the image should
+    be resized in linear space. The default `false`. Shrinking is
+    normally done in sRGB colourspace. Set linear to shrink in
+    linear light colourspace instead. This can give better results,
+    but can also be far slower, since tricks like JPEG shrink-on-load
+    cannot be used in linear space.
+
+  * `:resize` determines if an image may be only upsized, only
+    downsized, or both. The value may be one of `:up`, `:down`
+    or `:both`. The default is `:both`.
+
+  * `:height` - Size to this height. Default is to maintain
+    the image aspect ratio.
 
   ## Returns
 
@@ -437,49 +571,24 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec resize(Vimage.t(), scale :: float(), options :: resize_options()) ::
+  @spec resize(Vimage.t() | Path.t(), width :: pos_integer(), options :: resize_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def resize(%Vimage{} = image, scale, options \\ []) do
-    # Resize either by scale or to explicit size
+  def resize(image_or_path, wide, options \\ [])
+
+  def resize(%Vimage{} = image, width, options)
+       when is_integer(width) and width > 0 do
+    with {:ok, options} <- Options.Resize.validate_options(options) do
+      Operation.thumbnail_image(image, width, options)
+    end
   end
 
-  @doc """
-  Thumbnail an image.
-
-  ## Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t()` or a filename.
-  * `width` is the target width of the thumbnail. Unless
-    the option `:height` is specified, the image will retain
-    its aspect ratio.
-
-  ## Options
-
-  * `:autorotate` - Use orientation tags to rotate image upright. Default is `true`
-  * `:intent` - Rendering intent. Default is `:relative`
-  * `:export_profile` - Fallback export color profile. Default: `nil`
-  * `:import_profile` - Fallback import color profile. Default: `nil`
-  * `:linear` - Reduce in linear light. Default: false
-  * `:crop` - Reduce to fill target rectangle, then crop. Default: :VIPS_INTERESTING_NONE
-  * `:size` - Only upsize, only downsize, or both. Default: :VIPS_SIZE_BOTH
-  * `:height` - Size to this height. Default is to maintain the image aspect ratio.
-
-  """
-  @spec thumbnail(Vimage.t(), size :: float(), options :: thumbnail_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
-
-  def thumbnail(image, size, options \\ [])
-
-  def thumbnail(%Vimage{} = image, size, options) do
-    Operation.thumbnail_image(image, size, options)
-  end
-
-  @spec thumbnail(binary(), size :: float(), options :: thumbnail_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
-
-  def thumbnail(image_path, size, options) when is_binary(image_path) do
-    Operation.thumbnail(image_path, size, options)
+  def resize(image_path, width, options)
+      when is_binary(image_path) and is_integer(width) and width > 0 do
+    with {:ok, options} <- Options.Resize.validate_options(options),
+         :ok = file_exists?(image_path) do
+      Operation.thumbnail(image_path, width, options)
+    end
   end
 
   @doc """
@@ -913,10 +1022,28 @@ defmodule Image do
   as an RBG triplet value in an integer
   list.
 
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  * `options` is a keyword list of options.
+    The default is `[]`.
+
+  ## Options
+
+  * `:bins` is an integer number of color
+   freuqency bins the image is divided into.
+   The default is `10`.
+
+  ## Returns
+
+  * `[r, g, b]`
+
   """
   @max_band_value 256
 
-  def dominant_colour(%Vimage{} = image, options \\ []) do
+  @spec dominant_color(Vimage.t(), Keyword.t()) :: Color.rgb_color()
+  def dominant_color(%Vimage{} = image, options \\ []) do
     bins = Keyword.get(options, :bins, 10)
     bin_size = @max_band_value / bins
 
@@ -946,5 +1073,9 @@ defmodule Image do
 
   defp join_options(options) do
     Enum.map_join(options, ",", fn {k, v} -> "#{k}=#{v}" end)
+  end
+
+  defp file_exists?(path) do
+    if File.exists?(path, :raw), do: {:ok, path}, else: {:error, :enoent}
   end
 end
