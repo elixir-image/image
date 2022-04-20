@@ -1,6 +1,72 @@
 defmodule Image.Options.Open do
   # Map the keyword option to the
   # Vix option.
+
+  @typedoc """
+  The options applicable to opening an
+  image.
+
+  """
+  @type image_open_options ::
+          jpeg_open_options()
+          | png_open_options()
+          | tiff_open_options()
+          | webp_open_options()
+          | other_open_options()
+
+  @type jpeg_open_options :: [
+          {:shrink, 1..16},
+          {:autorotate, boolean()},
+          {:access, file_access()},
+          {:fail_on, fail_on()}
+        ]
+
+  @type png_open_options :: [
+          {:access, file_access()},
+          {:fail_on, fail_on()}
+        ]
+
+  @type tiff_open_options :: [
+          {:autorotate, boolean()},
+          {:access, file_access()},
+          {:fail_on, fail_on()},
+          {:pages, pos_integer()},
+          {:page, 1..100_000}
+        ]
+
+  @type webp_open_options :: [
+          {:autorotate, boolean()},
+          {:access, file_access()},
+          {:fail_on, fail_on()},
+          {:pages, pos_integer()},
+          {:page, 1..100_000},
+          {:scale, 1..1024}
+        ]
+
+  @type other_open_options :: [
+          {:access, file_access()},
+          {:fail_on, fail_on()}
+        ]
+
+  @typedoc """
+  The file access mode when opening
+  image files. The default in `:sequential`.
+
+  """
+  @type file_access :: :sequential | :random
+
+  @typedoc """
+  Stop attempting to load an image file
+  when a level of error is detected.
+  The default is `:none`.
+
+  Each error state implies all the states
+  before it such that `:error` implies
+  also `:truncated`.
+
+  """
+  @type fail_on :: :none | :truncated | :error | :warning
+
   @fail_on_open %{
     none: :VIPS_FAIL_ON_NONE,
     truncated: :VIPS_FAIL_ON_TRUNCATED,
@@ -13,7 +79,7 @@ defmodule Image.Options.Open do
 
   @access [:sequential, :random]
 
-  def validate_open_options(options) do
+  def validate_options(options) do
     case Enum.reduce_while(options, [], &validate_option(&1, &2)) do
       {:error, value} ->
         {:error, value}

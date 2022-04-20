@@ -9,69 +9,15 @@ defmodule Image do
   @copyright "exif-ifd0-Copyright"
 
   @typedoc """
-  The options applicable to opening an
-  image.
+  Reference to an ICC color profile
+
+  * `:none` means no profile
+  * `:cmyk`, `:srgb` and `:p3` refer to the built-in color profiles
+  * `Path.t()` means any file system path. If the path is a relative
+    path then is will be loaded from the systems profile directory.
 
   """
-  @type image_open_options ::
-          jpeg_open_options()
-          | png_open_options()
-          | tiff_open_options()
-          | webp_open_options()
-          | other_open_options()
-
-  @type jpeg_open_options :: [
-          {:shrink, 1..16},
-          {:autorotate, boolean()},
-          {:access, file_access()},
-          {:fail_on, fail_on()}
-        ]
-
-  @type png_open_options :: [
-          {:access, file_access()},
-          {:fail_on, fail_on()}
-        ]
-
-  @type tiff_open_options :: [
-          {:autorotate, boolean()},
-          {:access, file_access()},
-          {:fail_on, fail_on()},
-          {:pages, pos_integer()},
-          {:page, 1..100_000}
-        ]
-
-  @type webp_open_options :: [
-          {:autorotate, boolean()},
-          {:access, file_access()},
-          {:fail_on, fail_on()},
-          {:pages, pos_integer()},
-          {:page, 1..100_000},
-          {:scale, 1..1024}
-        ]
-
-  @type other_open_options :: [
-          {:access, file_access()},
-          {:fail_on, fail_on()}
-        ]
-
-  @typedoc """
-  The file access mode when opening
-  image files. The default in `:sequential`.
-
-  """
-  @type file_access :: :sequential | :random
-
-  @typedoc """
-  Stop attempting to load an image file
-  when a level of error is detected.
-  The default is `:none`.
-
-  Each error state implies all the states
-  before it such that `:error` implies
-  also `:truncated`.
-
-  """
-  @type fail_on :: :none | :truncated | :error | :warning
+  @type icc_profile :: :none | :cmyk | :srgb | :p3 | Path.t()
 
   @typedoc """
   The options applicable to rotating an
@@ -202,11 +148,11 @@ defmodule Image do
   * `{:error, message}`
 
   """
-  @spec open(binary(), image_open_options()) ::
+  @spec open(binary(), Options.Open.image_open_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def open(image_path, options \\ []) do
-    with {:ok, options} <- Options.Open.validate_open_options(options) do
+    with {:ok, options} <- Options.Open.validate_options(options) do
       image_path
       |> String.split("[", parts: 2)
       |> do_open(options)
@@ -278,10 +224,44 @@ defmodule Image do
   @doc """
   Write an image to a file.
 
+  ## Arguments
+
+  * `path` is the file system path to an image
+    file.
+
+  * `options` is a keyword list of options. The default is
+    `[]`.
+
+  ## Options
+
+  The available options depends on the type of image
+  file being opened.
+
+  ### All image types
+
+  * `:profile` is the name of any [ICC color profile]()
+
+  * `:strip` is a boolean indicating if all metadata
+    is to be stripped from the image. The default is `false`.
+
+  ### Jpeg images
+
+  * `:background` is the background value to be used
+    for any transparent areas of the image. Jpeg does
+    not support alpha bands so a color value must be
+    assigned.
+
+  ### PNG images
+
+  ### TIFF Jpeg images
+
+  ### webp images
+
   """
   def write(%Vimage{} = image, target, options \\ []) do
-    # Start by writing to a file but allow
-    # target to be a stream with updated Vix
+    with {:ok, options} <- Options.Write.validate_options(options) do
+
+    end
   end
 
   @doc """
@@ -461,7 +441,7 @@ defmodule Image do
   * `:export_profile` - Fallback export color profile. Default: `nil`
   * `:import_profile` - Fallback import color profile. Default: `nil`
   * `:linear` - Reduce in linear light. Default: false
-  * `crop` - Reduce to fill target rectangle, then crop. Default: :VIPS_INTERESTING_NONE
+  * `:crop` - Reduce to fill target rectangle, then crop. Default: :VIPS_INTERESTING_NONE
   * `:size` - Only upsize, only downsize, or both. Default: :VIPS_SIZE_BOTH
   * `:height` - Size to this height. Default is to maintain the image aspect ratio.
 
