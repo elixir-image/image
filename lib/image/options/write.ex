@@ -15,46 +15,46 @@ defmodule Image.Options.Write do
         ]
 
   @type jpeg_write_options :: [
-    {:quality, 1..100},
-    {:strip_metadata, boolean()},
-    {:icc_profile, Path.t()},
-    {:background, Image.pixel()}
-  ]
+          {:quality, 1..100},
+          {:strip_metadata, boolean()},
+          {:icc_profile, Path.t()},
+          {:background, Image.pixel()}
+        ]
 
   @type png_write_options :: [
-    {:quality, 1..100},
-    {:strip_metadata, boolean()},
-    {:icc_profile, Path.t()},
-    {:background, Image.pixel()}
-  ]
+          {:quality, 1..100},
+          {:strip_metadata, boolean()},
+          {:icc_profile, Path.t()},
+          {:background, Image.pixel()}
+        ]
 
   @type tiff_write_options :: [
-    {:quality, 1..100},
-    {:icc_profile ,Path.t()},
-    {:background, Image.pixel()}
-  ]
+          {:quality, 1..100},
+          {:icc_profile, Path.t()},
+          {:background, Image.pixel()}
+        ]
 
   @type heif_write_options :: [
-    {:quality, 1..100},
-    {:background, Image.pixel()},
-    {:compression, compression()}
-  ]
+          {:quality, 1..100},
+          {:background, Image.pixel()},
+          {:compression, compression()}
+        ]
 
   @type webp_write_options :: [
-    {:quality, 1..100},
-    {:icc_profile, Path.t()},
-    {:background, Image.pixel()},
-    {:strip_metadata, boolean()},
-  ]
+          {:quality, 1..100},
+          {:icc_profile, Path.t()},
+          {:background, Image.pixel()},
+          {:strip_metadata, boolean()}
+        ]
 
   @typedoc """
   Allowble compression types for heif images.
 
   """
-  @type compression ::  :hevc, :avc, :jpeg, :av1
+  @type(compression :: :hevc, :avc, :jpeg, :av1)
 
   defguard is_color(color)
-    when (is_number(color) and color > 0) or is_list(color) and length(color) == 3
+           when (is_number(color) and color > 0) or (is_list(color) and length(color) == 3)
 
   @inbuilt_profiles Image.Color.inbuilt_profiles()
   defguard is_inbuilt_profile(profile) when profile in @inbuilt_profiles
@@ -69,7 +69,8 @@ defmodule Image.Options.Write do
     end
   end
 
-  defp validate_option({:quality, quality}, options) when is_integer(quality) and quality in 1..100 do
+  defp validate_option({:quality, quality}, options)
+       when is_integer(quality) and quality in 1..100 do
     options =
       options
       |> Keyword.delete(:quality)
@@ -97,7 +98,7 @@ defmodule Image.Options.Write do
   end
 
   defp validate_option({:icc_profile, profile}, options)
-      when is_inbuilt_profile(profile) or is_binary(profile) do
+       when is_inbuilt_profile(profile) or is_binary(profile) do
     options =
       options
       |> Keyword.delete(:icc_profile)
@@ -106,7 +107,7 @@ defmodule Image.Options.Write do
     if Image.Color.known_icc_profile?(profile) do
       {:cont, options}
     else
-      {:halt, {:error, "The color profile #{inspect profile} is not known"}}
+      {:halt, {:error, "The color profile #{inspect(profile)} is not known"}}
     end
   end
 
@@ -121,5 +122,4 @@ defmodule Image.Options.Write do
   defp invalid_option(option) do
     "Invalid option or option value: #{inspect(option)}"
   end
-
 end

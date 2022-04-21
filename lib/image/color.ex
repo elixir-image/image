@@ -26,5 +26,4 @@ defmodule Image.Color do
       _other -> false
     end
   end
-
 end

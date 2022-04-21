@@ -5,11 +5,20 @@ defmodule Image do
   alias Image.{Exif, Xmp, Complex, Options, Color}
 
   @default_round_corner_radius 50
+  @default_avatar_size 180
   @alpha_channel 3
-  @copyright "exif-ifd0-Copyright"
+  @default_streaming_bytes 65_536
+
+  @copyright_header "exif-ifd0-Copyright"
+
+  defguard is_box(left, top, width, height)
+           when is_integer(left) and is_integer(top) and is_integer(width) and is_integer(height) and
+                  left > 0 and top > 0 and width > 0 and height > 0
 
   @typedoc """
-  The valid rendering intent values.
+  The valid rendering intent values. For all
+  functions that take an optioanl intent
+  parameter the default is `:perceptual`.
 
   ## Perceptual Intent
 
@@ -48,71 +57,10 @@ defmodule Image do
   @type render_intent :: :perceptual | :relative | :saturation | :absolute
 
   @typedoc """
-  The options applicable to rotating an
-  image.
-
-  """
-  @type rotation_options :: [
-          {:idy, float()},
-          {:idx, float()},
-          {:ody, float()},
-          {:odx, float()},
-          {:background, pixel()}
-        ]
-
-  @typedoc """
-  Options applicable to Image.resize/3
-
-  """
-  @type resize_options :: [
-    {:autorotate, boolean()},
-    {:intent, render_intent()},
-    {:export_icc_profile, Color.icc_profile()},
-    {:import_icc_profile, Color.icc_profile()},
-    {:linear, boolean()},
-    {:resize, resize_dimension()},
-    {:height, pos_integer()},
-    {:crop, crop_focus()}
-  ]
-
-  @type crop_options :: [
-
-  ]
-
-  @typedoc """
-  Indicates how to determine where to crop
-  an image to fill a target area.
-
-  `:none` and `:low` mean the same - the crop
-  is positioned at the top or left.  `:high`
-  positions at the bottom or right.
-
-  * `:none` means crop from the top left corner.
-
-  * `:center` means crop from the center of
-    the image
-
-  * `:entropy` uses an entropy measure.
-
-  * `:attention` means crop such the object
-    by look for features likely to draw human
-    attention.
-
-  * `:low` means position the crop towards the
-    low coordinate.
-
-  * `:high` means position the crop towards the
-    high coordinate.
-
-  """
-  @type crop_focus :: :none | :center | :entropy | :attention | :low | :high
-
-  @type resize_dimension :: :width | :height | :both
-
-  @type avatar_options :: []
-
-  @typedoc """
   Error messages returned by `libvips`
+
+  Typically a string.
+
   """
   @type error_message :: term()
 
@@ -140,7 +88,7 @@ defmodule Image do
 
   ## Arguments
 
-  * `path` is the file system path to an image
+  * `image_path` is the file system path to an image
     file.
 
   * `options` is a keyword list of options. The default is
@@ -219,7 +167,7 @@ defmodule Image do
   * `{:error, message}`
 
   """
-  @spec open(binary(), Options.Open.image_open_options()) ::
+  @spec open(image_path :: Path.t(), options :: Options.Open.image_open_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def open(image_path, options \\ []) do
@@ -249,10 +197,28 @@ defmodule Image do
     end
   end
 
-  @default_bytes 65_536
-
   @doc """
-  Stream an image file.
+  Stream an image file for image operations.
+
+  This function returns a `t:Vix.Vips.Image.t()` that
+  will be streamed when processing the image pipeline.
+  It is *not* an enumerable itself, but it does rely on
+  `File.stream!/3` for the underlying file streaming
+  functionality.
+
+  Most image operations will work on streamed
+  images. However operations which would require
+  "rewinding" the image will not work and will
+  return an error.
+
+  This function is most useful when the image source
+  is an HTTP source (like Amazon S3) or some other
+  API-based service. It allows image process to commence
+  even as the image itself is being downloaded from
+  the remote service.
+
+  Images can also be [streamed on write])() allowing
+  a fully asynchronous image pipeline.
 
   ## Arguments
 
@@ -260,19 +226,22 @@ defmodule Image do
     file.
 
   * `bytes` is the number of bytes in
-    each stream element. The default is #{@default_bytes}.
+    each stream element. The default is #{@default_streaming_bytes}.
 
   ## Returns
 
   * `{:ok, enumerable_image}` or
 
   * `{:error, reason}`
+
   """
 
-  @spec stream(binary(), pos_integer()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def stream(path, bytes \\ @default_bytes) do
-    if File.exists?(path) do
-      path
+  @spec stream(image_path :: Path.t(), streaming_bytes :: pos_integer()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def stream(image_path, bytes \\ @default_streaming_bytes) do
+    if File.exists?(image_path) do
+      image_path
       |> File.stream!([], bytes)
       |> Vimage.new_from_enum()
     else
@@ -285,7 +254,7 @@ defmodule Image do
 
   ## Arguments
 
-  * `path` is the file system path to an image
+  * `image_path` is the file system path to an image
     file.
 
   * `options` is a keyword list of options. The default is
@@ -351,6 +320,9 @@ defmodule Image do
     `:avc`, `:jpeg` and `:av1`. The default is `:hevc`.
 
   """
+  @spec write(image :: Vimage.t(), image_path :: Path.t(), options :: Options.Write.image_write_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
   def write(%Vimage{} = image, image_path, options \\ []) do
     with {:ok, options} <- Options.Write.validate_options(options) do
       image_path
@@ -490,8 +462,6 @@ defmodule Image do
 
   ## Returns
 
-  ## Returns
-
   * `{:ok, flipped_image}` or
 
   * `{:error, reason}`
@@ -508,13 +478,13 @@ defmodule Image do
     Operation.flip(image, :VIPS_DIRECTION_HORIZONTAL)
   end
 
-  def flip(%Vimage{} = image, direction) do
+  def flip(%Vimage{} = _image, direction) do
     {:error,
      "Invalid flip direction. Must be :vertical or :horizontal.  Found #{inspect(direction)}"}
   end
 
   @doc """
-  Resize an image to fit a bounding box.
+  Resize an image to fit or fill a bounding box.
 
   ## Arguments
 
@@ -523,7 +493,7 @@ defmodule Image do
   * `width` is the width of the resulting
     image after resizing.
 
-  * `:options` is a keyword list of options.
+  * `options` is a keyword list of options.
 
   ## Options
 
@@ -575,13 +545,17 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec resize(Vimage.t() | Path.t(), width :: pos_integer(), options :: resize_options()) ::
+  @spec resize(
+          Vimage.t() | Path.t(),
+          width :: pos_integer(),
+          options :: Options.Resize.resize_options()
+        ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def resize(image_or_path, wide, options \\ [])
 
   def resize(%Vimage{} = image, width, options)
-       when is_integer(width) and width > 0 do
+      when is_integer(width) and width > 0 do
     with {:ok, options} <- Options.Resize.validate_options(options) do
       Operation.thumbnail_image(image, width, options)
     end
@@ -596,7 +570,18 @@ defmodule Image do
   end
 
   @doc """
-  Make an avatar image.
+  Make a circular avatar image.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  * `size` is the diameter of the resulting
+    image after resizing.
+
+  * `options` is a keyword list of options.
+
+  ## Options
 
   ## Returns
 
@@ -605,16 +590,49 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec avatar(Vimage.t(), size :: float(), options :: avatar_options()) ::
+
+  @spec avatar(Vimage.t(), size :: float(), options :: Options.Avatar.avatar_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def avatar(%Vimage{} = image, size, options \\ []) do
-    # Thunail with circular mask with a default size of 180px
-    # Remove metadata but preserve title artist and copyright
+  def avatar(image, size \\ @default_avatar_size, options \\ [])
+
+  def avatar(%Vimage{} = image, size, options) do
+    with {:ok, options} <- Options.Avatar.validate_options(options) do
+      Operation.thumbnail_image(image, size, options)
+    end
+  end
+
+  def avatar(image_path, size, options) when is_binary(image_path) do
+    with {:ok, options} <- Options.Avatar.validate_options(options),
+         :ok = file_exists?(image_path) do
+      Operation.thumbnail(image_path, size, options)
+    end
   end
 
   @doc """
   Crop an image.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  * `left` is the left edge of extract area as a
+    positive integer.
+
+  * `top` is the top edge of extract area as a
+    positive integer.
+
+  * `width` is the width of extract area as a
+    positive integer.
+
+  * `height` is the height of extract area as a
+    positive integer.
+
+  * `options` is a keyword list of options.
+
+  ## Options
+
+
 
   ## Returns
 
@@ -623,11 +641,14 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec crop(Vimage.t(), options :: crop_options()) ::
+  @spec crop(Vimage.t(), integer, integer, integer, integer, Options.Crop.crop_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def crop(%Vimage{} = image, size, options \\ []) do
-    # Operation.extract_area
+  def crop(%Vimage{} = image, left, top, width, height, options \\ [])
+      when is_box(left, top, width, height) do
+    with {:ok, _options} <- Options.Crop.validate_options(options) do
+      Operation.extract_area(image, left, top, width, height, options)
+    end
   end
 
   @doc """
@@ -636,6 +657,14 @@ defmodule Image do
 
   The determination is a heuristic so certainty
   cannot be guaranteed.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  ## Returns
+
+  * `true` or `false`
 
   """
   def has_alpha?(%Vimage{} = image) do
@@ -686,7 +715,11 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec rotate(image :: Vimage.t(), angle :: float(), options :: rotation_options()) ::
+  @spec rotate(
+          image :: Vimage.t(),
+          angle :: float(),
+          options :: Options.Rotation.rotation_options()
+        ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def rotate(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
@@ -725,6 +758,7 @@ defmodule Image do
     `270` representing the degrees of rotation.
 
   """
+  @spec autorotate(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def autorotate(%Vimage{} = image) do
     case Operation.autorot(image) do
       {:ok, {image, flags}} ->
@@ -950,7 +984,7 @@ defmodule Image do
          {:ok, image} <- remove_metadata(image) do
       Vimage.mutate(image, fn mut_img ->
         :ok = MutableImage.set(mut_img, "exif-data", :VipsBlob, <<0>>)
-        :ok = MutableImage.set(mut_img, @copyright, :gchararray, "Copyright (c) 2008 Kip Cole")
+        :ok = MutableImage.set(mut_img, @copyright_header, :gchararray, "Copyright (c) 2008 Kip Cole")
       end)
     end
   end
