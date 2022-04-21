@@ -83,6 +83,10 @@ defmodule Image do
   Indicates how to determine where to crop
   an image to fill a target area.
 
+  `:none` and `:low` mean the same - the crop
+  is positioned at the top or left.  `:high`
+  positions at the bottom or right.
+
   * `:none` means crop from the top left corner.
 
   * `:center` means crop from the center of
