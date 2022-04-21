@@ -2,14 +2,15 @@
 
 An Image processing library for Elixir. Based upon the fabulous [vix](https://hex.pm/packages/vix) library that provides a [libvips](https://www.libvips.org) wrapper for Elixir.
 
-The library is in very early development but is intended to bring the power of `libvips` with an idiomatic Elixir interface to developers. `libvips` high performance, pipeline architecture and low memory footprint makes it a very solid foundation for image processing in Elixir.
+The library is in very early development but is intended to bring the power of `libvips` with an idiomatic Elixir interface to developers. `libvips`'s high performance, pipeline architecture and low memory footprint makes it a very solid foundation for image processing in Elixir.
+
+In a very simple image resizing benchmark, `Image` is approximately 2 to 3 times faster than `Mogrify` and uses about 5 times less memory. More thorough benchmarking will be done later in the development cycle. See the `bench` directory.
 
 Currently `Image` supports:
 
 ### Currently supported
 
 * [*] Math operators (`+`, `-`, `/`, `*`, `**`) and functions (`cos`, `sin`) for images and scalars/integers
-* [*] Access behaviour support to extract image bands
 * [*] Flip
 * [*] Rotate
 * [*] Ripple filter
@@ -24,7 +25,7 @@ It is the intention of `Image` to bring the power of `libvips` to Elixir develop
 
 * [ ] Streaming image support
 * [ ] Thumbnail an image
-* [ ] Resize
+* [x] Resize
 * [ ] Crop
 * [ ] Create avatar from image
 * [ ] Remove metadata from image

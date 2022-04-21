@@ -23,8 +23,11 @@ defmodule Image.MixProject do
       {:vix, github: "kipcole9/vix", branch: "vips-conn"},
       {:sweet_xml, "~> 0.7"},
       {:nx, "~> 0.1", optional: true},
-      {:temp, "~> 0.4", only: :test, runtime: false},
-      {:benchee, "~> 1.0", only: :dev, runtime: false, optional: true}
+      {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
+      {:benchee, "~> 1.0", only: :dev, runtime: false, optional: true},
+
+      # Only used for benchmarking
+      {:mogrify, "~> 0.9.1", only: :dev, optional: true}
     ]
   end
 
