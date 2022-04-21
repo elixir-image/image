@@ -16,9 +16,8 @@ defmodule Image.Options.Crop do
 
   * `:entropy` uses an entropy measure.
 
-  * `:attention` means crop image
-    by looking for features likely to draw human
-    attention.
+  * `:attention` means crop the image by looking
+    for features likely to draw human attention.
 
   * `:low` means position the crop towards the
     low coordinate. This means the bottom part
@@ -37,6 +36,11 @@ defmodule Image.Options.Crop do
   # after cropping. Indeed that is already the behaviour for
   # :center and :attention.
 
+  # Note too that we use US English spelling as apposed
+  # to the libvips British English spelling. The
+  # assumption being that most developers expect
+  # US English.
+
   @crop_map %{
     none: :VIPS_INTERESTING_NONE,
     center: :VIPS_INTERESTING_CENTRE,
@@ -49,7 +53,7 @@ defmodule Image.Options.Crop do
   @crop Map.keys(@crop_map)
 
   def validate_options(options) do
-    case Enum.reduce_while(options, [], &validate_option(&1, &2)) do
+    case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
       {:error, value} ->
         {:error, value}
 

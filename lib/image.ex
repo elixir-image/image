@@ -343,6 +343,23 @@ defmodule Image do
   end
 
   @doc """
+  Returns the filename for an image.
+
+  ## Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t()`.
+
+  ## Returns
+
+  * The pathname from which the image was opened.
+
+  """
+  @spec filename(image :: Vimage.t()) :: Path.t()
+  def filename(%Vimage{} = image) do
+    Vix.Vips.Image.filename(image)
+  end
+
+  @doc """
   Returns the EXIF data for an image as a
   keyword list.
 
