@@ -14,6 +14,11 @@ defmodule Image.Color do
 
   @inbuilt_profiles [:none, :srgb, :cmyk, :p3]
 
+  defguard is_color(color)
+           when (is_number(color) and color > 0) or (is_list(color) and length(color) == 3)
+
+  defguard is_inbuilt_profile(profile) when profile in @inbuilt_profiles
+
   def inbuilt_profiles, do: @inbuilt_profiles
 
   def known_icc_profile?(profile) when profile in @inbuilt_profiles do

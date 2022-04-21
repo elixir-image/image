@@ -2,6 +2,9 @@ defmodule Image.Options.Write do
   # Map the keyword option to the
   # Vix option.
 
+  alias Image.Color
+  import Color, only: [is_inbuilt_profile: 1, is_color: 1]
+
   @typedoc """
   Options for writing an image to a file with
   `Image.write/2`.
@@ -51,13 +54,7 @@ defmodule Image.Options.Write do
   Allowble compression types for heif images.
 
   """
-  @type(compression :: :hevc, :avc, :jpeg, :av1)
-
-  defguard is_color(color)
-           when (is_number(color) and color > 0) or (is_list(color) and length(color) == 3)
-
-  @inbuilt_profiles Image.Color.inbuilt_profiles()
-  defguard is_inbuilt_profile(profile) when profile in @inbuilt_profiles
+  @type compression :: :hevc | :avc | :jpeg | :av1
 
   def validate_options(options) do
     case Enum.reduce_while(options, [], &validate_option(&1, &2)) do
@@ -104,7 +101,7 @@ defmodule Image.Options.Write do
       |> Keyword.delete(:icc_profile)
       |> Keyword.put(:profile, to_string(profile))
 
-    if Image.Color.known_icc_profile?(profile) do
+    if Color.known_icc_profile?(profile) do
       {:cont, options}
     else
       {:halt, {:error, "The color profile #{inspect(profile)} is not known"}}
@@ -122,4 +119,5 @@ defmodule Image.Options.Write do
   defp invalid_option(option) do
     "Invalid option or option value: #{inspect(option)}"
   end
+
 end

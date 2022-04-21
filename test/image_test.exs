@@ -1,4 +1,4 @@
-defmodule ImageTest do
+defmodule Image.Test do
   use ExUnit.Case
   import Image.TestSupport
   import Image.Math

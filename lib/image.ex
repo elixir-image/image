@@ -24,7 +24,7 @@ defmodule Image do
 
   Perceptual rendering is used to process photographic
   type images. This intent processes the colors so that
-  the printed reproduction is pleasing. This process
+  the output reproduction is pleasing. This process
   tends to change the color from the original, so no
   guarantee the reproduction will be accurate against
   the original.
