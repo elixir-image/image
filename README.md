@@ -23,7 +23,7 @@ Currently `Image` supports:
 
 It is the intention of `Image` to bring the power of `libvips` to Elixir developers in an idiomatic API that can support:
 
-* [ ] Streaming image support
+* [ ] Streaming images
 * [ ] Thumbnail an image
 * [x] Resize
 * [x] Crop
@@ -32,9 +32,49 @@ It is the intention of `Image` to bring the power of `libvips` to Elixir develop
 * [ ] Add minimal metadata to image (artist, title, description, copyright, keywords)
 * [ ] Bidirectional integration with [Nx](https://hex.pm/packages/nx) to integrate ML and GPU processing with image transformation
 
+### GLib Debug Output
+
+At the bottom of the stack, `libvips` is a `C` library that actually performs the image manipulation and thats what provides the speed, memory efficiency and functionality. `libvips` used the [GLib](https://docs.gtk.org/glib/) library which has configurable debug output. This output depends on the setting of the environment variable `G_DEBUG`.  The initial value will depend on the installation method of `libvips` for a given system. It can be changed by setting the `G_DEBUG` environment variable to one of the following:
+
+fatal-warnings
+  Causes GLib to abort the program at the first call to g_warning() or g_critical().
+
+fatal-criticals
+  Causes GLib to abort the program at the first call to g_critical().
+
+gc-friendly
+  Newly allocated memory that isn't directly initialized, as well as
+  memory being freed will be reset to 0. The point here is to allow memory
+  checkers and similar programs that use Boehm GC alike algorithms to produce
+  more accurate results.
+
+resident-modules
+  All modules loaded by GModule will be made resident. This can be
+  useful for tracking memory leaks in modules which are later unloaded;
+  but it can also hide bugs where code is accessed after the module would
+  have normally been unloaded.
+
+bind-now-modules
+  All modules loaded by GModule will bind their symbols at load time,
+  even when the code uses %G_MODULE_BIND_LAZY.
+
+For example, to produce debug output for only the most critical issues, set `G_DEBUG` as follows (in bash and compatible shells):
+
+```bash
+export G_DEBUG=fatal-criticals
+````
+
+### Concurrency
+
+`Image` (because of `Vix` and `libvips`) will execute image operations using a number of system native threads (not BEAM processes). The number of threads available for concurrent image operations is configurable by either setting the environment variable `VIPS_CONCURRENCY` or through a call to `Image.put_concurrency/1`.  The current number of configured threads is returned from `Image.get_concurrency/0`.
+
+The default number of threads is equal to the number of cores on the running system. This may create CPU contention with other workloads given that image processing is CPU intensive.  Therefore it may be prudent to reduce the number of threads if overall system throughput is being affected.
+
+### Caching
+
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+When [available in Hex](https://hex.pm/packages/image), `Image` can be installed
 by adding `image` to your list of dependencies in `mix.exs`:
 
 ```elixir

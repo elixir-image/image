@@ -1134,6 +1134,22 @@ defmodule Image do
     [trunc(r), trunc(g), trunc(b)]
   end
 
+  @spec get_concurrency :: pos_integer()
+  def get_concurrency do
+    Vix.Vips.concurrency_get()
+  end
+
+  @spec put_concurrency(pos_integer()) :: :ok
+  def put_concurrency(concurrency) when is_integer(concurrency) and concurrency > 0 do
+    Vix.Vips.concurrency_set(concurrency)
+  end
+
+  @spec vips_version :: {:ok, Version.t()}
+  def vips_version do
+    Vix.Vips.version
+    |> Version.parse()
+  end
+
   defp wrap(item, atom) do
     {atom, item}
   end
