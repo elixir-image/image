@@ -66,6 +66,7 @@ defmodule Image.Options.Crop do
     {:cont, options}
   end
 
+  @doc false
   def validate_crop(crop, options) when crop in @crop do
     crop = Map.fetch!(@crop_map, crop)
     {:cont, Keyword.put(options, :crop, crop)}

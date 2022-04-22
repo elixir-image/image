@@ -26,7 +26,7 @@ It is the intention of `Image` to bring the power of `libvips` to Elixir develop
 * [ ] Streaming image support
 * [ ] Thumbnail an image
 * [x] Resize
-* [ ] Crop
+* [x] Crop
 * [ ] Create avatar from image
 * [ ] Remove metadata from image
 * [ ] Add minimal metadata to image (artist, title, description, copyright, keywords)

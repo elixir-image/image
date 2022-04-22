@@ -13,7 +13,7 @@ defmodule Image do
 
   defguard is_box(left, top, width, height)
            when is_integer(left) and is_integer(top) and is_integer(width) and is_integer(height) and
-                  left > 0 and top > 0 and width > 0 and height > 0
+                  width > 0 and height > 0
 
   @typedoc """
   The valid rendering intent values. For all
@@ -636,20 +636,16 @@ defmodule Image do
   * `left` is the left edge of extract area as a
     positive integer.
 
-  * `top` is the top edge of extract area as a
-    positive integer.
+  * `top` is the top edge of extract area as an
+    integer. If `top` is positive it is relative to
+    the top of the image. If it is negative it is
+    relative to the bottom of the image.
 
   * `width` is the width of extract area as a
     positive integer.
 
   * `height` is the height of extract area as a
     positive integer.
-
-  * `options` is a keyword list of options.
-
-  ## Options
-
-
 
   ## Returns
 
@@ -658,14 +654,31 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec crop(Vimage.t(), integer, integer, integer, integer, Options.Crop.crop_options()) ::
+  @spec crop(Vimage.t(), integer(), integer(), pos_integer(), pos_integer()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def crop(%Vimage{} = image, left, top, width, height, options \\ [])
-      when is_box(left, top, width, height) do
-    with {:ok, _options} <- Options.Crop.validate_options(options) do
-      Operation.extract_area(image, left, top, width, height, options)
-    end
+  def crop(%Vimage{} = image, left, top, width, height)
+      when is_box(left, top, width, height) and left > 0 and top > 0 do
+    Operation.extract_area(image, left, top, width, height)
+  end
+
+  def crop(%Vimage{} = image, left, top, width, height)
+      when is_box(left, top, width, height) and left < 0 and top > 0 and abs(left) >= width do
+    left = width(image) + left + 1
+    Operation.extract_area(image, left, top, width, height)
+  end
+
+  def crop(%Vimage{} = image, left, top, width, height)
+      when is_box(left, top, width, height) and left > 0 and top < 0 and abs(top) >= height do
+    top = height(image) + top + 1
+    Operation.extract_area(image, left, top, width, height)
+  end
+
+  def crop(%Vimage{} = image, left, top, width, height)
+      when is_box(left, top, width, height) and left < 0 and top < 0 and abs(left) >= width and abs(top) >= height do
+    left = width(image) + left + 1
+    top = height(image) + top + 1
+    Operation.extract_area(image, left, top, width, height)
   end
 
   @doc """
@@ -696,30 +709,35 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t()`.
 
-  * Angle is a `float` number of degrees
+  * `angle` is a `float` number of degrees
     to rotate in a clockwise direction.
 
   * `options` is a keyword list of options.
 
   ## Options
 
-  * `:idy` is the vertical input displacement. Default: `0.0`
+  * `:idy` is the vertical input displacement which
+    defaults to `0.0`
 
-  * `:idx` is the horizontal input displacement. Default: `0.0`
+  * `:idx` is the horizontal input displacement which
+    defaults to `0.0`
 
-  * `:ody` is the vertical output displacement. Default: `0.0`
+  * `:ody` is the vertical output displacement
+    which defaults to `0.0`
 
-  * `:odx` is the horizontal output displacement. Default: `0.0`
+  * `:odx` is the horizontal output displacement
+    which defaults to `0.0`
 
   * `:background` is the background color to be used for filling
     the blank areas of the image. The background is specified as
-    a list of 3 or 4 float values.
+    a list of 3 or 4 float values depending on the image
+    color space.
 
   ## Notes
 
   The displacement parameters cause the image canvas to be
-  expanded and the image displaced (relative to the top left
-  corner of the image) but the amount specified.
+  expanded and the image displaced, relative to the top left
+  corner of the image, by the amount specified.
 
   The rules defining how the image canvas is expanded
   is not known to the author of `Image`. Experimentation will
@@ -768,14 +786,16 @@ defmodule Image do
   was taken:
 
   * `:flip` which is a boolean indicating if the image
-  was flipped or not and
+    was flipped or not and
 
   * `:angle` through which the image was rotated.
     This value will be one of `0`, `90`, `180` or
     `270` representing the degrees of rotation.
 
   """
-  @spec autorotate(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec autorotate(image :: Vimage.t()) ::
+    {:ok, {Vimage.t(), Keyword.t()}} | {:error, error_message()}
+
   def autorotate(%Vimage{} = image) do
     case Operation.autorot(image) do
       {:ok, {image, flags}} ->
