@@ -64,11 +64,22 @@ For example, to produce debug output for only the most critical issues, set `G_D
 export G_DEBUG=fatal-criticals
 ````
 
+### Memory Leak Detection
+
+The environment variable `VIPS_LEAK` determines whether `libvips` reports possible memory leaks. To enable leak detection (on `bash` compatible systems):
+```bash
+export VIPS_LEAK=true
+```
+To stop leak detection:
+```bash
+unset VIPS_LEAK
+````
+
 ### Concurrency
 
-`Image` (because of `Vix` and `libvips`) will execute image operations using a number of system native threads (not BEAM processes). The number of threads available for concurrent image operations is configurable by either setting the environment variable `VIPS_CONCURRENCY` or through a call to `Image.put_concurrency/1`.  The current number of configured threads is returned from `Image.get_concurrency/0`.
+`Image` (because of `Vix` and `libvips`) will execute concurrent image operations using a number of system native threads (not BEAM processes). The number of threads available for concurrent image operations is configurable by either setting the environment variable `VIPS_CONCURRENCY` or through a call to `Image.put_concurrency/1`.  The current number of configured threads is returned from `Image.get_concurrency/0`.
 
-The default number of threads is equal to the number of cores on the running system. This may create CPU contention with other workloads given that image processing is CPU intensive.  Therefore it may be prudent to reduce the number of threads if overall system throughput is being affected.
+The default number of threads is equal to the number of cores detected on the running system. This may create CPU contention with other workloads given that image processing is CPU intensive.  Therefore it may be prudent to reduce the number of threads if overall system throughput is being affected.
 
 ### Caching
 
