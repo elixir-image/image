@@ -8,6 +8,7 @@ defmodule Image.Options.Resize do
   alias Image.Color
 
   import Color, only: [is_inbuilt_profile: 1]
+  import Image, only: [is_size: 1]
 
   @typedoc """
   Options applicable to Image.resize/3
@@ -131,5 +132,35 @@ defmodule Image.Options.Resize do
 
   defp invalid_option(option) do
     "Invalid option or option value: #{inspect(option)}"
+  end
+
+  def validate_dimensions(dimensions, options) do
+    case dimensions(String.split(dimensions, "x")) do
+      {width, nil} when is_size(width) ->
+        {:ok, width, options}
+
+      {width, height} when is_size(width) and is_size(height) ->
+        {:ok, width, Map.put(options, :height, height)}
+
+      _other ->
+        {:error, "Invalid dimensions. Found #{inspect dimensions}"}
+    end
+  end
+
+  defp dimensions([width]) do
+    case Integer.parse(width) do
+      {integer, ""} -> {integer, nil}
+      _other -> width
+    end
+  end
+
+  defp dimensions([width, ""]) do
+    dimensions([width])
+  end
+
+  defp dimensions([width, height]) do
+    width = dimensions([width])
+    height = dimensions([height])
+    {width, height}
   end
 end

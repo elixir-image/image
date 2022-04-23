@@ -662,8 +662,12 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `width` is the width of the resulting
-    image after resizing.
+  * `width` is the integer width of the resulting
+    image after resizing. It can also be of the form
+    "<width>x<height>". That is, a string with the
+    width and height separated by an `x`. The `<height>`
+    may be ommitted in which case it is the same as
+    providing an integer width.
 
   * `options` is a keyword list of options.
 
@@ -717,11 +721,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec resize(
-          Vimage.t() | Path.t(),
-          width :: pos_integer(),
-          options :: Options.Resize.resize_options()
-        ) ::
+  @spec resize(Vimage.t(), width :: pos_integer(), options :: Options.Resize.resize_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def resize(image_or_path, wide, options \\ [])
@@ -732,10 +732,23 @@ defmodule Image do
     end
   end
 
+  @spec resize(Path.t(), width :: pos_integer(), options :: Options.Resize.resize_options()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
   def resize(image_path, width, options) when is_binary(image_path) and is_size(width) do
     with {:ok, options} <- Options.Resize.validate_options(options),
          :ok = file_exists?(image_path) do
       Operation.thumbnail(image_path, width, options)
+    end
+  end
+
+  @spec resize(Vimage.t() | Path.t(), width :: pos_integer(), options :: Options.Resize.resize_options()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def resize(image_or_path, dimensions, options) when is_binary(image_or_path) and is_binary(dimensions) do
+    with {:ok, options} <- Options.Resize.validate_options(options),
+         {:ok, width, options} <- Options.Resize.validate_dimensions(dimensions, options) do
+      resize(image_or_path, width, options)
     end
   end
 
