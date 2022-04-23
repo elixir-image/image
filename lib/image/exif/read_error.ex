@@ -1,7 +1,7 @@
 defmodule Image.Exif.ReadError do
-  @moduledoc """
-  The error raised on any attempt to deal with incorrect files.
-  """
+  @moduledoc false
+  # The error raised on any attempt to deal with incorrect files.
+
   defexception [:type, :file, :message]
 
   @impl true

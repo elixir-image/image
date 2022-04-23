@@ -1,8 +1,7 @@
 defmodule Image.Exif.Decode do
-  @moduledoc """
-  Decode tags and (in some cases) their parameters.
-  """
+  @moduledoc false
 
+  # Decode tags and (in some cases) their parameters.
   # Reference for tags: https://exiftool.org/TagNames/EXIF.html
 
   alias Image.Exif.Gps

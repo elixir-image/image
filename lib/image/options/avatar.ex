@@ -1,17 +1,15 @@
 defmodule Image.Options.Avatar do
-  @type avatar_options :: []
+  alias Image.Options.Crop
+
+  @type avatar_options :: Crop.crop_options()
+
+  # Same as crop options but we default to
+  # cropping for attention as the default
 
   def validate_options(options) do
-    case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
-      {:error, value} ->
-        {:error, value}
-
-      options ->
-        {:ok, options}
+    with {:ok, options} <- Crop.validate_options(options) do
+      options = Keyword.put_new(options, :crop, :VIPS_INTERESTING_ATTENTION)
+      {:ok, options}
     end
-  end
-
-  def validate_option(_other, options) do
-    {:cont, options}
   end
 end

@@ -1,7 +1,6 @@
 defmodule Image.Exif.Gps do
-  @moduledoc """
-  Internal representation of GPS tag in the EXIF.
-  """
+  @moduledoc false
+  # Internal representation of GPS tag in the EXIF.
 
   @type t :: %__MODULE__{
           gps_version_id: any(),

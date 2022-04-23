@@ -1,7 +1,7 @@
 defmodule Image.Exif.Thumbnail do
-  @moduledoc """
-  Internal representation of Thumbnail tag in the EXIF.
-  """
+  @moduledoc false
+  # Internal representation of Thumbnail tag in the EXIF.
+
   @type t :: %__MODULE__{
           thumbnail_offset: non_neg_integer(),
           thumbnail_size: non_neg_integer()

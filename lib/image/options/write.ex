@@ -119,5 +119,4 @@ defmodule Image.Options.Write do
   defp invalid_option(option) do
     "Invalid option or option value: #{inspect(option)}"
   end
-
 end

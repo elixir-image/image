@@ -27,10 +27,12 @@ It is the intention of `Image` to bring the power of `libvips` to Elixir develop
 * [ ] Thumbnail an image
 * [x] Resize
 * [x] Crop
-* [ ] Create avatar from image
-* [ ] Remove metadata from image
+* [x] Create avatar from image
+* [x] Remove metadata from image
 * [ ] Add minimal metadata to image (artist, title, description, copyright, keywords)
 * [ ] Bidirectional integration with [Nx](https://hex.pm/packages/nx) to integrate ML and GPU processing with image transformation
+
+## Libvips Configuration
 
 ### GLib Debug Output
 
@@ -62,7 +64,7 @@ For example, to produce debug output for only the most critical issues, set `G_D
 
 ```bash
 export G_DEBUG=fatal-criticals
-````
+```
 
 ### Memory Leak Detection
 
@@ -70,10 +72,11 @@ The environment variable `VIPS_LEAK` determines whether `libvips` reports possib
 ```bash
 export VIPS_LEAK=true
 ```
+
 To stop leak detection:
 ```bash
 unset VIPS_LEAK
-````
+```
 
 ### Concurrency
 

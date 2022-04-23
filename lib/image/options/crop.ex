@@ -1,4 +1,12 @@
 defmodule Image.Options.Crop do
+
+  @typedoc """
+  Options applicable to cropping an
+  image.
+
+  Currently there are no options.
+
+  """
   @type crop_options :: []
 
   @typedoc """
@@ -77,6 +85,6 @@ defmodule Image.Options.Crop do
   end
 
   defp invalid_crop(crop) do
-    "Invalid crop option #{inspect crop}. Valid values are #{inspect @crop}"
+    "Invalid crop option #{inspect(crop)}. Valid values are #{inspect(@crop)}"
   end
 end

@@ -15,6 +15,8 @@ defmodule Image do
            when is_integer(left) and is_integer(top) and is_integer(width) and is_integer(height) and
                   width > 0 and height > 0
 
+  defguard is_size(size) when is_integer(size) and size > 0
+
   @typedoc """
   The valid rendering intent values. For all
   functions that take an optioanl intent
@@ -86,7 +88,7 @@ defmodule Image do
   @doc """
   Opens an image file for image processing.
 
-  ## Arguments
+  ### Arguments
 
   * `image_path` is the file system path to an image
     file.
@@ -94,7 +96,7 @@ defmodule Image do
   * `options` is a keyword list of options. The default is
     `[access: :sequential]`.
 
-  ## Options
+  ### Options
 
   The available options depends on the type of image
   file being opened.
@@ -160,7 +162,7 @@ defmodule Image do
   * There are no PNG-specific image loading
     options.
 
-  ## Returns
+  ### Returns
 
   * `{:ok, image}` or
 
@@ -198,9 +200,38 @@ defmodule Image do
   end
 
   @doc """
+  Opens an image file for image processing
+  returning an image or raising an exception.
+
+  ### Arguments
+
+  * `image_path` is the file system path to an image
+    file.
+
+  * `options` is a keyword list of options.
+    See `Image.open/2`.
+
+  ### Returns
+
+  * `image` or
+
+  * raises an exception.
+
+  """
+  @spec open!(image_path :: Path.t(), options :: Options.Open.image_open_options()) ::
+          Vimage.t() | no_return()
+
+  def open!(image_path, options \\ []) do
+    case open(image_path, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, {reason, image_path}
+    end
+  end
+
+  @doc """
   Stream an image file for image operations.
 
-  This function returns a `t:Vix.Vips.Image.t()` that
+  This function returns a `t:Vix.Vips.Image.t/0` that
   will be streamed when processing the image pipeline.
   It is *not* an enumerable itself, but it does rely on
   `File.stream!/3` for the underlying file streaming
@@ -220,7 +251,7 @@ defmodule Image do
   Images can also be [streamed on write])() allowing
   a fully asynchronous image pipeline.
 
-  ## Arguments
+  ### Arguments
 
   * `path` is the file system path to an image
     file.
@@ -228,7 +259,7 @@ defmodule Image do
   * `bytes` is the number of bytes in
     each stream element. The default is #{@default_streaming_bytes}.
 
-  ## Returns
+  ### Returns
 
   * `{:ok, enumerable_image}` or
 
@@ -237,7 +268,7 @@ defmodule Image do
   """
 
   @spec stream(image_path :: Path.t(), streaming_bytes :: pos_integer()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def stream(image_path, bytes \\ @default_streaming_bytes) do
     if File.exists?(image_path) do
@@ -250,9 +281,38 @@ defmodule Image do
   end
 
   @doc """
+  Streams an image file for image processing
+  returning an image or raising an exception.
+
+  ### Arguments
+
+  * `image_path` is the file system path to an image
+    file.
+
+  * `options` is a keyword list of options.
+    See `Image.stream/2`.
+
+  ### Returns
+
+  * `image` or
+
+  * raises an exception.
+
+  """
+  @spec stream!(image_path :: Path.t(), streaming_bytes :: pos_integer()) ::
+          Vimage.t() | no_return()
+
+  def stream!(image_path, options \\ []) do
+    case open(image_path, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, {reason, image_path}
+    end
+  end
+
+  @doc """
   Write an image to a file.
 
-  ## Arguments
+  ### Arguments
 
   * `image_path` is the file system path to an image
     file.
@@ -260,14 +320,15 @@ defmodule Image do
   * `options` is a keyword list of options. The default is
     `[]`.
 
-  ## Options
+  ### Options
 
   The available options depends on the type of image
   file being opened.
 
   ### All image types
 
-  * `:profile` is the name of any [ICC color profile]()
+  * `:profile` is the name of any
+    [ICC color profile](https://en.wikipedia.org/wiki/ICC_profile).
 
   * `:strip` is a boolean indicating if all metadata
     is to be stripped from the image. The default is `false`.
@@ -320,8 +381,12 @@ defmodule Image do
     `:avc`, `:jpeg` and `:av1`. The default is `:hevc`.
 
   """
-  @spec write(image :: Vimage.t(), image_path :: Path.t(), options :: Options.Write.image_write_options()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+  @spec write(
+          image :: Vimage.t(),
+          image_path :: Path.t(),
+          options :: Options.Write.image_write_options()
+        ) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def write(%Vimage{} = image, image_path, options \\ []) do
     with {:ok, options} <- Options.Write.validate_options(options) do
@@ -333,23 +398,64 @@ defmodule Image do
 
   defp do_write([image_path], image, options) do
     options = build_option_string(options)
-    Vimage.write_to_file(image, image_path <> options)
+
+    case Vimage.write_to_file(image, image_path <> options) do
+      :ok -> {:ok, image}
+      other -> other
+    end
   end
 
   defp do_write([image_path, open_options], image, options) do
     write_options = String.trim_trailing(open_options, "]")
     options = build_option_string(write_options, options)
-    Vimage.write_to_file(image, image_path <> options)
+
+    case Vimage.write_to_file(image, image_path <> options) do
+      :ok -> {:ok, image}
+      other -> other
+    end
+  end
+
+  @doc """
+  Writes an image to a file returning the image
+  or raising an exception.
+
+  ### Arguments
+
+  * `image_path` is the file system path to an image
+    file.
+
+  * `options` is a keyword list of options.
+    See `Image.write/2`.
+
+  ### Returns
+
+  * `image` or
+
+  * raises an exception.
+
+  """
+  @spec write!(
+          image :: Vimage.t(),
+          image_path :: Path.t(),
+          options :: Options.Write.image_write_options()
+        ) ::
+          Vimage.t() | no_return()
+
+  def write!(%Vimage{} = image, image_path, options \\ []) do
+    case write(image, image_path, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, {reason, image_path}
+    end
   end
 
   @doc """
   Returns the filename for an image.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  ## Returns
+  ### Returns
 
   * The pathname from which the image was opened.
 
@@ -361,18 +467,19 @@ defmodule Image do
 
   @doc """
   Returns the EXIF data for an image as a
-  keyword list.
+  map.
 
-  Only a selected set of EXIF data is returned.
+  Only a subset of EXIF data is returned but
+  its a substantial subset.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`
+  * `image` is any `t:Vix.Vips.Image.t/0`
 
-  ## Returns
+  ### Returns
 
   * `{:ok, exif_map}` where `exif_map` is a map
-    of selected EXIF data
+    of selected EXIF data.
 
   """
   @spec exif(Vimage.t()) :: {:ok, map()}
@@ -391,14 +498,14 @@ defmodule Image do
 
   Only a selected set of XMP data is returned.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`
+  * `image` is any `t:Vix.Vips.Image.t/0`
 
-  ## Returns
+  ### Returns
 
   * `{:ok, xmp_map}` where `xmp_map` is a map
-    of selected XMP data
+    of selected XMP data.
 
   """
   @spec xmp(Vimage.t()) :: {:ok, map()}
@@ -415,13 +522,13 @@ defmodule Image do
   @doc """
   Returns the width of an image.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`
+  * `image` is any `t:Vix.Vips.Image.t/0`
 
-  ## Returns
+  ### Returns
 
-  * The image width as an integer
+  * The image width as an integer.
 
   """
   @spec width(Vimage.t()) :: integer()
@@ -432,13 +539,13 @@ defmodule Image do
   @doc """
   Returns the height of an image.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`
+  * `image` is any `t:Vix.Vips.Image.t/0`
 
-  ## Returns
+  ### Returns
 
-  * The image height as an integer
+  * The image height as an integer.
 
   """
   @spec height(Vimage.t()) :: integer()
@@ -452,11 +559,15 @@ defmodule Image do
   A band is sometimes referred to as a
   channel.
 
-  ## Arguments
+  Note than bands are 0-indexed. That is, the
+  first band is band 0, the second band is
+  band 1 and so on.
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  ### Arguments
 
-  ## Returns
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
 
   * An integer number of bands in the image.
 
@@ -467,17 +578,16 @@ defmodule Image do
   end
 
   @doc """
-  Flip an image horizontally or
-  vertically.
+  Flip an image horizontally or vertically.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `direction` is either `:horizontal` or
     `:vertical`.
 
-  ## Returns
+  ### Returns
 
   * `{:ok, flipped_image}` or
 
@@ -501,31 +611,59 @@ defmodule Image do
   end
 
   @doc """
+  Flip an image horizontally or vertically returning
+  a flipped image or raising an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `direction` is either `:horizontal` or
+    `:vertical`.
+
+  ### Returns
+
+  * `flipped_image` or
+
+  * raises an exception.
+
+  """
+  @spec flip!(image :: Vimage.t(), direction :: :vertical | :horizontal) ::
+          Vimage.t() | no_return()
+
+  def flip!(%Vimage{} = image, direction) do
+    case flip(image, direction) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Resize an image to fit or fill a bounding box.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `width` is the width of the resulting
     image after resizing.
 
   * `options` is a keyword list of options.
 
-  ## Options
+  ### Options
 
   * `:crop` determines if the strategy is "resize to fit"
-    (crop is `:none`) or `resize to fill" (when the crop
-    option is not `:none`. The value may be [one of]()
+    (crop is `:none`) or "resize to fill" (when the crop
+    option is not `:none`. The value may be one of
     `:none`, `:center`, `:entropy`, `:attention`, `:low`
-    or `:high`. The default is `:none`.
+    or `:high`. The default is `:none`. See also `t:Image.Options.Crop.crop_focus/0`.
 
   * `:autorotate` is a boolean indicating if the image should
     be autorated based upon the image metadata. The default
     is `true`.
 
-  * `:intent` indicates the [rendering intent](). The default
-    is `:relative`.
+  * `:intent` indicates the rendering intent. The default
+    is `:relative`. See also `t:Image.render_intent/0`.
 
   * `:export_icc_profile` -Indicates the icc profile to be attached
     to the resized image. The value may be an inbuilt profile (`:srgb`,
@@ -555,7 +693,7 @@ defmodule Image do
   * `:height` - Size to this height. Default is to maintain
     the image aspect ratio.
 
-  ## Returns
+  ### Returns
 
   * `{:ok, resized_image}` or
 
@@ -571,15 +709,13 @@ defmodule Image do
 
   def resize(image_or_path, wide, options \\ [])
 
-  def resize(%Vimage{} = image, width, options)
-      when is_integer(width) and width > 0 do
+  def resize(%Vimage{} = image, width, options) when is_size(width) do
     with {:ok, options} <- Options.Resize.validate_options(options) do
       Operation.thumbnail_image(image, width, options)
     end
   end
 
-  def resize(image_path, width, options)
-      when is_binary(image_path) and is_integer(width) and width > 0 do
+  def resize(image_path, width, options) when is_binary(image_path) and is_size(width) do
     with {:ok, options} <- Options.Resize.validate_options(options),
          :ok = file_exists?(image_path) do
       Operation.thumbnail(image_path, width, options)
@@ -587,20 +723,60 @@ defmodule Image do
   end
 
   @doc """
-  Make a circular avatar image.
+  Resize an image to fit or fill a bounding box
+  returning an image or raising an exception.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `size` is the diameter of the resulting
+  * `width` is the width of the resulting
     image after resizing.
 
   * `options` is a keyword list of options.
+    See `Image.resize/3`.
 
-  ## Options
+  ### Returns
 
-  ## Returns
+  * `image` or
+
+  * raises an exception.
+
+  """
+  @spec resize!(
+          Vimage.t() | Path.t(),
+          width :: pos_integer(),
+          options :: Options.Resize.resize_options()
+        ) ::
+          Vimage.t() | no_return
+
+  def resize!(%Vimage{} = image, width, options \\ []) do
+    case resize(image, width, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Make a circular image intended to be used
+  as an avatar image.
+
+  The image is resized, a circular mask is
+  applied and all metadata is removed from
+  the image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `size` is the diameter of the resulting
+    image after resizing. The default value
+    is `#{@default_avatar_size}`.
+
+  * `options` is a keyword list of options.
+    See `Image.resize/3` for the valid options.
+
+  ### Returns
 
   * `{:ok, avatar_image}` or
 
@@ -613,25 +789,70 @@ defmodule Image do
 
   def avatar(image, size \\ @default_avatar_size, options \\ [])
 
-  def avatar(%Vimage{} = image, size, options) do
+  def avatar(%Vimage{} = image, size, options) when is_size(size) do
     with {:ok, options} <- Options.Avatar.validate_options(options) do
-      Operation.thumbnail_image(image, size, options)
+      {:ok, image} = Operation.thumbnail_image(image, size, options)
+      circular_mask_and_remove_meta(image)
     end
   end
 
-  def avatar(image_path, size, options) when is_binary(image_path) do
+  def avatar(image_path, size, options) when is_binary(image_path) and is_size(size) do
     with {:ok, options} <- Options.Avatar.validate_options(options),
          :ok = file_exists?(image_path) do
-      Operation.thumbnail(image_path, size, options)
+      {:ok, image} = Operation.thumbnail(image_path, size, options)
+      circular_mask_and_remove_meta(image)
+    end
+  end
+
+  def circular_mask_and_remove_meta(image) do
+    {:ok, image} = circle(image)
+    remove_metadata(image)
+  end
+
+  @doc """
+  Make a circular image intended to be used
+  as an avatar image returning an image or
+  raising an exception.
+
+  The image is resized, a circular mask is
+  applied and all metadata is removed from
+  the image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `size` is the diameter of the resulting
+    image after resizing. The default value
+    is `#{@default_avatar_size}`.
+
+  * `options` is a keyword list of options.
+    See `Image.resize/3` for the valid options.
+
+  ### Returns
+
+  * `avatar_image` or
+
+  * raises an exception.
+
+  """
+
+  @spec avatar!(Vimage.t(), size :: float(), options :: Options.Avatar.avatar_options()) ::
+          Vimage.t() | no_return()
+
+  def avatar!(%Vimage{} = image, size \\ @default_avatar_size, options \\ []) do
+    case avatar(image, size, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
   @doc """
   Crop an image.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `left` is the left edge of extract area as a
     positive integer.
@@ -647,7 +868,7 @@ defmodule Image do
   * `height` is the height of extract area as a
     positive integer.
 
-  ## Returns
+  ### Returns
 
   * `{:ok, cropped_image}` or
 
@@ -675,46 +896,66 @@ defmodule Image do
   end
 
   def crop(%Vimage{} = image, left, top, width, height)
-      when is_box(left, top, width, height) and left < 0 and top < 0 and abs(left) >= width and abs(top) >= height do
+      when is_box(left, top, width, height) and left < 0 and top < 0 and abs(left) >= width and
+             abs(top) >= height do
     left = width(image) + left + 1
     top = height(image) + top + 1
     Operation.extract_area(image, left, top, width, height)
   end
 
   @doc """
-  Returns a boolean based upon whether a given
-  image has an alpha band.
+  Crop an image returning a cropped image
+  or raising an exception.
 
-  The determination is a heuristic so certainty
-  cannot be guaranteed.
+  ### Arguments
 
-  ## Arguments
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  * `left` is the left edge of extract area as a
+    positive integer.
 
-  ## Returns
+  * `top` is the top edge of extract area as an
+    integer. If `top` is positive it is relative to
+    the top of the image. If it is negative it is
+    relative to the bottom of the image.
 
-  * `true` or `false`
+  * `width` is the width of extract area as a
+    positive integer.
+
+  * `height` is the height of extract area as a
+    positive integer.
+
+  ### Returns
+
+  * `cropped_image` or
+
+  * raises an exception.
 
   """
-  def has_alpha?(%Vimage{} = image) do
-    Vimage.has_alpha?(image)
+  @spec crop!(Vimage.t(), integer(), integer(), pos_integer(), pos_integer()) ::
+          Vimage.t() | no_return
+
+  def crop!(%Vimage{} = image, left, top, width, height) do
+    case crop(image, left, top, width, height) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
   end
 
   @doc """
   Rotate an image clockwise (to the
   right) by a number of degrees.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `angle` is a `float` number of degrees
     to rotate in a clockwise direction.
 
   * `options` is a keyword list of options.
 
-  ## Options
+  ### Options
 
   * `:idy` is the vertical input displacement which
     defaults to `0.0`
@@ -743,7 +984,7 @@ defmodule Image do
   is not known to the author of `Image`. Experimentation will
   be required if you explore these options.
 
-  ## Returns
+  ### Returns
 
   * `{:ok, rotated_image}` or
 
@@ -767,20 +1008,65 @@ defmodule Image do
   end
 
   @doc """
+  Rotate an image clockwise (to the
+  right) by a number of degrees.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `angle` is a `float` number of degrees
+    to rotate in a clockwise direction.
+
+  * `options` is a keyword list of options.
+    See `Image.rotate/3`.
+
+  ## Notes
+
+  The displacement parameters cause the image canvas to be
+  expanded and the image displaced, relative to the top left
+  corner of the image, by the amount specified.
+
+  The rules defining how the image canvas is expanded
+  is not known to the author of `Image`. Experimentation will
+  be required if you explore these options.
+
+  ### Returns
+
+  * `rotated_image` or
+
+  * raises an exception.
+
+  """
+  @spec rotate!(
+          image :: Vimage.t(),
+          angle :: float(),
+          options :: Options.Rotation.rotation_options()
+        ) ::
+          Vimage.t() | no_return()
+
+  def rotate!(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
+    case rotate(image, angle, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Rotate an image based upon the orientation
   information in an image's EXIF data.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  ## Returns
+  ### Returns
 
   * `{:ok, {auto_rotated_image, flags}}` or
 
   * `{:error, reason}`
 
-  ## Flags
+  ### Flags
 
   Two flags are returned indicating what action
   was taken:
@@ -794,7 +1080,7 @@ defmodule Image do
 
   """
   @spec autorotate(image :: Vimage.t()) ::
-    {:ok, {Vimage.t(), Keyword.t()}} | {:error, error_message()}
+          {:ok, {Vimage.t(), Keyword.t()}} | {:error, error_message()}
 
   def autorotate(%Vimage{} = image) do
     case Operation.autorot(image) do
@@ -821,19 +1107,47 @@ defmodule Image do
   end
 
   @doc """
+  Rotate an image based upon the orientation
+  information in an image's EXIF data. Returns
+  a potentially rotated image or raises and
+  exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `auto_rotated_image` or
+
+  * raises an exception.
+
+  """
+  @spec autorotate!(image :: Vimage.t()) ::
+          Vimage.t() | no_return()
+
+  def autorotate!(image) do
+    case autorotate(image) do
+      {:ok, image, _flags} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Convert image to polar coordinates.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  ## Returns
+  ### Returns
 
-  * `{:ok, image_in_polar_coordiantes}` or
+  * `{:ok, image_in_polar_coordinates}` or
 
   * `{:error, reason}`
 
   """
+  @spec to_polar_coordinates!(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def to_polar_coordinates(%Vimage{} = image) do
     use Image.Math
 
@@ -853,11 +1167,34 @@ defmodule Image do
   end
 
   @doc """
+  Convert image to polar coordinates returning
+  an image or raising an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `image_in_polar_coordinates` or
+
+  * raises an exception.
+
+  """
+  @spec to_polar_coordinates!(Vimage.t()) :: Vimage.t() | no_return()
+  def to_polar_coordinates!(%Vimage{} = image) do
+    case to_polar_coordinates(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Convert image to rectangular coordinates.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ## Notes
 
@@ -866,13 +1203,14 @@ defmodule Image do
   likely due to rounding errors in float
   arithmetic. Further study is required.
 
-  ## Returns
+  ### Returns
 
   * `{:ok, image_in_rectuangular_coordinates}` or
 
   * `{:error, reason}`
 
   """
+  @spec to_rectangular_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def to_rectangular_coordinates(%Vimage{} = image) do
     use Image.Math
 
@@ -892,19 +1230,50 @@ defmodule Image do
   end
 
   @doc """
-  Adds concentric ripple effect to an image
+  Convert image to rectangular coordinates
+  returning an image or raising an exception.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  ## Returns
+  ## Notes
+
+  Roundtrip to polar and back to rectangular
+  coordinates displays some image distortion,
+  likely due to rounding errors in float
+  arithmetic. Further study is required.
+
+  ### Returns
+
+  * `image_in_rectuangular_coordinates` or
+
+  * raises an exception.
+
+  """
+  @spec to_rectangular_coordinates!(Vimage.t()) :: Vimage.t() | no_return()
+  def to_rectangular_coordinates!(%Vimage{} = image) do
+    case to_rectangular_coordinates(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Adds a concentric ripple effect to an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
 
   * `{:ok, image_with_ripple}` or
 
   * `{:error, reason}`
 
   """
+  @spec ripple(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def ripple(%Vimage{} = image) do
     use Image.Math
 
@@ -937,19 +1306,53 @@ defmodule Image do
   end
 
   @doc """
+  Adds a concentric ripple effect to an image
+  returning an image or raising an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `image_with_ripple` or
+
+  * raises an exception.
+
+  """
+  @spec ripple!(Vimage.t()) :: Vimage.t() | no_return()
+  def ripple!(%Vimage{} = image) do
+    case ripple(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Apply a circular mask to an image.
 
-  ## Arguments
+  The returned image has an alpha
+  band masking the circular image.
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  As a result, it is best saved to a
+  format, like `.png` that supports
+  alpha transparency.
 
-  ## Returns
+  Note that `.jpg` files do not support
+  alpha transparency.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
 
   * `{:ok, circular_image}` or
 
-  * `{:error, reason}
+  * `{:error, reason}`
 
   """
+  @spec circle(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def circle(%Vimage{} = image, _options \\ []) do
     width = width(image)
     height = height(image)
@@ -960,9 +1363,61 @@ defmodule Image do
   end
 
   @doc """
-  Apply rounded corners to an image.
+  Apply a circular mask to an image
+  returning an image or raising and
+  exception.
+
+  The returned image has an alpha
+  band masking the circular image.
+
+  As a result, it is best saved to a
+  format, like `.png` that supports
+  alpha transparency.
+
+  Note that `.jpg` files do not support
+  alpha transparency.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `circular_image` or
+
+  * raises an exception.
 
   """
+  @spec circle!(Vimage.t(), Keyword.t()) :: Vimage.t() | no_return()
+  def circle!(%Vimage{} = image, options \\ []) do
+    case circle(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Apply rounded corners to an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:radius` is the desired corner radius.
+    The default is #{@default_round_corner_radius}.
+
+  ### Returns
+
+  * `{:ok, rounded_corner_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @spec rounded(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def rounded(%Vimage{} = image, options \\ []) do
     options = Keyword.put_new(options, :radius, @default_round_corner_radius)
     width = width(image)
@@ -973,12 +1428,42 @@ defmodule Image do
   end
 
   @doc """
-  Create an image mask.
+  Apply rounded corners to an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:radius` is the desired corner radius.
+    The default is #{@default_round_corner_radius}.
+
+  ### Returns
+
+  * `rounded_corner_image` or
+
+  * raises an exception.
 
   """
-  def mask(type, width, height, options \\ [])
+  @spec rounded!(Vimage.t(), Keyword.t()) :: Vimage.t() | no_return()
+  def rounded!(%Vimage{} = image, options \\ []) do
+    case rounded(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
 
-  def mask(:circle, diameter, diameter, _options) do
+  # Create an image mask (alph transparency) that can
+  # then be applied to an image.
+
+  # At some point this will become a public API.
+
+  defp mask(type, width, height, options \\ [])
+
+  defp mask(:circle, diameter, diameter, _options) do
     centre = div(diameter, 2)
 
     svg = """
@@ -991,7 +1476,7 @@ defmodule Image do
     Operation.extract_band(circle, @alpha_channel)
   end
 
-  def mask(:rounded_corners, width, height, options) do
+  defp mask(:rounded_corners, width, height, options) do
     radius = Keyword.get(options, :radius, @default_round_corner_radius)
 
     svg = """
@@ -1021,32 +1506,70 @@ defmodule Image do
          {:ok, image} <- remove_metadata(image) do
       Vimage.mutate(image, fn mut_img ->
         :ok = MutableImage.set(mut_img, "exif-data", :VipsBlob, <<0>>)
-        :ok = MutableImage.set(mut_img, @copyright_header, :gchararray, "Copyright (c) 2008 Kip Cole")
+
+        :ok =
+          MutableImage.set(mut_img, @copyright_header, :gchararray, "Copyright (c) 2008 Kip Cole")
       end)
     end
   end
 
+  @metadata_fields %{
+    exif: "exif-data",
+    xmp: "xmp-dataa",
+    iptc: "iptc-data"
+  }
+
+  @metadata_names Map.keys(@metadata_fields)
+
   @doc """
-  Remove all metadata from an image.
+  Remove metadata from an image.
 
   This can significant;y reduce the size of
   an image file.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`
+  * `image` is any `t:Vix.Vips.Image.t/0`
 
-  * `fields` is a list of metadata binary
-    field names. The default is all known
-    field names.
+  * `fields` is a list of metadata field names
+    as strings. The default is all known
+    field names. There are some special field
+    names interpreted by `Image` to simplify
+    metadata removal these are:
 
-  ## Returns
+    * `:exif` which means remove all
+      [EXIF](https://en.wikipedia.org/wiki/Exif) metadata
+    * `:iptc` which means remove all
+      [IPTC](https://en.wikipedia.org/wiki/IPTC_Information_Interchange_Model) metadata
+    * `:xmp` which means remove all
+      [xmp](https://en.wikipedia.org/wiki/Extensible_Metadata_Platform) data
 
-  * An image without the specified metadata
-    fields.
+  ## Notes
+
+  * The available field names (ie. metadata fields)
+    in an image can be returned with a call to
+    `Vix.Vips.Image.header_field_names/1`.
+
+  * Errors removing metadata fields is not propogated
+    into the return for this function. Errors might occur
+    when attempting to remove metadata fields that
+    do not exist in the image.
+
+  ### Returns
+
+    * `{:ok, image_without_metadata_fields}` or
+
+    * `{:error, reason}`
 
   """
+  @spec remove_metadata(Vimage.t(), list(binary() | atom())) ::
+      {:ok, Vimage.t()} | {:error, error_message()}
+
   def remove_metadata(image, fields \\ [])
+
+  def remove_metadata(image, field) when not is_list(field) do
+    remove_metadata(image, List.wrap(field))
+  end
 
   def remove_metadata(image, []) do
     {:ok, fields} = Vimage.header_field_names(image)
@@ -1055,26 +1578,115 @@ defmodule Image do
 
   def remove_metadata(%Vimage{} = image, fields) when is_list(fields) do
     Vimage.mutate(image, fn mut_img ->
-      Enum.each(fields, &MutableImage.remove(mut_img, &1))
+      Enum.each(fields, &remove_meta(mut_img, &1))
     end)
   end
+
+  defp remove_meta(image, field) when is_atom(field) and field in @metadata_names do
+    field = Map.fetch!(@metadata_fields, field)
+    remove_meta(image, field)
+  end
+
+  defp remove_meta(image, field) do
+    MutableImage.remove(image, field)
+  end
+
+  @doc """
+  Remove metadata from an image returning
+  an image or raising an exception.
+
+  This can significant;y reduce the size of
+  an image file.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  * `fields` is a list of metadata field names
+    as strings. The default is all known
+    field names. There are some special field
+    names interpreted by `Image` to simplify
+    metadata removal these are:
+
+    * `:exif` which means remove all
+      [EXIF](https://en.wikipedia.org/wiki/Exif) metadata
+    * `:iptc` which means remove all
+      [IPTC](https://en.wikipedia.org/wiki/IPTC_Information_Interchange_Model) metadata
+    * `:xmp` which means remove all
+      [xmp](https://en.wikipedia.org/wiki/Extensible_Metadata_Platform) data
+
+  ## Notes
+
+  * The available field names (ie. metadata fields)
+    in an image can be returned with a call to
+    `Vix.Vips.Image.header_field_names/1`.
+
+  * Errors removing metadata fields is not propogated
+    into the return for this function. Errors might occur
+    when attempting to remove metadata fields that
+    do not exist in the image.
+
+  ### Returns
+
+    * `image_without_metadata_fields` or
+
+    * raises an exception.
+
+  """
+  @spec remove_metadata!(Vimage.t(), list(binary() | atom())) :: Vimage.t() | no_return()
+  def remove_metadata!(image, fields \\ []) do
+    case remove_metadata(image, fields) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @y_band 1
 
   @doc """
   Create an image gradient of the same size as
   the given image.
 
   The gradient will interpolate from the `start`
-  value to the `end` value. The default `start`
+  value to the `finish` value. The default `start`
   value is black with 100% transparency. The
   default `finish` value is black with 100% opacity.
 
   `start` and `finish` are given as an `rgb` triplet
   or quadruplet list of integers between `0` and `255`.
 
-  """
-  @y_band 1
+  ### Arguments
 
-  def linear_gradient(image, start \\ [0, 0, 0, 0], finish \\ [0, 0, 0, 255]) do
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  * `:start is an `rgb` triplet or quadruplet
+    list of numbers between `0` and `255`.
+
+  * `:finish is an `rgb` triplet or quadruplet
+    list of numbers between `0` and `255`.
+
+  ### Returns
+
+  * `{:ok, gradient_image}` or
+
+  * `{:error, reason}`
+
+  ### Example
+
+      # transparent_black and opaque_black are the default
+      # start and finish values
+      transparent_black = [0, 0, 0, 0]
+      opaque_black = [0, 0, 0, 255]
+      {:ok, gradient} = Image.linear_gradient(image, transparent_black, opaque_black)
+
+  """
+  @start_color [0, 0, 0, 0]
+  @finish_color [0, 0, 0, 255]
+
+  @spec linear_gradient(Vimage.t(), start :: Color.rgb_color(), finish :: Color.rgb_color()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def linear_gradient(%Vimage{} = image, start \\ @start_color, finish \\ @finish_color) do
     use Image.Math
 
     width = width(image)
@@ -1093,24 +1705,72 @@ defmodule Image do
   end
 
   @doc """
+  Create an image gradient of the same size as
+  the given image. Returns the gradient image
+  or raises and exception.
+
+  The gradient will interpolate from the `start`
+  value to the `finish` value. The default `start`
+  value is black with 100% transparency. The
+  default `finish` value is black with 100% opacity.
+
+  `start` and `finish` are given as an `rgb` triplet
+  or quadruplet list of integers between `0` and `255`.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  * `:start is an `rgb` triplet or quadruplet
+    list of numbers between `0` and `255`.
+
+  * `:finish is an `rgb` triplet or quadruplet
+    list of numbers between `0` and `255`.
+
+  ### Returns
+
+  * `gradient_image` or
+
+  * raises an exception.
+
+  ### Example
+
+      # transparent_black and opaque_black are the default
+      # start and finish values
+      transparent_black = [0, 0, 0, 0]
+      opaque_black = [0, 0, 0, 255]
+      gradient = Image.linear_gradient!(image, transparent_black, opaque_black)
+
+  """
+  @spec linear_gradient!(Vimage.t(), start :: Color.rgb_color(), finish :: Color.rgb_color()) ::
+    Vimage.t() | no_return()
+
+  def linear_gradient!(%Vimage{} = image, start \\ @start_color, finish \\ @finish_color) do
+    case linear_gradient(image, start, finish) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Returns the dominant color of an image
   as an RBG triplet value in an integer
   list.
 
-  ## Arguments
+  ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t()`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `options` is a keyword list of options.
     The default is `[]`.
 
-  ## Options
+  ### Options
 
   * `:bins` is an integer number of color
    freuqency bins the image is divided into.
    The default is `10`.
 
-  ## Returns
+  ### Returns
 
   * `[r, g, b]`
 
@@ -1134,19 +1794,79 @@ defmodule Image do
     [trunc(r), trunc(g), trunc(b)]
   end
 
+  @doc """
+  Returns a boolean based upon whether a given
+  image has an alpha band.
+
+  The determination is a heuristic so certainty
+  cannot be guaranteed.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `true` or `false`
+
+  """
+  def has_alpha?(%Vimage{} = image) do
+    Vimage.has_alpha?(image)
+  end
+
+  @doc """
+  Returns the number of operating system
+  threads available for use by `libvips`.
+
+  By default the number of threads will be
+  the number of cores in the system.
+
+  Since image processing is CPU intensive it
+  may be appropriate to reduce the number of
+  threads to be available to reduce the risk
+  of CPU starvation for other workloads.
+
+  See `Image.put_concurrency/1`.
+
+  """
   @spec get_concurrency :: pos_integer()
   def get_concurrency do
     Vix.Vips.concurrency_get()
   end
 
-  @spec put_concurrency(pos_integer()) :: :ok
+  @doc """
+  Sets the number of available threads for use
+  by `libvips`.
+
+  By default this is the same as the number of
+  cores in the system. Reducing this number may
+  prevent CPU starvation for other workloads.
+
+  ### Arguments
+
+  * `concurrency` is a positive integer denoting
+    the maximum number of threads that `libvips` will
+    use for concurrency.
+
+  ### Returns
+
+  * `{:ok, updated_concurrency}`
+
+  """
+  @spec put_concurrency(pos_integer()) :: {:ok, pos_integer()}
   def put_concurrency(concurrency) when is_integer(concurrency) and concurrency > 0 do
-    Vix.Vips.concurrency_set(concurrency)
+    :ok = Vix.Vips.concurrency_set(concurrency)
+    {:ok, get_concurrency()}
   end
 
+  @doc """
+  Returns the version of `libvips` in
+  operation.
+
+  """
   @spec vips_version :: {:ok, Version.t()}
   def vips_version do
-    Vix.Vips.version
+    Vix.Vips.version()
     |> Version.parse()
   end
 

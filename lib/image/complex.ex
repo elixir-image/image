@@ -1,4 +1,5 @@
 defmodule Image.Complex do
+  @moduledoc false
   # See http://libvips.blogspot.com/2015/11/fancy-transforms.html
 
   alias Vix.Vips.Image, as: Vimage

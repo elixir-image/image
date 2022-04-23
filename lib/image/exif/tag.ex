@@ -1,7 +1,6 @@
 defmodule Image.Exif.Tag do
-  @moduledoc """
-  Parse the different tag type values (strings, unsigned shorts, etc...)
-  """
+  @moduledoc false
+  # Parse the different tag type values (strings, unsigned shorts, etc...)
 
   @max_signed_32_bit_int 2_147_483_647
 

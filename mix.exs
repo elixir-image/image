@@ -49,6 +49,7 @@ defmodule Image.MixProject do
       {:nx, "~> 0.1", optional: true},
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
       {:benchee, "~> 1.0", only: :dev, runtime: false, optional: true},
+      {:ex_doc, "~> 0.18", only: [:release, :dev]},
 
       # Only used for benchmarking
       {:mogrify, "~> 0.9.1", only: :dev, optional: true}
@@ -66,7 +67,7 @@ defmodule Image.MixProject do
         "mix.exs",
         "README*",
         "CHANGELOG*",
-        "LICENSE*",
+        "LICENSE*"
       ]
     ]
   end
@@ -92,14 +93,21 @@ defmodule Image.MixProject do
         "CHANGELOG.md"
       ],
       formatters: ["html"],
+      groups_for_modules: groups_for_modules(),
       skip_undefined_reference_warnings_on: ["changelog", "CHANGELOG.md"]
     ]
   end
 
-  defp preferred_cli_env() do
+  defp groups_for_modules do
     [
-
+      Options: ~r/Image.Options.*/,
+      Exif: ~r/Image.Exif.*/,
+      Xmp: ~r/Image.Xmp/
     ]
+  end
+
+  defp preferred_cli_env() do
+    []
   end
 
   def aliases do
