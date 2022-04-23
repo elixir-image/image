@@ -1871,7 +1871,7 @@ defmodule Image do
   @spec put_concurrency(pos_integer()) :: {:ok, pos_integer()}
   def put_concurrency(concurrency) when is_integer(concurrency) and concurrency > 0 do
     :ok = Vix.Vips.concurrency_set(concurrency)
-    {:ok, get_concurrency()}
+    get_concurrency()
   end
 
   @doc """
