@@ -28,15 +28,18 @@ Currently `Image` supports:
       border: 3px solid #FF1493;
       display: flex;
       flex-flow: column;
-      padding: 5px;
+      padding: 0;
       max-width: 220px;
       margin: auto;
+      width: 200px;
+      height: 200px;
   }
 
   img {
       width: 200px;
       height: 200px;
-      padding: 1em
+      padding: 0;
+      margin: 0
   }
 
   figcaption {
@@ -59,6 +62,12 @@ Currently `Image` supports:
   <figure>
       <img src="/unknown.jpg" alt="Another one">
       <figcaption>Another one</figcaption>
+  </figure>
+</div>
+<div class="column">
+  <figure>
+      <img src="/unknown.jpg" alt="Another also">
+      <figcaption>Another too</figcaption>
   </figure>
 </div>
 </div>
