@@ -8,9 +8,64 @@ In a very simple image resizing benchmark, `Image` is approximately 2 to 3 times
 
 Currently `Image` supports:
 
+### Image test
+
+<style>
+  .column {
+    float: left;
+    width: 33.33%;
+    padding: 5px;
+  }
+
+  /* Clear floats after image containers */
+  .row::after {
+    content: "";
+    clear: both;
+    display: table;
+  }
+
+  figure {
+      border: 3px solid #FF1493;
+      display: flex;
+      flex-flow: column;
+      padding: 5px;
+      max-width: 220px;
+      margin: auto;
+  }
+
+  img {
+      width: 200px;
+      height: 200px;
+      padding: 1em
+  }
+
+  figcaption {
+      background-color: #222;
+      color: #fff;
+      font: smaller sans-serif;
+      padding: 3px;
+      text-align: center;
+  }
+</style>
+
+<div class="row">
+<div class="column">
+  <figure>
+      <img src="/unknown.jpg" alt="Elephant at sunset">
+      <figcaption>An elephant at sunset</figcaption>
+  </figure>
+</div>
+<div class="column">
+  <figure>
+      <img src="/unknown.jpg" alt="Another one">
+      <figcaption>Another one</figcaption>
+  </figure>
+</div>
+</div>
+
 ### Currently supported
 
-* [*] Math operators (`+`, `-`, `/`, `*`, `**`) and functions (`cos`, `sin`) for images and scalars/integers
+* [*] Math operators (`+`, `-`, `/`, `**`) and functions (`cos`, `sin`) for images, constants and vectors
 * [*] Flip
 * [*] Rotate
 * [*] Ripple filter
@@ -36,31 +91,21 @@ It is the intention of `Image` to bring the power of `libvips` to Elixir develop
 
 ### GLib Debug Output
 
-At the bottom of the stack, `libvips` is a `C` library that actually performs the image manipulation and thats what provides the speed, memory efficiency and functionality. `libvips` used the [GLib](https://docs.gtk.org/glib/) library which has configurable debug output. This output depends on the setting of the environment variable `G_DEBUG`.  The initial value will depend on the installation method of `libvips` for a given system. It can be changed by setting the `G_DEBUG` environment variable to one of the following:
+The platform upon which `Image` and `Vix` stand is [libvips](https://www.libvips.org), a `C` library that actually performs the image manipulation. Its `libvips` that delivers the speed, memory efficiency and functionality.
 
-fatal-warnings
-  Causes GLib to abort the program at the first call to g_warning() or g_critical().
+`libvips` uses the [GLib](https://docs.gtk.org/glib/) library which has configurable debug output. This output depends on the setting of the environment variable `G_DEBUG`.  The initial value will depend on the installation method of `libvips` for a given system. It can be changed by setting the `G_DEBUG` environment variable to one of the following:
 
-fatal-criticals
-  Causes GLib to abort the program at the first call to g_critical().
+* **fatal-warnings** which causes GLib to abort the operation at the first call to g_warning() or g_critical().
 
-gc-friendly
-  Newly allocated memory that isn't directly initialized, as well as
-  memory being freed will be reset to 0. The point here is to allow memory
-  checkers and similar programs that use Boehm GC alike algorithms to produce
-  more accurate results.
+* **fatal-criticals** causes GLib to abort the operation at the first call to g_critical().
 
-resident-modules
-  All modules loaded by GModule will be made resident. This can be
-  useful for tracking memory leaks in modules which are later unloaded;
-  but it can also hide bugs where code is accessed after the module would
-  have normally been unloaded.
+* **gc-friendly** causes newly allocated memory that isn't directly initialized, as well as memory being freed to be reset to 0. The point here is to allow memory checkers and similar programs that use Boehm GC alike algorithms to produce more accurate results.
 
-bind-now-modules
-  All modules loaded by GModule will bind their symbols at load time,
-  even when the code uses %G_MODULE_BIND_LAZY.
+* **resident-modules** causes all modules loaded by GModule will be made resident. This can be useful for tracking memory leaks in modules which are later unloaded; but it can also hide bugs where code is accessed after the module would have normally been unloaded.
 
-For example, to produce debug output for only the most critical issues, set `G_DEBUG` as follows (in bash and compatible shells):
+* **bind-now-modules** causes all modules loaded by GModule to bind their symbols at load time, even when the code uses %G_MODULE_BIND_LAZY.
+
+To produce debug output for only the most critical issues, set `G_DEBUG` as follows (in bash and compatible shells):
 
 ```bash
 export G_DEBUG=fatal-criticals

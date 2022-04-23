@@ -902,21 +902,21 @@ defmodule Image do
 
   def crop(%Vimage{} = image, left, top, width, height)
       when is_box(left, top, width, height) and left < 0 and top > 0 and abs(left) >= width do
-    left = width(image) + left + 1
+    left = width(image) + left
     Operation.extract_area(image, left, top, width, height)
   end
 
   def crop(%Vimage{} = image, left, top, width, height)
       when is_box(left, top, width, height) and left > 0 and top < 0 and abs(top) >= height do
-    top = height(image) + top + 1
+    top = height(image) + top
     Operation.extract_area(image, left, top, width, height)
   end
 
   def crop(%Vimage{} = image, left, top, width, height)
       when is_box(left, top, width, height) and left < 0 and top < 0 and abs(left) >= width and
              abs(top) >= height do
-    left = width(image) + left + 1
-    top = height(image) + top + 1
+    left = width(image) + left
+    top = height(image) + top
     Operation.extract_area(image, left, top, width, height)
   end
 
@@ -1016,12 +1016,9 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def rotate(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
-    options = Keyword.merge(default_rotation_options(), options)
-    Operation.rotate(image, angle, options)
-  end
-
-  defp default_rotation_options do
-    []
+    with {:ok, options} <- Options.Rotate.validate_options(options) do
+      Operation.rotate(image, angle, options)
+    end
   end
 
   @doc """

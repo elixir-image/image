@@ -1,4 +1,9 @@
 defmodule Image.Options.Resize do
+  @moduledoc """
+  Options and option validation for `Image.resize/3`.
+
+  """
+
   alias Image.Options.Crop
   alias Image.Color
 
@@ -39,6 +44,12 @@ defmodule Image.Options.Resize do
 
   @resize Map.keys(@resize_map)
 
+  @doc """
+  Validate the options for `Image.resize/2`.
+
+  See `t:Image.Options.Resize.resize_options/0`.
+
+  """
   def validate_options(options) do
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
       {:error, value} ->
