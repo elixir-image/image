@@ -86,7 +86,7 @@ Currently `Image` supports:
       <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_avatar.png"
       alt="Image.avatar/3">
   </figure>
-  <figcaption>Image.avatar(image, 200) (circular crop, remove metadata)</figcaption>
+  <figcaption>Image.avatar(image, 200)</figcaption>
 </div>
 </div>
 

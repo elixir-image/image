@@ -33,7 +33,7 @@ defmodule Image.Resize.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     validate_path = validate_path("resize/kamchatka_fill.jpg")
 
-    assert :ok = Vimage.write_to_file(resized, out_path)
+    assert {:ok, _image} = Image.write(resized, out_path, quality: 50)
 
     assert_files_equal(out_path, validate_path)
   end
@@ -48,7 +48,6 @@ defmodule Image.Resize.Test do
     validate_path = validate_path("resize/kamchatka_fill_low.jpg")
 
     assert :ok = Vimage.write_to_file(resized, out_path)
-    Vimage.write_to_file(resized, validate_path)
 
     assert_files_equal(out_path, validate_path)
   end
