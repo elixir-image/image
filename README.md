@@ -29,15 +29,16 @@ Currently `Image` supports:
       display: flex;
       flex-flow: column;
       padding: 0;
-      max-width: 220px;
+      width: 200px;
+      height: 200px;
       margin: auto;
       width: 200px;
       height: 200px;
   }
 
   img {
-      width: 200px;
-      height: 200px;
+      max-width: 200px;
+      max-height: 200px;
       padding: 0;
       margin: 0
   }
@@ -46,6 +47,7 @@ Currently `Image` supports:
       background-color: #222;
       color: #fff;
       font: smaller sans-serif;
+      margin-top: 10px;
       padding: 3px;
       text-align: center;
   }
@@ -54,21 +56,37 @@ Currently `Image` supports:
 <div class="row">
 <div class="column">
   <figure>
-      <img src="/unknown.jpg" alt="Elephant at sunset">
-      <figcaption>An elephant at sunset</figcaption>
+      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_crop_none.jpg" alt="Image.resize/3">
   </figure>
+  <figcaption>Image.resize(image, 200, crop: :none)</figcaption>
 </div>
 <div class="column">
   <figure>
-      <img src="/unknown.jpg" alt="Another one">
-      <figcaption>Another one</figcaption>
+      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_crop_attention.jpg" alt="Image.resize/3">
   </figure>
+  <figcaption>Image.resize(image, 200, crop: :attention)</figcaption>
 </div>
 <div class="column">
   <figure>
-      <img src="/unknown.jpg" alt="Another also">
-      <figcaption>Another too</figcaption>
+      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_crop_550_320_200_200.jpg" alt="Image.crop/5">
   </figure>
+  <figcaption>Image.crop!(image, 550, 320, 200, 200)</figcaption>
+</div>
+</div>
+
+<div class="row">
+<div class="column">
+  <figure>
+      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_rounded.png" alt="Image.rounded/2">
+  </figure>
+  <figcaption>image |> Image.resize!(200, crop: :attention) |> Image.rounded!()</figcaption>
+</div>
+<div class="column">
+  <figure>
+      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_avatar.png"
+      alt="Image.avatar/3">
+  </figure>
+  <figcaption>Image.avatar(image, 200) (circular crop, remove metadata)</figcaption>
 </div>
 </div>
 
