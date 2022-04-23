@@ -18,7 +18,7 @@ defmodule Image.Avatar.Test do
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     validate_path = validate_path("Kip_small_avatar.png")
 
-    assert {:ok, _image} = Image.write(avatar, out_path, quality: 50)
+    assert {:ok, _image} = Image.write(avatar, validate_path, quality: 50)
 
     assert_files_equal(out_path, validate_path)
   end
