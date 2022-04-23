@@ -2,7 +2,7 @@ defmodule Image do
   alias Vix.Vips.{Operation, MutableImage}
   alias Vix.Vips.Image, as: Vimage
 
-  alias Image.{Exif, Xmp, Complex, Options, Color}
+  alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation}
 
   @default_round_corner_radius 50
   @default_avatar_size 180
@@ -742,10 +742,15 @@ defmodule Image do
     end
   end
 
-  @spec resize(Vimage.t() | Path.t(), width :: pos_integer(), options :: Options.Resize.resize_options()) ::
+  @spec resize(
+          Vimage.t() | Path.t(),
+          width :: pos_integer(),
+          options :: Options.Resize.resize_options()
+        ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def resize(image_or_path, dimensions, options) when is_binary(image_or_path) and is_binary(dimensions) do
+  def resize(image_or_path, dimensions, options)
+      when is_binary(image_or_path) and is_binary(dimensions) do
     with {:ok, options} <- Options.Resize.validate_options(options),
          {:ok, width, options} <- Options.Resize.validate_dimensions(dimensions, options) do
       resize(image_or_path, width, options)
@@ -1161,132 +1166,6 @@ defmodule Image do
   end
 
   @doc """
-  Convert image to polar coordinates.
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`.
-
-  ### Returns
-
-  * `{:ok, image_in_polar_coordinates}` or
-
-  * `{:error, reason}`
-
-  """
-  @spec to_polar_coordinates!(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def to_polar_coordinates(%Vimage{} = image) do
-    use Image.Math
-
-    width = width(image)
-    height = height(image)
-
-    {:ok, xy} = Operation.xyz(width, height)
-    xy = xy - [width / 2.0, height / 2.0]
-
-    scale = min(width, height) / width
-    xy = xy * 2.0 / scale
-
-    {:ok, index} = Complex.polar(xy)
-    index = index * [1, height / 360.0]
-
-    Operation.mapim(image, index)
-  end
-
-  @doc """
-  Convert image to polar coordinates returning
-  an image or raising an exception.
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`.
-
-  ### Returns
-
-  * `image_in_polar_coordinates` or
-
-  * raises an exception.
-
-  """
-  @spec to_polar_coordinates!(Vimage.t()) :: Vimage.t() | no_return()
-  def to_polar_coordinates!(%Vimage{} = image) do
-    case to_polar_coordinates(image) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  @doc """
-  Convert image to rectangular coordinates.
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`.
-
-  ## Notes
-
-  Roundtrip to polar and back to rectangular
-  coordinates displays some image distortion,
-  likely due to rounding errors in float
-  arithmetic. Further study is required.
-
-  ### Returns
-
-  * `{:ok, image_in_rectuangular_coordinates}` or
-
-  * `{:error, reason}`
-
-  """
-  @spec to_rectangular_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def to_rectangular_coordinates(%Vimage{} = image) do
-    use Image.Math
-
-    width = width(image)
-    height = height(image)
-
-    {:ok, xy} = Operation.xyz(width, height)
-    xy = xy * [1, 360.0 / height]
-
-    {:ok, index} = Complex.rectangular(xy)
-    scale = min(width, height) / width
-
-    index = index * scale / 2.0
-    index = index + [width / 2.0, height / 2.0]
-
-    Operation.mapim(image, index)
-  end
-
-  @doc """
-  Convert image to rectangular coordinates
-  returning an image or raising an exception.
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`.
-
-  ## Notes
-
-  Roundtrip to polar and back to rectangular
-  coordinates displays some image distortion,
-  likely due to rounding errors in float
-  arithmetic. Further study is required.
-
-  ### Returns
-
-  * `image_in_rectuangular_coordinates` or
-
-  * raises an exception.
-
-  """
-  @spec to_rectangular_coordinates!(Vimage.t()) :: Vimage.t() | no_return()
-  def to_rectangular_coordinates!(%Vimage{} = image) do
-    case to_rectangular_coordinates(image) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  @doc """
   Adds a concentric ripple effect to an image.
 
   ### Arguments
@@ -1591,7 +1470,7 @@ defmodule Image do
 
   """
   @spec remove_metadata(Vimage.t(), list(binary() | atom())) ::
-      {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def remove_metadata(image, fields \\ [])
 
@@ -1712,7 +1591,7 @@ defmodule Image do
   @finish_color [0, 0, 0, 255]
 
   @spec linear_gradient(Vimage.t(), start :: Color.rgb_color(), finish :: Color.rgb_color()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def linear_gradient(%Vimage{} = image, start \\ @start_color, finish \\ @finish_color) do
     use Image.Math
@@ -1771,7 +1650,7 @@ defmodule Image do
 
   """
   @spec linear_gradient!(Vimage.t(), start :: Color.rgb_color(), finish :: Color.rgb_color()) ::
-    Vimage.t() | no_return()
+          Vimage.t() | no_return()
 
   def linear_gradient!(%Vimage{} = image, start \\ @start_color, finish \\ @finish_color) do
     case linear_gradient(image, start, finish) do
@@ -1820,6 +1699,299 @@ defmodule Image do
     b = band * bin_size + bin_size / 2
 
     [trunc(r), trunc(g), trunc(b)]
+  end
+
+  @doc """
+  Converts an impage to the given colorspace.
+
+  Available colorspaces are returned from
+  `Image.Interpretation.known_interpretations/0`.
+
+  ### Arguments
+
+  * `image` is any `Vix.Vips.Image.t/0`
+
+  * `colorspace` is any known colorspace
+
+  ### Returns
+
+  * `{;ok, image_in_new_colorspace}` or
+
+  * `{:error, reason}`
+
+  ### Example
+
+      Image.to_colorspace(image, :bw)
+
+  """
+  @spec to_colorspace(Vimage.t(), Interpretation.interpretation()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def to_colorspace(%Vimage{} = image, colorspace) do
+    with {:ok, colorspace} <- Interpretation.vips_interpretation(colorspace) do
+      Vix.Vips.Operation.colourspace(image, colorspace)
+    end
+  end
+
+  @doc """
+  Converts an impage to the given colorspace returning
+  an image or raising an exception.
+
+  Available colorspaces are returned from
+  `Image.Interpretation.known_interpretations/0`.
+
+  ### Arguments
+
+  * `image` is any `Vix.Vips.Image.t/0`
+
+  * `colorspace` is any known colorspace
+
+  ### Returns
+
+  * `image_in_new_colorspace` or
+
+  * raises an exception
+
+  ### Example
+
+      Image.to_colorspace!(image, :bw)
+
+  """
+  @spec to_colorspace!(Vimage.t(), Interpretation.interpretation()) ::
+          Vimage.t() | no_return()
+
+  def to_colorspace!(%Vimage{} = image, colorspace) do
+    case to_colorspace(image, colorspace) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Convert image to polar coordinates.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, image_in_polar_coordinates}` or
+
+  * `{:error, reason}`
+
+  """
+  @spec to_polar_coordinates!(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def to_polar_coordinates(%Vimage{} = image) do
+    use Image.Math
+
+    width = width(image)
+    height = height(image)
+
+    xy = Operation.xyz!(width, height)
+    xy = xy - [width / 2.0, height / 2.0]
+
+    scale = min(width, height) / width
+    xy = xy * 2.0 / scale
+
+    {:ok, index} = Complex.polar(xy)
+    index = index * [1.0, height / 360.0]
+
+    Operation.mapim(image, index)
+  end
+
+  @doc """
+  Convert image to polar coordinates returning
+  an image or raising an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `image_in_polar_coordinates` or
+
+  * raises an exception.
+
+  """
+  @spec to_polar_coordinates!(Vimage.t()) :: Vimage.t() | no_return()
+  def to_polar_coordinates!(%Vimage{} = image) do
+    case to_polar_coordinates(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Convert image to rectangular coordinates.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ## Notes
+
+  Roundtrip to polar and back to rectangular
+  coordinates displays some image distortion,
+  likely due to rounding errors in float
+  arithmetic. Further study is required.
+
+  ### Returns
+
+  * `{:ok, image_in_rectangular_coordinates}` or
+
+  * `{:error, reason}`
+
+  """
+  @spec to_rectangular_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def to_rectangular_coordinates(%Vimage{} = image) do
+    use Image.Math
+
+    width = width(image)
+    height = height(image)
+
+    xy = Operation.xyz!(width, height)
+    xy = xy * [1.0, 360.0 / height]
+
+    {:ok, index} = Complex.rectangular(xy)
+    scale = min(width, height) / width
+
+    index = index * scale / 2.0
+    index = index + [width / 2.0, height / 2.0]
+
+    Operation.mapim(image, index)
+  end
+
+  @doc """
+  Convert image to rectangular coordinates
+  returning an image or raising an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ## Notes
+
+  Roundtrip to polar and back to rectangular
+  coordinates displays some image distortion,
+  likely due to rounding errors in float
+  arithmetic. Further study is required.
+
+  ### Returns
+
+  * `image_in_rectuangular_coordinates` or
+
+  * raises an exception.
+
+  """
+  @spec to_rectangular_coordinates!(Vimage.t()) :: Vimage.t() | no_return()
+  def to_rectangular_coordinates!(%Vimage{} = image) do
+    case to_rectangular_coordinates(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Returns the fast fourier transform (fft) of
+  the given image.
+
+  ### Arguments
+
+  * `image` is any `Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * `{:ok, fft_image}` or
+
+  * `{:error, reason}`
+
+  ### Example
+
+      Image.fft(image)
+
+  """
+  @spec fft(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def fft(%Vimage{} = image) do
+    image
+    |> to_colorspace!(:bw)
+    |> Operation.fwfft!()
+    |> Operation.wrap!()
+    |> Operation.abs()
+  end
+
+  @doc """
+  Returns the fast fourier transform (fft) of
+  the given image returning an image or
+  raising an exception.
+
+  ### Arguments
+
+  * `image` is any `Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * `fft_image` or
+
+  * raises an exception
+
+  ### Example
+
+      Image.fft!(image)
+
+  """
+  @spec fft!(Vimage.t()) :: Vimage.t() | no_return()
+  def fft!(%Vimage{} = image) do
+    case fft(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  # See https://stackoverflow.com/questions/52474645/improve-a-picture-to-detect-the-characters-within-an-area/52502597#52502597
+
+  @doc """
+  Attempts top determine the distance
+  from the perpendicular for a given image.
+
+  The principle is that rotating the image
+  by the skew angle should return an image
+  in the upright position.
+
+  The results are very image sensitive and
+  perfect results are not guaranteed.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * `skew_angle` which is an float number
+    of degrees the image is tilted from the
+    upright.
+
+  #### Example
+
+      skew_angle = skew_angle(image)
+      Image.rotate(image, skew_angle)
+
+  """
+  def skew_angle(%Vimage{} = image) do
+    {_columns, rows, []} =
+      image
+      |> fft!()
+      |> to_rectangular_coordinates!()
+      |> Operation.project!()
+
+    {_v, _x, y} =
+      rows
+      |> Operation.gaussblur!(10)
+      |> Image.Math.maxpos()
+
+    # and turn to an angle in degrees we should counter-rotate by
+    270 - 360 * y / height(rows)
   end
 
   @doc """

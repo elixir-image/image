@@ -1,5 +1,4 @@
 defmodule Image.Options.Crop do
-
   @typedoc """
   Options applicable to cropping an
   image.

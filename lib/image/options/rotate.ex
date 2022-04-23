@@ -44,7 +44,7 @@ defmodule Image.Options.Rotate do
   end
 
   defp validate_option({:background, [r, g, b]}, options)
-      when is_color(r) and is_color(g) and is_color(b) do
+       when is_color(r) and is_color(g) and is_color(b) do
     {:cont, options}
   end
 
@@ -53,7 +53,7 @@ defmodule Image.Options.Rotate do
   end
 
   defp validate_option({option, value}, options)
-      when option in @valid_options and is_number(value) do
+       when option in @valid_options and is_number(value) do
     {:cont, options}
   end
 

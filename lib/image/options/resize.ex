@@ -143,7 +143,7 @@ defmodule Image.Options.Resize do
         {:ok, width, Map.put(options, :height, height)}
 
       _other ->
-        {:error, "Invalid dimensions. Found #{inspect dimensions}"}
+        {:error, "Invalid dimensions. Found #{inspect(dimensions)}"}
     end
   end
 

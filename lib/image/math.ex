@@ -166,14 +166,14 @@ defmodule Image.Math do
   end
 
   @spec pow(Vimage.t(), Vimage.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def pow(%Vimage{} = image, %Vimage{} = image2) do
     Operation.math2(image, image2, :VIPS_OPERATION_MATH2_POW)
   end
 
   @spec pow(Vimage.t(), number()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def pow(%Vimage{} = image, value) when is_number(value) do
     Operation.math2_const(image, :VIPS_OPERATION_MATH2_POW, [value])
@@ -297,84 +297,84 @@ defmodule Image.Math do
   end
 
   @spec less_than(Vimage.t(), Vimage.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def less_than(%Vimage{} = image, %Vimage{} = other) do
     Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_LESS)
   end
 
   @spec less_than(Vimage.t(), Image.pixel()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def less_than(%Vimage{} = image, other) when is_pixel(other) do
     Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_LESS, List.wrap(other))
   end
 
   @spec less_than_or_equal(Vimage.t(), Vimage.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def less_than_or_equal(%Vimage{} = image, %Vimage{} = other) do
     Vix.Vips.Operation.relational(image, :VIPS_OPERATION_RELATIONAL_LESSEQ, List.wrap(other))
   end
 
   @spec less_than_or_equal(Vimage.t(), Image.pixel()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def less_than_or_equal(%Vimage{} = image, other) when is_pixel(other) do
     Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_LESSEQ, List.wrap(other))
   end
 
   @spec greater_than(Vimage.t(), Vimage.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def greater_than(%Vimage{} = image, %Vimage{} = other) do
     Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_MORE)
   end
 
   @spec greater_than(Vimage.t(), Image.pixel()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def greater_than(%Vimage{} = image, other) when is_pixel(other) do
     Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_MORE, List.wrap(other))
   end
 
   @spec greater_than_or_equal(Vimage.t(), Vimage.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def greater_than_or_equal(%Vimage{} = image, %Vimage{} = other) do
     Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_MOREEQ)
   end
 
   @spec greater_than_or_equal(Vimage.t(), Image.pixel()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def greater_than_or_equal(%Vimage{} = image, other) when is_pixel(other) do
     Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_MOREEQ, List.wrap(other))
   end
 
   @spec equal(Vimage.t(), Vimage.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def equal(%Vimage{} = image, %Vimage{} = other) do
     Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_EQUAL)
   end
 
   @spec equal(Vimage.t(), Image.pixel()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def equal(%Vimage{} = image, other) when is_pixel(other) do
     Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_EQUAL, List.wrap(other))
   end
 
   @spec not_equal(Vimage.t(), Vimage.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def not_equal(%Vimage{} = image, %Vimage{} = other) do
     Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_NOTEQ)
   end
 
   @spec not_equal(Vimage.t(), Image.pixel()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def not_equal(%Vimage{} = image, other) when is_pixel(other) do
     Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_NOTEQ, List.wrap(other))
@@ -466,7 +466,7 @@ defmodule Image.Math do
     end
   end
 
- @spec add!(Image.pixel(), Vimage.t()) :: Vimage.t() | no_return()
+  @spec add!(Image.pixel(), Vimage.t()) :: Vimage.t() | no_return()
   def add!(value, %Vimage{} = image) do
     case add(image, value) do
       {:ok, image} -> image
@@ -534,7 +534,7 @@ defmodule Image.Math do
     Kernel./(a, b)
   end
 
- @spec pow!(Vimage.t(), number()) :: Vimage.t() | no_return()
+  @spec pow!(Vimage.t(), number()) :: Vimage.t() | no_return()
   def pow!(%Vimage{} = image, value) do
     case pow(image, value) do
       {:ok, image} -> image
@@ -555,7 +555,7 @@ defmodule Image.Math do
     end
   end
 
- @spec sin!(Vimage.t()) :: Vimage.t() | no_return()
+  @spec sin!(Vimage.t()) :: Vimage.t() | no_return()
   def sin!(%Vimage{} = image) do
     case sin(image) do
       {:ok, image} -> image
@@ -582,8 +582,8 @@ defmodule Image.Math do
   * `{:ok, maximum, x_position, y_position}`
 
   """
-  @spec maxpos(Vimage.t(), Keyword.t) ::
-    {:ok, maximum :: float(), x_positiom :: integer(), y_position :: integer()}
+  @spec maxpos(Vimage.t(), Keyword.t()) ::
+          {:ok, maximum :: float(), x_positiom :: integer(), y_position :: integer()}
 
   def maxpos(%Vimage{} = image, options \\ []) do
     size = Keyword.get(options, :size, 10)
@@ -611,8 +611,8 @@ defmodule Image.Math do
   * `{:ok, minimum, x_position, y_position}`
 
   """
-  @spec minpos(Vimage.t(), Keyword.t) ::
-    {:ok, minimium :: float(), x_positiom :: integer(), y_position :: integer()}
+  @spec minpos(Vimage.t(), Keyword.t()) ::
+          {:ok, minimium :: float(), x_positiom :: integer(), y_position :: integer()}
 
   def minpos(%Vimage{} = image, options \\ []) do
     size = Keyword.get(options, :size, 10)

@@ -17,49 +17,62 @@ defmodule Image.Complex do
     complex(image, &Operation.complex(&1, :VIPS_OPERATION_COMPLEX_RECT))
   end
 
-  defp complex(%Vimage{} = image, fun) do
-    bands = Vimage.bands(image)
-    format = Vimage.format(image)
-
-    with {:ok, image} <- to_complex(image, format, bands),
-         {:ok, image} <- fun.(image) do
-      uncomplex(image, format, Vimage.format(image), bands)
+  def rectangular!(%Vimage{} = image) do
+    case rectangular(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
     end
   end
+
+  defp complex(%Vimage{} = image, fun) do
+    bands = Vimage.bands(image)
+    original_format = Vimage.format(image)
+
+    with {:ok, image} <- to_complex(image, original_format, bands),
+         {:ok, image} <- fun.(image) do
+      new_format = Vimage.format(image)
+      from_complex(image, original_format, new_format, bands)
+    end
+  end
+
+  # Convert to complex
 
   defp to_complex(%Vimage{} = _image, format, bands)
        when not complex(format) and not even(bands) do
     {:error, "Not an even number of bands. Found: #{inspect(bands)}"}
   end
 
-  defp to_complex(%Vimage{} = image, format, bands)
-       when not complex(format) and not float_format(format) do
-    {:ok, image} = Operation.cast(image, :VIPS_FORMAT_FLOAT)
+  # If its already complex, return it
+  defp to_complex(%Vimage{} = image, format, _bands) when complex(format) do
+    {:ok, image}
+  end
+
+  defp to_complex(%Vimage{} = image, :VIPS_FORMAT_FLOAT, bands) do
     Operation.copy(image, format: :VIPS_FORMAT_COMPLEX, bands: div(bands, 2))
   end
 
-  defp to_complex(%Vimage{} = image, format, bands) when format === :VIPS_FORMAT_DOUBLE do
+  defp to_complex(%Vimage{} = image, :VIPS_FORMAT_DOUBLE, bands) do
     Operation.copy(image, format: :VIPS_FORMAT_DPCOMPLEX, bands: div(bands, 2))
   end
 
   defp to_complex(%Vimage{} = image, _format, bands) do
-    Operation.copy(image, format: :VIPS_FORMAT_COMPLEX, bands: div(bands, 2))
+    {:ok, image} = Operation.cast(image, :VIPS_FORMAT_FLOAT)
+    to_complex(image, Vimage.format(image), bands)
   end
 
-  defp uncomplex(image, original_format, format, bands)
-       when not complex(original_format) and format === :VIPS_FORMAT_DPCOMPLEX do
+  # Convert from complex
+
+  defp from_complex(image, original_format, :VIPS_FORMAT_DPCOMPLEX, bands)
+       when not complex(original_format) do
     Operation.copy(image, format: :VIPS_FORMAT_DOUBLE, bands: bands)
   end
 
-  defp uncomplex(image, original_format, _format, bands) when not complex(original_format) do
+  defp from_complex(image, original_format, _new_format, bands)
+       when not complex(original_format) do
     Operation.copy(image, format: :VIPS_FORMAT_FLOAT, bands: bands)
   end
 
-  defp uncomplex(image, original_format, format, bands) when not complex(original_format) do
-    Operation.copy(image, format: format, bands: bands)
-  end
-
-  defp uncomplex(image, _original_format, _format, _bands) do
+  defp from_complex(image, _original_format, _format, _bands) do
     {:ok, image}
   end
 end
