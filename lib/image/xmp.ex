@@ -35,7 +35,7 @@ defmodule Image.Xmp do
     |> zip(:copyright)
   end
 
-  def zip(map, key) do
+  defp zip(map, key) do
     case Map.fetch(map, key) do
       {:ok, value} ->
         zipped = zip(value)

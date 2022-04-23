@@ -1,5 +1,5 @@
 defmodule Image.Test do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import Image.TestSupport
   import Image.Math
   alias Vix.Vips.Operation

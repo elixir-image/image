@@ -11,11 +11,28 @@ defmodule Image do
 
   @copyright_header "exif-ifd0-Copyright"
 
+  @doc """
+  Guards whether the coordinates can be reasonable
+  interpreted as a bounding box.
+
+  """
   defguard is_box(left, top, width, height)
            when is_integer(left) and is_integer(top) and is_integer(width) and is_integer(height) and
                   width > 0 and height > 0
 
+  @doc """
+  Guards whether a number can be reasonable interpreted
+  as a size (as in size of a crop or mask)
+
+  """
   defguard is_size(size) when is_integer(size) and size > 0
+
+  @doc """
+  Guards whether a term might be reasonable interpreted
+  as an image pixel.
+
+  """
+  defguard is_pixel(value) when is_number(value) or is_list(value)
 
   @typedoc """
   The valid rendering intent values. For all
@@ -257,7 +274,7 @@ defmodule Image do
     file.
 
   * `bytes` is the number of bytes in
-    each stream element. The default is #{@default_streaming_bytes}.
+    each stream element. The default is `#{@default_streaming_bytes}`.
 
   ### Returns
 
@@ -493,7 +510,7 @@ defmodule Image do
   end
 
   @doc """
-  Retruns the XMP data for an image as a
+  Returns the XMP data for an image as a
   keyword list.
 
   Only a selected set of XMP data is returned.
@@ -804,7 +821,7 @@ defmodule Image do
     end
   end
 
-  def circular_mask_and_remove_meta(image) do
+  defp circular_mask_and_remove_meta(image) do
     {:ok, image} = circle(image)
     remove_metadata(image)
   end
@@ -1364,7 +1381,7 @@ defmodule Image do
 
   @doc """
   Apply a circular mask to an image
-  returning an image or raising and
+  returning an image or raising an
   exception.
 
   The returned image has an alpha
@@ -1428,7 +1445,8 @@ defmodule Image do
   end
 
   @doc """
-  Apply rounded corners to an image.
+  Apply rounded corners to an image. Returns
+  an image or raises an exception.
 
   ### Arguments
 

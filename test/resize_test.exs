@@ -1,5 +1,5 @@
 defmodule Image.Resize.Test do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import Image.TestSupport
 
   alias Vix.Vips.Image, as: Vimage
