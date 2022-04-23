@@ -7,7 +7,6 @@ defmodule Image do
   @default_round_corner_radius 50
   @default_avatar_size 180
   @alpha_channel 3
-  @default_streaming_bytes 65_536
 
   @doc """
   Guards whether the coordinates can be reasonable
@@ -237,87 +236,6 @@ defmodule Image do
           Vimage.t() | no_return()
 
   def open!(image_path, options \\ []) do
-    case open(image_path, options) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, {reason, image_path}
-    end
-  end
-
-  @doc """
-  Stream an image file for image operations.
-
-  This function returns a `t:Vix.Vips.Image.t/0` that
-  will be streamed when processing the image pipeline.
-  It is *not* an enumerable itself, but it does rely on
-  `File.stream!/3` for the underlying file streaming
-  functionality.
-
-  Most image operations will work on streamed
-  images. However operations which would require
-  "rewinding" the image will not work and will
-  return an error.
-
-  This function is most useful when the image source
-  is an HTTP source (like Amazon S3) or some other
-  API-based service. It allows image process to commence
-  even as the image itself is being downloaded from
-  the remote service.
-
-  Images can also be [streamed on write])() allowing
-  a fully asynchronous image pipeline.
-
-  ### Arguments
-
-  * `path` is the file system path to an image
-    file.
-
-  * `bytes` is the number of bytes in
-    each stream element. The default is `#{@default_streaming_bytes}`.
-
-  ### Returns
-
-  * `{:ok, enumerable_image}` or
-
-  * `{:error, reason}`
-
-  """
-
-  @spec stream(image_path :: Path.t(), streaming_bytes :: pos_integer()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
-
-  def stream(image_path, bytes \\ @default_streaming_bytes) do
-    if File.exists?(image_path) do
-      image_path
-      |> File.stream!([], bytes)
-      |> Vimage.new_from_enum()
-    else
-      {:error, :enoent}
-    end
-  end
-
-  @doc """
-  Streams an image file for image processing
-  returning an image or raising an exception.
-
-  ### Arguments
-
-  * `image_path` is the file system path to an image
-    file.
-
-  * `options` is a keyword list of options.
-    See `Image.stream/2`.
-
-  ### Returns
-
-  * `image` or
-
-  * raises an exception.
-
-  """
-  @spec stream!(image_path :: Path.t(), streaming_bytes :: pos_integer()) ::
-          Vimage.t() | no_return()
-
-  def stream!(image_path, options \\ []) do
     case open(image_path, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, {reason, image_path}
