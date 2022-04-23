@@ -9,8 +9,6 @@ defmodule Image do
   @alpha_channel 3
   @default_streaming_bytes 65_536
 
-  @copyright_header "exif-ifd0-Copyright"
-
   @doc """
   Guards whether the coordinates can be reasonable
   interpreted as a bounding box.
@@ -1396,27 +1394,76 @@ defmodule Image do
     Operation.extract_band(mask, @alpha_channel)
   end
 
-  # In general, keep:
-  # Title
-  # Caption
-  # Copyright
-  # Creator
-  # ? GPS
+  @doc """
+  Minimize metadata by keeping only the artist
+  and copyright (if available).
 
-  # Remove
-  # xmp data
-  # iptc data
+  Removing metadata from an image can greatly reduce
+  the overall size of an image. The proprtional
+  reduction is most noticable with smaller images
+  which are very common in web applications.
 
-  def add_minimal_exif(%Vimage{} = image) do
+  Removing all metadata is a common option however
+  with intellectual property concerns in mind
+  this function will keep the artist and
+  copyright fields if they exist in the original
+  image.
+
+  On a 1000x500px image exported from Adobe Lightroom
+  with metadata intact, removing the metadata
+  results in am approximately 50% saving in file
+  size due to the removal of most EXIF and all
+  IPTC and XMP metadata.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * `{:ok, image_with_minimal_metadata}` or
+
+  * `{:error, reason}`
+
+  """
+  @spec minimize_metadata(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def minimize_metadata(%Vimage{} = image) do
     with {:ok, _exif} <- exif(image),
-         # {:ok, xmp} <- xmp(image),
          {:ok, image} <- remove_metadata(image) do
+      {:ok, artist} = Exif.get_metadata(image, :artist)
+      {:ok, copyright} = Exif.get_metadata(image, :copyright)
+
       Vimage.mutate(image, fn mut_img ->
         :ok = MutableImage.set(mut_img, "exif-data", :VipsBlob, <<0>>)
 
-        :ok =
-          MutableImage.set(mut_img, @copyright_header, :gchararray, "Copyright (c) 2008 Kip Cole")
+        Exif.put_metadata(mut_img, :copyright, copyright)
+        Exif.put_metadata(mut_img, :artist, artist)
       end)
+    end
+  end
+
+  @doc """
+  Minimize metadata by keeping only the artist
+  and copyright (if available).
+
+  See also `Image.minimize_metadata/1`.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * ` image_with_minimal_metadata` or
+
+  * raises an exception.
+
+  """
+  @spec minimize_metadata!(image :: Vimage.t()) :: Vimage.t() | no_return()
+  def minimize_metadata!(%Vimage{} = image) do
+    case minimize_metadata(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -1429,9 +1476,10 @@ defmodule Image do
   @metadata_names Map.keys(@metadata_fields)
 
   @doc """
-  Remove metadata from an image.
+  Remove metadata from an image returning
+  an updated image or raising an exception.
 
-  This can significant;y reduce the size of
+  This can significantly reduce the size of
   an image file.
 
   ### Arguments

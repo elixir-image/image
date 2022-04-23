@@ -134,6 +134,7 @@ defmodule Image.Options.Resize do
     "Invalid option or option value: #{inspect(option)}"
   end
 
+  @doc false
   def validate_dimensions(dimensions, options) do
     case dimensions(String.split(dimensions, "x")) do
       {width, nil} when is_size(width) ->

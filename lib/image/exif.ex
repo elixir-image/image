@@ -43,6 +43,32 @@ defmodule Image.Exif do
   @type value :: binary()
   @type context :: {value(), non_neg_integer(), (any() -> non_neg_integer())}
 
+  @copyright_header "exif-ifd0-Copyright"
+  @artist_header "exif-ifd0-Artist"
+
+  def field(:artist), do: @artist_header
+  def field(:copyright), do: @copyright_header
+  def field(other), do: to_string(other)
+
+  @doc false
+  def get_metadata(image, header) do
+    case Vix.Vips.Image.header_value(image, field(header)) do
+      {:ok, value} -> {:ok, value}
+      {:error, "No such field"} -> {:ok, nil}
+    end
+  end
+
+  @doc false
+  def put_metadata(_mut_img, _field, nil), do: :ok
+  def put_metadata(_mut_img, _field, ""), do: :ok
+  def put_metadata(mut_img, field, value) do
+    Vix.Vips.MutableImage.set(mut_img, field(field), :gchararray, value)
+  end
+
+  @doc """
+  Extract EXIF data from a binary blob.
+
+  """
   def extract_exif(exif) do
     <<byte_order::16, forty_two::binary-size(2), offset::binary-size(4), _rest::binary>> = exif
 

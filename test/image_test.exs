@@ -19,12 +19,13 @@ defmodule Image.Test do
     {:ok, input_info} = File.stat(image)
     {:ok, kip} = Vimage.new_from_file(image)
 
-    {:ok, minimised} = Image.add_minimal_exif(kip)
+    {:ok, minimised} = Image.minimize_metadata(kip)
 
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     validate_path = validate_path("Kip_small_with_simple_exif.jpg")
 
     assert :ok = Vimage.write_to_file(minimised, out_path)
+
     {:ok, output_info} = File.stat(validate_path)
 
     assert_files_equal(out_path, validate_path("Kip_small_with_simple_exif.jpg"))
