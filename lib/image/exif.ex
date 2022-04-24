@@ -61,6 +61,7 @@ defmodule Image.Exif do
   @doc false
   def put_metadata(_mut_img, _field, nil), do: :ok
   def put_metadata(_mut_img, _field, ""), do: :ok
+
   def put_metadata(mut_img, field, value) do
     Vix.Vips.MutableImage.set(mut_img, field(field), :gchararray, value)
   end

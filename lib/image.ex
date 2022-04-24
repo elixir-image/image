@@ -4,9 +4,21 @@ defmodule Image do
 
   alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation}
 
+  # Default radius of rounded corners
   @default_round_corner_radius 50
+
+  # Standard size of an avatar image, at least for
+  # this library
   @default_avatar_size 180
+
+  # The image band that typically is the
+  # alpha (transparency) band
   @alpha_channel 3
+
+  # if the ratio between width and height differs
+  # by less than this amount, consider the image
+  # to be square
+  @square_when_ratio_less_than 0.0
 
   @doc """
   Guards whether the coordinates can be reasonable
@@ -98,6 +110,12 @@ defmodule Image do
 
   """
   @type pixel :: [float()]
+
+  @typedoc """
+  Image orientation.
+
+  """
+  @type orientation :: :landscape | :portrait | :square
 
   @doc """
   Opens an image file for image processing.
@@ -2023,6 +2041,50 @@ defmodule Image do
   def put_concurrency(concurrency) when is_integer(concurrency) and concurrency > 0 do
     :ok = Vix.Vips.concurrency_set(concurrency)
     get_concurrency()
+  end
+
+  @doc """
+  Returns the orientation of an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  * `options` is a keyword list of options
+
+  ### Options
+
+  * `:square_ratio` indicates when an image
+    is to be considered square. It is a floating
+    point indicator of the ratio between the width
+    and height below which the image is considered
+    square. The default is `0.0` meaning that the
+    dimensions must be exactly equal in order for
+    the image to be considered square.
+
+  ### Returns
+
+  * Either `:landscape`, `:portrait` or `:square`.
+
+  ### Example
+
+      iex> puppy = Image.open!(Path.expand("images/puppy.webp"))
+      iex> Image.orientation(puppy, square_ratio: 0.05)
+      :landscape
+
+  """
+  @spec orientation(Vimage.t()) :: orientation()
+  def orientation(%Vimage{} = image, options \\ []) do
+    square_ratio = Keyword.get(options, :square_ratio, @square_when_ratio_less_than)
+    width = Image.width(image)
+    height = Image.height(image)
+    ratio = abs(1.0 - width / height)
+
+    cond do
+      ratio < square_ratio -> :square
+      width > height -> :landscape
+      height > width -> :portrait
+    end
   end
 
   @doc """
