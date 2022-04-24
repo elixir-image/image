@@ -5,6 +5,13 @@ defmodule Image.Social do
 
   """
 
+  alias Vix.Vips.Image, as: Vimage
+
+  @type image_type :: atom()
+
+  @type platform ::
+    :facebook | :twitter | :linkedin | :pinterest | :instagram | :tumblr | :youtube | :snapchat | :toktok
+
   # Before Version 1.0, this content will move from being a static
   # list to a dynamic one that can be updated at runtime
 
@@ -76,6 +83,8 @@ defmodule Image.Social do
     }
   }
 
+  @social_platforms Map.keys(@social_sizes)
+
   @doc """
   Return the map of social media image
   sizes.
@@ -93,6 +102,103 @@ defmodule Image.Social do
   """
   def media_sizes do
     @social_sizes
+  end
+
+  @doc """
+  Returns a list of known social
+  platforms.
+
+  ### Example
+
+
+  """
+  @spec known_platforms :: [platform()]
+  def known_platforms do
+    @social_platforms
+  end
+
+  @doc """
+  Returns the image types for the given
+  social platform.
+
+  ### Arguments
+
+  * `platform` is any known social platform.
+    See `Image.Social.known_platforms/0`.
+
+  ### Returns
+
+  * A list of images types available for the
+    platform.
+
+  ### Example
+
+
+  """
+  @spec image_types(platform()) :: [image_type()]
+  def image_types(platform) when platform in @social_platforms do
+    media_sizes()
+    |> Map.fetch!(platform)
+    |> Map.delete(:default)
+    |> Map.keys
+  end
+
+  @doc """
+  Returns the default image type that an
+  image is resized to for a given platform
+  is no `:type` parameter is peovided.
+
+  ### Arguments
+
+  * `platform` is any known social platform.
+    See `Image.Social.known_platforms/0`.
+
+  ### Returns
+
+  * The default image type for the platform.
+
+  ### Example
+
+  """
+  @spec default_image_type(platform()) :: image_type()
+  def default_image_type(platform) when platform in @social_platforms do
+    media_sizes()
+    |> Map.fetch!(platform)
+    |> Map.get(:default)
+  end
+
+  @doc """
+  Resize an image for a particular social
+  platform and usage.
+
+  This function:
+
+  * Resizes an image to the correct dimensions, including being
+    image orientation aware
+  * Converts to the sRGB color space
+  * Minimises metadata (retains only Artist and Copyright)
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  * `platform` is the name of a known social
+    media platform. See `Image.Social.known_platforms/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:type` is the image type within the social
+  platform for which the image should be resized. See
+  `Image.Social.image_types/1`
+
+  """
+  @spec resize(Vimage.t(), image_type() | :default, Keyword.t()) ::
+      {:ok, Vimage.t()} | {:error, Image.error_message()}
+
+  def resize(%Vimage{} = image, type \\ :default, options \\ []) do
+
   end
 
 end

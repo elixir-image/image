@@ -92,7 +92,7 @@ Currently `Image` supports:
 
 ### Currently supported
 
-* [*] Math operators (`+`, `-`, `/`, `**`) and functions (`cos`, `sin`) for images, constants and vectors
+* [*] Math operators (`+`, `-`, `*`, `/`, `**`) and functions (`cos`, `sin`) for images, constants and vectors
 * [*] Flip
 * [*] Rotate
 * [*] Ripple filter
@@ -111,7 +111,7 @@ It is the intention of `Image` to bring the power of `libvips` to Elixir develop
 * [x] Crop
 * [x] Create avatar from image
 * [x] Remove metadata from image
-* [ ] Add minimal metadata to image (artist, title, description, copyright, keywords)
+* [x] Add minimal metadata to image (artist, title, description, copyright, keywords)
 * [ ] Bidirectional integration with [Nx](https://hex.pm/packages/nx) to integrate ML and GPU processing with image transformation
 
 ## Libvips Configuration
