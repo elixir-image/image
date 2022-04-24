@@ -7,7 +7,7 @@ defmodule Image.MixProject do
     [
       app: :image,
       version: @version,
-      elixir: "~> 1.12",
+      elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -31,8 +31,9 @@ defmodule Image.MixProject do
 
   defp description do
     """
-    An image processing library based upon Vix and libvips that
-    is NIF-based, fast, multi-threaded, pipelined and low memory.
+    An approachable image processing library based upon Vix and libvips that
+    is NIF-based, fast, multi-threaded, pipelined and a low memory
+    footprint.
     """
   end
 
@@ -44,7 +45,7 @@ defmodule Image.MixProject do
 
   defp deps do
     [
-      {:vix, github: "kipcole9/vix", branch: "vips-conn"},
+      {:vix, "~> 0.9"},
       {:sweet_xml, "~> 0.7"},
       {:nx, "~> 0.1", optional: true},
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},

@@ -11,7 +11,7 @@
   "nimble_parsec": {:hex, :nimble_parsec, "1.2.3", "244836e6e3f1200c7f30cb56733fd808744eca61fd182f731eac4af635cc6d0b", [:mix], [], "hexpm", "c8d789e39b9131acf7b99291e93dae60ab48ef14a7ee9d58c6964f59efb570b0"},
   "nx": {:hex, :nx, "0.1.0", "8f8a047dc0fd2b1798406edf828b43c46cca648b13c58fd5abd52285316b3d86", [:mix], [], "hexpm", "24ce6e184dc9c7b7c6c247923bfbe994101a7fe049bd3fd376b5b0512f787256"},
   "statistex": {:hex, :statistex, "1.0.0", "f3dc93f3c0c6c92e5f291704cf62b99b553253d7969e9a5fa713e5481cd858a5", [:mix], [], "hexpm", "ff9d8bee7035028ab4742ff52fc80a2aa35cece833cf5319009b52f1b5a86c27"},
-  "sweet_xml": {:hex, :sweet_xml, "0.7.1", "a2cac8e2101237e617dfa9d427d44b8aff38ba6294f313ffb4667524d6b71b98", [:mix], [], "hexpm", "8bc7b7b584a6a87113071d0d2fd39fe2251cf2224ecaeed7093bdac1b9c1555f"},
+  "sweet_xml": {:hex, :sweet_xml, "0.7.3", "debb256781c75ff6a8c5cbf7981146312b66f044a2898f453709a53e5031b45b", [:mix], [], "hexpm", "e110c867a1b3fe74bfc7dd9893aa851f0eed5518d0d7cad76d7baafd30e4f5ba"},
   "temp": {:hex, :temp, "0.4.7", "2c78482cc2294020a4bc0c95950b907ff386523367d4e63308a252feffbea9f2", [:mix], [], "hexpm", "6af19e7d6a85a427478be1021574d1ae2a1e1b90882586f06bde76c63cd03e0d"},
-  "vix": {:git, "https://github.com/kipcole9/vix.git", "7d7bc9897d3476fb7930e775c4f5030c1f56964a", [branch: "vips-conn"]},
+  "vix": {:hex, :vix, "0.9.0", "5b5fb71b9df3c1bb6caff8c7c675e9a44726196a95a1138091d0418cd04dbb1b", [:make, :mix], [{:elixir_make, "~> 0.6", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm", "739499641bebb3d3189739c5eeddc42338634a18dd64e0165acc9a569906a031"},
 }
