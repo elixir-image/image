@@ -683,10 +683,8 @@ defmodule Image do
         ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def resize(image_or_path, dimensions, options)
-      when is_binary(image_or_path) and is_binary(dimensions) do
-    with {:ok, options} <- Options.Resize.validate_options(options),
-         {:ok, width, options} <- Options.Resize.validate_dimensions(dimensions, options) do
+  def resize(image_or_path, dimensions, options) when is_binary(dimensions) do
+    with {:ok, width, options} <- Options.Resize.validate_dimensions(dimensions, options) do
       resize(image_or_path, width, options)
     end
   end

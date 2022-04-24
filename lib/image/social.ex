@@ -21,6 +21,7 @@ defmodule Image.Social do
 
   @social_sizes %{
     facebook: %{
+      default: :post,
       profile: "170x170",
       cover_desktop: "820x312",
       cover_mobile: "640x360",
@@ -190,15 +191,128 @@ defmodule Image.Social do
   ### Options
 
   * `:type` is the image type within the social
-  platform for which the image should be resized. See
-  `Image.Social.image_types/1`
+    platform for which the image should be resized. See
+    `Image.Social.image_types/1`
+
+  * All other options are passed to `Image.resize!/3`.
+
+  ### Returns
+
+  * `{:ok, resized_image}` or
+
+  * `{:error, reason}`
 
   """
-  @spec resize(Vimage.t(), image_type() | :default, Keyword.t()) ::
+  @spec resize(Vimage.t(), platform(), Keyword.t()) ::
       {:ok, Vimage.t()} | {:error, Image.error_message()}
 
-  def resize(%Vimage{} = image, type \\ :default, options \\ []) do
+  def resize(image, platform, options \\ [])
 
+  def resize(%Vimage{} = image, platform, options) when platform in @social_platforms do
+    {usage, options} = Keyword.pop(options, :usage, :default)
+    options = Keyword.put_new(options, :crop, :attention)
+    orientation = Image.orientation(image)
+    platform = Map.fetch!(media_sizes(), platform)
+
+    with {:ok, size} <- get_image_size(platform, usage, orientation) do
+      image
+      |> Image.resize!(size, options)
+      |> Image.to_colorspace!(:srgb)
+      |> Image.minimize_metadata()
+    end
   end
 
+  def resize(%Vimage{} = _image, platform, _options) do
+    {:error, unknown_platform_error(platform)}
+  end
+
+  @doc """
+  Resize an image for a particular social
+  platform and usage.
+
+  This function:
+
+  * Resizes an image to the correct dimensions, including being
+    image orientation aware
+  * Converts to the sRGB color space
+  * Minimises metadata (retains only Artist and Copyright)
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  * `platform` is the name of a known social
+    media platform. See `Image.Social.known_platforms/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:type` is the image type within the social
+    platform for which the image should be resized. See
+    `Image.Social.image_types/1`
+
+  * All other options are passed to `Image.resize!/3`.
+
+  ## Returns
+
+  * `resized_image` or
+
+  * Raises an exception.
+
+  """
+  @spec resize!(Vimage.t(), platform(), Keyword.t()) ::
+      Vimage.t() | no_return
+
+  def resize!(%Vimage{} = image, platform, options \\ []) do
+    case resize(image, platform, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  # ---- Helpers -----
+
+  defp get_image_size(platform, :default = type, orientation) do
+    default = Map.get(platform, type, {nil, type})
+    get_image_size(platform, default, orientation)
+  end
+
+  defp get_image_size(_platform, {nil, usage}, _orientation) do
+    {:error, unknown_usage_error(usage)}
+  end
+
+  defp get_image_size(platform, usage, orientation) when is_map_key(platform, usage) do
+    platform
+    |> Map.get(usage)
+    |> resolve_orientation(orientation)
+  end
+
+  defp get_image_size(_platform, usage, _orientation) do
+    {:error, unknown_usage_error(usage)}
+  end
+
+  defp resolve_orientation(size, _orientation) when is_binary(size) do
+    {:ok, size}
+  end
+
+  defp resolve_orientation(sizes, orientation) when is_map_key(sizes, orientation) do
+    {:ok, Map.fetch!(sizes, orientation)}
+  end
+
+  defp resolve_orientation(_sizes, orientation) do
+    {:error, unknown_orientation_error(orientation)}
+  end
+
+  defp unknown_platform_error(platform) do
+    "Unknown social platform #{inspect platform}"
+  end
+
+  defp unknown_usage_error(usage) do
+    "Unknown image usage #{inspect usage}"
+  end
+
+  defp unknown_orientation_error(orientation) do
+    "Unknown orientation #{inspect orientation}"
+  end
 end
