@@ -1881,7 +1881,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`
 
   ### Returns
 
@@ -1910,7 +1910,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`
 
   ### Returns
 
@@ -1960,6 +1960,7 @@ defmodule Image do
       Image.rotate(image, skew_angle)
 
   """
+  @spec skew_angle(Vimage.t()) :: float()
   def skew_angle(%Vimage{} = image) do
     {_columns, rows, []} =
       image
@@ -1992,6 +1993,7 @@ defmodule Image do
   * `true` or `false`
 
   """
+  @spec has_alpha?(Vimage.t()) :: boolean()
   def has_alpha?(%Vimage{} = image) do
     Vimage.has_alpha?(image)
   end
@@ -2013,7 +2015,8 @@ defmodule Image do
   """
   @spec get_concurrency :: pos_integer()
   def get_concurrency do
-    Vix.Vips.concurrency_get()
+    {:ok, concurrency} = Vix.Vips.concurrency_get()
+    concurrency
   end
 
   @doc """
@@ -2035,7 +2038,7 @@ defmodule Image do
   * `{:ok, updated_concurrency}`
 
   """
-  @spec put_concurrency(pos_integer()) :: {:ok, pos_integer()}
+  @spec put_concurrency(pos_integer()) :: pos_integer()
   def put_concurrency(concurrency) when is_integer(concurrency) and concurrency > 0 do
     :ok = Vix.Vips.concurrency_set(concurrency)
     get_concurrency()
