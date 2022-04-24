@@ -308,6 +308,10 @@ defmodule Image.Social do
     "Unknown social platform #{inspect platform}"
   end
 
+  defp unknown_usage_error(:default) do
+    "No :default usage is configured"
+  end
+
   defp unknown_usage_error(usage) do
     "Unknown image usage #{inspect usage}"
   end
