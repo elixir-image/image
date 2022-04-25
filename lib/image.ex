@@ -1931,8 +1931,6 @@ defmodule Image do
     end
   end
 
-  # See https://stackoverflow.com/questions/52474645/improve-a-picture-to-detect-the-characters-within-an-area/52502597#52502597
-
   @doc """
   Attempts top determine the distance
   from the perpendicular for a given image.
@@ -1944,13 +1942,16 @@ defmodule Image do
   The results are very image sensitive and
   perfect results are not guaranteed.
 
+  The algorithm is an implementation of
+  [this stackoverflow post](https://stackoverflow.com/questions/52474645/improve-a-picture-to-detect-the-characters-within-an-area/52502597#52502597).
+
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`
 
   ### Returns
 
-  * `skew_angle` which is an float number
+  * `skew_angle` which is a float number
     of degrees the image is tilted from the
     upright.
 
