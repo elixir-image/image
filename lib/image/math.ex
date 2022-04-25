@@ -1,16 +1,34 @@
 defmodule Image.Math do
   @moduledoc """
   Implements math operators for images,
-  delegating to the Kernel functions in the
-  cases where the parameters do not involve
-  images.
+  delegating to the `Kernel` functions in the
+  cases where the parameters do not include
+  `t:Vix.Vips.Image.t/0`.
 
   To override the standard operations in a
-  function of module, `use Image.Math`.
+  function or module, add `use Image.Math`.
 
-  To maximise readability and transparency it
+  To maximise readability and clarity it
   is recommended that `use Image.Math` be added
   to only those functions that require it.
+
+  ### Example
+
+      defmodule MyModule do
+        # Not recommended
+        use Image.Math
+
+        def my_function(%Vix.Vips.Image{} = image) do
+          # Recommended
+          use Image.Math
+
+          # Increase the all bands by 20%
+          brigher = image * 1.2
+
+          # Or adjust only green by 20%
+          bright_green = image * [1, 1.2, 1]
+        end
+      end
 
   """
 
@@ -26,6 +44,7 @@ defmodule Image.Math do
   """
   defguard is_pixel(value) when is_number(value) or is_list(value)
 
+  @doc false
   defmacro __using__(_opts) do
     quote do
       import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
