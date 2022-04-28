@@ -158,6 +158,10 @@ The default number of threads is equal to the number of cores detected on the ru
 
 ### Caching
 
+## Security
+
+* There are [638](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=imagemagick) CVEs reporting for Imagemagick and only [8](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=libvips) CVE's reported for `libvips`
+
 ## Installation
 
 When [available in Hex](https://hex.pm/packages/image), `Image` can be installed

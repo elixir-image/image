@@ -21,8 +21,13 @@ defmodule Image do
   @square_when_ratio_less_than 0.0
 
   @doc """
-  Guards whether the coordinates can be reasonable
+  Guards whether the coordinates can be reasonably
   interpreted as a bounding box.
+
+  `left` and `top` when positive are relative to
+  the left and top of the image respectively. When
+  negative they are relative to the right and bottom
+  of the image.
 
   """
   defguard is_box(left, top, width, height)
