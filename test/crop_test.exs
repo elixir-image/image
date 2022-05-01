@@ -14,7 +14,7 @@ defmodule Image.Crop.Test do
     image = image_path("Kamchatka-2019-8754.jpg")
     {:ok, image} = Vimage.new_from_file(image)
 
-    {:ok, cropped} = Image.crop(image, 1, 1, 500, 200)
+    {:ok, cropped} = Image.crop(image, 0, 0, 500, 200)
 
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     validate_path = validate_path("crop/kamchatka_top_left.jpg")
@@ -28,7 +28,7 @@ defmodule Image.Crop.Test do
     image = image_path("Kamchatka-2019-8754.jpg")
     {:ok, image} = Vimage.new_from_file(image)
 
-    {:ok, cropped} = Image.crop(image, 1, -250, 500, 200)
+    {:ok, cropped} = Image.crop(image, 0, -1, 500, 200)
 
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     validate_path = validate_path("crop/kamchatka_bottom_left.jpg")
@@ -42,13 +42,13 @@ defmodule Image.Crop.Test do
     image = image_path("Kamchatka-2019-8754.jpg")
     {:ok, image} = Vimage.new_from_file(image)
 
-    {:ok, cropped} = Image.crop(image, -700, 1, 500, 200)
+    {:ok, cropped} = Image.crop(image, -1, 0, 500, 200)
 
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     validate_path = validate_path("crop/kamchatka_top_right.jpg")
 
     assert :ok = Vimage.write_to_file(cropped, out_path)
-    Vimage.write_to_file(cropped, validate_path)
+
     assert_files_equal(out_path, validate_path)
   end
 
@@ -56,7 +56,7 @@ defmodule Image.Crop.Test do
     image = image_path("Kamchatka-2019-8754.jpg")
     {:ok, image} = Vimage.new_from_file(image)
 
-    {:ok, cropped} = Image.crop(image, -700, -250, 500, 200)
+    {:ok, cropped} = Image.crop(image, -1, -1, 500, 200)
 
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     validate_path = validate_path("crop/kamchatka_bottom_right.jpg")

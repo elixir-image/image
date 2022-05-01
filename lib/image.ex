@@ -826,19 +826,29 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `left` is the left edge of extract area as a
-    positive integer.
+  * `left` is the top edge of crop area as an
+    integer. If `left` is positive it is relative to
+    the left edge of the image. If it is negative it is
+    relative to the right edge of the image.
 
-  * `top` is the top edge of extract area as an
+  * `top` is the top edge of crop area as an
     integer. If `top` is positive it is relative to
-    the top of the image. If it is negative it is
-    relative to the bottom of the image.
+    the top edge of the image. If it is negative it is
+    relative to the bottom edge of the image.
 
-  * `width` is the width of extract area as a
+  * `width` is the width of area remaining as a
     positive integer.
 
-  * `height` is the height of extract area as a
-    positive integer.
+  * `height` is the height of the area remaining
+    as a positive integer.
+
+  ### Notes
+
+  * `left` is 0-indexed. That is, the leftmost
+    edge of the image starts at `0`.
+
+  * `top` is 0-indexed. That is, the toptmost
+    edge of the image starts at `0`.
 
   ### Returns
 
@@ -851,27 +861,26 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def crop(%Vimage{} = image, left, top, width, height)
-      when is_box(left, top, width, height) and left > 0 and top > 0 do
+      when is_box(left, top, width, height) and left >= 0 and top >= 0 do
     Operation.extract_area(image, left, top, width, height)
   end
 
   def crop(%Vimage{} = image, left, top, width, height)
-      when is_box(left, top, width, height) and left < 0 and top > 0 and abs(left) >= width do
-    left = width(image) + left
+      when is_box(left, top, width, height) and left < 0 and top >= 0 do
+    left = width(image) + left - width
     Operation.extract_area(image, left, top, width, height)
   end
 
   def crop(%Vimage{} = image, left, top, width, height)
-      when is_box(left, top, width, height) and left > 0 and top < 0 and abs(top) >= height do
-    top = height(image) + top
+      when is_box(left, top, width, height) and left >= 0 and top < 0 do
+    top = height(image) + top - height
     Operation.extract_area(image, left, top, width, height)
   end
 
   def crop(%Vimage{} = image, left, top, width, height)
-      when is_box(left, top, width, height) and left < 0 and top < 0 and abs(left) >= width and
-             abs(top) >= height do
-    left = width(image) + left
-    top = height(image) + top
+      when is_box(left, top, width, height) and left < 0 and top < 0 do
+    left = width(image) + left - width
+    top = height(image) + top - height
     Operation.extract_area(image, left, top, width, height)
   end
 

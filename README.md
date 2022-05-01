@@ -1,122 +1,46 @@
 # Image
 
-An Image processing library for Elixir. Based upon the fabulous [vix](https://hex.pm/packages/vix) library that provides a [libvips](https://www.libvips.org) wrapper for Elixir.
+`Image` is an image processing library for Elixir. It is based upon the fabulous [vix](https://hex.pm/packages/vix) library that provides a [libvips](https://www.libvips.org) wrapper for Elixir.
 
-The library is in very early development but is intended to bring the power of `libvips` with an idiomatic Elixir interface to developers. `libvips`'s high performance, pipeline architecture and low memory footprint makes it a very solid foundation for image processing in Elixir.
+`Image` is intended to provide well-documented common image processing functions in an idiomatic Elixir functional style as a layer above the very comprehensive set of functions in `Vix`.
 
-In a very simple image resizing benchmark, `Image` is approximately 2 to 3 times faster than `Mogrify` and uses about 5 times less memory. More thorough benchmarking will be done later in the development cycle. See the `bench` directory.
+In a very simple image resizing benchmark, `Image` is approximately 2 to 3 times faster than `Mogrify` and uses about 5 times less memory. 
 
-Currently `Image` supports:
+## Installation
 
-### Image test
+`Image` can be installed by adding `image` to your list of dependencies in `mix.exs`:
 
-<style>
-  .column {
-    float: left;
-    width: 33.33%;
-    padding: 5px;
-  }
+```elixir
+def deps do
+  [
+    {:image, "~> 0.1.0"}
+  ]
+end
+```
 
-  /* Clear floats after image containers */
-  .row::after {
-    content: "";
-    clear: both;
-    display: table;
-  }
+The documentation can be found at [https://hexdocs.pm/image](https://hexdocs.pm/image).
 
-  figure {
-      border: 3px solid #FF1493;
-      display: flex;
-      flex-flow: column;
-      padding: 0;
-      width: 200px;
-      height: 200px;
-      margin: auto;
-      width: 200px;
-      height: 200px;
-  }
+### Installation Dependencies
 
-  img {
-      max-width: 200px;
-      max-height: 200px;
-      padding: 0;
-      margin: 0
-  }
+Installing `Vix` requires `libvips` with development headers. Installation is platform dependent however the common platform installations are:
 
-  figcaption {
-      background-color: #222;
-      color: #fff;
-      font: smaller sans-serif;
-      margin-top: 10px;
-      padding: 3px;
-      text-align: center;
-  }
-</style>
+macOS: Install using [homebrew](https://brew.sh) with `brew install libvips`
+Linux: Install with `apt install libvips-dev`
 
-<div class="row">
-<div class="column">
-  <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_crop_none.jpg" alt="Image.resize/3">
-  </figure>
-  <figcaption>Image.resize(image, 200, crop: :none)</figcaption>
-</div>
-<div class="column">
-  <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_crop_attention.jpg" alt="Image.resize/3">
-  </figure>
-  <figcaption>Image.resize(image, 200, crop: :attention)</figcaption>
-</div>
-<div class="column">
-  <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_crop_550_320_200_200.jpg" alt="Image.crop/5">
-  </figure>
-  <figcaption>Image.crop!(image, 550, 320, 200, 200)</figcaption>
-</div>
-</div>
+For more details see https://www.libvips.org/install.html
 
-<div class="row">
-<div class="column">
-  <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_rounded.png" alt="Image.rounded/2">
-  </figure>
-  <figcaption>image |> Image.resize!(200, crop: :attention) |> Image.rounded!()</figcaption>
-</div>
-<div class="column">
-  <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_avatar.png"
-      alt="Image.avatar/3">
-  </figure>
-  <figcaption>Image.avatar(image, 200)</figcaption>
-</div>
-</div>
+In addition the following will be required (and would normally be installed in the steps above):
 
-### Currently supported
+* pkg-config
+* A `c` compiler
 
-* [*] Math operators (`+`, `-`, `*`, `/`, `**`) and functions (`cos`, `sin`) for images, constants and vectors
-* [*] Flip
-* [*] Rotate
-* [*] Ripple filter
-* [*] Circular crop filter
-* [*] Rounded corners filter
-* [*] Extract [exif](https://en.wikipedia.org/wiki/Exif) and [XMP](https://www.adobe.com/products/xmp.html) (limited) into a map
-* [*] Linear gradient filter (one direction only)
+### Configurration
 
-### Roadmap
+#### Vix NIF Error Logging
 
-It is the intention of `Image` to bring the power of `libvips` to Elixir developers in an idiomatic API that can support:
+`Vix` NIF code writes logs to stderr on certain errors. This is disabled by default. To enable logging set `VIX_LOG_ERROR` environment variable to `true`.
 
-* [ ] Streaming images
-* [ ] Thumbnail an image
-* [x] Resize
-* [x] Crop
-* [x] Create avatar from image
-* [x] Remove metadata from image
-* [x] Add minimal metadata to image (artist, title, description, copyright, keywords)
-* [ ] Bidirectional integration with [Nx](https://hex.pm/packages/nx) to integrate ML and GPU processing with image transformation
-
-## Libvips Configuration
-
-### GLib Debug Output
+#### GLib Debug Output
 
 The platform upon which `Image` and `Vix` stand is [libvips](https://www.libvips.org), a `C` library that actually performs the image manipulation. Its `libvips` that delivers the speed, memory efficiency and functionality.
 
@@ -138,7 +62,7 @@ To produce debug output for only the most critical issues, set `G_DEBUG` as foll
 export G_DEBUG=fatal-criticals
 ```
 
-### Memory Leak Detection
+#### Memory Leak Detection
 
 The environment variable `VIPS_LEAK` determines whether `libvips` reports possible memory leaks. To enable leak detection (on `bash` compatible systems):
 ```bash
@@ -150,32 +74,17 @@ To stop leak detection:
 unset VIPS_LEAK
 ```
 
-### Concurrency
+#### Concurrency
 
 `Image` (because of `Vix` and `libvips`) will execute concurrent image operations using a number of system native threads (not BEAM processes). The number of threads available for concurrent image operations is configurable by either setting the environment variable `VIPS_CONCURRENCY` or through a call to `Image.put_concurrency/1`.  The current number of configured threads is returned from `Image.get_concurrency/0`.
 
 The default number of threads is equal to the number of cores detected on the running system. This may create CPU contention with other workloads given that image processing is CPU intensive.  Therefore it may be prudent to reduce the number of threads if overall system throughput is being affected.
 
-### Caching
+#### Caching
 
-## Security
+### Security Cosiderations
 
 * There are [638](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=imagemagick) CVEs reporting for Imagemagick and only [8](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=libvips) CVE's reported for `libvips`
 
-## Installation
 
-When [available in Hex](https://hex.pm/packages/image), `Image` can be installed
-by adding `image` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:image, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/image](https://hexdocs.pm/image).
 
