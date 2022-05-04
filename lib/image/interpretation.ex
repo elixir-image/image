@@ -1,4 +1,9 @@
 defmodule Image.Interpretation do
+  @moduledoc """
+  Defines the known color interpretations to which
+  an image can be converted to and from.
+
+  """
   @type interpretation ::
           :multiband
           | :bw

@@ -7,8 +7,16 @@ defmodule Image.Social do
 
   alias Vix.Vips.Image, as: Vimage
 
-  @type image_type :: atom()
+  @typedoc """
+  The social media platform image usage.
 
+  """
+  @type image_usage :: atom()
+
+  @typedoc """
+  The known social media platforms.
+
+  """
   @type platform ::
     :facebook | :twitter | :linkedin | :pinterest | :instagram | :tumblr | :youtube | :snapchat | :toktok
 
@@ -136,8 +144,8 @@ defmodule Image.Social do
 
 
   """
-  @spec image_types(platform()) :: [image_type()]
-  def image_types(platform) when platform in @social_platforms do
+  @spec image_usages(platform()) :: [image_usage()]
+  def image_usages(platform) when platform in @social_platforms do
     media_sizes()
     |> Map.fetch!(platform)
     |> Map.delete(:default)
@@ -161,8 +169,8 @@ defmodule Image.Social do
   ### Example
 
   """
-  @spec default_image_type(platform()) :: image_type()
-  def default_image_type(platform) when platform in @social_platforms do
+  @spec default_image_usage(platform()) :: image_usage()
+  def default_image_usage(platform) when platform in @social_platforms do
     media_sizes()
     |> Map.fetch!(platform)
     |> Map.get(:default)
@@ -192,7 +200,7 @@ defmodule Image.Social do
 
   * `:type` is the image type within the social
     platform for which the image should be resized. See
-    `Image.Social.image_types/1`
+    `Image.Social.image_usages/1`
 
   * All other options are passed to `Image.resize!/3`.
 
@@ -250,7 +258,7 @@ defmodule Image.Social do
 
   * `:type` is the image type within the social
     platform for which the image should be resized. See
-    `Image.Social.image_types/1`
+    `Image.Social.image_usages/1`
 
   * All other options are passed to `Image.resize!/3`.
 

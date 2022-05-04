@@ -1,4 +1,9 @@
 defmodule Image.Color do
+  @moduledoc """
+  Functions to manage image color and color conversion.
+
+  """
+
   @typedoc """
   Reference to an ICC color profile
 
