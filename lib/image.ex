@@ -1,4 +1,20 @@
 defmodule Image do
+  @moduledoc """
+  `Image` is based upon the fabulous
+  [vix](https://hex.pm/packages/vix) library that provides a [libvips](https://www.libvips.org)
+  wrapper for Elixir.
+
+  `Image` is intended to provide well-documented common image processing functions in
+  an idiomatic Elixir functional style as a layer above the very comprehensive set
+  of functions in `Vix` and `libvips`.
+
+  In a very simple image resizing
+  [benchmark](https://github.com/kipcole9/image/blob/main/bench/image_resize.exs),
+  `Image` is approximately 2 to 3 times faster than `Mogrify` and uses about 5 times
+  less memory.
+
+  """
+
   alias Vix.Vips.{Operation, MutableImage}
   alias Vix.Vips.Image, as: Vimage
 
