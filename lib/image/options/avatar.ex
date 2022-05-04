@@ -1,4 +1,8 @@
 defmodule Image.Options.Avatar do
+  @moduledoc """
+  Options and option validation for `Image.avatar/3`.
+
+  """
   alias Image.Options.Crop
 
   @type avatar_options :: Crop.crop_options()

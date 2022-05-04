@@ -1,4 +1,9 @@
 defmodule Image.Options.Open do
+  @moduledoc """
+  Options and option validation for `Image.open/2`.
+
+  """
+
   # Map the keyword option to the
   # Vix option.
 

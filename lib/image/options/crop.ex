@@ -1,4 +1,9 @@
 defmodule Image.Options.Crop do
+  @moduledoc """
+  Options and option validation for `Image.crop/5`.
+
+  """
+
   @typedoc """
   Options applicable to cropping an
   image.

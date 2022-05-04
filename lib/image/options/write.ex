@@ -1,4 +1,9 @@
 defmodule Image.Options.Write do
+  @moduledoc """
+  Options and option validation for `Image.write/3`.
+
+  """
+
   # Map the keyword option to the
   # Vix option.
 

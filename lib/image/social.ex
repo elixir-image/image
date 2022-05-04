@@ -137,7 +137,7 @@ defmodule Image.Social do
 
   ### Returns
 
-  * A list of images types available for the
+  * A list of images uses available for the
     platform.
 
   ### Example
