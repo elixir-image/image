@@ -32,7 +32,7 @@ defmodule Image.MixProject do
   defp description do
     """
     An approachable image processing library based upon Vix and libvips that
-    is NIF-based, fast, multi-threaded, pipelined and a low memory
+    is NIF-based, fast, multi-threaded, pipelined and has a low memory
     footprint.
     """
   end
@@ -64,7 +64,6 @@ defmodule Image.MixProject do
       links: links(),
       files: [
         "lib",
-        "config",
         "mix.exs",
         "README*",
         "CHANGELOG*",
@@ -91,7 +90,8 @@ defmodule Image.MixProject do
       extras: [
         "README.md",
         "LICENSE.md",
-        "CHANGELOG.md"
+        "CHANGELOG.md",
+        "guides/examples.md"
       ],
       formatters: ["html"],
       groups_for_modules: groups_for_modules(),

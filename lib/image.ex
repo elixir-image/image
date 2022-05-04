@@ -1705,9 +1705,11 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`
 
-  * `colorspace` is any known colorspace
+  * `colorspace` is any known colorspace. See
+    `Image.Interpretation.known_interpretations/0`
+    for a list of the known colorspaces.
 
   ### Returns
 
@@ -1738,9 +1740,11 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`
 
-  * `colorspace` is any known colorspace
+  * `colorspace` is any known colorspace. See
+    `Image.Interpretation.known_interpretations/0`
+    for a list of the known colorspaces.
 
   ### Returns
 
