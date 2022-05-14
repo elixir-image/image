@@ -11,7 +11,7 @@ defmodule Image.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      source_url: "https://github.com/kipcole/image",
+      source_url: "https://github.com/kipcole9/image",
       docs: docs(),
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
