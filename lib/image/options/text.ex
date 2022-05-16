@@ -1,4 +1,6 @@
 defmodule Image.Options.Text do
+  @moduledoc false
+
   alias Image.Color
 
   def default_options do

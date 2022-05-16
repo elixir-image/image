@@ -1,4 +1,6 @@
 defmodule Image.Error do
+  @moduledoc false
+
   defexception message: "Unknown error"
 
   @impl true

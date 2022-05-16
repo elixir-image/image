@@ -1,4 +1,9 @@
 defmodule Image.Text do
+  @doc """
+  Functions for the creation of images based
+  upon text.
+
+  """
 
   alias Vix.Vips.Image, as: Vimage
   alias Vix.Vips.Operation
@@ -6,6 +11,7 @@ defmodule Image.Text do
 
   def new(string, options \\ []) when is_binary(string) and is_list(options) do
     with {:ok, options} <- Options.Text.validate_options(options),
+         {:ok, string} <- escape_html_text(string),
          {:ok, text_layer} <- text(string, options),
          {:ok, text_with_background} <- add_background(text_layer, options) do
       pad_background(text_with_background, options)
@@ -32,37 +38,43 @@ defmodule Image.Text do
 
   def add_background(image, options \\ [])
 
-  def add_background(image, options) when is_list(options) do
+  def add_background(%Vimage{} = image, options) when is_list(options) do
     with {:ok, options} <- Options.Text.validate_options(options) do
       add_background(image, options)
     end
   end
 
-  def add_background(image, %{background_color: color} = options) when color not in [:none, nil] do
+  def add_background(%Vimage{} = image, %{background_color: :none} = _options) do
+    {:ok, image}
+  end
+
+  def add_background(%Vimage{} = image, %{} = options) do
     {:ok, background} = render_background(image, options)
 
-    # Composite and mask out the text
-    if Vimage.bands(image) == 1 do
+    # If its transparent text then the image
+    # is a mask and we add it as the alpha channel
+    # otherwise just composite the two images
+
+    if transparent_text?(options) do
       Operation.bandjoin([background, image])
     else
       Operation.composite2(background, image, :VIPS_BLEND_MODE_OVER)
     end
   end
 
-  def add_background(image, %{} = _options) do
-    {:ok, image}
-  end
-
   def pad_background(image, options \\ [])
 
-  def pad_background(image, options) when is_list(options) do
+  def pad_background(%Vimage{} = image, options) when is_list(options) do
     with {:ok, options} <- Options.Text.validate_options(options) do
       pad_background(image, options)
     end
   end
 
-  def pad_background(image, %{background_color: color} = options) when color not in [:none, nil] do
-    # Embed in a larger background
+  def pad_background(%Vimage{} = image, %{background_color: :none} = _options) do
+    {:ok, image}
+  end
+
+  def pad_background(%Vimage{} = image, %{} = options)  do
     padding =
       Map.get(options, :padding)
 
@@ -83,9 +95,6 @@ defmodule Image.Text do
     Operation.embed(image, padding, padding, width, height, background: background_color)
   end
 
-  def pad_background(image, %{} = _options) do
-    {:ok, image}
-  end
 
   # For transparent text we need to render the text in
   # white which is then converted later to a transparency
@@ -154,4 +163,16 @@ defmodule Image.Text do
     Map.get(options, :text_fill_color) in [:transparent, nil]
   end
 
+  defp escape_html_text({:safe, string}) do
+    {:ok, string}
+  end
+
+  defp escape_html_text(string) do
+    string =
+      string
+      |> Phoenix.HTML.html_escape()
+      |> Phoenix.HTML.safe_to_string()
+
+    {:ok, string}
+  end
 end

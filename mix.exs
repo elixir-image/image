@@ -46,7 +46,9 @@ defmodule Image.MixProject do
     [
       {:vix, "~> 0.9"},
       {:sweet_xml, "~> 0.7"},
-      {:nx, "~> 0.1", optional: true},
+      {:phoenix_html, "~> 3.2 or ~> 2.14"},
+
+      # {:nx, "~> 0.1", optional: true},
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
       {:benchee, "~> 1.0", only: :dev, runtime: false, optional: true},
       {:ex_doc, "~> 0.18", only: [:release, :dev]},

@@ -419,7 +419,41 @@ defmodule Image do
   @doc """
   Compse two images together to form a new image.
 
+  ### Arguments
+
+  * `base_image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `overlay_image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:blend_mode` is the manner in which the two
+    images are composited. See `t:Image.BkendMode.t/0`.
+    The default is `:over` which is the most common blend
+    mode.
+
+  * `:x` is the offset (0-based) from the *left* of the `base_image`
+    where the `overlay_image` will be placed. It may also be
+    one of the keywords `:left`, `:right` or `:center`. The
+    default is `:center`.
+
+  * `:y` is the offset (0-based) from the *top* of the `base_image`
+    where the `overlay_image` will be placed.  It may also be
+    one of the keywords `:top`, `:bottom` or `:middle`. The
+    default is `:middle`.
+
+  ### Returns
+
+  * `{:ok, composed_image}` or
+
+  * `{:error, reason}`
+
   """
+  @spec compose(base_image::Vimage.t(), overlay_image::Vimage.t(), options::Keyword.t()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
   def compose(base_image, overlay_image, options \\ []) do
     x = Keyword.get(options, :x, :center)
     y = Keyword.get(options, :y, :middle)
@@ -428,6 +462,51 @@ defmodule Image do
     with {:ok, blend_mode} <- Image.BlendMode.validate_blend_mode(blend_mode) do
       {x, y} = xy_offset(base_image, overlay_image, x, y)
       Operation.composite2(base_image, overlay_image, blend_mode, x: x, y: y)
+    end
+  end
+
+  @doc """
+  Compse two images together to form a new image.
+
+  ### Arguments
+
+  * `base_image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `overlay_image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:blend_mode` is the manner in which the two
+    images are composited. See `t:Image.BkendMode.t/0`.
+    The default is `:over` which is the most common blend
+    mode.
+
+  * `:x` is the offset (0-based) from the *left* of the `base_image`
+    where the `overlay_image` will be placed. It may also be
+    one of the keywords `:left`, `:right` or `:center`. The
+    default is `:center`.
+
+  * `:y` is the offset (0-based) from the *top* of the `base_image`
+    where the `overlay_image` will be placed.  It may also be
+    one of the keywords `:top`, `:bottom` or `:middle`. The
+    default is `:middle`.
+
+  ### Returns
+
+  * `composed_image` or
+
+  * raises an exception
+
+  """
+  @spec compose!(base_image::Vimage.t(), overlay_image::Vimage.t(), options::Keyword.t()) ::
+     Vimage.t() | no_return()
+
+  def compose!(base_image, overlay_image, options \\ []) do
+    case compose(base_image, overlay_image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
