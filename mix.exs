@@ -8,7 +8,6 @@ defmodule Image.MixProject do
       app: :image,
       version: @version,
       elixir: "~> 1.10",
-      start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       source_url: "https://github.com/kipcole9/image",

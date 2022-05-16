@@ -69,4 +69,68 @@ defmodule Image.Color do
       _other -> false
     end
   end
+
+  @priv_dir :code.priv_dir(:image) |> List.to_string()
+  @path Path.join(@priv_dir, "color_map.csv")
+
+  @color_map File.read!(@path)
+  |> String.split("\n", trim: true)
+  |> Enum.map(&String.split(&1, ", "))
+  |> Enum.map(fn [name, hex] ->
+    <<"#", r::bytes-2, g::bytes-2, b::bytes-2>> = hex
+    rgb = [String.to_integer(r, 16), String.to_integer(g, 16), String.to_integer(b, 16)]
+    {String.downcase(name), hex: hex, rgb: rgb}
+  end)
+  |> Map.new()
+
+  @doc """
+  Returns a mapping from CSS color names to CSS hex values
+  and RGB triplets as a list.
+
+  """
+  def color_map do
+    @color_map
+  end
+
+  def rgb_color!(color) when is_binary(color) do
+    case color do
+      <<"#", r::bytes-2, g::bytes-2, b::bytes-2>> ->
+        [String.to_integer(r, 16), String.to_integer(g, 16), String.to_integer(b, 16)]
+
+      color ->
+        color_map()
+        |> Map.fetch!(normalize(color))
+        |> Keyword.fetch!(:rgb)
+    end
+  end
+
+  def rgb_color!(color) when is_color(color) do
+    color
+  end
+
+  @opacity 255
+
+  def rgba_color!(color, a \\ @opacity)
+
+  def rgba_color!(color, a) when is_binary(color) and is_integer(a) do
+    [r, g, b] = rgb_color!(color)
+    [r, g, b, a]
+  end
+
+  def rgba_color!(color, a) when is_binary(color) and is_float(a) and a >= 0.0 and a <= 1.0 do
+    a = round(@opacity * a)
+
+    [r, g, b] = rgb_color!(color)
+    [r, g, b, a]
+  end
+
+  def rgba_color!([r, g, b], a) do
+    [r, g, b, a]
+  end
+
+  defp normalize(color) do
+    color
+    |> String.downcase()
+    |> String.replace(["_", "-", " "], "")
+  end
 end

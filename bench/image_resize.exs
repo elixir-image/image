@@ -1,18 +1,15 @@
 image_path = Path.expand("test/support/images/Kamchatka-2019-8754.jpg")
+{:ok, image} = Image.open(image_path, access: :random)
 
 Benchee.run(
   %{
-    "Resize to fit from 1000x542 to 50% size" => fn ->
-      {:ok, image} = Image.open(image_path)
-      {:ok, image} = Image.resize(image, 500)
-      {:ok, _buffer} = Vix.Vips.Image.write_to_buffer(image, ".jpg")
+    "Using Operation.text" => fn ->
+      Image.Text.plain(image)
     end,
-    "Resize to fit from 1000x542 to 25% size" => fn ->
-      {:ok, image} = Image.open(image_path)
-      {:ok, image} = Image.resize(image, 250)
-      {:ok, _buffer} = Vix.Vips.Image.write_to_buffer(image, ".jpg")
+    "Using SVG render" => fn ->
+      Image.Text.text2(image)
     end
     },
-  time: 10,
+  time: 20,
   memory_time: 2
 )
