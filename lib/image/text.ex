@@ -1,234 +1,157 @@
 defmodule Image.Text do
+
+  alias Vix.Vips.Image, as: Vimage
   alias Vix.Vips.Operation
+  alias Image.Options
 
-  def plain(image, options \\ []) do
-    font = Keyword.get(options, :font, "Helvetica")
-    font_size = Keyword.get(options, :font_size, 50)
-    font_weight = Keyword.get(options, :font_weight, "normal")
-    font_color = Keyword.get(options, :font_color, "white")
-    height = Keyword.get(options, :height, round(font_size * 1.5))
-    dy = div(height - font_size, 2)
-
-    svg = """
-    <svg height="#{font_size}px">
-      <style type="text/css">
-        svg text {
-          font-family: #{font};
-          font-size: #{font_size}px;
-          font-weight: #{font_weight};
-          fill: #{font_color};
-          stroke: #{font_color};
-          text-anchor: middle;
-        }
-      </style>
-      <text dy="#{dy}px" x="50%" y="50%">Some jumbled text</text>
-    </svg>
-    """
-
-    {:ok, {text, _}} = Operation.svgload_buffer(svg, disc: false)
-    Image.write(text, "/Users/kip/Desktop/plain2.png")
-
-    x = div(Image.width(image), 2) - div(Image.width(text), 2)
-    y = div(Image.height(image), 2) - div(Image.height(text), 2)
-
-    {:ok, image_with_text} = Operation.composite2(image, text, :VIPS_BLEND_MODE_OVER, x: x, y: y)
-
-    Image.write(image_with_text, "/Users/kip/Desktop/plain.png")
+  def new(string, options \\ []) when is_binary(string) and is_list(options) do
+    with {:ok, options} <- Options.Text.validate_options(options),
+         {:ok, text_layer} <- text(string, options),
+         {:ok, text_with_background} <- add_background(text_layer, options) do
+      pad_background(text_with_background, options)
+    end
   end
 
-  def overlay(image, options \\ []) do
-    font = Keyword.get(options, :font, "Helvetica")
-    font_size = Keyword.get(options, :font_size, 50)
-    font_weight = Keyword.get(options, :font_weight, "bold")
-    height = Keyword.get(options, :height, round(font_size * 1.5))
-    width = Keyword.get(options, :width, Image.width(image))
-    background_color = Keyword.get(options, :background_color, "black")
-    opacity = Keyword.get(options, :opacity, 0.7)
-    dy = div(height - font_size, 2)
+  def text(string, options \\ [])
 
-    svg = """
-    <svg width="#{width}px" height="#{height}px">
-      <style type="text/css">
-        svg text {
-          font-family: #{font};
-          font-size: #{font_size}px;
-          font-weight: #{font_weight};
-          text-anchor: middle;
-          dominant-baseline: middle;
-        }
-      </style>
-
-      <defs>
-        <mask id="mask" x="0" y="0" width="100%" height="100%">
-          <rect fill="white" opacity="#{opacity}" x="0" y="0" width="100%" height="100%" />
-          <text dy="#{dy}px" x="50%" y="50%">
-            Some jumbled text
-          </text>
-        </mask>
-      </defs>
-      <rect fill="#{background_color}" mask="url(#mask)" x="0" y="0" width="100%" height="100%" />
-    </svg>
-    """
-
-    {:ok, {text, _}} = Operation.svgload_buffer(svg, disc: false)
-    x = div(Image.width(image), 2) - div(Image.width(text), 2)
-    y = div(Image.height(image), 2) - div(Image.height(text), 2)
-    {:ok, image_with_text} = Operation.composite2(image, text, :VIPS_BLEND_MODE_OVER, x: x, y: y)
-
-    Image.write(image_with_text, "/Users/kip/Desktop/overlay.png")
+  def text(string, options) when is_list(options) do
+    with {:ok, options} <- Options.Text.validate_options(options) do
+      text(string, options)
+    end
   end
 
-  def text(image, options \\ []) do
-    font = Keyword.get(options, :font, "Helvetica")
-    font_size = Keyword.get(options, :font_size, 50)
-    font_color = Keyword.get(options, :font_color, "white")
-    font_weight = Keyword.get(options, :font_weight, "bold")
-    height = Keyword.get(options, :height, round(font_size * 1.5))
-    width = Keyword.get(options, :width, Image.width(image))
-    background_color = Keyword.get(options, :background_color, "black")
-    opacity = Keyword.get(options, :opacity, 0.7)
-    dy = div(height - font_size, 2)
+  def text(string, %{} = options) do
+    {:ok, text_layer} = render_text(string, options)
 
-    svg = """
-    <svg width="#{width}px" height="#{height}px">
-      <style type="text/css">
-        svg text {
-          font-family: #{font};
-          font-size: #{font_size}px;
-          font-weight: #{font_weight};
-          fill: #{font_color};
-          text-anchor: middle;
-          dominant-baseline: middle;
-        }
-      </style>
-
-      <rect fill="#{background_color}" opacity="#{opacity}" width="100%" height="100%" />
-      <text dy="#{dy}px" x="50%" y="50%">
-        Some jumbled text
-      </text>
-    </svg>
-    """
-
-    {:ok, {text, _}} = Operation.svgload_buffer(svg, disc: false)
-    x = div(Image.width(image), 2) - div(Image.width(text), 2)
-    y = div(Image.height(image), 2) - div(Image.height(text), 2)
-    {:ok, image_with_text} = Operation.composite2(image, text, :VIPS_BLEND_MODE_OVER, x: x, y: y)
-
-    Image.write(image_with_text, "/Users/kip/Desktop/overlay2.png")
+    if transparent_text?(options) do
+      Image.convert_to_mask(text_layer)
+    else
+      {:ok, text_layer}
+    end
   end
 
-  # Using Operation.text() seems to be about 17% slower and use more
-  # memory
+  def add_background(image, options \\ [])
 
-  def text2(image, options \\ []) do
-    font = Keyword.get(options, :font, "Helvetica")
-    font_size = Keyword.get(options, :font_size, 50)
-
-    words = """
-      <span foreground="white">Some jumbled text</span>
-    """
-
-    {:ok, {text, _flags}} =
-      Operation.text(words, font: "#{font} #{font_size}", rgba: true)
-
-      x = div(Image.width(image), 2) - div(Image.width(text), 2)
-      y = div(Image.height(image), 2) - div(Image.height(text), 2)
-
-    {:ok, image_with_text} =
-      Operation.composite2(image, text, :VIPS_BLEND_MODE_OVER, x: x, y: y)
-
-    Image.write(image_with_text, "/Users/kip/Desktop/text2.png")
-
+  def add_background(image, options) when is_list(options) do
+    with {:ok, options} <- Options.Text.validate_options(options) do
+      add_background(image, options)
+    end
   end
 
-  @alpha_channel 3
-
-  def layer(image, options \\ []) do
-    # The text layer
-    {:ok, {text, _}} = render_text("This is jumbled text", options)
-    {:ok, mask} = Operation.extract_band(text, @alpha_channel)
-    {:ok, mask} = Operation.invert(mask)
-    Image.write(text, "/Users/kip/Desktop/layer_1.png")
-
-    # The background layer
-    options =
-      options
-      |> Keyword.put_new(:background_width, Image.width(text))
-      |> Keyword.put_new(:background_height, Image.height(text))
-
-    {:ok, rectangle} = render_rectangle(options)
-    Image.write(rectangle, "/Users/kip/Desktop/layer_2.png")
+  def add_background(image, %{background_color: color} = options) when color not in [:none, nil] do
+    {:ok, background} = render_background(image, options)
 
     # Composite and mask out the text
-    {:ok, text_with_background} = Operation.bandjoin([rectangle, mask])
-    Image.write(text_with_background, "/Users/kip/Desktop/layer_3.png")
+    if Vimage.bands(image) == 1 do
+      Operation.bandjoin([background, image])
+    else
+      Operation.composite2(background, image, :VIPS_BLEND_MODE_OVER)
+    end
+  end
 
+  def add_background(image, %{} = _options) do
+    {:ok, image}
+  end
+
+  def pad_background(image, options \\ [])
+
+  def pad_background(image, options) when is_list(options) do
+    with {:ok, options} <- Options.Text.validate_options(options) do
+      pad_background(image, options)
+    end
+  end
+
+  def pad_background(image, %{background_color: color} = options) when color not in [:none, nil] do
     # Embed in a larger background
-    padding = Keyword.get(options, :padding, 0)
-    width = Image.width(text_with_background) + padding * 2
-    height = Image.height(text_with_background) + padding * 2
+    padding =
+      Map.get(options, :padding)
 
     options =
       options
-      |> Keyword.put(:background_width, width)
-      |> Keyword.put(:background_height, height)
-      |> Keyword.put_new(:background_color, "black")
-      |> Keyword.put_new(:opacity, 0.7)
+      |> Map.put_new(:background_width, Image.width(image) + padding * 2)
+      |> Map.put_new(:background_height, Image.height(image) + padding * 2)
 
-    {:ok, expanded_background} = render_rectangle(options)
-    Image.write(expanded_background, "/Users/kip/Desktop/layer_4.png")
+    width = Map.get(options, :background_width)
+    height = Map.get(options, :background_height)
+    opacity = Map.get(options, :opacity)
 
     background_color =
       options
-      |> Keyword.get(:background_color)
-      |> Image.Color.rgba_color!()
+      |> Map.get(:background_color)
+      |> Image.Color.rgba_color!(opacity)
 
-    {:ok, expanded} =
-      Operation.embed(text_with_background, padding, padding, width, height,
-        background: background_color);
-    Image.write(expanded, "/Users/kip/Desktop/layer_5.png")
+    Operation.embed(image, padding, padding, width, height, background: background_color)
   end
 
-  def render_text(text, options \\ []) do
-    font = Keyword.get(options, :font, "Helvetica")
-    font_size = Keyword.get(options, :font_size, 50)
-    font_color = Keyword.get(options, :font_color, "white")
-    font_weight = Keyword.get(options, :font_weight, "bold")
-    height = Keyword.get(options, :height, round(font_size * 1.5))
-    dy = div(height - font_size, 2)
+  def pad_background(image, %{} = _options) do
+    {:ok, image}
+  end
+
+  # For transparent text we need to render the text in
+  # white which is then converted later to a transparency
+  # mask
+
+  defp render_text(text, %{text_fill_color: :transparent} = options) do
+    render_text(text, Map.put(options, :text_fill_color, :white))
+  end
+
+  defp render_text(text, %{} = options) do
+    height = Map.get(options, :height, round(options.font_size * 1.5))
+    dy = div(height - options.font_size, 2)
 
     svg = """
-    <svg height="#{font_size}px">
+    <svg height="#{options.font_size}px">
       <style type="text/css">
         svg text {
-          font-family: #{font};
-          font-size: #{font_size}px;
-          font-weight: #{font_weight};
-          fill: #{font_color};
-          stroke: #{font_color};
+          font-family: #{options.font};
+          font-size: #{options.font_size};
+          font-weight: #{options.font_weight};
+          fill: #{options.text_fill_color};
+          stroke: #{options.text_stroke_color};
+          stroke-width: #{options.text_stroke_width};
           text-anchor: middle;
         }
       </style>
-      <text dy="#{dy}px" x="50%" y="50%">#{text}</text>
+      <text dy="#{dy}" x="50%" y="50%">#{text}</text>
     </svg>
     """
 
-    Operation.svgload_buffer(svg)
+    {:ok, {image, _flags}} = Operation.svgload_buffer(svg)
+    {:ok, image}
   end
 
-  def render_rectangle(options \\ []) do
-    width = Keyword.get(options, :background_width)
-    height = Keyword.get(options, :background_height)
-    background_color = Keyword.get(options, :background_color)
-    opacity = Keyword.get(options, :opacity)
+  # Render a background rectangle and return
+  # it without its alpha channel since we will
+  # apply transparency from the text image
+
+  defp render_background(image, %{} = options) do
+    width = Map.get(options, :background_width, Image.width(image))
+    height = Map.get(options, :background_height, Image.height(image))
 
     svg = """
     <svg width="#{width}px" height="#{height}px">
-      <rect fill="#{background_color}" opacity="#{opacity}" width="100%" height="100%" />
+      <rect
+        fill="#{options.background_color}"
+        stroke="#{options.background_stroke}"
+        stroke-width="#{options.background_stroke_width}"
+        opacity="#{options.opacity}"
+        width="100%"
+        height="100%"
+      />
     </svg>
     """
 
     {:ok, {rectangle, _flags}} = Operation.svgload_buffer(svg)
-    Operation.extract_band(rectangle, 0, n: 3)
+
+    if transparent_text?(options) do
+      Operation.extract_band(rectangle, 0, n: 3)
+    else
+      {:ok, rectangle}
+    end
   end
+
+  defp transparent_text?(%{} = options) do
+    Map.get(options, :text_fill_color) in [:transparent, nil]
+  end
+
 end

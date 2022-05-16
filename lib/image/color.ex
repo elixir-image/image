@@ -128,8 +128,9 @@ defmodule Image.Color do
     [r, g, b, a]
   end
 
-  defp normalize(color) do
+  def normalize(color) do
     color
+    |> to_string()
     |> String.downcase()
     |> String.replace(["_", "-", " "], "")
   end

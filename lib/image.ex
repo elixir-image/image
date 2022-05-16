@@ -27,10 +27,6 @@ defmodule Image do
   # this library
   @default_avatar_size 180
 
-  # The image band that typically is the
-  # alpha (transparency) band
-  @alpha_channel 3
-
   # if the ratio between width and height differs
   # by less than this amount, consider the image
   # to be square
@@ -417,6 +413,21 @@ defmodule Image do
     case write(image, image_path, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, {reason, image_path}
+    end
+  end
+
+  @doc """
+  Compse two images together to form a new image.
+
+  """
+  def compose(base_image, overlay_image, options \\ []) do
+    x = Keyword.get(options, :x, :center)
+    y = Keyword.get(options, :y, :middle)
+    blend_mode = Keyword.get(options, :blend_mode)
+
+    with {:ok, blend_mode} <- Image.BlendMode.validate_blend_mode(blend_mode) do
+      {x, y} = xy_offset(base_image, overlay_image, x, y)
+      Operation.composite2(base_image, overlay_image, blend_mode, x: x, y: y)
     end
   end
 
@@ -1342,7 +1353,7 @@ defmodule Image do
     """
 
     {:ok, {circle, _flags}} = Operation.svgload_buffer(svg)
-    Operation.extract_band(circle, @alpha_channel)
+    Operation.extract_band(circle, alpha_band(circle))
   end
 
   defp mask(:rounded_corners, width, height, options) do
@@ -1355,7 +1366,7 @@ defmodule Image do
     """
 
     {:ok, {mask, _flags}} = Operation.svgload_buffer(svg)
-    Operation.extract_band(mask, @alpha_channel)
+    Operation.extract_band(mask, alpha_band(mask))
   end
 
   @doc """
@@ -2013,6 +2024,61 @@ defmodule Image do
   end
 
   @doc """
+  Convert an image into a mask.
+
+  Takes an image, extracts its alpha channel
+  which holds the opacity information and
+  inverts the content.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * `{:ok, mask}` or
+
+  * `{:error, reason}`
+
+  """
+  @spec convert_to_mask(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def convert_to_mask(%Vimage{} = image) do
+    if alpha_band = alpha_band(image) do
+      {:ok, mask} = Operation.extract_band(image, alpha_band)
+      Operation.invert(mask)
+    else
+      {:error, "Image has no alpha band"}
+    end
+  end
+
+  @doc """
+  Convert an image into a mask returning
+  an image or raising an exception.
+
+  Takes an image, extracts its alpha channel
+  which holds the opacity information and
+  inverts the content.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * `mask` image or
+
+  * raises an exception
+
+  """
+  @spec convert_to_mask!(Vimage.t()) :: Vimage.t() | no_return()
+  def convert_to_mask!(%Vimage{} = image) do
+    case convert_to_mask(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Returns a boolean based upon whether a given
   image has an alpha band.
 
@@ -2031,6 +2097,34 @@ defmodule Image do
   @spec has_alpha?(Vimage.t()) :: boolean()
   def has_alpha?(%Vimage{} = image) do
     Vimage.has_alpha?(image)
+  end
+
+  @doc """
+  Returns the band number of the alpha
+  channel of an image, or nil if it doesn't
+  have one.
+
+  The determination is a heuristic so certainty
+  cannot be guaranteed.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * An integer in the range `1..4` depending
+    on the image interpretation. Returns `nil`
+    if there is no alpha band.
+
+  """
+  @spec alpha_band(Vimage.t()) :: 1..4 | nil
+  def alpha_band(%Vimage{} = image) do
+    if has_alpha?(image) do
+      Vimage.bands(image) - 1
+    else
+      nil
+    end
   end
 
   @doc """
@@ -2152,5 +2246,32 @@ defmodule Image do
 
   defp file_exists?(path) do
     if File.exists?(path, :raw), do: {:ok, path}, else: {:error, :enoent}
+  end
+
+  defp xy_offset(%Vimage{} = _image, _overlay, x, y) when is_number(x) and is_number(y) do
+    {x, y}
+  end
+
+  defp xy_offset(%Vimage{} = base_image, %Vimage{} = overlay, x, y) do
+    x = offset_from(x, Image.width(base_image), Image.width(overlay))
+    y = offset_from(y, Image.height(base_image), Image.height(overlay))
+    {x, y}
+  end
+
+  # Used for x offset
+  defp offset_from(:left, _base_size, _overlay_size), do: 0
+  defp offset_from(:right, base_size, overlay_size), do: base_size - overlay_size
+  defp offset_from(:center, base_size, overlay_size), do: div(base_size, 2) - div(overlay_size, 2)
+
+  # Used for y offset
+  defp offset_from(:top, _base_size, _overlay_size), do: 0
+  defp offset_from(:bottom, base_size, overlay_size), do: base_size - overlay_size
+  defp offset_from(:middle, base_size, overlay_size), do: div(base_size, 2) - div(overlay_size, 2)
+
+  defp offset_from(other, _base_size, _overlay_size) do
+    raise ArgumentError, """
+    Invalid offset position #{inspect other}.
+    Valid positions are :left, :right, :middle, :top, :bottom, :center
+    """
   end
 end
