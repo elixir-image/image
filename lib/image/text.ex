@@ -53,11 +53,16 @@ defmodule Image.Text do
   * `:font_size` is an integer font size in pixels. The
     dfault is `50`.
 
+  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
+    The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
+    or an integer between `1` and `1_000`. The default is `:normal`
+    which is equivalent to `400`.
+
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
     a background. A black background will be forced if a
-    `:background_color` is not provided
+    `:background_fill_color` is not provided
 
   * `:text_stroke_color` is the color of the outline
     of each character in the string. The default is "none".
@@ -66,27 +71,35 @@ defmodule Image.Text do
     pixels of the outline of each character in the string.
     The default is `1`.
 
-  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
-    The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
-    or an integer between `1` and `1_000`. The default is `:normal`
-    which is equivalent to `400`.
+  * `:background_fill_opacity` is the opacity of the background fill.
+    It is a float between `0.0` and `1.0` where `0.0` means transparent
+    and `1.0` means opaque. The default is `0.7`.
 
-  * `:background_color` is the background fill color behind
+  * `:padding` is the padding in pixels between the
+    text and the edge of the background.  It can be expressed
+    as a single integer integer in which case the same padding
+    is applied to all four sides of the image.  It can also
+    be expressed as a list of two integers like `[0, 0]`.
+    The first integer will be used as the padding for the
+    left and right of the image. The second integer will be used
+    for the top and bottom of the image.  Another alternative is
+    to pass a `t:Vimage.t/0` in which case the padding will be derived
+    from the image dimensions such that the background covers the
+    whole of the impage.  THe default is `[0, 0]`.
+
+  * `:background_fill_color` is the background fill color behind
     the text. The default is `:none` which indicates no
     background. Note that if
 
-  * `:background_stroke` is the colour of the outline
+  * `:background_stroke_color` is the colour of the outline
     of the background. The default is "none",
 
   * `:background_stroke_width` is the integer size in pixels
     of the background border. The default is `1`.
 
-  * `:opacity` is the opacity of the background. It is a
-    float between `0.0` and `1.0` where `0.0` means transparent
-    and `1.0` means opaque. The default is `0.7`.
-
-  * `:padding` is the padding in pixels between the
-    text and the edge of the background. THe default is `0`,
+  * `:background_stroke_opacity` is the opacity of the background
+    string. It is a float between `0.0` and `1.0` where `0.0` means
+    transparent and `1.0` means opaque. The default is `0.7`.
 
   ### Returns
 
@@ -164,11 +177,16 @@ defmodule Image.Text do
   * `:font_size` is an integer font size in pixels. The
     dfault is `50`.
 
+  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
+    The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
+    or an integer between `1` and `1_000`. The default is `:normal`
+    which is equivalent to `400`.
+
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
     a background. A black background will be forced if a
-    `:background_color` is not provided
+    `:background_fill_color` is not provided
 
   * `:text_stroke_color` is the color of the outline
     of each character in the string. The default is "none".
@@ -177,27 +195,35 @@ defmodule Image.Text do
     pixels of the outline of each character in the string.
     The default is `1`.
 
-  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
-    The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
-    or an integer between `1` and `1_000`. The default is `:normal`
-    which is equivalent to `400`.
+  * `:background_fill_opacity` is the opacity of the background fill.
+    It is a float between `0.0` and `1.0` where `0.0` means transparent
+    and `1.0` means opaque. The default is `0.7`.
 
-  * `:background_color` is the background fill color behind
+  * `:padding` is the padding in pixels between the
+    text and the edge of the background.  It can be expressed
+    as a single integer integer in which case the same padding
+    is applied to all four sides of the image.  It can also
+    be expressed as a list of two integers like `[0, 0]`.
+    The first integer will be used as the padding for the
+    left and right of the image. The second integer will be used
+    for the top and bottom of the image.  Another alternative is
+    to pass a `t:Vimage.t/0` in which case the padding will be derived
+    from the image dimensions such that the background covers the
+    whole of the impage.  THe default is `[0, 0]`.
+
+  * `:background_fill_color` is the background fill color behind
     the text. The default is `:none` which indicates no
     background. Note that if
 
-  * `:background_stroke` is the colour of the outline
+  * `:background_stroke_color` is the colour of the outline
     of the background. The default is "none",
 
   * `:background_stroke_width` is the integer size in pixels
     of the background border. The default is `1`.
 
-  * `:opacity` is the opacity of the background. It is a
-    float between `0.0` and `1.0` where `0.0` means transparent
-    and `1.0` means opaque. The default is `0.7`.
-
-  * `:padding` is the padding in pixels between the
-    text and the edge of the background. THe default is `0`,
+  * `:background_stroke_opacity` is the opacity of the background
+    string. It is a float between `0.0` and `1.0` where `0.0` means
+    transparent and `1.0` means opaque. The default is `0.7`.
 
   ### Returns
 
@@ -250,11 +276,16 @@ defmodule Image.Text do
   * `:font_size` is an integer font size in pixels. The
     dfault is `50`.
 
+  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
+    The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
+    or an integer between `1` and `1_000`. The default is `:normal`
+    which is equivalent to `400`.
+
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
     a background. A black background will be forced if a
-    `:background_color` is not provided
+    `:background_fill_color` is not provided
 
   * `:text_stroke_color` is the color of the outline
     of each character in the string. The default is "none".
@@ -262,11 +293,6 @@ defmodule Image.Text do
   * `:text_stroke_width` is the integer width in
     pixels of the outline of each character in the string.
     The default is `1`.
-
-  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
-    The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
-    or an integer between `1` and `1_000`. The default is `:normal`
-    which is equivalent to `400`.
 
   ### Returns
 
@@ -331,11 +357,16 @@ defmodule Image.Text do
   * `:font_size` is an integer font size in pixels. The
     dfault is `50`.
 
+  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
+    The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
+    or an integer between `1` and `1_000`. The default is `:normal`
+    which is equivalent to `400`.
+
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
     a background. A black background will be forced if a
-    `:background_color` is not provided
+    `:background_fill_color` is not provided
 
   * `:text_stroke_color` is the color of the outline
     of each character in the string. The default is "none".
@@ -343,11 +374,6 @@ defmodule Image.Text do
   * `:text_stroke_width` is the integer width in
     pixels of the outline of each character in the string.
     The default is `1`.
-
-  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
-    The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
-    or an integer between `1` and `1_000`. The default is `:normal`
-    which is equivalent to `400`.
 
   ### Returns
 
@@ -389,11 +415,11 @@ defmodule Image.Text do
 
   ### Options
 
-  * `:background_color` is the background fill color behind
+  * `:background_fill_color` is the background fill color behind
     the text. The default is `:none` which indicates no
     background. Note that if
 
-  * `:opacity` is the opacity of the background. It is a
+  * `:background_fill_opacity` is the opacity of the background. It is a
     float between `0.0` and `1.0` where `0.0` means transparent
     and `1.0` means opaque. The default is `0.7`.
 
@@ -420,7 +446,7 @@ defmodule Image.Text do
     end
   end
 
-  def add_background(%Vimage{} = image, %{background_color: :none} = _options) do
+  def add_background(%Vimage{} = image, %{background_fill_color: :none} = _options) do
     {:ok, image}
   end
 
@@ -432,7 +458,8 @@ defmodule Image.Text do
     # otherwise just composite the two images
 
     if transparent_text?(options) do
-      Operation.bandjoin([background, image])
+      {:ok, image} = Operation.bandjoin([background, image])
+      {:ok, apply_opacity(image, options)}
     else
       Operation.composite2(background, image, :VIPS_BLEND_MODE_OVER)
     end
@@ -451,11 +478,11 @@ defmodule Image.Text do
 
   ### Options
 
-  * `:background_color` is the background fill color behind
+  * `:background_fill_color` is the background fill color behind
     the text. The default is `:none` which indicates no
     background. Note that if
 
-  * `:opacity` is the opacity of the background. It is a
+  * `:background_fill_opacity` is the opacity of the background. It is a
     float between `0.0` and `1.0` where `0.0` means transparent
     and `1.0` means opaque. The default is `0.7`.
 
@@ -494,16 +521,25 @@ defmodule Image.Text do
 
   ### Options
 
-  * `:background_color` is the background fill color behind
+  * `:background_fill_color` is the background fill color behind
     the text. The default is `:none` which indicates no
     background. Note that if
 
-  * `:opacity` is the opacity of the background. It is a
+  * `:background_fill_opacity` is the opacity of the background. It is a
     float between `0.0` and `1.0` where `0.0` means transparent
     and `1.0` means opaque. The default is `0.7`.
 
   * `:padding` is the padding in pixels between the
-    text and the edge of the background. THe default is `0`,
+    text and the edge of the background.  It can be expressed
+    as a single integer integer in which case the same padding
+    is applied to all four sides of the image.  It can also
+    be expressed as a list of two integers like `[0, 0]`.
+    The first integer will be used as the padding for the
+    left and right of the image. The second integer will be used
+    for the top and bottom of the image.  Another alternative is
+    to pass a `t:Vimage.t/0` in which case the padding will be derived
+    from the image dimensions such that the background covers the
+    whole of the impage.  THe default is `[0, 0]`.
 
   ### Returns
 
@@ -519,7 +555,9 @@ defmodule Image.Text do
     `#FF00FF` for the color "Fuschia".
 
   """
-  @spec add_background_padding(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec add_background_padding(Vimage.t(), Keyword.t()) ::
+      {:ok, Vimage.t()} | {:error, Image.error_message()}
+
   def add_background_padding(image, options \\ [])
 
   def add_background_padding(%Vimage{} = image, options) when is_list(options) do
@@ -528,29 +566,29 @@ defmodule Image.Text do
     end
   end
 
-  def add_background_padding(%Vimage{} = image, %{background_color: :none} = _options) do
+  def add_background_padding(%Vimage{} = image, %{background_fill_color: :none} = _options) do
     {:ok, image}
   end
 
   def add_background_padding(%Vimage{} = image, %{} = options)  do
-    padding =
-      Map.get(options, :padding)
+    [padding_left, padding_top] = options.padding
 
     options =
       options
-      |> Map.put_new(:background_width, Image.width(image) + padding * 2)
-      |> Map.put_new(:background_height, Image.height(image) + padding * 2)
+      |> Map.put_new(:background_width, Image.width(image) + padding_left * 2)
+      |> Map.put_new(:background_height, Image.height(image) + padding_top * 2)
 
     width = Map.get(options, :background_width)
     height = Map.get(options, :background_height)
-    opacity = Map.get(options, :opacity)
+    opacity = Map.get(options, :background_fill_opacity)
 
-    background_color =
+    background_fill_color =
       options
-      |> Map.get(:background_color)
+      |> Map.get(:background_fill_color)
       |> Image.Color.rgba_color!(opacity)
 
-    Operation.embed(image, padding, padding, width, height, background: background_color)
+    Operation.embed(image, padding_left, padding_top, width, height,
+      background: background_fill_color)
   end
 
   @doc """
@@ -566,16 +604,25 @@ defmodule Image.Text do
 
   ### Options
 
-  * `:background_color` is the background fill color behind
+  * `:background_fill_color` is the background fill color behind
     the text. The default is `:none` which indicates no
     background. Note that if
 
-  * `:opacity` is the opacity of the background. It is a
+  * `:background_fill_opacity` is the opacity of the background. It is a
     float between `0.0` and `1.0` where `0.0` means transparent
     and `1.0` means opaque. The default is `0.7`.
 
   * `:padding` is the padding in pixels between the
-    text and the edge of the background. THe default is `0`,
+    text and the edge of the background.  It can be expressed
+    as a single integer integer in which case the same padding
+    is applied to all four sides of the image.  It can also
+    be expressed as a list of two integers like `[0, 0]`.
+    The first integer will be used as the padding for the
+    left and right of the image. The second integer will be used
+    for the top and bottom of the image.  Another alternative is
+    to pass a `t:Vimage.t/0` in which case the padding will be derived
+    from the image dimensions such that the background covers the
+    whole of the impage.  THe default is `[0, 0]`.
 
   ### Returns
 
@@ -611,15 +658,15 @@ defmodule Image.Text do
 
   ### Options
 
-  * `:background_stroke` is the colour of the outline
+  * `:background_stroke_color` is the colour of the outline
     of the background. The default is "none",
 
   * `:background_stroke_width` is the integer size in pixels
     of the background border. The default is `1`.
 
-  * `:opacity` is the opacity of the background. It is a
-    float between `0.0` and `1.0` where `0.0` means transparent
-    and `1.0` means opaque. The default is `0.7`.
+  * `:background_stroke_opacity` is the opacity of the background
+    string. It is a float between `0.0` and `1.0` where `0.0` means
+    transparent and `1.0` means opaque. The default is `0.7`.
 
   ### Returns
 
@@ -644,7 +691,7 @@ defmodule Image.Text do
     end
   end
 
-  def add_background_border(image, %{background_stroke: :none} = _options) do
+  def add_background_border(image, %{background_stroke_color: :none} = _options) do
     {:ok, image}
   end
 
@@ -671,15 +718,15 @@ defmodule Image.Text do
 
   ### Options
 
-  * `:background_stroke` is the colour of the outline
+  * `:background_stroke_color` is the colour of the outline
     of the background. The default is "none",
 
   * `:background_stroke_width` is the integer size in pixels
     of the background border. The default is `1`.
 
-  * `:opacity` is the opacity of the background. It is a
-    float between `0.0` and `1.0` where `0.0` means transparent
-    and `1.0` means opaque. The default is `0.7`.
+  * `:background_stroke_opacity` is the opacity of the background
+    string. It is a float between `0.0` and `1.0` where `0.0` means
+    transparent and `1.0` means opaque. The default is `0.7`.
 
   ### Returns
 
@@ -750,8 +797,8 @@ defmodule Image.Text do
     svg = """
     <svg width="#{width}px" height="#{height}px">
       <rect
-        fill="#{options.background_color}"
-        opacity="#{options.opacity}"
+        fill="#{options.background_fill_color}"
+        opacity="#{options.background_fill_opacity}"
         width="100%"
         height="100%"
       />
@@ -759,7 +806,6 @@ defmodule Image.Text do
     """
 
     {:ok, {rectangle, _flags}} = Operation.svgload_buffer(svg)
-
     if transparent_text?(options) do
       Operation.extract_band(rectangle, 0, n: 3)
     else
@@ -775,13 +821,19 @@ defmodule Image.Text do
     width = Map.get(options, :background_width, Image.width(image))
     height = Map.get(options, :background_height, Image.height(image))
 
+    # This because the stroke is along the centre line and therefore
+    # 50% of it is clipped outside the background. We are after the
+    # equivalent of the stroke inside the bounding box.
+
+    stroke_width = options.background_stroke_width * 2
+
     svg = """
     <svg width="#{width}px" height="#{height}px">
       <rect
-        fill="none"
-        stroke="#{options.background_stroke}"
-        stroke-width="#{options.background_stroke_width}"
-        opacity="#{options.opacity}"
+        fill="transparent"
+        stroke="#{options.background_stroke_color}"
+        stroke-width="#{stroke_width}"
+        opacity="#{options.background_stroke_opacity}"
         width="100%"
         height="100%"
       />
@@ -789,6 +841,12 @@ defmodule Image.Text do
     """
 
     Operation.svgload_buffer(svg)
+  end
+
+  defp apply_opacity(image, options) do
+    use Image.Math
+
+    image * [1.0, 1.0, 1.0, options.background_fill_opacity]
   end
 
   defp transparent_text?(%{} = options) do

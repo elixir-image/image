@@ -9,6 +9,11 @@ defmodule Image.Error do
     %__MODULE__{message: message}
   end
 
+  def exception({message, path}) when is_binary(message) and is_binary(path) do
+    message = "#{message}: #{path}"
+    %__MODULE__{message: message}
+  end
+
   def exception(message) when is_binary(message) do
     %__MODULE__{message: message}
   end
