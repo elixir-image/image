@@ -22,7 +22,7 @@ defmodule Image.MixProject do
       preferred_cli_env: preferred_cli_env(),
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
-        plt_add_apps: ~w(gettext inets jason mix plug sweet_xml ratio)a
+        plt_add_apps: ~w(mix)a
       ],
       compilers: Mix.compilers()
     ]
@@ -52,6 +52,7 @@ defmodule Image.MixProject do
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
       {:benchee, "~> 1.0", only: :dev, runtime: false, optional: true},
       {:ex_doc, "~> 0.18", only: [:release, :dev]},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false, optional: true},
 
       # Only used for benchmarking
       {:mogrify, "~> 0.9.1", only: :dev, optional: true}

@@ -122,7 +122,10 @@ defmodule Image.Shape do
     </svg>
     """
 
-    Operation.svgload_buffer(svg)
+    case Operation.svgload_buffer(svg) do
+      {:ok, {polygon, _flags}} -> {:ok, polygon}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @doc """

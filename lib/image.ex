@@ -862,7 +862,7 @@ defmodule Image do
 
   """
 
-  @spec avatar(Vimage.t(), size :: float(), options :: Options.Avatar.avatar_options()) ::
+  @spec avatar(Vimage.t(), size :: pos_integer(), options :: Options.Avatar.avatar_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def avatar(image, size \\ @default_avatar_size, options \\ [])
@@ -915,7 +915,7 @@ defmodule Image do
 
   """
 
-  @spec avatar!(Vimage.t(), size :: float(), options :: Options.Avatar.avatar_options()) ::
+  @spec avatar!(Vimage.t(), size :: pos_integer(), options :: Options.Avatar.avatar_options()) ::
           Vimage.t() | no_return()
 
   def avatar!(%Vimage{} = image, size \\ @default_avatar_size, options \\ []) do
