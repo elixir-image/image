@@ -157,14 +157,14 @@ defmodule Image.Options.Text do
 
         {:cont, Keyword.put(options, option, hex_color)}
 
-      color == :none ->
-        {:cont, options}
+      color in [:none, "none"] ->
+        {:cont, Keyword.put(options, option, :transparent)}
 
       color in [:transparent, "transparent"] ->
         {:cont, Keyword.put(options, option, :transparent)}
 
-      String.downcase(to_string(color)) in ["none", ""] ->
-        {:cont, Keyword.put(options, :background_color, :none)}
+      (is_binary(color) or is_atom(color)) && String.downcase(to_string(color)) in ["none", ""] ->
+        {:cont, Keyword.put(options, option, :none)}
 
       true ->
         {:halt, {:error, invalid_option(option, color)}}

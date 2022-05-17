@@ -29,6 +29,8 @@ defmodule Image.Shape do
   @type path :: String.t() | [point(), ...]
 
   @default_width 500
+  @default_radius 100
+  @default_rotation 180
 
   @doc """
   Creates an image of a polygon as a single
@@ -43,7 +45,10 @@ defmodule Image.Shape do
     be an [SVG point string](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/points)
     or a "list of lists" of the form
     `[[x1, y1], [x2, y2], ...]` where `x1` and `y1`
-    are integers.
+    are integers.  `points` can also be a positive
+    integer >= 3 which indicates that an `n` sided
+    polygon will be generated. In this case the options
+    `:rotation` and `:radius` are also applicable.
 
   * `options` is a `t:Keyword.t/0` list of options.
 
@@ -64,6 +69,14 @@ defmodule Image.Shape do
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
     and `1.0` is completely opaque. The default is `0.7`.
+
+  * `:rotation` is the number of degrees to rotate the
+    axis of a generated n-sided polygon. This option is
+    only valid if `points` is an integer >= 3.
+    The default is `#{@default_rotation}`.
+
+  * `:radius` indicates the radius in pixels of a generated
+    n-sided polygon. The default is `#{@default_radius}`.
 
   ### Notes
 
@@ -131,6 +144,25 @@ defmodule Image.Shape do
       {:ok, {polygon, _flags}} -> {:ok, polygon}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  @spec polygon(sides::pos_integer(), options::Keyword.t()) ::
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
+
+  def polygon(sides, options) when is_integer(sides) and sides > 2 do
+    {radius, options} = Keyword.pop(options, :radius, @default_radius)
+    {rotation, options} = Keyword.pop(options, :rotation, @default_rotation)
+
+    segment = :math.pi * 2 / sides
+    rotation = rotation * :math.pi / 180
+
+    for side <- 1..sides do
+      [
+        :math.sin(segment * side + rotation) * radius,
+        :math.cos(segment * side + rotation) * radius
+      ]
+    end
+    |> polygon(options)
   end
 
   defp dimensions_from(points, nil, nil) do

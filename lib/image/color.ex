@@ -112,6 +112,10 @@ defmodule Image.Color do
 
   def rgba_color!(color, a \\ @opacity)
 
+  def rgba_color!(color, _a) when color in [:none, :transparent] do
+    [0.0, 0.0, 0.0, 1.0]
+  end
+
   def rgba_color!(color, a) when is_binary(color) and is_integer(a) do
     [r, g, b] = rgb_color!(color)
     [r, g, b, a]

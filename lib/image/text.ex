@@ -567,10 +567,10 @@ defmodule Image.Text do
       add_background_padding(image, options)
     end
   end
-
-  def add_background_padding(%Vimage{} = image, %{background_fill_color: :none} = _options) do
-    {:ok, image}
-  end
+  #
+  # def add_background_padding(%Vimage{} = image, %{background_fill_color: :none} = _options) do
+  #   {:ok, image}
+  # end
 
   def add_background_padding(%Vimage{} = image, %{} = options)  do
     [padding_left, padding_top] = options.padding
