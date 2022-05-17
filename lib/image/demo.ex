@@ -4,7 +4,7 @@ defmodule Image.Demo do
   @points [[0, 0], [0, 100], [70, 100], [90, 0]]
   @polygon_color  [116, 214, 245]
 
-  def demo do
+  def demo1 do
     {:ok, base_image} = Image.open("test/support/images/Singapore-2016-09-5887.jpg")
     {:ok, polygon} = Shape.polygon(@points, fill_color:  @polygon_color, stroke_color: "none", height: Image.height(base_image), opacity: 0.8)
     {:ok, explore_new} = Text.new_from_string("EXPLORE NEW", font_size: 95, font: "DIN Alternate")
