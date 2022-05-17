@@ -10,14 +10,14 @@ defmodule Image.Demo do
     {:ok, explore_new} = Text.new_from_string("EXPLORE NEW", font_size: 95, font: "DIN Alternate")
     {:ok, places} = Text.new_from_string("PLACES", font_size: 95, font: "DIN Alternate")
     {:ok, blowout} = Text.new_from_string("BLOWOUT SINGAPORE SALE", font_size: 40, font: "DIN Alternate")
-    {:ok, start_saving} = Text.new_from_string("START SAVING", font_size: 30, padding: 20, background_fill_color: @polygon_color, background_fill_opacity: 0.8, background_stroke_color: "white", background_stroke_width: 5)
+    {:ok, start_saving} = Text.new_from_string("START SAVING", font_size: 30, padding: 20, background_fill_color: @polygon_color, background_fill_opacity: 0.3, background_stroke_color: "white", background_stroke_width: 5)
 
     base_image
     |> Image.compose!(polygon, x: :middle, y: :top)
-    |> Image.compose!(explore_new, x: 180, y: 200)
-    |> Image.compose!(places, x: 218, y: 260)
-    |> Image.compose!(blowout, x: 194, y: 340)
-    |> Image.compose!(start_saving, x: 259, y: 400)
+    |> Image.compose!(explore_new, x: 260, y: 200)
+    |> Image.compose!(places, x: 260, y: 260)
+    |> Image.compose!(blowout, x: 260, y: 340)
+    |> Image.compose!(start_saving, x: 260, y: 400)
     |> Image.write!("/Users/kip/Desktop/polygon.png")
   end
 

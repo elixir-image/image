@@ -8,6 +8,8 @@ defmodule Image.Text do
   alias Vix.Vips.Operation
   alias Image.Options
 
+  @black [0, 0, 0]
+
   @doc """
   Create a new image from the provided text and
   formatting options.
@@ -780,7 +782,9 @@ defmodule Image.Text do
     """
 
     {:ok, {image, _flags}} = Operation.svgload_buffer(svg)
-    {:ok, image}
+    {:ok, {x, y, width, height, _flags}} =
+      Operation.find_trim(image, background: @black, threshold: 10)
+    Image.crop(image, x, y, width, height)
   end
 
   # Render a background rectangle and return
