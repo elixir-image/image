@@ -28,6 +28,8 @@ defmodule Image.Shape do
   """
   @type path :: String.t() | [point(), ...]
 
+  @default_width 500
+
   @doc """
   Creates an image of a polygon as a single
   band image on a transparent background.
@@ -97,12 +99,14 @@ defmodule Image.Shape do
     |> polygon(options)
   end
 
-  def polygon(points, options) when is_list(points) do
-    width = Keyword.get(options, :width, 500)
-    height = Keyword.get(options, :height, 500)
-    fill_color = Keyword.get(options, :fill_color, "none")
-    opacity = Keyword.get(options, :opacity, 0.7)
-    stroke_color = Keyword.get(options, :stroke_color, "black")
+  def polygon(points, options) when is_list(points) and is_list(options) do
+    with {:ok, options} <- Image.Options.Shape.validate_polygon_options(options) do
+      polygon(points, options)
+    end
+  end
+
+  def polygon(points, %{} = options) when is_list(points) do
+    {width, height} = dimensions_from(points, options[:width], options[:height])
 
     points =
       points
@@ -113,9 +117,10 @@ defmodule Image.Shape do
     <svg width="#{width}px" height="#{height}px">
       <style type="text/css">
         svg polygon {
-          fill: #{fill_color};
-          stroke: #{stroke_color};
-          opacity: #{opacity};
+          fill: #{options.fill_color};
+          stroke: #{options.stroke_color};
+          stroke-width: #{options.stroke_width};
+          opacity: #{options.opacity};
         }
       </style>
       <polygon points="#{points}" />
@@ -126,6 +131,25 @@ defmodule Image.Shape do
       {:ok, {polygon, _flags}} -> {:ok, polygon}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp dimensions_from(points, nil, nil) do
+    aspect_ratio = aspect_ratio(points)
+    {@default_width, round(@default_width / aspect_ratio)}
+  end
+
+  defp dimensions_from(_points, width, height) when is_integer(width) and is_integer(height) do
+    {width, height}
+  end
+
+  defp dimensions_from(points, width, nil) when is_integer(width) do
+    aspect_ratio = aspect_ratio(points)
+    {width, round(width / aspect_ratio)}
+  end
+
+  defp dimensions_from(points, nil, height) when is_integer(height) do
+    aspect_ratio = aspect_ratio(points)
+    {round(height * aspect_ratio), height}
   end
 
   @doc """
@@ -290,6 +314,15 @@ defmodule Image.Shape do
     min = 0
 
     rescale(polygon, min, width, min, height, {from_x_min, from_x_max, from_y_min, from_y_max})
+  end
+
+  def aspect_ratio(%Vimage{} = image) do
+    Image.width(image) / Image.height(image)
+  end
+
+  def aspect_ratio(polygon) when is_list(polygon) do
+    {from_x_min, from_x_max, from_y_min, from_y_max} = polygon_scale(polygon)
+    (from_x_max - from_x_min) / (from_y_max - from_y_min)
   end
 
   defp polygon_scale(polygon) do

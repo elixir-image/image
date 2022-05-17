@@ -119,7 +119,7 @@ defmodule Image.Options.Text do
   end
 
   defp validate_option({:padding, [left, right]}, options)
-      when is_integer(left) and is_integer(right) and left > 0 and right > 0 do
+      when is_integer(left) and is_integer(right) and left >= 0 and right >= 0 do
     {:cont, options}
   end
 
@@ -139,13 +139,23 @@ defmodule Image.Options.Text do
     {:halt, {:error, invalid_option(option)}}
   end
 
-  defp validate_color(option, color, options) do
+  @doc false
+  def validate_color(option, color, options) do
     cond do
-      Map.get(Color.color_map(), Color.normalize(color)) ->
+      (is_binary(color) or is_atom(color)) && Map.get(Color.color_map(), Color.normalize(color)) ->
         {:cont, options}
 
       match?(<<"#", _rest::bytes-6>>, color) ->
         {:cont, options}
+
+      match?([_r, _g, _b], color) ->
+        [r, g, b] = color
+
+        hex_color =
+          ["#", convert_color(r), convert_color(g), convert_color(b)]
+          |> :erlang.iolist_to_binary()
+
+        {:cont, Keyword.put(options, option, hex_color)}
 
       color == :none ->
         {:cont, options}
@@ -161,32 +171,36 @@ defmodule Image.Options.Text do
     end
   end
 
-  defp validate_opacity(_option, opacity, options)
+  @doc false
+  def validate_opacity(_option, opacity, options)
       when is_float(opacity) and opacity >= 0.0 and opacity <= 1.0 do
     {:cont, options}
   end
 
-  defp validate_opacity(option, opacity, _options) do
+  def validate_opacity(option, opacity, _options) do
     {:halt, {:error, invalid_option(option, opacity)}}
   end
 
-  defp validate_stroke_width(_option, width, options) when is_integer(width) and width > 0 do
+  @doc false
+  def validate_stroke_width(_option, width, options) when is_integer(width) and width > 0 do
     {:cont, options}
   end
 
-  defp validate_stroke_width(option, width, _options) do
+  def validate_stroke_width(option, width, _options) do
     {:halt, {:error, invalid_option(option, width)}}
   end
 
-  defp invalid_option(option) do
+  @doc false
+  def invalid_option(option) do
     "Invalid option or option value: #{inspect(option)}"
   end
 
-  defp invalid_option(option, value) do
+  @doc false
+  def invalid_option(option, value) do
     "Invalid option or option value: #{option}: #{inspect value}"
   end
 
-  def ensure_background_color_if_transparent_text(options) do
+  defp ensure_background_color_if_transparent_text(options) do
     case options do
       %{text_fill_color: :transparent, background_color: :none} ->
         Map.put(options, :background_color, "black")
@@ -196,7 +210,15 @@ defmodule Image.Options.Text do
     end
   end
 
-  defp wrap(term, atom) do
+  defp convert_color(c) do
+    c
+    |> round()
+    |> Integer.to_string(16)
+    |> String.pad_leading(2, "0")
+  end
+
+  @doc false
+  def wrap(term, atom) do
     {atom, term}
   end
 end

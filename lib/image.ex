@@ -421,10 +421,10 @@ defmodule Image do
 
   ### Arguments
 
+  * `base_image` is any `t:Vix.Vips.Image.t/0`.
+
   * `overlay_image` is any `t:Vix.Vips.Image.t/0` that will
     be composed over the top of `base_image`.
-
-  * `base_image` is any `t:Vix.Vips.Image.t/0`.
 
   * `options` is a keyword list of options.
 
@@ -452,10 +452,10 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec compose(overlay_image::Vimage.t(), base_image::Vimage.t(), options::Keyword.t()) ::
+  @spec compose(base_image::Vimage.t(), overlay_image::Vimage.t(), options::Keyword.t()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
-  def compose(overlay_image, base_image, options \\ []) do
+  def compose(base_image, overlay_image, options \\ []) do
     x = Keyword.get(options, :x, :center)
     y = Keyword.get(options, :y, :middle)
     blend_mode = Keyword.get(options, :blend_mode)
@@ -471,10 +471,10 @@ defmodule Image do
 
   ### Arguments
 
+  * `base_image` is any `t:Vix.Vips.Image.t/0`.
+
   * `overlay_image` is any `t:Vix.Vips.Image.t/0` that will
     be composed over the top of `base_image`.
-
-  * `base_image` is any `t:Vix.Vips.Image.t/0`.
 
   * `options` is a keyword list of options.
 
@@ -502,10 +502,10 @@ defmodule Image do
   * raises an exception
 
   """
-  @spec compose!(overlay_image::Vimage.t(), base_image::Vimage.t(), options::Keyword.t()) ::
+  @spec compose!(base_image::Vimage.t(), overlay_image::Vimage.t(),  options::Keyword.t()) ::
      Vimage.t() | no_return()
 
-  def compose!(overlay_image, base_image, options \\ []) do
+  def compose!(base_image, overlay_image, options \\ []) do
     case compose(base_image, overlay_image, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
