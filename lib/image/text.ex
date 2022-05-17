@@ -112,9 +112,9 @@ defmodule Image.Text do
     with {:ok, options} <- Options.Text.validate_options(options),
          {:ok, string} <- escape_html_text(string),
          {:ok, text_layer} <- text(string, options),
-         {:ok, text_with_background} <- add_background(text_layer, options),
-         {:ok, text_with_padding} <- add_background_padding(text_with_background, options) do
-      add_background_border(text_with_padding, options)
+         {:ok, with_background} <- add_background(text_layer, options),
+         {:ok, with_padding} <- add_background_padding(with_background, options) do
+      add_background_border(with_padding, options)
     end
   end
 
@@ -393,12 +393,6 @@ defmodule Image.Text do
     the text. The default is `:none` which indicates no
     background. Note that if
 
-  * `:background_stroke` is the colour of the outline
-    of the background. The default is "none",
-
-  * `:background_stroke_width` is the integer size in pixels
-    of the background border. The default is `1`.
-
   * `:opacity` is the opacity of the background. It is a
     float between `0.0` and `1.0` where `0.0` means transparent
     and `1.0` means opaque. The default is `0.7`.
@@ -659,24 +653,9 @@ defmodule Image.Text do
   end
 
   def add_background_border(image, %{} = options) do
-    width = Map.get(options, :background_width, Image.width(image))
-    height = Map.get(options, :background_height, Image.height(image))
-
-    svg = """
-    <svg width="#{width}px" height="#{height}px">
-      <rect
-        fill="none"
-        stroke="#{options.background_stroke}"
-        stroke-width="#{options.background_stroke_width}"
-        opacity="#{options.opacity}"
-        width="100%"
-        height="100%"
-      />
-    </svg>
-    """
-
-    {:ok, {border, _flags}} = Operation.svgload_buffer(svg)
-    Operation.composite2(image, border, :VIPS_BLEND_MODE_OVER)
+    with {:ok, {border, _flags}} <- render_background_border(image, options) do
+      Operation.composite2(image, border, :VIPS_BLEND_MODE_OVER)
+    end
   end
 
   @doc """
@@ -761,21 +740,17 @@ defmodule Image.Text do
   # it without its alpha channel since we will
   # apply transparency from the text image
 
-  # Don't apply a background stroke if there is
-  # padding since we want the stroke around the
-  # padded area.
+  # Don't apply a background stroke since
+  # we want the stroke around the padded area.
 
   defp render_background(image, %{} = options) do
     width = Map.get(options, :background_width, Image.width(image))
     height = Map.get(options, :background_height, Image.height(image))
-    background_stroke = if options.padding > 0, do: :none, else: options.background_stroke
 
     svg = """
     <svg width="#{width}px" height="#{height}px">
       <rect
         fill="#{options.background_color}"
-        stroke="#{background_stroke}"
-        stroke-width="#{options.background_stroke_width}"
         opacity="#{options.opacity}"
         width="100%"
         height="100%"
@@ -790,6 +765,30 @@ defmodule Image.Text do
     else
       {:ok, rectangle}
     end
+  end
+
+  # Render a background border. The fill will be
+  # transparent so the border cam be composed over
+  # another layer.
+
+  defp render_background_border(image, %{} = options) do
+    width = Map.get(options, :background_width, Image.width(image))
+    height = Map.get(options, :background_height, Image.height(image))
+
+    svg = """
+    <svg width="#{width}px" height="#{height}px">
+      <rect
+        fill="none"
+        stroke="#{options.background_stroke}"
+        stroke-width="#{options.background_stroke_width}"
+        opacity="#{options.opacity}"
+        width="100%"
+        height="100%"
+      />
+    </svg>
+    """
+
+    Operation.svgload_buffer(svg)
   end
 
   defp transparent_text?(%{} = options) do
