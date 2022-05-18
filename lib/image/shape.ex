@@ -258,20 +258,29 @@ defmodule Image.Shape do
   end
 
   @doc """
-  Returns an image of a 5-pointed star that
+  Returns an image of an n-pointed star that
   can be composed over other images.
 
   ### Arguments
 
   * `points` is an integer number of points
-    on the star. `points` must be >= 3.
+    on the star. `points` must be >= 3. The default
+    is `#{@default_star_points}`.
 
   * `options` is a `t:Keyword.t/0` list of options.
 
   ### Options
 
-  * See `Image.Shape.polygon/2` for the applicable
-    options
+  * `:inner_radius` is the size of the inner
+    radius. The default is `#{@default_star_inner_radius}`.
+
+  * `:outer_radius` is the size of the outer
+    radius. The default is `#{@default_star_inner_radius}`.
+
+  * `:rotation` is the angle in degrees of rotation
+    applied to the points. The default is `#{@default_star_rotation}`.
+
+  * Any remaining options are passed to `Image.Shape.polygon/2`.
 
   ### Returns
 
@@ -280,6 +289,9 @@ defmodule Image.Shape do
   * `{:error, reason}`
 
   ### Examples
+
+      #=> {:ok, star} = Image.Shape.star
+      #=> {:ok, star} = Image.Shape.star 5, rotation: 90, fill_color: :red, stroke_color: :green
 
   """
   @spec star(points :: pos_integer(), options::Keyword.t()) ::
@@ -304,7 +316,6 @@ defmodule Image.Shape do
         inner_radius * :math.sin(inner_angle)
       ]
 
-
       outer = [
         outer_radius * :math.cos(outer_angle),
         outer_radius * :math.sin(outer_angle)
@@ -316,20 +327,29 @@ defmodule Image.Shape do
   end
 
   @doc """
-  Returns an image of a 5-pointed star that
+  Returns an image of an n-pointed star that
   can be composed over other images.
 
   ### Arguments
 
   * `points` is an integer number of points
-    on the star. `points` must be >= 3.
+    on the star. `points` must be >= 3. The default
+    is `#{@default_star_points}`.
 
   * `options` is a `t:Keyword.t/0` list of options.
 
   ### Options
 
-  * See `Image.Shape.polygon/2` for the applicable
-    options
+  * `:inner_radius` is the size of the inner
+    radius. The default is `#{@default_star_inner_radius}`.
+
+  * `:outer_radius` is the size of the outer
+    radius. The default is `#{@default_star_inner_radius}`.
+
+  * `:rotation` is the angle in degrees of rotation
+    applied to the points. The default is `#{@default_star_rotation}`.
+
+  * Any remaining options are passed to `Image.Shape.polygon/2`.
 
   ### Returns
 
@@ -338,6 +358,9 @@ defmodule Image.Shape do
   * raises an exception
 
   ### Examples
+
+      #=> star = Image.Shape.star!
+      #=> star = Image.Shape.star! 5, rotation: 90, fill_color: :red, stroke_color: :green
 
   """
   @spec star!(points :: pos_integer(), options::Keyword.t()) :: Vimage.t() | no_return()

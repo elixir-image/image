@@ -1,6 +1,7 @@
 if String.starts_with?(to_string(:erlang.system_info(:system_architecture)), "x86_64") do
   defmodule Image.Avatar.Test do
-    use ExUnit.Case
+    use ExUnit.Case, async: true
+
     import Image.TestSupport
     alias Vix.Vips.Image, as: Vimage
 
