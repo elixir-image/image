@@ -4,26 +4,6 @@ defmodule Image.Interpretation do
   an image can be converted to and from.
 
   """
-  @type interpretation ::
-          :multiband
-          | :bw
-          | :histogram
-          | :xyz
-          | :lab
-          | :cmyk
-          | :labq
-          | :rbg
-          | :cmc
-          | :lch
-          | :labs
-          | :srgb
-          | :yxy
-          | :fourier
-          | :rgb16
-          | :grey16
-          | :matrix
-          | :scrgb
-          | :hsv
 
   @interpretation_map %{
     multiband: :VIPS_INTERPRETATION_MULTIBAND,
@@ -48,6 +28,13 @@ defmodule Image.Interpretation do
   }
 
   @interpretation Map.keys(@interpretation_map)
+  @vips_interpretation Map.values(@interpretation_map)
+
+  @typedoc """
+  Defines the known colorspace interpretations
+
+  """
+  @type t ::  unquote(Enum.reduce(@interpretation, &{:|, [], [&1, &2]}))
 
   @doc """
   Returns the known colorspace interpretations
@@ -57,11 +44,52 @@ defmodule Image.Interpretation do
     @interpretation
   end
 
-  @doc false
-  def vips_interpretation(interpretation) when is_atom(interpretation) do
+  @doc """
+  Normalizes and validates a color interpretation.
+
+  ### Arguments
+
+  * `interpretation` is any atom or string value
+    in `Image.Interpretation.known_interpretations/0`
+
+  ### Returns
+
+  * `{:error, normalized_interpretation}` or
+
+  * `{:error, reason}`
+
+  ### Examples
+
+      iex> Image.Interpretation.validate_interpretation(:bw)
+      {:ok, :VIPS_INTERPRETATION_B_W}
+
+      iex> Image.Interpretation.validate_interpretation(:VIPS_INTERPRETATION_sRGB)
+      {:ok, :VIPS_INTERPRETATION_sRGB}
+
+      iex> Image.Interpretation.validate_interpretation(:unknown)
+      {:error, "Unknown interpretation. Found :unknown"}
+
+  """
+  def validate_interpretation(interpretation) when interpretation in @vips_interpretation do
+    {:ok, interpretation}
+  end
+
+  def validate_interpretation(interpretation) when is_atom(interpretation) do
     case Map.fetch(@interpretation_map, interpretation) do
       {:ok, interpretation} -> {:ok, interpretation}
-      :error -> {:error, "Unknown interpretation. Found #{inspect(interpretation)}"}
+      :error -> {:error, unknown_interpretation_error(interpretation)}
     end
+  end
+
+  def validate_interpretation(interpretation) when is_binary(interpretation) do
+    interpretation
+    |> String.to_existing_atom()
+    |> validate_interpretation
+  rescue ArgumentError ->
+    {:error, unknown_interpretation_error(interpretation)}
+  end
+
+  defp unknown_interpretation_error(interpretation) do
+    "Unknown interpretation. Found #{inspect(interpretation)}"
   end
 end

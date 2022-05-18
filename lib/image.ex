@@ -2129,7 +2129,7 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def to_colorspace(%Vimage{} = image, colorspace) do
-    with {:ok, colorspace} <- Interpretation.vips_interpretation(colorspace) do
+    with {:ok, colorspace} <- Interpretation.validate_interpretation(colorspace) do
       Vix.Vips.Operation.colourspace(image, colorspace)
     end
   end
