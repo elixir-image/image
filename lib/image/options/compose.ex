@@ -1,6 +1,13 @@
 defmodule Image.Options.Compose do
   @moduledoc false
 
+  # Thie module propvides functions to calculate
+  # x, y positions for compositions.
+
+  # Since x,y can be relateive or absolution, can be symbolid
+  # or numeric and can even by a function this becomse more
+  # complex that it might initially seem
+
   @doc false
   def get_x(image, prev_x, prev_width, x, dx, baseline) when is_function(x, 6) do
     x = x.(image, prev_x, prev_width, x, dx, baseline)
