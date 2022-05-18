@@ -32,6 +32,11 @@ defmodule Image.Shape do
   @default_radius 100
   @default_rotation 180
 
+  @default_star_points 5
+  @default_star_inner_radius 60
+  @default_star_outer_radius 150
+  @default_star_rotation 0
+
   @doc """
   Creates an image of a polygon as a single
   band image on a transparent background.
@@ -252,13 +257,14 @@ defmodule Image.Shape do
     end
   end
 
-  @star_polygon "50,0 21,90 98,35 2,35 79,90"
-
   @doc """
   Returns an image of a 5-pointed star that
   can be composed over other images.
 
   ### Arguments
+
+  * `points` is an integer number of points
+    on the star. `points` must be >= 3.
 
   * `options` is a `t:Keyword.t/0` list of options.
 
@@ -276,9 +282,37 @@ defmodule Image.Shape do
   ### Examples
 
   """
-  @spec star(options::Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
-  def star(options \\ []) do
-    polygon(@star_polygon, options)
+  @spec star(points :: pos_integer(), options::Keyword.t()) ::
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
+
+  def star(points \\ @default_star_points, options \\ []) when points > 3 do
+    {inner_radius, options} = Keyword.pop(options, :inner_radius, @default_star_inner_radius)
+    {outer_radius, options} = Keyword.pop(options, :outer_radius, @default_star_outer_radius)
+    {rotation, options} = Keyword.pop(options, :rotation, @default_star_rotation)
+
+    rotation = (rotation * :math.pi / 180)
+
+    Enum.reduce(1..points, [], fn point, polygon ->
+      inner_angle = 2 * :math.pi * point / points
+      outer_angle = inner_angle + :math.pi / points
+
+      inner_angle = inner_angle + rotation
+      outer_angle = outer_angle + rotation
+
+      inner = [
+        inner_radius * :math.cos(inner_angle),
+        inner_radius * :math.sin(inner_angle)
+      ]
+
+
+      outer = [
+        outer_radius * :math.cos(outer_angle),
+        outer_radius * :math.sin(outer_angle)
+      ]
+
+      [outer, inner | polygon]
+    end)
+    |> polygon(options)
   end
 
   @doc """
@@ -286,6 +320,9 @@ defmodule Image.Shape do
   can be composed over other images.
 
   ### Arguments
+
+  * `points` is an integer number of points
+    on the star. `points` must be >= 3.
 
   * `options` is a `t:Keyword.t/0` list of options.
 
@@ -303,9 +340,9 @@ defmodule Image.Shape do
   ### Examples
 
   """
-  @spec star!(options::Keyword.t()) :: Vimage.t() | no_return()
-  def star!(options \\ []) do
-    case star(options) do
+  @spec star!(points :: pos_integer(), options::Keyword.t()) :: Vimage.t() | no_return()
+  def star!(points \\ @default_star_points, options \\ []) do
+    case star(points, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end

@@ -11,10 +11,10 @@ defmodule Image.Text do
   @black [0, 0, 0]
 
   @doc """
-  Create a new image from the provided text and
+  Create a new image from the provided string and
   formatting options.
 
-  `new_from_string/2` creates an image with the
+  `text/2` creates an image with the
   following steps:
 
   * Render the text
@@ -122,11 +122,10 @@ defmodule Image.Text do
     `#FF00FF` for the color "Fuschia".
 
   """
-  @spec new_from_string(Phoenix.HTML.safe() | String.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
-  def new_from_string(string, options \\ []) when is_list(options) do
+  @spec text(Phoenix.HTML.safe() | String.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  def text(string, options \\ []) when is_list(options) do
     with {:ok, options} <- Options.Text.validate_options(options),
-         {:ok, string} <- escape_html_text(string),
-         {:ok, text_layer} <- text(string, options),
+         {:ok, text_layer} <- simple_text(string, options),
          {:ok, with_background} <- add_background(text_layer, options),
          {:ok, with_padding} <- add_background_padding(with_background, options) do
       add_background_border(with_padding, options)
@@ -134,11 +133,11 @@ defmodule Image.Text do
   end
 
   @doc """
-  Create a new image from the provided text and
+  Create a new image from the provided string and
   formatting options returning an image or raising
   an exception.
 
-  `new_from_string!/2` creates an image with the
+  `text!/2` creates an image with the
   following steps:
 
   * Render the text
@@ -246,9 +245,9 @@ defmodule Image.Text do
     `#FF00FF` for the color "Fuschia".
 
   """
-  @spec new_from_string!(String.t(), Keyword.t()) :: Vimage.t() | no_return()
-  def new_from_string!(string, options \\ []) do
-    case new_from_string(string, options) do
+  @spec text!(String.t(), Keyword.t()) :: Vimage.t() | no_return()
+  def text!(string, options \\ []) do
+    case text(string, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
@@ -315,22 +314,24 @@ defmodule Image.Text do
     `#FF00FF` for the color "Fuschia".
 
   """
-  @spec text(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
-  def text(string, options \\ [])
+  @spec simple_text(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  def simple_text(string, options \\ [])
 
-  def text(string, options) when is_list(options) do
+  def simple_text(string, options) when is_list(options) do
     with {:ok, options} <- Options.Text.validate_options(options) do
-      text(string, options)
+      simple_text(string, options)
     end
   end
 
-  def text(string, %{} = options) do
-    {:ok, text_layer} = render_text(string, options)
+  def simple_text(string, %{} = options) do
+    with {:ok, string} <- escape_html_text(string) do
+      {:ok, text_layer} = render_text(string, options)
 
-    if transparent_text?(options) do
-      Image.convert_to_mask(text_layer)
-    else
-      {:ok, text_layer}
+      if transparent_text?(options) do
+        Image.convert_to_mask(text_layer)
+      else
+        {:ok, text_layer}
+      end
     end
   end
 
@@ -396,9 +397,9 @@ defmodule Image.Text do
     `#FF00FF` for the color "Fuschia".
 
   """
-  @spec text!(Vimage.t(), Keyword.t()) :: Vimage.t() | no_return()
-  def text!(string, options \\ []) do
-    case text(string, options) do
+  @spec simple_text!(Vimage.t(), Keyword.t()) :: Vimage.t() | no_return()
+  def simple_text!(string, options \\ []) do
+    case simple_text(string, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end

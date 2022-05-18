@@ -48,9 +48,9 @@ defmodule Image.Options.Compose do
     {:ok, prev_x + dx}
   end
 
-  # Default to left edge of image if no baseline
+  # Default to right edge of image if no baseline
   def get_x(image, prev_x, prev_width, nil, dx, nil) do
-    get_x(image, prev_x, prev_width, nil, dx, :left)
+    get_x(image, prev_x, prev_width, nil, dx, :right)
   end
 
   def get_x(_image, _prev_x, _prev_width, x, _dx, _baseline) do

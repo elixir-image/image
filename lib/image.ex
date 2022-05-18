@@ -33,34 +33,6 @@ defmodule Image do
   # to be square
   @square_when_ratio_less_than 0.0
 
-  @doc """
-  Guards whether the coordinates can be reasonably
-  interpreted as a bounding box.
-
-  `left` and `top` when positive are relative to
-  the left and top of the image respectively. When
-  negative they are relative to the right and bottom
-  of the image.
-
-  """
-  defguard is_box(left, top, width, height)
-           when is_integer(left) and is_integer(top) and is_integer(width) and is_integer(height) and
-                  width > 0 and height > 0
-
-  @doc """
-  Guards whether a number can be reasonable interpreted
-  as a size (as in size of a crop or mask)
-
-  """
-  defguard is_size(size) when is_integer(size) and size > 0
-
-  @doc """
-  Guards whether a term might be reasonable interpreted
-  as an image pixel.
-
-  """
-  defguard is_pixel(value) when is_number(value) or is_list(value)
-
   @typedoc """
   The valid rendering intent values. For all
   functions that take an optioanl intent
@@ -134,6 +106,101 @@ defmodule Image do
 
   """
   @type orientation :: :landscape | :portrait | :square
+
+  @typedoc """
+  A composition is a 2-tuple defining an image
+  and the options which describe how to
+  compose this image on a base image.
+
+  """
+  @type composition :: {Vimage.t(), composition_options}
+
+  @typedoc """
+  When composing an image on a base image, these
+  options drive how the composition proceeds.
+
+  * `:x` describes the absolute `x` offset on the
+    base image where this image will be placed. If
+    this option is set to `:left`, `:center` or
+    `:right` then the `x` position will be calculated
+    relative to the base image. If `:x` is nil
+    (the default) then the image will be placed according
+    to the relative offset of the previously composed
+    image using `:dx`.
+
+  * `:y` describes the absolute `y` offset on the
+    base image where this image will be placed. If
+    this option is set to `:top`, `:middle` or
+    `:bottom` then the `y` position will be calculated
+    relative to the base image. If `:y` is nil
+    (the default) then the image will be placed according
+    to the relative offset of the previously composed
+    image using `:dy`.
+
+  * `:dx` descibes the relative offset used to calculate
+    the `x` value. `:dx` is an integer offset from the
+    edge of the previously composed image. Which edge is
+    determined by the `:x_baseline` option. If `:x` is also
+    specified then `:x` is first calculated, then `:dx` is
+    added to it. In this case, `:x_baseline` is ignored.
+
+  * `:dy` descibes the relative offset used to calculate
+    the `y` value. `:dy` is an integer offset from the
+    edge of the previously composed image. Which edge is
+    determined by the `:y_baseline` option. If `:y` is also
+    specified then `:y` is first calculated, then `:dy` is
+    added to it. In this case, `:x_baseline` is ignored.
+
+  * `:blend_mode` is the `t:Image.BlendMode.t/0` used when
+    composing this image over its base image. The default
+    is `:over` which is appropriate for most use cases.
+
+  * `:x_baseline` establishes the baseline on the
+    previsouly composed image from which `:dx` is
+    calculated. The default is `:right`.
+
+  * `:y_baseline` establishes the baseline on the
+    previsouly composed image from which `:dy` is
+    calculated. The default is `:bottom`.
+
+  """
+  @type composition_options :: [
+    {:x, non_neg_integer() | nil | :left | :center | :right},
+    {:y, non_neg_integer() | nil | :top | :middle | :bottom},
+    {:dx, integer()},
+    {:dy, integer()},
+    {:blend_mode, Image.BlendMode.t()},
+    {:x_baseline, :nil | :left | :center | :right},
+    {:y_baseline, :nil | :top | :middle | :bottom}
+  ]
+
+  @doc """
+  Guards whether the coordinates can be reasonably
+  interpreted as a bounding box.
+
+  `left` and `top` when positive are relative to
+  the left and top of the image respectively. When
+  negative they are relative to the right and bottom
+  of the image.
+
+  """
+  defguard is_box(left, top, width, height)
+           when is_integer(left) and is_integer(top) and is_integer(width) and is_integer(height) and
+                  width > 0 and height > 0
+
+  @doc """
+  Guards whether a number can be reasonable interpreted
+  as a size (as in size of a crop or mask)
+
+  """
+  defguard is_size(size) when is_integer(size) and size > 0
+
+  @doc """
+  Guards whether a term might be reasonable interpreted
+  as an image pixel.
+
+  """
+  defguard is_pixel(value) when is_number(value) or is_list(value)
 
   @doc """
   Opens an image file for image processing.
@@ -425,11 +492,13 @@ defmodule Image do
   * `base_image` is any `t:Vix.Vips.Image.t/0`.
 
   * `overlay_image` is any `t:Vix.Vips.Image.t/0` that will
-    be composed over the top of `base_image`.
+    be composed over the top of `base_image`. It can also
+    be a list of `t:composition/0`s that allow for multiple
+    images to be composed in a single call.
 
   * `options` is a keyword list of options.
 
-  ### Options
+  ### Options for a single overlay image
 
   * `:blend_mode` is the manner in which the two
     images are composited. See `t:Image.BkendMode.t/0`.
@@ -446,11 +515,86 @@ defmodule Image do
     one of the keywords `:top`, `:bottom` or `:middle`. The
     default is `:middle`.
 
+  ### Composition list options
+
+  When `overlay_image` is an `image_list`, each entry in
+  the list is either a `t:Vix.Vips.Image.t/0` or a
+  `t:composition/0`. A composition supports the specification
+  of how a particular image is composed onto the base image.
+
+  * `:x` describes the absolute `x` offset on the
+    base image where this image will be placed. If
+    this option is set to `:left`, `:center` or
+    `:right` then the `x` position will be calculated
+    relative to the base image. If `:x` is nil
+    (the default) then the image will be placed according
+    to the relative offset of the previously composed
+    image using `:dx`.
+
+  * `:y` describes the absolute `y` offset on the
+    base image where this image will be placed. If
+    this option is set to `:top`, `:middle` or
+    `:bottom` then the `y` position will be calculated
+    relative to the base image. If `:y` is nil
+    (the default) then the image will be placed according
+    to the relative offset of the previously composed
+    image using `:dy`.
+
+  * `:dx` descibes the relative offset used to calculate
+    the `x` value. `:dx` is an integer offset from the
+    edge of the previously composed image. Which edge is
+    determined by the `:x_baseline` option. If `:x` is also
+    specified then `:x` is first calculated, then `:dx` is
+    added to it. In this case, `:x_baseline` is ignored.
+
+  * `:dy` descibes the relative offset used to calculate
+    the `y` value. `:dy` is an integer offset from the
+    edge of the previously composed image. Which edge is
+    determined by the `:y_baseline` option. If `:y` is also
+    specified then `:y` is first calculated, then `:dy` is
+    added to it. In this case, `:x_baseline` is ignored.
+
+  * `:blend_mode` is the `t:Image.BlendMode.t/0` used when
+    composing this image over its base image. The default
+    is `:over` which is appropriate for most use cases.
+
+  * `:x_baseline` establishes the baseline on the
+    previsouly composed image from which `:dx` is
+    calculated. The default is `:right`.
+
+  * `:y_baseline` establishes the baseline on the
+    previsouly composed image from which `:dy` is
+    calculated. The default is `:bottom`.
+
   ### Returns
 
   * `{:ok, composed_image}` or
 
   * `{:error, reason}`
+
+  ### Examples
+
+      # Compose images over a base image using
+      # absolute coordinates from the base image
+      # to place each overlay image
+      #==> {:ok, image} = Image.compose(base_image, polygon, x: :middle, y: :top)
+      #==> {:ok, image} = Image.compose(image, explore_new, x: 260, y: 200)
+      #==> {:ok, image} = Image.compose(image, places, x: 260, y: 260)
+      #==> {:ok, image} = Image.compose(image, blowout, x: 260, y: 340)
+      #==> {:ok, image} = Image.compose(image, start_saving, x: 260, y: 400)
+
+      # Compose images over a base image
+      # using a composition list and coordinates
+      # that are either absolute with respect to the
+      # base image or relative to the previously
+      # composed image
+      #==> Image.compose(base_image, [
+      ...>   {polygon, x: :center, y: :top},
+      ...>   {explore_new, y_baseline: :top, x_baseline: :left, dx: 20, dy: 200},
+      ...>   {places, dy: 10},
+      ...>   {blowout, dy: 20},
+      ...>   {start_saving, dy: 50}
+      ...> ])
 
   """
   @spec compose(base_image::Vimage.t(), overlay_image::Vimage.t(), options::Keyword.t()) ::
@@ -473,8 +617,11 @@ defmodule Image do
     {:ok, Vimage.t()} | {:error, error_message()}
 
   def compose(%Vimage{} = base_image, image_list, _options) when is_list(image_list) do
+    width = Image.width(base_image)
+    height = Image.height(base_image)
+
     zipped =
-      Enum.reduce_while image_list, {0, 0, Image.width(base_image), Image.height(base_image), []}, fn
+      Enum.reduce_while image_list, {0, 0, width, height, []}, fn
         %Vimage{} = image, {prev_x, prev_y, prev_width, prev_height, acc} ->
           build_composition(image, prev_x, prev_y, prev_width, prev_height, acc, Map.new())
 
@@ -487,20 +634,22 @@ defmodule Image do
         {:error, reason}
 
       {_x, _y, _height, _width, list} ->
-        {overlay_images, xs, ys, blend_modes} = unzip_composition(list)
-        Operation.composite([base_image | overlay_images], blend_modes, x: xs, y: ys)
+        {overlay_images, x_list, y_list, blend_modes} = unzip_composition(list)
+        Operation.composite([base_image | overlay_images], blend_modes, x: x_list, y: y_list)
     end
   end
 
   defp build_composition(image, prev_x, prev_y, prev_width, prev_height, acc, options) do
+    import Compose, only: [get_x: 6, get_y: 6]
+
     options = Map.merge(Compose.default_composit_options(), options)
 
-    with {:ok, x} <- Compose.get_x(image, prev_x, prev_width, options.x, options.dx, options.x_baseline),
-         {:ok, y} <- Compose.get_y(image, prev_y, prev_height, options.y, options.dy, options.y_baseline),
+    with {:ok, x} <- get_x(image, prev_x, prev_width, options.x, options.dx, options.x_baseline),
+         {:ok, y} <- get_y(image, prev_y, prev_height, options.y, options.dy, options.y_baseline),
          {:ok, blend_mode} <- BlendMode.validate_blend_mode(options.blend_mode) do
       {:ok, [image, x, y, blend_mode]}
     end
-    |> update_compositions(image, acc)
+    |> accumulate_compositions(image, acc)
   end
 
   defp unzip_composition(list) do
@@ -511,7 +660,7 @@ defmodule Image do
     end
   end
 
-  defp update_compositions(composition, image, acc) do
+  defp accumulate_compositions(composition, image, acc) do
     case composition do
       {:ok, composition} ->
         [_image, x, y | _rest] = composition
@@ -523,7 +672,8 @@ defmodule Image do
   end
 
   @doc """
-  Compse two images together to form a new image.
+  Compse two images together to form a new image or
+  raising an exception.
 
   ### Arguments
 
@@ -551,11 +701,88 @@ defmodule Image do
     one of the keywords `:top`, `:bottom` or `:middle`. The
     default is `:middle`.
 
+  ### Composition list options
+
+  When `overlay_image` is an `image_list`, each entry in
+  the list is either a `t:Vix.Vips.Image.t/0` or a
+  `t:composition/0`. A composition supports the specification
+  of how a particular image is composed onto the base image.
+
+  * `:x` describes the absolute `x` offset on the
+    base image where this image will be placed. If
+    this option is set to `:left`, `:center` or
+    `:right` then the `x` position will be calculated
+    relative to the base image. If `:x` is nil
+    (the default) then the image will be placed according
+    to the relative offset of the previously composed
+    image using `:dx`.
+
+  * `:y` describes the absolute `y` offset on the
+    base image where this image will be placed. If
+    this option is set to `:top`, `:middle` or
+    `:bottom` then the `y` position will be calculated
+    relative to the base image. If `:y` is nil
+    (the default) then the image will be placed according
+    to the relative offset of the previously composed
+    image using `:dy`.
+
+  * `:dx` descibes the relative offset used to calculate
+    the `x` value. `:dx` is an integer offset from the
+    edge of the previously composed image. Which edge is
+    determined by the `:x_baseline` option. If `:x` is also
+    specified then `:x` is first calculated, then `:dx` is
+    added to it. In this case, `:x_baseline` is ignored.
+
+  * `:dy` descibes the relative offset used to calculate
+    the `y` value. `:dy` is an integer offset from the
+    edge of the previously composed image. Which edge is
+    determined by the `:y_baseline` option. If `:y` is also
+    specified then `:y` is first calculated, then `:dy` is
+    added to it. In this case, `:x_baseline` is ignored.
+
+  * `:blend_mode` is the `t:Image.BlendMode.t/0` used when
+    composing this image over its base image. The default
+    is `:over` which is appropriate for most use cases.
+
+  * `:x_baseline` establishes the baseline on the
+    previsouly composed image from which `:dx` is
+    calculated. The default is `:right`.
+
+  * `:y_baseline` establishes the baseline on the
+    previsouly composed image from which `:dy` is
+    calculated. The default is `:bottom`.
+
   ### Returns
 
   * `composed_image` or
 
   * raises an exception
+
+  ### Examples
+
+      # Compose images over a base image using
+      # absolute  coordinates from the base image
+      # to place each overlay image
+      #==> base_image
+      ...> |> Image.compose!(polygon, x: :middle, y: :top)
+      ...> |> Image.compose!(explore_new, x: 260, y: 200)
+      ...> |> Image.compose!(places, x: 260, y: 260)
+      ...> |> Image.compose!(blowout, x: 260, y: 340)
+      ...> |> Image.compose!(start_saving, x: 260, y: 400)
+
+      # Compose images over a base image
+      # using a composition list and coordinates
+      # that are either absolute with respect to the
+      # base image or relative to the previously
+      # composed image
+      #==> base_image
+      ...> |> Image.compose!([
+      ...>   {polygon, x: :center, y: :top},
+      ...>   {explore_new, y_baseline: :top, x_baseline: :left, dx: 20, dy: 200},
+      ...>   {places, dy: 10},
+      ...>   {blowout, dy: 20},
+      ...>   {start_saving, dy: 50}
+      ...> ])
 
   """
   @spec compose!(base_image::Vimage.t(), overlay_image::Vimage.t(),  options::Keyword.t()) ::
