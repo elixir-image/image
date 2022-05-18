@@ -18,7 +18,8 @@ defmodule Image do
   alias Vix.Vips.{Operation, MutableImage}
   alias Vix.Vips.Image, as: Vimage
 
-  alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation}
+  alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode}
+  alias Image.Options.Compose
 
   # Default radius of rounded corners
   @default_round_corner_radius 50
@@ -455,7 +456,9 @@ defmodule Image do
   @spec compose(base_image::Vimage.t(), overlay_image::Vimage.t(), options::Keyword.t()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
-  def compose(base_image, overlay_image, options \\ []) do
+  def compose(base_image, overlay_image_or_images, options \\ [])
+
+  def compose(%Vimage{} = base_image, %Vimage{} = overlay_image, options) do
     x = Keyword.get(options, :x, :center)
     y = Keyword.get(options, :y, :middle)
     blend_mode = Keyword.get(options, :blend_mode)
@@ -463,6 +466,59 @@ defmodule Image do
     with {:ok, blend_mode} <- Image.BlendMode.validate_blend_mode(blend_mode) do
       {x, y} = xy_offset(base_image, overlay_image, x, y)
       Operation.composite2(base_image, overlay_image, blend_mode, x: x, y: y)
+    end
+  end
+
+  @spec compose(base_image::Vimage.t(), image_list::[Vimage.t(), ...], options::Keyword.t()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def compose(%Vimage{} = base_image, image_list, _options) when is_list(image_list) do
+    zipped =
+      Enum.reduce_while image_list, {0, 0, Image.width(base_image), Image.height(base_image), []}, fn
+        %Vimage{} = image, {prev_x, prev_y, prev_width, prev_height, acc} ->
+          build_composition(image, prev_x, prev_y, prev_width, prev_height, acc, Map.new())
+
+        {%Vimage{} = image, options}, {prev_x, prev_y, prev_width, prev_height, acc} ->
+          build_composition(image, prev_x, prev_y, prev_width, prev_height, acc, Map.new(options))
+      end
+
+    case zipped do
+      {:error, reason} ->
+        {:error, reason}
+
+      {_x, _y, _height, _width, list} ->
+        {overlay_images, xs, ys, blend_modes} = unzip_composition(list)
+        Operation.composite([base_image | overlay_images], blend_modes, x: xs, y: ys)
+    end
+  end
+
+  defp build_composition(image, prev_x, prev_y, prev_width, prev_height, acc, options) do
+    options = Map.merge(Compose.default_composit_options(), options)
+
+    with {:ok, x} <- Compose.get_x(image, prev_x, prev_width, options.x, options.dx, options.x_baseline),
+         {:ok, y} <- Compose.get_y(image, prev_y, prev_height, options.y, options.dy, options.y_baseline),
+         {:ok, blend_mode} <- BlendMode.validate_blend_mode(options.blend_mode) do
+      {:ok, [image, x, y, blend_mode]}
+    end
+    |> update_compositions(image, acc)
+  end
+
+  defp unzip_composition(list) do
+    Enum.reduce list, {[], [], [], []}, fn
+      [image, x, y, blend_mode], {images, xs, ys, blend_modes} ->
+        blend_mode = Vix.Vips.Enum.VipsBlendMode.to_nif_term(blend_mode, nil)
+        {[image | images], [x | xs], [y | ys], [blend_mode | blend_modes]}
+    end
+  end
+
+  defp update_compositions(composition, image, acc) do
+    case composition do
+      {:ok, composition} ->
+        [_image, x, y | _rest] = composition
+        {:cont, {x, y, Image.width(image), Image.height(image), [composition | acc]}}
+
+      {:error, reason} ->
+        {:halt, reason}
     end
   end
 
@@ -505,8 +561,20 @@ defmodule Image do
   @spec compose!(base_image::Vimage.t(), overlay_image::Vimage.t(),  options::Keyword.t()) ::
      Vimage.t() | no_return()
 
-  def compose!(base_image, overlay_image, options \\ []) do
+  def compose!(base_image, image_or_image_list, options \\ [])
+
+  def compose!(%Vimage{} = base_image, %Vimage{} = overlay_image, options) do
     case compose(base_image, overlay_image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @spec compose!(base_image::Vimage.t(), image_list::[Vimage.t(), ...],  options::Keyword.t()) ::
+     Vimage.t() | no_return()
+
+  def compose!(%Vimage{} = base_image, image_list, options) when is_list(image_list) do
+    case compose(base_image, image_list, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
