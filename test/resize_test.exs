@@ -4,6 +4,8 @@ defmodule Image.Resize.Test do
 
   alias Vix.Vips.Image, as: Vimage
 
+  @moduletag :full
+
   setup do
     Temp.track!()
     dir = Temp.mkdir!()
@@ -16,8 +18,8 @@ defmodule Image.Resize.Test do
 
     {:ok, resized} = Image.resize(image, 200)
 
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
-    validate_path = validate_path("resize/kamchatka_fit.png")
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    validate_path = validate_path("resize/kamchatka_fit.jpg")
 
     assert :ok = Vimage.write_to_file(resized, out_path)
 
