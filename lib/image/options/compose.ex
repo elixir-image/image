@@ -15,7 +15,7 @@ defmodule Image.Options.Compose do
   end
 
   def get_x(image, prev_x, prev_width, x, dx, baseline) when is_function(dx, 6) do
-    dx = x.(image, prev_x, prev_width, x, dx, baseline)
+    dx = dx.(image, prev_x, prev_width, x, dx, baseline)
     get_y(image, prev_x, prev_width, x, dx, baseline)
   end
 
@@ -64,7 +64,7 @@ defmodule Image.Options.Compose do
   end
 
   def get_y(image, prev_y, prev_height, y, dy, baseline) when is_function(dy, 6) do
-    dy = y.(image, prev_y, prev_height, y, dy, baseline)
+    dy = dy.(image, prev_y, prev_height, y, dy, baseline)
     get_y(image, prev_y, prev_height, y, dy, baseline)
   end
 
