@@ -40,7 +40,7 @@ defmodule Image.TestSupport do
     compared = calculated_image == validate_image
     validate_path = Image.filename(validate_image)
 
-    case Operation.min!(compared, size: 1) do
+    case Operation.min!(compared) do
       {255.0, _} ->
         assert true
 

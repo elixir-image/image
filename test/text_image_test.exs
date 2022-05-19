@@ -18,7 +18,7 @@ defmodule TextImage.Test do
   end
 
   test "compositing several images in a pipeline", %{image: base_image} do
-    validate_path = validate_path("compose/composition_1.png")
+    validate_path = validate_path("compose/composition_1.tif")
 
     {:ok, polygon} = Shape.polygon(@points, fill_color:  @polygon_color, stroke_color: "none", height: Image.height(base_image), opacity: 0.8)
     {:ok, explore_new} = Text.text("EXPLORE NEW", font_size: 95, font: "DIN Alternate")
@@ -38,16 +38,16 @@ defmodule TextImage.Test do
   end
 
   test "Transparent text on a full image background", %{image: base_image} do
-    validate_path = validate_path("compose/composition_2.png")
+    validate_path = validate_path("compose/composition_2.tif")
 
     {:ok, singapore} = Text.text("SINGAPORE", font_size: 250, font: "DIN Alternate", padding: base_image, text_fill_color: :transparent, background_fill_color: "black", background_fill_opacity: 0.6)
     final_image = Image.compose!(base_image, singapore, x: :center, y: :middle)
-
+    Image.write final_image, validate_path
     assert_images_equal(final_image, validate_path)
   end
 
   test "Text centered on a base image", %{image: base_image} do
-    validate_path = validate_path("compose/composition_3.png")
+    validate_path = validate_path("compose/composition_3.tif")
 
     {:ok, singapore} = Text.text("Singapore", font_size: 100, font: "DIN Alternate")
     final_image = Image.compose!(base_image, singapore, x: :center, y: :middle)
@@ -56,7 +56,7 @@ defmodule TextImage.Test do
   end
 
   test "compositing several images in a composition list", %{image: base_image} do
-    validate_path = validate_path("compose/composition_4.png")
+    validate_path = validate_path("compose/composition_4.tif")
 
     {:ok, polygon} = Shape.polygon(@points, fill_color:  @polygon_color, stroke_color: "none", height: Image.height(base_image), opacity: 0.8)
     {:ok, explore_new} = Text.text("EXPLORE NEW", font_size: 95, font: "DIN Alternate")
