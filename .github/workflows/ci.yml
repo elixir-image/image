@@ -50,7 +50,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-20.04"]
-        elixir: ["1.13", "1.12", "1.11"]
+        elixir: ["1.13"]
         otp: ["24", "23", "22"]
     steps:
       - uses: actions/checkout@v2
@@ -65,6 +65,7 @@ jobs:
           restore-keys: ${{ matrix.os }}-otp_${{ matrix.otp }}-elixir_${{ matrix.elixir }}-mix
       - run: sudo apt-get update
       - run: sudo apt-get install -y libvips-dev
+      - run: vips --vips-config
       - run: mix deps.get --only test
       - run: mix deps.compile
       - run: mix compile
