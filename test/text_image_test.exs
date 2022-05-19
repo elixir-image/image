@@ -38,6 +38,7 @@ defmodule TextImage.Test do
     validate_path = validate_path("compose/composition_1.png")
 
     assert {:ok, _image} = Image.write(final_image, out_path, quality: 50)
+
     assert_images_equal(out_path, validate_path)
   end
 
