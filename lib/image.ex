@@ -1079,7 +1079,7 @@ defmodule Image do
 
   def resize(image_path, width, options) when is_binary(image_path) and is_size(width) do
     with {:ok, options} <- Resize.validate_options(options),
-         :ok = file_exists?(image_path) do
+         {:ok, _file} = file_exists?(image_path) do
       Operation.thumbnail(image_path, width, options)
     end
   end
@@ -2617,7 +2617,7 @@ defmodule Image do
   end
 
   defp file_exists?(path) do
-    if File.exists?(path, :raw), do: {:ok, path}, else: {:error, :enoent}
+    if File.exists?(path, [:raw]), do: {:ok, path}, else: {:error, :enoent}
   end
 
   defp xy_offset(%Vimage{} = _image, _overlay, x, y) when is_number(x) and is_number(y) do
