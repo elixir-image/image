@@ -31,7 +31,7 @@ defmodule Image.Interpretation do
   @vips_interpretation Map.values(@interpretation_map)
 
   @typedoc """
-  Defines the known colorspace interpretations
+  Defines the known colorspace interpretations.
 
   """
   @type t ::  unquote(Enum.reduce(@interpretation, &{:|, [], [&1, &2]}))
@@ -50,7 +50,7 @@ defmodule Image.Interpretation do
   ### Arguments
 
   * `interpretation` is any atom or string value
-    in `Image.Interpretation.known_interpretations/0`
+    in `Image.Interpretation.known_interpretations/0`.
 
   ### Returns
 
@@ -83,8 +83,9 @@ defmodule Image.Interpretation do
 
   def validate_interpretation(interpretation) when is_binary(interpretation) do
     interpretation
+    |> String.downcase()
     |> String.to_existing_atom()
-    |> validate_interpretation
+    |> validate_interpretation()
   rescue ArgumentError ->
     {:error, unknown_interpretation_error(interpretation)}
   end

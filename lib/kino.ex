@@ -4,8 +4,8 @@ defmodule Image.Kino do
   # A convenience module to use with livebooks
   # to render an image using Kino.
   #
-  # Since Kino is not a dependency and to therefore
-  # avoid compiler warnings, we use `apply/3`
+  # Since Kino is not a dependency we
+  # avoid compiler warnings by using `apply/3`
 
   alias Vix.Vips.{Operation, Image}
 
