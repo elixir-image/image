@@ -4,93 +4,64 @@ defmodule Image.Resize.Test do
 
   @moduletag :full
 
-  setup do
-    Temp.track!()
-    dir = Temp.mkdir!()
-    {:ok, %{dir: dir}}
-  end
-
-  test "Resize to fit", %{dir: dir} do
+  test "Resize to fit" do
     image = image_path("Kamchatka-2019-8754.jpg")
-    {:ok, image} = Image.open(image, access: :random)
-
-    {:ok, resized} = Image.resize(image, 200)
-
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
     validate_path = validate_path("resize/kamchatka_fit.png")
 
-    assert {:ok, _image} = Image.write(resized, out_path)
+    {:ok, image} = Image.open(image, access: :random)
+    {:ok, resized} = Image.resize(image, 200)
+
     assert_images_equal resized, validate_path
   end
 
-  test "Resize to fill with attention crop", %{dir: dir} do
+  test "Resize to fill with attention crop" do
     image = image_path("Kamchatka-2019-8754.jpg")
-    {:ok, image} = Image.open(image, access: :random)
-
-    {:ok, resized} = Image.resize(image, 200, height: 50, crop: :attention)
-
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
     validate_path = validate_path("resize/kamchatka_fill.png")
 
-    assert {:ok, _image} = Image.write(resized, out_path, quality: 50)
+    {:ok, image} = Image.open(image, access: :random)
+    {:ok, resized} = Image.resize(image, 200, height: 50, crop: :attention)
 
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal(resized, validate_path)
   end
 
-  test "Resize to fill with low crop", %{dir: dir} do
+  test "Resize to fill with low crop" do
     image = image_path("Kamchatka-2019-8754.jpg")
-    {:ok, image} = Image.open(image, access: :random)
-
-    {:ok, resized} = Image.resize(image, 200, height: 50, crop: :low)
-
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
     validate_path = validate_path("resize/kamchatka_fill_low.png")
 
-    assert {:ok, _image} = Image.write(resized, out_path)
+    {:ok, image} = Image.open(image, access: :random)
+    {:ok, resized} = Image.resize(image, 200, height: 50, crop: :low)
 
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal(resized, validate_path)
   end
 
-  test "Resize to fill with high crop", %{dir: dir} do
+  test "Resize to fill with high crop" do
     image = image_path("Kamchatka-2019-8754.jpg")
-    {:ok, image} = Image.open(image, access: :random)
-
-    {:ok, resized} = Image.resize(image, 200, height: 50, crop: :high)
-
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
     validate_path = validate_path("resize/kamchatka_fill_high.png")
 
-    assert {:ok, _image} = Image.write(resized, out_path)
+    {:ok, image} = Image.open(image, access: :random)
+    {:ok, resized} = Image.resize(image, 200, height: 50, crop: :high)
 
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal(resized, validate_path)
   end
 
-  test "Resize to fill with center crop", %{dir: dir} do
+  test "Resize to fill with center crop" do
     image = image_path("Kamchatka-2019-8754.jpg")
-    {:ok, image} = Image.open(image, access: :random)
-
-    {:ok, resized} = Image.resize(image, 200, height: 50, crop: :center)
-
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
     validate_path = validate_path("resize/kamchatka_fill_center.png")
 
-    assert {:ok, _image} = Image.write(resized, out_path)
+    {:ok, image} = Image.open(image, access: :random)
+    {:ok, resized} = Image.resize(image, 200, height: 50, crop: :center)
 
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal(resized, validate_path)
   end
 
-  test "Resize to fill with none crop", %{dir: dir} do
+  test "Resize to fill with none crop" do
     image = image_path("Kamchatka-2019-8754.jpg")
-    {:ok, image} = Image.open(image, access: :random)
-
-    {:ok, resized} = Image.resize(image, 200, height: 50, crop: :none)
-
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
     validate_path = validate_path("resize/kamchatka_fill_none.png")
 
-    assert {:ok, _image} = Image.write(resized, out_path)
+    {:ok, image} = Image.open(image, access: :random)
+    {:ok, resized} = Image.resize(image, 200, height: 50, crop: :none)
 
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal(resized, validate_path)
   end
 end
 

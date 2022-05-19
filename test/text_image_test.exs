@@ -11,15 +11,15 @@ defmodule TextImage.Test do
   @polygon_color  [116, 214, 245]
 
   setup do
-    Temp.track!()
-    dir = Temp.mkdir!()
-    {:ok, %{dir: dir}}
+    image = image_path("Singapore-2016-09-5887.jpg")
+    {:ok, image} = Image.open(image, access: :random)
+
+    {:ok, %{image: image}}
   end
 
-  test "compositing several images in a pipeline", %{dir: dir} do
-    image = image_path("Singapore-2016-09-5887.jpg")
+  test "compositing several images in a pipeline", %{image: base_image} do
+    validate_path = validate_path("compose/composition_1.png")
 
-    {:ok, base_image} = Image.open(image, access: :random)
     {:ok, polygon} = Shape.polygon(@points, fill_color:  @polygon_color, stroke_color: "none", height: Image.height(base_image), opacity: 0.8)
     {:ok, explore_new} = Text.text("EXPLORE NEW", font_size: 95, font: "DIN Alternate")
     {:ok, places} = Text.text("PLACES", font_size: 95, font: "DIN Alternate")
@@ -34,48 +34,30 @@ defmodule TextImage.Test do
       |> Image.compose!(blowout, x: 260, y: 340)
       |> Image.compose!(start_saving, x: 260, y: 400)
 
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
-    validate_path = validate_path("compose/composition_1.png")
-
-    assert {:ok, _image} = Image.write(final_image, out_path, quality: 50)
-
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal(final_image, validate_path)
   end
 
-  test "Transparent text on a full image background", %{dir: dir} do
-    image = image_path("Singapore-2016-09-5887.jpg")
-
-    {:ok, base_image} = Image.open(image, access: :random)
-    {:ok, singapore} = Text.text("SINGAPORE", font_size: 250, font: "DIN Alternate", padding: base_image, text_fill_color: :transparent, background_fill_color: "black", background_fill_opacity: 0.6)
-
-    final_image = Image.compose!(base_image, singapore, x: :center, y: :middle)
-
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
+  test "Transparent text on a full image background", %{image: base_image} do
     validate_path = validate_path("compose/composition_2.png")
 
-    assert {:ok, _image} = Image.write(final_image, out_path, quality: 50)
-    assert_images_equal(out_path, validate_path)
-  end
-
-  test "Text centered on a base image", %{dir: dir} do
-    image = image_path("Singapore-2016-09-5887.jpg")
-
-    {:ok, base_image} = Image.open(image, access: :random)
-    {:ok, singapore} = Text.text("Singapore", font_size: 100, font: "DIN Alternate")
-
+    {:ok, singapore} = Text.text("SINGAPORE", font_size: 250, font: "DIN Alternate", padding: base_image, text_fill_color: :transparent, background_fill_color: "black", background_fill_opacity: 0.6)
     final_image = Image.compose!(base_image, singapore, x: :center, y: :middle)
 
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
-    validate_path = validate_path("compose/composition_3.png")
-
-    assert {:ok, _image} = Image.write(final_image, out_path, quality: 50)
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal(final_image, validate_path)
   end
 
-  test "compositing several images in a composition list", %{dir: dir} do
-    image = image_path("Singapore-2016-09-5887.jpg")
+  test "Text centered on a base image", %{image: base_image} do
+    validate_path = validate_path("compose/composition_3.png")
 
-    {:ok, base_image} = Image.open(image, access: :random)
+    {:ok, singapore} = Text.text("Singapore", font_size: 100, font: "DIN Alternate")
+    final_image = Image.compose!(base_image, singapore, x: :center, y: :middle)
+
+    assert_images_equal(final_image, validate_path)
+  end
+
+  test "compositing several images in a composition list", %{image: base_image} do
+    validate_path = validate_path("compose/composition_4.png")
+
     {:ok, polygon} = Shape.polygon(@points, fill_color:  @polygon_color, stroke_color: "none", height: Image.height(base_image), opacity: 0.8)
     {:ok, explore_new} = Text.text("EXPLORE NEW", font_size: 95, font: "DIN Alternate")
     {:ok, places} = Text.text("PLACES", font_size: 95, font: "DIN Alternate")
@@ -92,10 +74,6 @@ defmodule TextImage.Test do
         {start_saving, dy: 50}
       ])
 
-    out_path = Temp.path!(suffix: ".png", basedir: dir)
-    validate_path = validate_path("compose/composition_4.png")
-
-    assert {:ok, _image} = Image.write(final_image, out_path, quality: 50)
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal(final_image, validate_path)
   end
 end

@@ -2,67 +2,42 @@ defmodule Image.Crop.Test do
   use ExUnit.Case, async: true
   import Image.TestSupport
 
-  alias Vix.Vips.Image, as: Vimage
-
   setup do
-    Temp.track!()
-    dir = Temp.mkdir!()
-    {:ok, %{dir: dir}}
+    image = image_path("Kamchatka-2019-8754.jpg")
+    {:ok, image} = Image.open(image, access: :random)
+
+    {:ok, %{image: image}}
   end
 
-  test "Crop from top left", %{dir: dir} do
-    image = image_path("Kamchatka-2019-8754.jpg")
-    {:ok, image} = Vimage.new_from_file(image)
+  test "Crop from top left", %{image: image} do
+    validate_path = validate_path("crop/kamchatka_top_left.tif")
 
     {:ok, cropped} = Image.crop(image, 0, 0, 500, 200)
 
-    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
-    validate_path = validate_path("crop/kamchatka_top_left.jpg")
-
-    assert :ok = Vimage.write_to_file(cropped, out_path)
-
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal(cropped, validate_path)
   end
 
-  test "Crop from bottom left", %{dir: dir} do
-    image = image_path("Kamchatka-2019-8754.jpg")
-    {:ok, image} = Vimage.new_from_file(image)
+  test "Crop from bottom left", %{image: image} do
+    validate_path = validate_path("crop/kamchatka_bottom_left.tif")
 
     {:ok, cropped} = Image.crop(image, 0, -1, 500, 200)
 
-    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
-    validate_path = validate_path("crop/kamchatka_bottom_left.jpg")
-
-    assert :ok = Vimage.write_to_file(cropped, out_path)
-
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal(cropped, validate_path)
   end
 
-  test "Crop from top right", %{dir: dir} do
-    image = image_path("Kamchatka-2019-8754.jpg")
-    {:ok, image} = Vimage.new_from_file(image)
+  test "Crop from top right", %{image: image} do
+    validate_path = validate_path("crop/kamchatka_top_right.tif")
 
     {:ok, cropped} = Image.crop(image, -1, 0, 500, 200)
 
-    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
-    validate_path = validate_path("crop/kamchatka_top_right.jpg")
-
-    assert :ok = Vimage.write_to_file(cropped, out_path)
-
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal(cropped, validate_path)
   end
 
-  test "Crop from bottom right", %{dir: dir} do
-    image = image_path("Kamchatka-2019-8754.jpg")
-    {:ok, image} = Vimage.new_from_file(image)
+  test "Crop from bottom right", %{image: image} do
+    validate_path = validate_path("crop/kamchatka_bottom_right.tif")
 
     {:ok, cropped} = Image.crop(image, -1, -1, 500, 200)
 
-    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
-    validate_path = validate_path("crop/kamchatka_bottom_right.jpg")
-
-    assert :ok = Vimage.write_to_file(cropped, out_path)
-
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal(cropped, validate_path)
   end
 end
