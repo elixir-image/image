@@ -10,9 +10,21 @@ defmodule Image.TestSupport do
     assert File.read!(expected) == File.read!(result)
   end
 
-  def assert_images_equal(%Vimage{} = calculated, validate) when is_binary(validate) do
-    validate = Image.open!(validate)
-    assert calculated == validate
+  def assert_images_equal(%Vimage{} = calculated_image, validate) when is_binary(validate) do
+    use Image.Math
+
+    validate_image = Image.open!(validate)
+    compared = calculated_image == validate_image
+
+    case Operation.min!(compared, size: 1) do
+      {255.0, _} ->
+        assert true
+
+      other ->
+        path = String.replace(validate, "validate", "did_not_match")
+        Image.write!(compared, path)
+        flunk("images did not match: #{inspect other}")
+    end
   end
 
   def assert_images_equal(calculated, validate) when is_binary(calculated) and is_binary(validate) do

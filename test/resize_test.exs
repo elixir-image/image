@@ -22,8 +22,8 @@ defmodule Image.Resize.Test do
     validate_path = validate_path("resize/kamchatka_fit.png")
 
     assert :ok = Vimage.write_to_file(resized, out_path)
-
-    assert_images_equal(out_path, validate_path)
+    assert_images_equal resized, validate_path
+    #assert_images_equal(out_path, validate_path)
   end
 
   test "Resize to fill with attention crop", %{dir: dir} do
