@@ -35,7 +35,7 @@ defmodule Image.Math do
   alias Vix.Vips.Operation
   alias Vix.Vips.Image, as: Vimage
 
-  import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
+  import Kernel, except: [+: 2, -: 2, "*": 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
 
   @doc """
   Guards if a given value might be reasonably interpreted
@@ -47,7 +47,7 @@ defmodule Image.Math do
   @doc false
   defmacro __using__(_opts) do
     quote do
-      import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
+      import Kernel, except: [+: 2, -: 2, "*": 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
       import Image.Math
     end
   end
