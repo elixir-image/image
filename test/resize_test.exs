@@ -18,8 +18,8 @@ defmodule Image.Resize.Test do
 
     {:ok, resized} = Image.resize(image, 200)
 
-    out_path = Temp.path!(suffix: ".tif", basedir: dir)
-    validate_path = validate_path("resize/kamchatka_fit.tif")
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    validate_path = validate_path("resize/kamchatka_fit.png")
 
     assert :ok = Vimage.write_to_file(resized, out_path)
 
@@ -32,8 +32,8 @@ defmodule Image.Resize.Test do
 
     {:ok, resized} = Image.resize(image, 200, height: 50, crop: :attention)
 
-    out_path = Temp.path!(suffix: ".tif", basedir: dir)
-    validate_path = validate_path("resize/kamchatka_fill.tif")
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    validate_path = validate_path("resize/kamchatka_fill.png")
 
     assert {:ok, _image} = Image.write(resized, out_path, quality: 50)
 
@@ -46,8 +46,8 @@ defmodule Image.Resize.Test do
 
     {:ok, resized} = Image.resize(image, 200, height: 50, crop: :low)
 
-    out_path = Temp.path!(suffix: ".tif", basedir: dir)
-    validate_path = validate_path("resize/kamchatka_fill_low.tif")
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    validate_path = validate_path("resize/kamchatka_fill_low.png")
 
     assert :ok = Vimage.write_to_file(resized, out_path)
 
@@ -60,8 +60,8 @@ defmodule Image.Resize.Test do
 
     {:ok, resized} = Image.resize(image, 200, height: 50, crop: :high)
 
-    out_path = Temp.path!(suffix: ".tif", basedir: dir)
-    validate_path = validate_path("resize/kamchatka_fill_high.tif")
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    validate_path = validate_path("resize/kamchatka_fill_high.png")
 
     assert :ok = Vimage.write_to_file(resized, out_path)
 
@@ -74,8 +74,8 @@ defmodule Image.Resize.Test do
 
     {:ok, resized} = Image.resize(image, 200, height: 50, crop: :center)
 
-    out_path = Temp.path!(suffix: ".tif", basedir: dir)
-    validate_path = validate_path("resize/kamchatka_fill_center.tif")
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    validate_path = validate_path("resize/kamchatka_fill_center.png")
 
     assert :ok = Vimage.write_to_file(resized, out_path)
 
@@ -88,8 +88,8 @@ defmodule Image.Resize.Test do
 
     {:ok, resized} = Image.resize(image, 200, height: 50, crop: :none)
 
-    out_path = Temp.path!(suffix: ".tif", basedir: dir)
-    validate_path = validate_path("resize/kamchatka_fill_none.tif")
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    validate_path = validate_path("resize/kamchatka_fill_none.png")
 
     assert :ok = Vimage.write_to_file(resized, out_path)
 
