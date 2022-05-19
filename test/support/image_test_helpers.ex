@@ -18,13 +18,18 @@ defmodule Image.TestSupport do
   def assert_images_equal(calculated, validate) when is_binary(calculated) and is_binary(validate) do
     use Image.Math
 
-    validate = Image.open!(validate)
-    calculated = Image.open!(calculated)
-    compared = calculated == validate
+    validate_image = Image.open!(validate, access: :random)
+    calculated_image = Image.open!(calculated, access: :random)
+    compared = calculated_image == validate_image
 
     case Operation.min!(compared, size: 1) do
-      {255.0, _} -> assert true
-      _other -> flunk("images did not match")
+      {255.0, _} ->
+        assert true
+
+      other ->
+        path = String.replace(validate, "validate", "did_not_match")
+        Image.write!(compared, path)
+        flunk("images did not match: #{inspect other}")
     end
   end
 

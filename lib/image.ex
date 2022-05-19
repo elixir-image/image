@@ -19,7 +19,7 @@ defmodule Image do
   alias Vix.Vips.Image, as: Vimage
 
   alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode}
-  alias Image.Options.Compose
+  alias Image.Options.{Resize, Compose}
 
   # Default radius of rounded corners
   @default_round_corner_radius 50
@@ -1063,36 +1063,32 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec resize(Vimage.t(), width :: pos_integer(), options :: Options.Resize.resize_options()) ::
+  @spec resize(Vimage.t(), width :: pos_integer(), options :: Resize.resize_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def resize(image_or_path, wide, options \\ [])
 
   def resize(%Vimage{} = image, width, options) when is_size(width) do
-    with {:ok, options} <- Options.Resize.validate_options(options) do
+    with {:ok, options} <- Resize.validate_options(options) do
       Operation.thumbnail_image(image, width, options)
     end
   end
 
-  @spec resize(Path.t(), width :: pos_integer(), options :: Options.Resize.resize_options()) ::
+  @spec resize(Path.t(), width :: pos_integer(), options :: Resize.resize_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def resize(image_path, width, options) when is_binary(image_path) and is_size(width) do
-    with {:ok, options} <- Options.Resize.validate_options(options),
+    with {:ok, options} <- Resize.validate_options(options),
          :ok = file_exists?(image_path) do
       Operation.thumbnail(image_path, width, options)
     end
   end
 
-  @spec resize(
-          Vimage.t() | Path.t(),
-          width :: pos_integer(),
-          options :: Options.Resize.resize_options()
-        ) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+  @spec resize(Vimage.t() | Path.t(), width :: pos_integer(), options :: Resize.resize_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
 
   def resize(image_or_path, dimensions, options) when is_binary(dimensions) do
-    with {:ok, width, options} <- Options.Resize.validate_dimensions(dimensions, options) do
+    with {:ok, width, options} <- Resize.validate_dimensions(dimensions, options) do
       resize(image_or_path, width, options)
     end
   end
