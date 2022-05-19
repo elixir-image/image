@@ -11,44 +11,19 @@ defmodule Image.TestSupport do
   end
 
   def assert_images_equal(%Vimage{} = calculated_image, validate) when is_binary(validate) do
-    use Image.Math
-
     validate_image = Image.open!(validate)
-    compared = calculated_image == validate_image
-
-    case Operation.min!(compared, size: 1) do
-      {255.0, _} ->
-        assert true
-
-      other ->
-        path = String.replace(validate, "validate", "did_not_match")
-        Image.write!(compared, path)
-        flunk("images did not match: #{inspect other}")
-    end
+    compare_images(calculated_image, validate_image)
   end
 
   def assert_images_equal(calculated, validate) when is_binary(calculated) and is_binary(validate) do
-    use Image.Math
-
     validate_image = Image.open!(validate, access: :random)
     calculated_image = Image.open!(calculated, access: :random)
-    compared = calculated_image == validate_image
 
-    case Operation.min!(compared, size: 1) do
-      {255.0, _} ->
-        assert true
-
-      other ->
-        path = String.replace(validate, "validate", "did_not_match")
-        Image.write!(compared, path)
-        flunk("images did not match: #{inspect other}")
-    end
+    compare_images(calculated_image, validate_image)
   end
 
   def assert_images_equal(%Vimage{} = calculated, %Vimage{} = validate) do
-    use Image.Math
-
-    assert calculated == validate
+    compare_images(calculated, validate)
   end
 
   def image_path(name) do
@@ -57,5 +32,22 @@ defmodule Image.TestSupport do
 
   def validate_path(name) do
     Path.join(@validate_path, name)
+  end
+
+  defp compare_images(calculated_image, validate_image) do
+    use Image.Math
+
+    compared = calculated_image == validate_image
+    validate_path = Image.filename(validate_image)
+
+    case Operation.min!(compared, size: 1) do
+      {255.0, _} ->
+        assert true
+
+      other ->
+        path = String.replace(validate_path, "validate", "did_not_match")
+        Image.write!(compared, path)
+        flunk("images did not match: #{inspect other}")
+    end
   end
 end
