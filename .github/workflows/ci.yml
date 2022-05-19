@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "*"
+  pull_request:
+    types:
+      - opened
+    branches:
+      - "*"
+
+jobs:
+  lint:
+    runs-on: ${{ matrix.os }}
+    env:
+      MIX_ENV: dev
+    name: Lint
+    strategy:
+      matrix:
+        os: ["ubuntu-20.04"]
+        elixir: ["1.13"]
+        otp: ["24"]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - uses: actions/cache@v2
+        with:
+          path: deps
+          key: ${{ matrix.os }}-otp_${{ matrix.otp }}-elixir_${{ matrix.elixir }}-mix_${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ matrix.os }}-otp_${{ matrix.otp }}-elixir_${{ matrix.elixir }}-mix
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y libvips-dev
+      - run: mix deps.get
+      - run: mix deps.compile
+      # Enable as library matures
+      # - run: mix format --check-formatted
+      # - run: mix deps.unlock --check-unused
+      # - run: mix dialyzer
+
+  test:
+    runs-on: ${{ matrix.os }}
+    name: Test Elixir ${{ matrix.elixir }}, OTP ${{ matrix.otp }}, OS ${{ matrix.os }}
+    env:
+      MIX_ENV: test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-20.04"]
+        elixir: ["1.13", "1.12", "1.11"]
+        otp: ["24", "23", "22"]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - uses: actions/cache@v2
+        with:
+          path: deps
+          key: ${{ matrix.os }}-otp_${{ matrix.otp }}-elixir_${{ matrix.elixir }}-mix_${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ matrix.os }}-otp_${{ matrix.otp }}-elixir_${{ matrix.elixir }}-mix
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y libvips-dev
+      - run: mix deps.get --only test
+      - run: mix deps.compile
+      - run: mix compile
+      - run: mix test
