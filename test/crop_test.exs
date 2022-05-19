@@ -21,7 +21,7 @@ defmodule Image.Crop.Test do
 
     assert :ok = Vimage.write_to_file(cropped, out_path)
 
-    assert_files_equal(out_path, validate_path)
+    assert_images_equal(out_path, validate_path)
   end
 
   test "Crop from bottom left", %{dir: dir} do
@@ -35,7 +35,7 @@ defmodule Image.Crop.Test do
 
     assert :ok = Vimage.write_to_file(cropped, out_path)
 
-    assert_files_equal(out_path, validate_path)
+    assert_images_equal(out_path, validate_path)
   end
 
   test "Crop from top right", %{dir: dir} do
@@ -49,7 +49,7 @@ defmodule Image.Crop.Test do
 
     assert :ok = Vimage.write_to_file(cropped, out_path)
 
-    assert_files_equal(out_path, validate_path)
+    assert_images_equal(out_path, validate_path)
   end
 
   test "Crop from bottom right", %{dir: dir} do
@@ -63,6 +63,6 @@ defmodule Image.Crop.Test do
 
     assert :ok = Vimage.write_to_file(cropped, out_path)
 
-    assert_files_equal(out_path, validate_path)
+    assert_images_equal(out_path, validate_path)
   end
 end

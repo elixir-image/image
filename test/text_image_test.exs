@@ -33,10 +33,10 @@ defmodule TextImage.Test do
       |> Image.compose!(start_saving, x: 260, y: 400)
 
     out_path = Temp.path!(suffix: ".png", basedir: dir)
-    validate_path = validate_path("composition_1.png")
+    validate_path = validate_path("compose/composition_1.png")
 
     assert {:ok, _image} = Image.write(final_image, out_path, quality: 50)
-    assert_files_equal(out_path, validate_path)
+    assert_images_equal(out_path, validate_path)
   end
 
   test "Transparent text on a full image background", %{dir: dir} do
@@ -48,10 +48,10 @@ defmodule TextImage.Test do
     final_image = Image.compose!(base_image, singapore, x: :center, y: :middle)
 
     out_path = Temp.path!(suffix: ".png", basedir: dir)
-    validate_path = validate_path("composition_2.png")
+    validate_path = validate_path("compose/composition_2.png")
 
     assert {:ok, _image} = Image.write(final_image, out_path, quality: 50)
-    assert_files_equal(out_path, validate_path)
+    assert_images_equal(out_path, validate_path)
   end
 
   test "Text centered on a base image", %{dir: dir} do
@@ -63,10 +63,10 @@ defmodule TextImage.Test do
     final_image = Image.compose!(base_image, singapore, x: :center, y: :middle)
 
     out_path = Temp.path!(suffix: ".png", basedir: dir)
-    validate_path = validate_path("composition_3.png")
+    validate_path = validate_path("compose/composition_3.png")
 
     assert {:ok, _image} = Image.write(final_image, out_path, quality: 50)
-    assert_files_equal(out_path, validate_path)
+    assert_images_equal(out_path, validate_path)
   end
 
   test "compositing several images in a composition list", %{dir: dir} do
@@ -90,9 +90,9 @@ defmodule TextImage.Test do
       ])
 
     out_path = Temp.path!(suffix: ".png", basedir: dir)
-    validate_path = validate_path("composition_4.png")
+    validate_path = validate_path("compose/composition_4.png")
 
     assert {:ok, _image} = Image.write(final_image, out_path, quality: 50)
-    assert_files_equal(out_path, validate_path)
+    assert_images_equal(out_path, validate_path)
   end
 end

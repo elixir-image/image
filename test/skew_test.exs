@@ -22,7 +22,7 @@ defmodule Image.Skew.Test do
 
     assert :ok = Vimage.write_to_file(straight, out_path)
 
-    assert_files_equal(out_path, validate_path)
+    assert_images_equal(out_path, validate_path)
     assert_in_delta skew_angle, 1.1628, 0.0001
   end
 end

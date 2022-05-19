@@ -28,7 +28,7 @@ defmodule Image.Test do
 
     {:ok, output_info} = File.stat(validate_path)
 
-    assert_files_equal(out_path, validate_path("Kip_small_with_simple_exif.jpg"))
+    assert_images_equal(out_path, validate_path("Kip_small_with_simple_exif.jpg"))
     assert input_info.size > output_info.size * 2
   end
 
@@ -40,7 +40,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     assert :ok = Vimage.write_to_file(circle, out_path)
 
-    assert_files_equal(out_path, validate_path("Kip_small_circle_mask.png"))
+    assert_images_equal(out_path, validate_path("Kip_small_circle_mask.png"))
   end
 
   test "Rounded Image", %{dir: dir} do
@@ -51,7 +51,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     assert :ok = Vimage.write_to_file(rounded, out_path)
 
-    assert_files_equal(out_path, validate_path("Kip_small_rounded_mask.png"))
+    assert_images_equal(out_path, validate_path("Kip_small_rounded_mask.png"))
   end
 
   test "Image composition", %{dir: dir} do
@@ -65,7 +65,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     assert :ok = Vimage.write_to_file(composite, out_path)
 
-    assert_files_equal(out_path, validate_path("composite_with_gradient.png"))
+    assert_images_equal(out_path, validate_path("composite_with_gradient.png"))
   end
 
   test "Circular Image Gradient 1", %{dir: dir} do
@@ -95,7 +95,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     assert :ok = Vimage.write_to_file(out, out_path)
 
-    assert_files_equal(out_path, validate_path("radial_gradient_1.png"))
+    assert_images_equal(out_path, validate_path("radial_gradient_1.png"))
   end
 
   test "Circular Image Gradient 2", %{dir: dir} do
@@ -131,7 +131,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     assert :ok = Vimage.write_to_file(out, out_path)
 
-    assert_files_equal(out_path, validate_path("radial_gradient_2.png"))
+    assert_images_equal(out_path, validate_path("radial_gradient_2.png"))
   end
 
   # This test validates the expected operation of infix operators
@@ -152,7 +152,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     assert :ok = Vimage.write_to_file(im, out_path)
 
-    assert_files_equal out_path, validate_path("image_circle_white.png")
+    assert_images_equal out_path, validate_path("image_circle_white.png")
   end
 
   test "Rotating an image 90 degrees", %{dir: dir} do
@@ -163,7 +163,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(rotated, out_path)
 
-    assert_files_equal(out_path, validate_path("Kip_small_rotate90.jpg"))
+    assert_images_equal(out_path, validate_path("Kip_small_rotate90.jpg"))
   end
 
   test "Rotating an image -90 degrees", %{dir: dir} do
@@ -174,7 +174,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(rotated, out_path)
 
-    assert_files_equal(out_path, validate_path("Kip_small_rotate-90.jpg"))
+    assert_images_equal(out_path, validate_path("Kip_small_rotate-90.jpg"))
   end
 
   test "Rotating an image 45 degrees", %{dir: dir} do
@@ -185,7 +185,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(rotated, out_path)
 
-    assert_files_equal(out_path, validate_path("Kip_small_rotate45.jpg"))
+    assert_images_equal(out_path, validate_path("Kip_small_rotate45.jpg"))
   end
 
   test "Rotating an image 45 degrees with white background", %{dir: dir} do
@@ -196,7 +196,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(rotated, out_path)
 
-    assert_files_equal(out_path, validate_path("Kip_small_rotate45_white.jpg"))
+    assert_images_equal(out_path, validate_path("Kip_small_rotate45_white.jpg"))
   end
 
   test "Rotating an image 45 degrees with displacement", %{dir: dir} do
@@ -207,7 +207,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(rotated, out_path)
 
-    assert_files_equal out_path, validate_path("Kip_small_rotate45_displaced.jpg")
+    assert_images_equal out_path, validate_path("Kip_small_rotate45_displaced.jpg")
   end
 
   test "Convert to polar coordinates", %{dir: dir} do
@@ -218,7 +218,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(polar, out_path)
 
-    assert_files_equal out_path, validate_path("polar.jpg")
+    assert_images_equal out_path, validate_path("polar.jpg")
   end
 
   test "Convert to rectangular coordinates", %{dir: dir} do
@@ -229,7 +229,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(polar, out_path)
 
-    assert_files_equal out_path, validate_path("rectangular.jpg")
+    assert_images_equal out_path, validate_path("rectangular.jpg")
   end
 
   test "Ripple Effect", %{dir: dir} do
@@ -240,7 +240,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(ripple, out_path)
 
-    assert_files_equal out_path, validate_path("ripple.jpg")
+    assert_images_equal out_path, validate_path("ripple.jpg")
   end
 
   test "Autorotate an image", %{dir: dir} do
@@ -252,6 +252,6 @@ defmodule Image.Test do
     assert :ok = Vimage.write_to_file(autorotated, out_path)
 
     assert {:ok, 180} = Keyword.fetch(flags, :angle)
-    assert_files_equal out_path, validate_path("autorotated.jpg")
+    assert_images_equal out_path, validate_path("autorotated.jpg")
   end
 end
