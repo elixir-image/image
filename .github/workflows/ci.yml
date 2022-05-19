@@ -65,7 +65,7 @@ jobs:
           restore-keys: ${{ matrix.os }}-otp_${{ matrix.otp }}-elixir_${{ matrix.elixir }}-mix
       - run: sudo apt-get update
       - run: sudo apt-get install -y libvips-dev
-      - run: vips --v
+      - run: vips -v
       - run: mix deps.get --only test
       - run: mix deps.compile
       - run: mix compile
