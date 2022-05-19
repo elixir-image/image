@@ -1,10 +1,8 @@
 defmodule Image.Test do
   use ExUnit.Case, async: true
   import Image.TestSupport
-  import Image.Math
   alias Vix.Vips.Operation
   alias Vix.Vips.Image, as: Vimage
-  use Image.Math
 
   doctest Image
 
@@ -71,6 +69,8 @@ defmodule Image.Test do
   @tag :full
 
   test "Circular Image Gradient 1", %{dir: dir} do
+    use Image.Math
+
     start = [100, 50, 0]
     finish = [50, 0, 50]
     size = 512
@@ -101,6 +101,8 @@ defmodule Image.Test do
   end
 
   test "Circular Image Gradient 2", %{dir: dir} do
+    use Image.Math
+
     start = [255, 0, 0]
     finish = [0, 0, 255]
 
@@ -140,6 +142,8 @@ defmodule Image.Test do
   # working on Image data. This behaviour is driven by `use Image.Math`.
 
   test "Math operators to create a white circle", %{dir: dir} do
+    use Image.Math
+
     {:ok, im} = Operation.xyz(200, 200)
 
     # move the origin to the centre
