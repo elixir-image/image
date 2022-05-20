@@ -47,6 +47,7 @@ defmodule Image.TestSupport do
       other ->
         path = String.replace(validate_path, "validate", "did_not_match")
         Image.write!(compared, path)
+
         flunk("images did not match: #{inspect other}")
     end
   end
