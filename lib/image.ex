@@ -2196,7 +2196,7 @@ defmodule Image do
       Image.to_colorspace(image, :bw)
 
   """
-  @spec to_colorspace(Vimage.t(), Interpretation.interpretation()) ::
+  @spec to_colorspace(Vimage.t(), Interpretation.t()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def to_colorspace(%Vimage{} = image, colorspace) do
@@ -2231,7 +2231,7 @@ defmodule Image do
       Image.to_colorspace!(image, :bw)
 
   """
-  @spec to_colorspace!(Vimage.t(), Interpretation.interpretation()) ::
+  @spec to_colorspace!(Vimage.t(), Interpretation.t()) ::
           Vimage.t() | no_return()
 
   def to_colorspace!(%Vimage{} = image, colorspace) do
