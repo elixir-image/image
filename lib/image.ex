@@ -2069,7 +2069,7 @@ defmodule Image do
   ### Options
 
   * `:bins` is an integer number of color
-   freuqency bins the image is divided into.
+   frequency bins the image is divided into.
    The default is `10`.
 
   ### Returns
@@ -2079,25 +2079,100 @@ defmodule Image do
   """
   @max_band_value 256
 
+  @doc since: "0.3.0"
+
   @spec dominant_color(Vimage.t(), Keyword.t()) :: Color.rgb_color()
   def dominant_color(%Vimage{} = image, options \\ []) do
     bins = Keyword.get(options, :bins, 10)
     bin_size = @max_band_value / bins
+    midpoint = bin_size / 2
 
     {:ok, histogram} = Operation.hist_find_ndim(image, bins: bins)
     {v, x, y} = Image.Math.maxpos(histogram)
     {:ok, pixel} = Operation.getpoint(histogram, x, y)
-    band = Enum.find_index(pixel, &(&1 == v))
+    z = Enum.find_index(pixel, &(&1 == v))
 
-    r = x * bin_size + bin_size / 2
-    g = y * bin_size + bin_size / 2
-    b = band * bin_size + bin_size / 2
+    r = (x * bin_size) + midpoint
+    g = (y * bin_size) + midpoint
+    b = (z * bin_size) + midpoint
 
     [trunc(r), trunc(g), trunc(b)]
   end
 
   @doc """
-  Converts an impage to the given colorspace.
+  Returns the histogram for an image.
+
+  The histogram is returned as a `t:Vimage.t/0`
+  that is a 255 by 255 image with three bands.
+
+  ### Argument
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, histogram_image}` or
+
+  * `{:error, reason}`
+
+  ### Notes
+
+  The returned image is is organized
+  as a 256x256 pixel image with
+  the same number of bands as the original
+  image.
+
+  Each pixel on the image returns the count
+  of pixels in the original image that are
+  in that 1/256th part of the image.
+
+  """
+  @doc since: "0.3.0"
+
+  @spec histogram(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def histogram(%Vimage{} = image) do
+    image
+    |> Operation.hist_find!()
+    |> Operation.hist_norm!()
+  end
+
+  @doc """
+  Returns the pixel value at the given image location.
+
+  The returned pixel is a list of numbers where
+  the length of the list is equal to the number
+  of bands in the image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `x` is an integer offset from the top
+    left of the image along the `x` (width) axis.
+    The number must be in the range `0..width - 1`.
+
+  * `y` is an integer offset from the top
+    left of the image along the `y` (height) axis.
+    The number must be in the range `0..height - 1`.
+
+  ### Returns
+
+  * `{:ok, pixel_value}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.3.0"
+
+  @spec get_pixel(Vimage.t(), non_neg_integer(), non_neg_integer()) ::
+      {:ok, Color.rgb_color()} | {:error, error_message()}
+
+  def get_pixel(image, x, y) do
+    Operation.getpoint(image, x, y)
+  end
+
+  @doc """
+  Converts an image to the given colorspace.
 
   Available colorspaces are returned from
   `Image.Interpretation.known_interpretations/0`.

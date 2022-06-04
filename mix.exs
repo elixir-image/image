@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.2.0"
+  @version "0.3.0"
 
   def project do
     [
@@ -55,7 +55,7 @@ defmodule Image.MixProject do
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false, optional: true},
 
       # Only used for benchmarking
-      {:mogrify, "~> 0.9.1", only: :dev, optional: true}
+      # {:mogrify, "~> 0.9.1", only: :dev, optional: true}
     ]
   end
 
