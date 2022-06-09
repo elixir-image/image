@@ -631,7 +631,7 @@ defmodule Image.Math do
 
   """
   @spec minpos(Vimage.t(), Keyword.t()) ::
-          {:ok, minimium :: float(), x_positiom :: integer(), y_position :: integer()}
+          {:ok, minimum :: float(), x_positiom :: integer(), y_position :: integer()}
 
   def minpos(%Vimage{} = image, options \\ []) do
     size = Keyword.get(options, :size, 10)

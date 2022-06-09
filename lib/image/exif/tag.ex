@@ -133,7 +133,7 @@ defmodule Image.Exif.Tag do
     [ru.(number) | read_unsigned_many(rest, size, ru)]
   end
 
-  @spec maybe_signed_int(non_neg_integer(), :singed | :unsigned) :: non_neg_integer()
+  @spec maybe_signed_int(non_neg_integer(), :signed | :unsigned) :: non_neg_integer()
   defp maybe_signed_int(x, :signed) when x > @max_signed_32_bit_int,
     do: x - (@max_signed_32_bit_int + 1) * 2
 

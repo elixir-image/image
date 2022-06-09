@@ -1,7 +1,7 @@
 defmodule Image.Options.Compose do
   @moduledoc false
 
-  # Thie module propvides functions to calculate
+  # This module propvides functions to calculate
   # x, y positions for compositions.
 
   # Since x,y can be relateive or absolution, can be symbolid
@@ -28,7 +28,7 @@ defmodule Image.Options.Compose do
     {:ok, prev_x + div(prev_width, 2) - div(Image.width(image), 2) + dx}
   end
 
-  # Left align to iamge
+  # Left align to image
   def get_x(_image, prev_x, _prev_width, :left, dx, _) do
     {:ok, prev_x + dx}
   end
@@ -77,7 +77,7 @@ defmodule Image.Options.Compose do
     {:ok, prev_y + div(prev_height, 2) - div(Image.height(image), 2) + dy}
   end
 
-  # Top align to iamge
+  # Top align to image
   def get_y(_image, prev_y, _prev_height, :top, dy, _) do
     {:ok, prev_y + dy}
   end

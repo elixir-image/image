@@ -92,7 +92,7 @@ There are several considerations in the use of any image processing library and 
 
 3. Image processing by its nature operates on external data and there have been exploits based upon maliciously crafted images. The two primary vectors are:
     * An invalid image format that causes the image parser to crash and therefore crash the NIF and the BEAM
-    * Executable code embedded in image metadata (such as EXIF data) that if passed un-escaped to a web browser may result in arbitraty code execution.
+    * Executable code embedded in image metadata (such as EXIF data) that if passed un-escaped to a web browser may result in arbitrary code execution.
     
 In comparison to `Imagemagick` that has a reported [638](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=imagemagick) CVEs, there have been only  [8](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=libvips) CVE's reported for `libvips`, each resolved in a very timely manner.
 

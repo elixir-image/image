@@ -8,7 +8,7 @@ This is the changelog for Image version 0.3.0 released on June 4th, 2022.  For o
 
 * Add `Image.dominant_color/2` to return the dominant color of an image
 
-* Add `Image.histogram/1` to return a histgram of an image
+* Add `Image.histogram/1` to return a histogram of an image
 
 * Add `Image.get_pixel` to get the pixel value at a given `x` and `y` offset into an image.
 

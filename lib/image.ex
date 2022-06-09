@@ -35,7 +35,7 @@ defmodule Image do
 
   @typedoc """
   The valid rendering intent values. For all
-  functions that take an optioanl intent
+  functions that take an optional intent
   parameter the default is `:perceptual`.
 
   ## Perceptual Intent
@@ -137,14 +137,14 @@ defmodule Image do
     to the relative offset of the previously composed
     image using `:dy`.
 
-  * `:dx` descibes the relative offset used to calculate
+  * `:dx` describes the relative offset used to calculate
     the `x` value. `:dx` is an integer offset from the
     edge of the previously composed image. Which edge is
     determined by the `:x_baseline` option. If `:x` is also
     specified then `:x` is first calculated, then `:dx` is
     added to it. In this case, `:x_baseline` is ignored.
 
-  * `:dy` descibes the relative offset used to calculate
+  * `:dy` describes the relative offset used to calculate
     the `y` value. `:dy` is an integer offset from the
     edge of the previously composed image. Which edge is
     determined by the `:y_baseline` option. If `:y` is also
@@ -156,11 +156,11 @@ defmodule Image do
     is `:over` which is appropriate for most use cases.
 
   * `:x_baseline` establishes the baseline on the
-    previsouly composed image from which `:dx` is
+    previously composed image from which `:dx` is
     calculated. The default is `:right`.
 
   * `:y_baseline` establishes the baseline on the
-    previsouly composed image from which `:dy` is
+    previously composed image from which `:dy` is
     calculated. The default is `:bottom`.
 
   """
@@ -384,7 +384,7 @@ defmodule Image do
 
   * `:progressive` is a boolean indicating if the image
     should be interleaved rather than baseline. Progressive
-    has the advantage of perceived time for the inital
+    has the advantage of perceived time for the initial
     image load and the cost of multiple decoding passes on
     the client. For many applications `:progressive` is
     to be preferred but validation of this assumption for
@@ -540,14 +540,14 @@ defmodule Image do
     to the relative offset of the previously composed
     image using `:dy`.
 
-  * `:dx` descibes the relative offset used to calculate
+  * `:dx` describes the relative offset used to calculate
     the `x` value. `:dx` is an integer offset from the
     edge of the previously composed image. Which edge is
     determined by the `:x_baseline` option. If `:x` is also
     specified then `:x` is first calculated, then `:dx` is
     added to it. In this case, `:x_baseline` is ignored.
 
-  * `:dy` descibes the relative offset used to calculate
+  * `:dy` describes the relative offset used to calculate
     the `y` value. `:dy` is an integer offset from the
     edge of the previously composed image. Which edge is
     determined by the `:y_baseline` option. If `:y` is also
@@ -559,11 +559,11 @@ defmodule Image do
     is `:over` which is appropriate for most use cases.
 
   * `:x_baseline` establishes the baseline on the
-    previsouly composed image from which `:dx` is
+    previously composed image from which `:dx` is
     calculated. The default is `:right`.
 
   * `:y_baseline` establishes the baseline on the
-    previsouly composed image from which `:dy` is
+    previously composed image from which `:dy` is
     calculated. The default is `:bottom`.
 
   ### Returns
@@ -726,14 +726,14 @@ defmodule Image do
     to the relative offset of the previously composed
     image using `:dy`.
 
-  * `:dx` descibes the relative offset used to calculate
+  * `:dx` describes the relative offset used to calculate
     the `x` value. `:dx` is an integer offset from the
     edge of the previously composed image. Which edge is
     determined by the `:x_baseline` option. If `:x` is also
     specified then `:x` is first calculated, then `:dx` is
     added to it. In this case, `:x_baseline` is ignored.
 
-  * `:dy` descibes the relative offset used to calculate
+  * `:dy` describes the relative offset used to calculate
     the `y` value. `:dy` is an integer offset from the
     edge of the previously composed image. Which edge is
     determined by the `:y_baseline` option. If `:y` is also
@@ -745,11 +745,11 @@ defmodule Image do
     is `:over` which is appropriate for most use cases.
 
   * `:x_baseline` establishes the baseline on the
-    previsouly composed image from which `:dx` is
+    previously composed image from which `:dx` is
     calculated. The default is `:right`.
 
   * `:y_baseline` establishes the baseline on the
-    previsouly composed image from which `:dy` is
+    previously composed image from which `:dy` is
     calculated. The default is `:bottom`.
 
   ### Returns
@@ -1008,7 +1008,7 @@ defmodule Image do
     image after resizing. It can also be of the form
     "<width>x<height>". That is, a string with the
     width and height separated by an `x`. The `<height>`
-    may be ommitted in which case it is the same as
+    may be omitted in which case it is the same as
     providing an integer width.
 
   * `options` is a keyword list of options.
@@ -1708,7 +1708,7 @@ defmodule Image do
     end
   end
 
-  # Create an image mask (alph transparency) that can
+  # Create an image mask (alpha transparency) that can
   # then be applied to an image.
 
   # At some point this will become a public API.
@@ -1747,7 +1747,7 @@ defmodule Image do
 
   Removing metadata from an image can greatly reduce
   the overall size of an image. The proprtional
-  reduction is most noticable with smaller images
+  reduction is most noticeable with smaller images
   which are very common in web applications.
 
   Removing all metadata is a common option however
@@ -1852,7 +1852,7 @@ defmodule Image do
     in an image can be returned with a call to
     `Vix.Vips.Image.header_field_names/1`.
 
-  * Errors removing metadata fields is not propogated
+  * Errors removing metadata fields is not propagated
     into the return for this function. Errors might occur
     when attempting to remove metadata fields that
     do not exist in the image.
@@ -1923,7 +1923,7 @@ defmodule Image do
     in an image can be returned with a call to
     `Vix.Vips.Image.header_field_names/1`.
 
-  * Errors removing metadata fields is not propogated
+  * Errors removing metadata fields is not propagated
     into the return for this function. Errors might occur
     when attempting to remove metadata fields that
     do not exist in the image.
