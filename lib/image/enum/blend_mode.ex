@@ -124,7 +124,7 @@ defmodule Image.BlendMode do
 
   ### Returns
 
-  * `{:ok, atom_blend_mode}` wher `atom_blend_mode` is
+  * `{:ok, atom_blend_mode}` where `atom_blend_mode` is
     a valid blend mode for `libvips`
 
   * `{:error, reason}`

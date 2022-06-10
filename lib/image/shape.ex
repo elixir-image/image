@@ -60,10 +60,10 @@ defmodule Image.Shape do
   ### Options
 
   * `:width` is the width of the canvas onto which the
-    pologon is drawn. The default is `500` pixels.
+    polygon is drawn. The default is `500` pixels.
 
   * `:height` is the width of the canvas onto which the
-    pologon is drawn. The default is `500` pixels.
+    polygon is drawn. The default is `500` pixels.
 
   * `:fill_color` is the color used to fill in the
     polygon. The default is `:none`.
@@ -94,8 +94,8 @@ defmodule Image.Shape do
 
   * Colors may be any valid
     [CSS color name](https://www.w3.org/wiki/CSS/Properties/color/keywords) or
-    a six hexidecimal digit string prefixed with `#`. For example
-    `#FF00FF` for the color "Fuschia".
+    a six hexadecimal digit string prefixed with `#`. For example
+    `#FF00FF` for the color "Fuchsia".
 
   ### Returns
 
@@ -209,10 +209,10 @@ defmodule Image.Shape do
   ### Options
 
   * `:width` is the width of the canvas onto which the
-    pologon is drawn. The default is `500` pixels.
+    polygon is drawn. The default is `500` pixels.
 
   * `:height` is the width of the canvas onto which the
-    pologon is drawn. The default is `500` pixels.
+    polygon is drawn. The default is `500` pixels.
 
   * `:fill_color` is the color used to fill in the
     polygon. The default is `:none`.
@@ -235,8 +235,8 @@ defmodule Image.Shape do
 
   * Colors may be any valid
     [CSS color name](https://www.w3.org/wiki/CSS/Properties/color/keywords) or
-    a six hexidecimal digit string prefixed with `#`. For example
-    `#FF00FF` for the color "Fuschia".
+    a six hexadecimal digit string prefixed with `#`. For example
+    `#FF00FF` for the color "Fuchsia".
 
   ### Returns
 
