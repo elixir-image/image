@@ -42,7 +42,7 @@ defmodule TextImage.Test do
 
     {:ok, singapore} = Text.text("SINGAPORE", font_size: 250, font: "DIN Alternate", padding: base_image, text_fill_color: :transparent, background_fill_color: "black", background_fill_opacity: 0.6)
     final_image = Image.compose!(base_image, singapore, x: :center, y: :middle)
-    Image.write final_image, validate_path
+
     assert_images_equal(final_image, validate_path)
   end
 

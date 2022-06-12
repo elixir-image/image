@@ -19,7 +19,7 @@ defmodule Image do
   alias Vix.Vips.Image, as: Vimage
 
   alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode}
-  alias Image.Options.{Resize, Compose}
+  alias Image.Options.{Resize, Compose, Open}
 
   # Default radius of rounded corners
   @default_round_corner_radius 50
@@ -203,22 +203,22 @@ defmodule Image do
   defguard is_pixel(value) when is_number(value) or is_list(value)
 
   @doc """
-  Opens an image file for image processing.
+  Opens an image file or stream for image processing.
 
   ### Arguments
 
-  * `image_path` is the file system path to an image
-    file.
+  * `image_path_or_stream` is the file system path to an image
+    file or a `t:File.Stream.t/0` or a `t:Stream.t/0`.
 
   * `options` is a keyword list of options. The default is
     `[access: :sequential]`.
 
-  ### Options
+  ### File Path Options
 
-  The available options depends on the type of image
+  These options are for file paths and depend on the type of image
   file being opened.
 
-  ### All image types
+  #### All image types
 
   * `:access` is the file access mode, either `:random`
     or `:sequential`. THe default is `:sequentual`.
@@ -234,7 +234,7 @@ defmodule Image do
     Each error state implies all the states before it such
     that `:error` implies also `:truncated`.
 
-  ### JPEG image options
+  #### JPEG image options
 
   * `:shrink` is an integer factor in the range `1..16` by
     which the image is reduced upon loading. This is an
@@ -248,7 +248,7 @@ defmodule Image do
     data stored in the image metadata. The default is
     `false`.
 
-  ### Webp options
+  #### Webp options
 
   * `:scale` will scale the image on load. The value is
     `1..1024` with a default of `1`.
@@ -260,7 +260,7 @@ defmodule Image do
   * `:pages` indicates how many pages to load. THe value is
     in the range `1..100_000` with a default value of `1`.
 
-  ### TIFF options
+  #### TIFF options
 
   * `:autorotate` is a boolean value indicating if
     the image should be rotated according to the orientation
@@ -274,10 +274,17 @@ defmodule Image do
   * `:pages` indicates how many pages to load. THe value is
     in the range `1..100_000` with a default value of `1`.
 
-  ### PNG options
+  #### PNG options
 
   * There are no PNG-specific image loading
     options.
+
+  ### File Stream Options
+
+  * `:suffix` is the a file suffix to indicate the
+    type of image in the stream. The default is `""`
+    which means the image type is automatically
+    detected from the stream.
 
   ### Returns
 
@@ -286,15 +293,35 @@ defmodule Image do
   * `{:error, message}`
 
   """
-  @spec open(image_path :: Path.t(), options :: Options.Open.image_open_options()) ::
+  def open(image_path_or_stream, options \\ [])
+
+  @spec open(image_path_or_stream :: Path.t() | File.Stream.t(), options :: Open.image_open_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def open(image_path, options \\ []) do
+  def open(image_path, options) when is_binary(image_path) do
     with {:ok, options} <- Options.Open.validate_options(options) do
       image_path
       |> String.split("[", parts: 2)
       |> do_open(options)
     end
+  end
+
+  def open(%File.Stream{line_or_bytes: bytes} = image_stream, options) when is_integer(bytes) do
+    suffix = Keyword.get(options, :suffix, "")
+    Vix.Vips.Image.new_from_enum(image_stream, suffix)
+  end
+
+  def open(%Stream{} = image_stream, options) do
+    suffix = Keyword.get(options, :suffix, "")
+    Vix.Vips.Image.new_from_enum(image_stream, suffix)
+  end
+
+  def open(%File.Stream{}, _options) do
+    {:error,
+      "File stream must be specify the number of bytes to read. " <>
+      "It should be opened as File.stream!(path, options, bytes) where bytes " <>
+      "is the number of bytes to read on each iteration."
+    }
   end
 
   defp do_open([path], options) do
@@ -652,6 +679,7 @@ defmodule Image do
     |> accumulate_compositions(image, acc)
   end
 
+  # TODO do we need to decode the blend mode with Vix 0.10 and later?
   defp unzip_composition(list) do
     Enum.reduce list, {[], [], [], []}, fn
       [image, x, y, blend_mode], {images, xs, ys, blend_modes} ->

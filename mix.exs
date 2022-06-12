@@ -38,7 +38,7 @@ defmodule Image.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger, :inets]
     ]
   end
 
@@ -53,6 +53,9 @@ defmodule Image.MixProject do
       {:benchee, "~> 1.0", only: :dev, runtime: false, optional: true},
       {:ex_doc, "~> 0.18", only: [:release, :dev]},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false, optional: true},
+
+      {:ex_aws_s3, "~> 2.3", optional: true, only: [:dev, :test]},
+      {:hackney, "~> 1.18", optional: true, only: [:dev, :test]}
 
       # Only used for benchmarking
       # {:mogrify, "~> 0.9.1", only: :dev, optional: true}
@@ -118,8 +121,8 @@ defmodule Image.MixProject do
     []
   end
 
-  defp elixirc_paths(:test), do: ["lib", "src", "dev", "mix/support/units", "mix/tasks", "test"]
-  defp elixirc_paths(:dev), do: ["lib", "mix", "src", "dev", "bench"]
-  defp elixirc_paths(:release), do: ["lib", "dev", "src"]
+  defp elixirc_paths(:test), do: ["lib", "src", "mix", "test"]
+  defp elixirc_paths(:dev), do: ["lib", "src", "mix", "bench"]
+  defp elixirc_paths(:release), do: ["lib", "src"]
   defp elixirc_paths(_), do: ["lib", "src"]
 end
