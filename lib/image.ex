@@ -213,10 +213,9 @@ defmodule Image do
   * `options` is a keyword list of options. The default is
     `[access: :sequential]`.
 
-  ### File Path Options
+  ### Options
 
-  These options are for file paths and depend on the type of image
-  file being opened.
+  The available options depend upon the image type.
 
   #### All image types
 
@@ -279,13 +278,6 @@ defmodule Image do
   * There are no PNG-specific image loading
     options.
 
-  ### File Stream Options
-
-  * `:suffix` is the a file suffix to indicate the
-    type of image in the stream. The default is `""`
-    which means the image type is automatically
-    detected from the stream.
-
   ### Returns
 
   * `{:ok, image}` or
@@ -307,13 +299,17 @@ defmodule Image do
   end
 
   def open(%File.Stream{line_or_bytes: bytes} = image_stream, options) when is_integer(bytes) do
-    suffix = Keyword.get(options, :suffix, "")
-    Vix.Vips.Image.new_from_enum(image_stream, suffix)
+    with {:ok, options} <- Options.Open.validate_options(options) do
+      options = loader_options(options)
+      Vix.Vips.Image.new_from_enum(image_stream, options)
+    end
   end
 
   def open(%Stream{} = image_stream, options) do
-    suffix = Keyword.get(options, :suffix, "")
-    Vix.Vips.Image.new_from_enum(image_stream, suffix)
+    with {:ok, options} <- Options.Open.validate_options(options) do
+      options = loader_options(options)
+      Vix.Vips.Image.new_from_enum(image_stream, options)
+    end
   end
 
   def open(%File.Stream{}, _options) do
@@ -341,6 +337,10 @@ defmodule Image do
     else
       {:error, :enoent}
     end
+  end
+
+  defp loader_options(options) do
+    "[" <> Enum.map_join(options, ",", fn {k, v} -> "#{k}=#{v}" end) <> "]"
   end
 
   @doc """
