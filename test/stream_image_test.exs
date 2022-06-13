@@ -3,8 +3,6 @@ defmodule StreamImage.Test do
 
   import Image.TestSupport
 
-  @moduletag :stream
-
   setup do
     Temp.track!()
     dir = Temp.mkdir!()
@@ -22,15 +20,17 @@ defmodule StreamImage.Test do
       |> Image.write(out_path)
   end
 
-  test "Streaming from minio", %{dir: dir} do
-    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+  if System.find_executable("minio") do
+    test "Streaming from minio", %{dir: dir} do
+      out_path = Temp.path!(suffix: ".jpg", basedir: dir)
 
-    assert {:ok, _image} =
-      ExAws.S3.download_file("images", "Hong-Kong-2015-07-1998.jpg", :memory)
-      |> ExAws.stream!
-      |> Image.open!()
-      |> Image.resize!(200)
-      |> Image.write(out_path)
+      assert {:ok, _image} =
+        ExAws.S3.download_file("images", "Hong-Kong-2015-07-1998.jpg", :memory)
+        |> ExAws.stream!
+        |> Image.open!()
+        |> Image.resize!(200)
+        |> Image.write(out_path)
+    end
   end
 
 end
