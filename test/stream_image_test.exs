@@ -3,6 +3,8 @@ defmodule StreamImage.Test do
 
   import Image.TestSupport
 
+  @moduletag :stream
+
   setup do
     Temp.track!()
     dir = Temp.mkdir!()
