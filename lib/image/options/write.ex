@@ -16,7 +16,8 @@ defmodule Image.Options.Write do
 
   """
   @type image_write_options :: [
-          jpeg_write_options()
+          {:suffix, String.t()}
+          | jpeg_write_options()
           | png_write_options()
           | tiff_write_options()
           | webp_write_options()
@@ -69,6 +70,10 @@ defmodule Image.Options.Write do
       options ->
         {:ok, options}
     end
+  end
+
+  defp validate_option({:suffix, "." <> _suffix}, options) do
+    {:cont, options}
   end
 
   defp validate_option({:quality, quality}, options)

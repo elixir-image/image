@@ -44,9 +44,14 @@ defmodule Image.MixProject do
 
   defp deps do
     [
-      {:vix, "~> 0.9"},
+      # {:vix, "~> 0.10"},
+      {:vix, path: "../vix"},
+
       {:sweet_xml, "~> 0.7"},
       {:phoenix_html, "~> 3.2 or ~> 2.14"},
+
+      # For streaming writes
+      {:plug, "~> 1.13", optional: true},
 
       # {:nx, "~> 0.1", optional: true},
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},

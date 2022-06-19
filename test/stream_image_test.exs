@@ -20,6 +20,18 @@ defmodule StreamImage.Test do
       |> Image.write(out_path)
   end
 
+  test "Stream an image for writing", %{dir: dir} do
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    stream = File.stream!(out_path, [], 2048)
+
+    assert {:ok, _image} =
+      image_path("Singapore-2016-09-5887.jpg")
+      |> File.stream!([], 2048)
+      |> Image.open!()
+      |> Image.resize!(200)
+      |> Image.write(stream)
+  end
+
   if System.find_executable("minio") do
     test "Streaming from minio", %{dir: dir} do
       out_path = Temp.path!(suffix: ".jpg", basedir: dir)

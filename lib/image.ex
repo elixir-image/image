@@ -446,20 +446,65 @@ defmodule Image do
   """
   @spec write(
           image :: Vimage.t(),
-          image_path :: Path.t(),
+          image_path :: Path.t() | Plug.Conn.t() | Stream.t() | File.Stream.t(),
           options :: Options.Write.image_write_options()
         ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def write(%Vimage{} = image, image_path, options \\ []) do
+  def write(image, image_path, options \\ [])
+
+  def write(%Vimage{} = image, image_path, options) when is_binary(image_path) do
     with {:ok, options} <- Options.Write.validate_options(options) do
       image_path
       |> String.split("[", parts: 2)
-      |> do_write(image, options)
+      |> write_path(image, options)
     end
   end
 
-  defp do_write([image_path], image, options) do
+  def write(%Vimage{} = image, %Plug.Conn{} = conn, options) do
+    suffix = Keyword.get(options, :suffix, ".jpg")
+
+    image
+    |> Vix.Vips.Image.write_to_stream(suffix)
+    |> Enum.reduce_while(conn, fn (chunk, conn) ->
+      case Plug.Conn.chunk(conn, chunk) do
+        {:ok, conn} ->
+          {:cont, conn}
+        {:error, :closed} ->
+          {:halt, conn}
+      end
+    end)
+  end
+
+  def write(%Vimage{} = image, %File.Stream{} = stream, options) do
+    with {:ok, options} <- Options.Write.validate_options(options) do
+      case write_stream(image, stream, options) do
+        :ok -> {:ok, image}
+        other -> other
+      end
+    end
+  end
+
+  def write(%Vimage{} = image, %Stream{} = stream, options) do
+    case write_stream(image, stream, options) do
+      :ok -> {:ok, image}
+      other -> other
+    end
+  end
+
+  defp write_stream(image, stream, options) do
+    {suffix, options} = Keyword.pop(options, :suffix, "")
+    options = suffix <> loader_options(options)
+
+    image
+    |> Vix.Vips.Image.write_to_stream(options)
+    |> Stream.into(stream)
+    |> Stream.run()
+  rescue e in ArgumentError ->
+    {:error, e.message}
+  end
+
+  defp write_path([image_path], image, options) do
     options = build_option_string(options)
 
     case Vimage.write_to_file(image, image_path <> options) do
@@ -468,7 +513,7 @@ defmodule Image do
     end
   end
 
-  defp do_write([image_path, open_options], image, options) do
+  defp write_path([image_path, open_options], image, options) do
     write_options = String.trim_trailing(open_options, "]")
     options = build_option_string(write_options, options)
 
@@ -499,7 +544,7 @@ defmodule Image do
   """
   @spec write!(
           image :: Vimage.t(),
-          image_path :: Path.t(),
+          image_path :: Path.t() | Plug.Conn.t() | Stream.t() | File.Stream.t(),
           options :: Options.Write.image_write_options()
         ) ::
           Vimage.t() | no_return()
