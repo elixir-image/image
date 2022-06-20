@@ -33,6 +33,9 @@ defmodule Image do
   # to be square
   @square_when_ratio_less_than 0.0
 
+  # The default image type when streaming output
+  @default_image_type ".jpg"
+
   @typedoc """
   The valid rendering intent values. For all
   functions that take an optional intent
@@ -462,21 +465,25 @@ defmodule Image do
   end
 
   def write(%Vimage{} = image, %Plug.Conn{} = conn, options) do
-    suffix = Keyword.get(options, :suffix, ".jpg")
+    with {:ok, options} <- Options.Write.validate_options(options) do
+      {suffix, options} = Keyword.pop(options, :suffix, @default_image_type)
+      options = suffix <> loader_options(options)
 
-    image
-    |> Vix.Vips.Image.write_to_stream(suffix)
-    |> Enum.reduce_while(conn, fn (chunk, conn) ->
-      case Plug.Conn.chunk(conn, chunk) do
-        {:ok, conn} ->
-          {:cont, conn}
-        {:error, :closed} ->
-          {:halt, conn}
-      end
-    end)
+      image
+      |> Vix.Vips.Image.write_to_stream(options)
+      |> Enum.reduce_while(conn, fn (chunk, conn) ->
+        case Plug.Conn.chunk(conn, chunk) do
+          {:ok, conn} ->
+            {:cont, conn}
+          {:error, :closed} ->
+            {:halt, conn}
+        end
+      end)
+    end
   end
 
-  def write(%Vimage{} = image, %File.Stream{} = stream, options) do
+  def write(%Vimage{} = image, %module{} = stream, options)
+      when module in [File.Stream, Stream] do
     with {:ok, options} <- Options.Write.validate_options(options) do
       case write_stream(image, stream, options) do
         :ok -> {:ok, image}
@@ -485,22 +492,15 @@ defmodule Image do
     end
   end
 
-  def write(%Vimage{} = image, %Stream{} = stream, options) do
-    case write_stream(image, stream, options) do
-      :ok -> {:ok, image}
-      other -> other
-    end
-  end
-
   defp write_stream(image, stream, options) do
-    {suffix, options} = Keyword.pop(options, :suffix, "")
+    {suffix, options} = Keyword.pop(options, :suffix, @default_image_type)
     options = suffix <> loader_options(options)
 
     image
-    |> Vix.Vips.Image.write_to_stream(options)
+    |> Vimage.write_to_stream(options)
     |> Stream.into(stream)
     |> Stream.run()
-  rescue e in ArgumentError ->
+  rescue e in Vix.Vips.Image.Error->
     {:error, e.message}
   end
 

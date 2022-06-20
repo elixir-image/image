@@ -30,3 +30,6 @@ image-*.tar
 
 # Which images that dont match in tests go
 /test/support/did_not_match/
+
+# Minio
+.minio.sys/
