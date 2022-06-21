@@ -55,6 +55,18 @@ defmodule StreamImage.Test do
         |> Image.resize!(200)
         |> Image.write(out_path)
     end
+
+    test "Streaming from minio into a file stream", %{dir: dir} do
+      out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+      stream = File.stream!(out_path, [], 2048)
+
+      assert {:ok, _image} =
+        ExAws.S3.download_file("images", "Hong-Kong-2015-07-1998.jpg", :memory)
+        |> ExAws.stream!
+        |> Image.open!()
+        |> Image.resize!(200)
+        |> Image.write(stream)
+    end
   end
 
 end
