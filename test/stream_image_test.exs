@@ -4,6 +4,8 @@ defmodule StreamImage.Test do
 
   import Image.TestSupport
 
+  @s3_buffer_size 5 * 1024 * 1024
+
   setup do
     Temp.track!()
     dir = Temp.mkdir!()
@@ -91,7 +93,6 @@ defmodule StreamImage.Test do
       |> Image.open!()
       |> Image.resize!(200)
       |> Image.stream!(suffix: ".jpg")
-      |> Image.buffer!()
       |> Enum.reduce_while(conn, fn (chunk, conn) ->
         case Plug.Conn.chunk(conn, chunk) do
           {:ok, conn} ->
@@ -149,8 +150,7 @@ defmodule StreamImage.Test do
         |> File.stream!([], 2048)
         |> Image.open!()
         |> Image.resize!(200)
-        |> Image.stream!(suffix: ".jpg")
-        |> Image.buffer!()
+        |> Image.stream!(suffix: ".jpg", buffer_size: @s3_buffer_size)
         |> ExAws.S3.upload("images", out_path)
         |> ExAws.request()
     end
@@ -173,8 +173,7 @@ defmodule StreamImage.Test do
         |> ExAws.stream!()
         |> Image.open!()
         |> Image.resize!(200)
-        |> Image.stream!(suffix: ".jpg")
-        |> Image.buffer!()
+        |> Image.stream!(suffix: ".jpg", buffer_size: @s3_buffer_size)
         |> ExAws.S3.upload("images", out_path)
         |> ExAws.request()
     end

@@ -596,7 +596,13 @@ defmodule Image do
 
   ### Options
 
-  See `Image.write/3`.
+  * `:buffer_size` is the size in bytes for
+    each chunk in the stream to be delivered.
+    Some services, like AWS S3, require a minumum
+    5 MiB per chunk to be delivered and this option
+    can be used to satisfy that requirement.
+
+  For additional options see `Image.write/3`.
 
   ### Returns
 
@@ -622,51 +628,21 @@ defmodule Image do
   def stream!(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
       {suffix, options} = Keyword.pop(options, :suffix)
+      {buffer_size, options} = Keyword.pop(options, :buffer_size, :unbuffered)
       options = suffix <> loader_options(options)
-      Vimage.write_to_stream(image, options)
+
+      stream = Vimage.write_to_stream(image, options)
+      if buffer_size == :unbuffered || buffer_size == 0 do
+        stream
+      else
+        buffer!(stream, buffer_size)
+      end
     else
       {:error, reason} -> raise Image.Error, reason
     end
   end
 
-  @doc """
-  Buffers a stream into the required chunk
-  size.
-
-  Some services, like AWS S3, require a minimum
-  chunk size when uploading files.  This function
-  provides a means to consume a stream, re-chunk
-  it to the required size and then emit a new
-  stream.
-
-  ### Arguments
-
-  * `stream` is any `t:Enumerable.t/0`, most commonly
-    produced by `Image.stream!/2`
-
-  * `buffer_size` is the buffer size inbytes of the
-    output stream. The default is `#{@default_buffer_size}`.
-
-  ### Returns
-
-  * An `t:Enumerable.t/0`
-
-  ### Example
-
-  In this example an image is opened, resized,
-  buffered and then streamed into AWS S3:
-
-      "some/image.jpg"
-      |> Image.open!()
-      |> Image.resize!(200)
-      |> Image.stream!()
-      |> Image.buffer!()
-      |> ExAws.S3.upload("images", "some_object_name.jpg")
-      |> ExAws.request()
-
-  """
-  @spec buffer!(Enumerable.t()) :: Enumerable.t()
-  def buffer!(stream, buffer_size \\ @default_buffer_size) do
+  defp buffer!(stream, buffer_size) do
     chunker =
       fn bin, acc ->
         acc_size = IO.iodata_length(acc)

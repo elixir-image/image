@@ -96,6 +96,11 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
+  defp validate_option({:buffer_size, buffer_size}, options)
+       when (is_integer(buffer_size) and buffer_size >= 9) or buffer_size == :unbuffered do
+    {:cont, options}
+  end
+
   defp validate_option({:strip_metadata, strip?}, options) when is_boolean(strip?) do
     options =
       options
