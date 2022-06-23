@@ -81,7 +81,7 @@ defmodule StreamImage.Test do
       |> Image.write(conn, suffix: ".jpg")
   end
 
-  test "Image.stream! with buffering into a Plug.Conn" do
+  test "Image.stream! into a Plug.Conn" do
     conn =
       :get
       |> conn("/")
