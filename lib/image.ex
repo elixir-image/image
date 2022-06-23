@@ -208,7 +208,7 @@ defmodule Image do
   ### Arguments
 
   * `image_path_or_stream` is the file system path to an image
-    file or a `t:File.Stream.t/0` or a `t:Stream.t/0`.
+    file or a `t:File.Stream.t/0` or any `t:Enumerable.t/0`.
 
   * `options` is a keyword list of options. The default is
     `[access: :sequential]`.
@@ -220,7 +220,7 @@ defmodule Image do
   #### All image types
 
   * `:access` is the file access mode, either `:random`
-    or `:sequential`. THe default is `:sequentual`.
+    or `:sequential`. The default is `:sequentual`.
     When `:sequential`, `Image` (via `Vix`) is able
     to support streaming transformations and optimise
     memory usage more effectively. Howwevef `:sequenial`
@@ -256,7 +256,7 @@ defmodule Image do
     value is in the range `0..100_000` with a default
     value of `0`.
 
-  * `:pages` indicates how many pages to load. THe value is
+  * `:pages` indicates how many pages to load. The value is
     in the range `1..100_000` with a default value of `1`.
 
   #### TIFF options
@@ -270,7 +270,7 @@ defmodule Image do
     value is in the range `0..100_000` with a default
     value of `0`.
 
-  * `:pages` indicates how many pages to load. THe value is
+  * `:pages` indicates how many pages to load. The value is
     in the range `1..100_000` with a default value of `1`.
 
   #### PNG options
@@ -373,7 +373,7 @@ defmodule Image do
   end
 
   @doc """
-  Write an image to a file, a stream or
+  Write an image to a file, a stream, and enumerable or
   to memory.
 
   ### Arguments
@@ -382,9 +382,9 @@ defmodule Image do
 
   * `image_path` is the file system path to an image
     file. It may also be a stream created with
-    `File.stream/3` or with `Stream.resource/3`. Lastly,
+    `File.stream!/3` or with `Stream.resource/3`. Lastly,
     it can also be `:memory` in which case the image is
-    written to a memory buffer.
+    written to a binary.
 
   * `options` is a keyword list of options. The default is
     `[]`.
@@ -416,7 +416,7 @@ defmodule Image do
   ### Streaming images and :memory images
 
   * `:suffix` must be specified so that the image is written
-    in the correct format. For example: `suffix: ".jpg".
+    in the correct format. For example: `suffix: ".jpg"`.
 
   ### JPEG images
 
@@ -457,7 +457,7 @@ defmodule Image do
   """
   @spec write(
           image :: Vimage.t(),
-          image_path :: Path.t() | Plug.Conn.t() | Stream.t() | File.Stream.t() | :memory,
+          image_path :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t() | :memory,
           options :: Options.Write.image_write_options()
         ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -549,7 +549,7 @@ defmodule Image do
 
   * `image_path` is the file system path to an image
     file. It may also be a stream created with
-    `File.stream/3` or with `Stream.resource/3`. Lastly,
+    `File.stream!/3` or with `Stream.resource/3`. Lastly,
     it can also be `:memory` in which case the image is
     written to a memory buffer.
 
@@ -565,7 +565,7 @@ defmodule Image do
   """
   @spec write!(
           image :: Vimage.t(),
-          image_path_or_stream :: Path.t() | Plug.Conn.t() | Stream.t() | File.Stream.t(),
+          image_path_or_stream :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t(),
           options :: Options.Write.image_write_options()
         ) ::
           Vimage.t() | no_return()
