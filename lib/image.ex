@@ -39,9 +39,6 @@ defmodule Image do
   # to be square
   @square_when_ratio_less_than 0.0
 
-  # The default image type when streaming output
-  @default_image_type ".jpg"
-
   @typedoc """
   The valid rendering intent values. For all
   functions that take an optional intent
@@ -482,8 +479,8 @@ defmodule Image do
   end
 
   def write(%Vimage{} = image, %Plug.Conn{} = conn, options) do
-    with {:ok, options} <- Options.Write.validate_options(options) do
-      {suffix, options} = Keyword.pop(options, :suffix, @default_image_type)
+    with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
+      {suffix, options} = Keyword.pop(options, :suffix)
       options = suffix <> loader_options(options)
 
       image
@@ -500,8 +497,8 @@ defmodule Image do
   end
 
   def write(%Vimage{} = image, :memory, options) do
-    with {:ok, options} <- Options.Write.validate_options(options) do
-      {suffix, options} = Keyword.pop(options, :suffix, @default_image_type)
+    with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
+      {suffix, options} = Keyword.pop(options, :suffix)
       options = suffix <> loader_options(options)
       Vimage.write_to_buffer(image, options)
     end
@@ -509,7 +506,7 @@ defmodule Image do
 
   def write(%Vimage{} = image, %module{} = stream, options)
       when module in [File.Stream, Stream] do
-    with {:ok, options} <- Options.Write.validate_options(options) do
+    with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
       case write_stream(image, stream, options) do
         :ok -> {:ok, image}
         other -> other
@@ -518,7 +515,7 @@ defmodule Image do
   end
 
   defp write_stream(image, stream, options) do
-    {suffix, options} = Keyword.pop(options, :suffix, @default_image_type)
+    {suffix, options} = Keyword.pop(options, :suffix)
     options = suffix <> loader_options(options)
 
     image
@@ -615,7 +612,7 @@ defmodule Image do
       "some/image.jpg"
       |> Image.open!()
       |> Image.resize!(200)
-      |> Image.stream!()
+      |> Image.stream!(suffix: ".jpg")
       |> Image.buffer!()
       |> ExAws.S3.upload("images", "some_object_name.jpg")
       |> ExAws.request()
@@ -623,10 +620,12 @@ defmodule Image do
   """
   @spec stream!(Vimage.t(), options :: Options.Write.image_write_options()) :: Enumerable.t()
   def stream!(%Vimage{} = image, options \\ []) do
-    with {:ok, options} <- Options.Write.validate_options(options) do
-      {suffix, options} = Keyword.pop(options, :suffix, @default_image_type)
+    with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
+      {suffix, options} = Keyword.pop(options, :suffix)
       options = suffix <> loader_options(options)
       Vimage.write_to_stream(image, options)
+    else
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 

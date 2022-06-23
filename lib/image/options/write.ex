@@ -72,6 +72,16 @@ defmodule Image.Options.Write do
     end
   end
 
+  def validate_options(options, :require_suffix) do
+    with {:ok, options} <- validate_options(options) do
+      if Keyword.get(options, :suffix) do
+        {:ok, options}
+      else
+        {:error, "The option :suffix must be provided. Example: suffix: \".jpg\""}
+      end
+    end
+  end
+
   defp validate_option({:suffix, "." <> _suffix}, options) do
     {:cont, options}
   end

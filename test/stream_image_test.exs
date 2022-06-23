@@ -38,7 +38,7 @@ defmodule StreamImage.Test do
       |> File.stream!([], 2048)
       |> Image.open!()
       |> Image.resize!(200)
-      |> Image.write(stream)
+      |> Image.write(stream, suffix: ".jpg")
   end
 
   test "Stream an image for writing with invalid writer options", %{dir: dir} do
@@ -53,6 +53,18 @@ defmodule StreamImage.Test do
       |> Image.write(stream, suffix: ".invalid")
   end
 
+  test "Stream an image for writing with no suffix provided", %{dir: dir} do
+    out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+    stream = File.stream!(out_path, [], 2048)
+
+    assert {:error, _reason} =
+      image_path("Singapore-2016-09-5887.jpg")
+      |> File.stream!([], 2048)
+      |> Image.open!()
+      |> Image.resize!(200)
+      |> Image.write(stream)
+  end
+
   test "Stream an image into a Plug.Conn" do
     conn =
       :get
@@ -64,7 +76,7 @@ defmodule StreamImage.Test do
       |> File.stream!([], 2048)
       |> Image.open!()
       |> Image.resize!(200)
-      |> Image.write(conn)
+      |> Image.write(conn, suffix: ".jpg")
   end
 
   test "Image.stream! with buffering into a Plug.Conn" do
@@ -78,10 +90,9 @@ defmodule StreamImage.Test do
       |> File.stream!([], 2048)
       |> Image.open!()
       |> Image.resize!(200)
-      |> Image.stream!()
+      |> Image.stream!(suffix: ".jpg")
       |> Image.buffer!()
       |> Enum.reduce_while(conn, fn (chunk, conn) ->
-        IO.puts "CHUNK"
         case Plug.Conn.chunk(conn, chunk) do
           {:ok, conn} ->
             {:cont, conn}
@@ -112,10 +123,10 @@ defmodule StreamImage.Test do
         |> ExAws.stream!
         |> Image.open!()
         |> Image.resize!(200)
-        |> Image.write(stream)
+        |> Image.write(stream, suffix: ".jpg")
     end
 
-    test "Streaming from minio then into non-streamed minio", %{dir: dir}  do
+    test "Streaming from minio then into non-streamed minio", %{dir: dir} do
       out_path = Temp.path!(suffix: ".jpg", basedir: dir)
 
       {:ok, buffer} =
@@ -130,7 +141,7 @@ defmodule StreamImage.Test do
         |> ExAws.request()
     end
 
-    test "Streaming from a file then into streamed minio", %{dir: dir}  do
+    test "Streaming from a file then into streamed minio", %{dir: dir} do
       out_path = Temp.path!(suffix: ".jpg", basedir: dir)
 
       assert {:ok, _} =
@@ -138,10 +149,20 @@ defmodule StreamImage.Test do
         |> File.stream!([], 2048)
         |> Image.open!()
         |> Image.resize!(200)
-        |> Image.stream!()
+        |> Image.stream!(suffix: ".jpg")
         |> Image.buffer!()
         |> ExAws.S3.upload("images", out_path)
         |> ExAws.request()
+    end
+
+    test "Streaming from a file then into streamed minio with exception" do
+      assert_raise Image.Error, ~r"The option :suffix must be provided", fn ->
+        image_path("Singapore-2016-09-5887.jpg")
+        |> File.stream!([], 2048)
+        |> Image.open!()
+        |> Image.resize!(200)
+        |> Image.stream!()
+      end
     end
 
     test "Streaming from minio then into streamed minio", %{dir: dir}  do
@@ -152,7 +173,7 @@ defmodule StreamImage.Test do
         |> ExAws.stream!()
         |> Image.open!()
         |> Image.resize!(200)
-        |> Image.stream!()
+        |> Image.stream!(suffix: ".jpg")
         |> Image.buffer!()
         |> ExAws.S3.upload("images", out_path)
         |> ExAws.request()
