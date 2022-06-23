@@ -1,5 +1,6 @@
 defmodule StreamImage.Test do
   use ExUnit.Case, async: true
+  use Plug.Test
 
   import Image.TestSupport
 
@@ -50,6 +51,44 @@ defmodule StreamImage.Test do
       |> Image.open!()
       |> Image.resize!(200)
       |> Image.write(stream, suffix: ".invalid")
+  end
+
+  test "Stream an image into a Plug.Conn" do
+    conn =
+      :get
+      |> conn("/")
+      |> Plug.Conn.send_chunked(200)
+
+    assert %Plug.Conn{} =
+      image_path("Singapore-2016-09-5887.jpg")
+      |> File.stream!([], 2048)
+      |> Image.open!()
+      |> Image.resize!(200)
+      |> Image.write(conn)
+  end
+
+  test "Image.stream! with buffering into a Plug.Conn" do
+    conn =
+      :get
+      |> conn("/")
+      |> Plug.Conn.send_chunked(200)
+
+    assert %Plug.Conn{} =
+      image_path("Singapore-2016-09-5887.jpg")
+      |> File.stream!([], 2048)
+      |> Image.open!()
+      |> Image.resize!(200)
+      |> Image.stream!()
+      |> Image.buffer!()
+      |> Enum.reduce_while(conn, fn (chunk, conn) ->
+        IO.puts "CHUNK"
+        case Plug.Conn.chunk(conn, chunk) do
+          {:ok, conn} ->
+            {:cont, conn}
+          {:error, :closed} ->
+            {:halt, conn}
+        end
+      end)
   end
 
   if System.find_executable("minio") do

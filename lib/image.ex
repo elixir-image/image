@@ -487,7 +487,7 @@ defmodule Image do
       options = suffix <> loader_options(options)
 
       image
-      |> Vix.Vips.Image.write_to_stream(options)
+      |> Vimage.write_to_stream(options)
       |> Enum.reduce_while(conn, fn (chunk, conn) ->
         case Plug.Conn.chunk(conn, chunk) do
           {:ok, conn} ->
