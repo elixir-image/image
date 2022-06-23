@@ -28,12 +28,6 @@ defmodule Image do
   # this library
   @default_avatar_size 180
 
-  # Default buffer size for buffering an image
-  # stream. 5 MiB is the minimum chunk size
-  # for an AWS S3 upload so we use that size as
-  # the default.
-  @default_buffer_size 5 * 1024 * 1024
-
   # if the ratio between width and height differs
   # by less than this amount, consider the image
   # to be square
@@ -597,7 +591,7 @@ defmodule Image do
   ### Options
 
   * `:buffer_size` is the size in bytes for
-    each chunk in the stream to be delivered.
+    each chunk in the stream being written.
     Some services, like AWS S3, require a minumum
     5 MiB per chunk to be delivered and this option
     can be used to satisfy that requirement.
@@ -618,10 +612,13 @@ defmodule Image do
       "some/image.jpg"
       |> Image.open!()
       |> Image.resize!(200)
-      |> Image.stream!(suffix: ".jpg")
-      |> Image.buffer!()
+      |> Image.stream!(suffix: ".jpg", buffer_size: 5_242_880)
       |> ExAws.S3.upload("images", "some_object_name.jpg")
       |> ExAws.request()
+
+  Since AWS S3 requires multipart uploads to be 5MiB per
+  chunk, we specify the `:buffer_size` option to
+  `Image.stream!/2`.
 
   """
   @spec stream!(Vimage.t(), options :: Options.Write.image_write_options()) :: Enumerable.t()
@@ -641,6 +638,10 @@ defmodule Image do
       {:error, reason} -> raise Image.Error, reason
     end
   end
+
+  # Rebuffers a steram into chunks of a minimum size.
+  # This is useful when streaming to AWS S3 which requires
+  # a minimum 5 MiB chunk size for multi-part uploads.
 
   defp buffer!(stream, buffer_size) do
     chunker =
