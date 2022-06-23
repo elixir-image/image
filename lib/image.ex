@@ -498,8 +498,7 @@ defmodule Image do
     end
   end
 
-  def write(%Vimage{} = image, %module{} = stream, options)
-      when module in [File.Stream, Stream] do
+  def write(%Vimage{} = image, %module{} = stream, options) when module in [File.Stream, Stream] do
     with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
       case write_stream(image, stream, options) do
         :ok -> {:ok, image}

@@ -99,6 +99,7 @@ defmodule Image.MixProject do
       source_ref: "v#{@version}",
       main: "readme",
       logo: "logo.png",
+      extra_section: "Guides",
       extras: [
         "README.md",
         "LICENSE.md",
