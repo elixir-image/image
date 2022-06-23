@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.3.0"
+  @version "0.4.0"
 
   def project do
     [
@@ -44,8 +44,8 @@ defmodule Image.MixProject do
 
   defp deps do
     [
-      # {:vix, "~> 0.10"},
-      {:vix, path: "../vix"},
+      {:vix, "~> 0.11"},
+      # {:vix, path: "../vix"},
 
       {:sweet_xml, "~> 0.7"},
       {:phoenix_html, "~> 3.2 or ~> 2.14"},
