@@ -60,7 +60,8 @@ defmodule Image.MixProject do
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false, optional: true},
 
       {:ex_aws_s3, "~> 2.3", optional: true, only: [:dev, :test]},
-      {:hackney, "~> 1.18", optional: true, only: [:dev, :test]}
+      {:hackney, "~> 1.18", optional: true, only: [:dev, :test]},
+      {:jason, "~> 1.0", optional: true, only: [:dev, :test]}
 
       # Only used for benchmarking
       # {:mogrify, "~> 0.9.1", only: :dev, optional: true}

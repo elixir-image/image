@@ -28,6 +28,12 @@ defmodule Image do
   # this library
   @default_avatar_size 180
 
+  # Default buffer size for buffering an image
+  # stream. 5 MiB is the minimum chunkc size
+  # for an AWS S3 upload so we use that size as
+  # the default.
+  @default_buffer_size 5 * 1024 * 1024
+
   # if the ratio between width and height differs
   # by less than this amount, consider the image
   # to be square
@@ -376,12 +382,18 @@ defmodule Image do
   end
 
   @doc """
-  Write an image to a file.
+  Write an image to a file, a stream or
+  to memory.
 
   ### Arguments
 
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
   * `image_path` is the file system path to an image
-    file.
+    file. It may also be a stream created with
+    `File.stream/3` or with `Stream.resource/3`. Lastly,
+    it can also be `:memory` in which case the image is
+    written to a memory buffer.
 
   * `options` is a keyword list of options. The default is
     `[]`.
@@ -409,6 +421,11 @@ defmodule Image do
     most image formats is `75`. For PNG files it is the
     quantization quality with a default of `100`. For
     HEIF files the default is `50`.
+
+  ### Streaming images and :memory images
+
+  * `:suffix` must be specified so that the image is written
+    in the correct format. For example: `suffix: ".jpg".
 
   ### JPEG images
 
@@ -449,7 +466,7 @@ defmodule Image do
   """
   @spec write(
           image :: Vimage.t(),
-          image_path :: Path.t() | Plug.Conn.t() | Stream.t() | File.Stream.t(),
+          image_path :: Path.t() | Plug.Conn.t() | Stream.t() | File.Stream.t() | :memory,
           options :: Options.Write.image_write_options()
         ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -479,6 +496,14 @@ defmodule Image do
             {:halt, conn}
         end
       end)
+    end
+  end
+
+  def write(%Vimage{} = image, :memory, options) do
+    with {:ok, options} <- Options.Write.validate_options(options) do
+      {suffix, options} = Keyword.pop(options, :suffix, @default_image_type)
+      options = suffix <> loader_options(options)
+      Vimage.write_to_buffer(image, options)
     end
   end
 
@@ -524,13 +549,19 @@ defmodule Image do
   end
 
   @doc """
-  Writes an image to a file returning the image
+  Write an image to a file, a stream or
+  to memory returning the image
   or raising an exception.
 
   ### Arguments
 
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
   * `image_path` is the file system path to an image
-    file.
+    file. It may also be a stream created with
+    `File.stream/3` or with `Stream.resource/3`. Lastly,
+    it can also be `:memory` in which case the image is
+    written to a memory buffer.
 
   * `options` is a keyword list of options.
     See `Image.write/2`.
@@ -544,7 +575,7 @@ defmodule Image do
   """
   @spec write!(
           image :: Vimage.t(),
-          image_path :: Path.t() | Plug.Conn.t() | Stream.t() | File.Stream.t(),
+          image_path_or_stream :: Path.t() | Plug.Conn.t() | Stream.t() | File.Stream.t(),
           options :: Options.Write.image_write_options()
         ) ::
           Vimage.t() | no_return()
@@ -557,7 +588,110 @@ defmodule Image do
   end
 
   @doc """
-  Compse two images together to form a new image.
+  Convert an image into an enumerable
+  stream.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  See `Image.write/3`.
+
+  ### Returns
+
+  * An `t:Enumerable.t/0` suitable for
+    streaming to an external service such as
+    S3, Minio or any other enumerable consumer.
+
+  ### Example
+
+  In this example an image is opened, resized
+  and then streamed into AWS S3:
+
+      "some/image.jpg"
+      |> Image.open!()
+      |> Image.resize!(200)
+      |> Image.stream!()
+      |> Image.buffer!()
+      |> ExAws.S3.upload("images", "some_object_name.jpg")
+      |> ExAws.request()
+
+  """
+  @spec stream!(Vimage.t(), options :: Options.Write.image_write_options()) :: Enumerable.t()
+  def stream!(%Vimage{} = image, options \\ []) do
+    with {:ok, options} <- Options.Write.validate_options(options) do
+      {suffix, options} = Keyword.pop(options, :suffix, @default_image_type)
+      options = suffix <> loader_options(options)
+      Vimage.write_to_stream(image, options)
+    end
+  end
+
+  @doc """
+  Buffers a stream into the required chunk
+  size.
+
+  Some services, like AWS S3, require a minimum
+  chunk size when uploading files.  This function
+  provides a means to consume a stream, re-chunk
+  it to the required size and then emit a new
+  stream.
+
+  ### Arguments
+
+  * `stream` is any `t:Enumerable.t/0`, most commonly
+    produced by `Image.stream!/2`
+
+  * `buffer_size` is the buffer size inbytes of the
+    output stream. The default is `#{@default_buffer_size}`.
+
+  ### Returns
+
+  * An `t:Enumerable.t/0`
+
+  ### Example
+
+  In this example an image is opened, resized,
+  buffered and then streamed into AWS S3:
+
+      "some/image.jpg"
+      |> Image.open!()
+      |> Image.resize!(200)
+      |> Image.stream!()
+      |> Image.buffer!()
+      |> ExAws.S3.upload("images", "some_object_name.jpg")
+      |> ExAws.request()
+
+  """
+  @spec buffer!(Enumerable.t()) :: Enumerable.t()
+  def buffer!(stream, buffer_size \\ @default_buffer_size) do
+    chunker =
+      fn bin, acc ->
+        acc_size = IO.iodata_length(acc)
+
+        if IO.iodata_length(bin) + acc_size >= buffer_size do
+          size = buffer_size - acc_size
+          <<chunk::binary-size(size), rest::binary>> = bin
+          {:cont, IO.iodata_to_binary([chunk | acc]), [rest]}
+        else
+          {:cont, [bin | acc]}
+        end
+      end
+
+    final =
+      fn
+        [] -> {:cont, []}
+        acc -> {:cont, IO.iodata_to_binary(acc), []}
+      end
+
+    Stream.chunk_while(stream, [], chunker, final)
+  end
+
+  @doc """
+  Compose two images together to form a new image.
 
   ### Arguments
 
