@@ -29,7 +29,7 @@ defmodule Image do
   @default_avatar_size 180
 
   # Default buffer size for buffering an image
-  # stream. 5 MiB is the minimum chunkc size
+  # stream. 5 MiB is the minimum chunk size
   # for an AWS S3 upload so we use that size as
   # the default.
   @default_buffer_size 5 * 1024 * 1024
