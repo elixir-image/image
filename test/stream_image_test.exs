@@ -9,6 +9,14 @@ defmodule StreamImage.Test do
     {:ok, %{dir: dir}}
   end
 
+  test "Filename from a streamed image is nil" do
+    assert nil ==
+      image_path("Singapore-2016-09-5887.jpg")
+      |> File.stream!([], 2048)
+      |> Image.open!()
+      |> Image.filename()
+  end
+
   test "Stream an image for reading", %{dir: dir} do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
 

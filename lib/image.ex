@@ -724,11 +724,9 @@ defmodule Image do
     |> accumulate_compositions(image, acc)
   end
 
-  # TODO do we need to decode the blend mode with Vix 0.10 and later?
   defp unzip_composition(list) do
     Enum.reduce list, {[], [], [], []}, fn
       [image, x, y, blend_mode], {images, xs, ys, blend_modes} ->
-        blend_mode = Vix.Vips.Enum.VipsBlendMode.to_nif_term(blend_mode, nil)
         {[image | images], [x | xs], [y | ys], [blend_mode | blend_modes]}
     end
   end
@@ -746,7 +744,7 @@ defmodule Image do
 
   @doc """
   Compse two images together to form a new image or
-  raising an exception.
+  raise an exception.
 
   ### Arguments
 
@@ -760,7 +758,7 @@ defmodule Image do
   ### Options
 
   * `:blend_mode` is the manner in which the two
-    images are composited. See `t:Image.BkendMode.t/0`.
+    images are composited. See `t:Image.BlendMode.t/0`.
     The default is `:over` which is the most common blend
     mode.
 
@@ -889,12 +887,21 @@ defmodule Image do
 
   ### Returns
 
-  * The pathname from which the image was opened.
+  * The pathname from which the image was opened or
+    `nil` if there is no associated path. This can
+    happen in the case of a streamed image or an image
+    created from a memory buffer.
 
   """
-  @spec filename(image :: Vimage.t()) :: Path.t()
+  @spec filename(image :: Vimage.t()) :: Path.t() | nil
   def filename(%Vimage{} = image) do
     Vix.Vips.Image.filename(image)
+  rescue e in RuntimeError ->
+    if e.message == "null_value" do
+      nil
+    else
+      reraise e, __STACKTRACE__
+    end
   end
 
   @doc """
@@ -921,6 +928,9 @@ defmodule Image do
       exif
       |> Exif.extract_exif()
       |> wrap(:ok)
+    else
+      false -> {:error, "Invalid Exif data"}
+      other -> other
     end
   end
 
