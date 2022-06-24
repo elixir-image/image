@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.5.0
+
+This is the changelog for Image version 0.5.0 released on June 24th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancements
+
+* Adds `Image.to_nx/1` to convert an image to an Nx tensor.
+
+* Adds `Image.from_nx/1` to convert an Nx tensor into an image.
+
 ## Image 0.4.0
 
 This is the changelog for Image version 0.4.0 released on June 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
