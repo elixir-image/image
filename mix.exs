@@ -54,7 +54,7 @@ defmodule Image.MixProject do
       {:plug, "~> 1.13", optional: true},
 
       # For NX interchange testing
-      {:nx, "~> 0.2", optional: true},
+      if(otp_release() >= 24, do: {:nx, "~> 0.2", optional: true}),
 
       # For testing and benchmarking
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
@@ -72,6 +72,7 @@ defmodule Image.MixProject do
       # Only used for benchmarking
       # {:mogrify, "~> 0.9.1", only: :dev, optional: true}
     ]
+    |> Enum.reject(&is_nil/1)
   end
 
   defp package do
@@ -124,6 +125,11 @@ defmodule Image.MixProject do
       Exif: ~r/Image.Exif.*/,
       Xmp: ~r/Image.Xmp/
     ]
+  end
+
+  defp otp_release do
+    :erlang.system_info(:otp_release)
+    |> List.to_integer
   end
 
   defp preferred_cli_env() do
