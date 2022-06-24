@@ -18,7 +18,7 @@ jobs:
     name: Lint
     strategy:
       matrix:
-        os: ["ubuntu-22.04"]
+        os: ["ubuntu-20.04"]
         elixir: ["1.13"]
         otp: ["24"]
     steps:
@@ -35,7 +35,6 @@ jobs:
       - run: sudo apt-get update
       - run: sudo apt-get install -y libvips-dev
       - run: vips --vips-version
-      - run: vips --vips-config
       - run: mix deps.get
       - run: mix deps.compile
       # Enable as library matures
