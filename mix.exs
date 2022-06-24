@@ -53,12 +53,18 @@ defmodule Image.MixProject do
       # For streaming writes
       {:plug, "~> 1.13", optional: true},
 
-      # {:nx, "~> 0.1", optional: true},
+      # For NX interchange testing
+      {:nx, "~> 0.2", optional: true},
+
+      # For testing and benchmarking
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
       {:benchee, "~> 1.0", only: :dev, runtime: false, optional: true},
-      {:ex_doc, "~> 0.18", only: [:release, :dev]},
+
+      # For release management
+      {:ex_doc, "~> 0.18", only: [:release, :dev, :docs]},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false, optional: true},
 
+      # For testing HTTP streaming
       {:ex_aws_s3, "~> 2.3", optional: true, only: [:dev, :test]},
       {:hackney, "~> 1.18", optional: true, only: [:dev, :test]},
       {:jason, "~> 1.0", optional: true, only: [:dev, :test]}

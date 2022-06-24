@@ -38,10 +38,10 @@ defmodule TextImage.Test do
   end
 
   test "Transparent text on a full image background", %{image: base_image} do
-    validate_path = validate_path("compose/composition_2.tif")
+    validate_path = validate_path("compose/composition_2.png")
 
     {:ok, singapore} = Text.text("SINGAPORE", font_size: 250, font: "DIN Alternate", padding: base_image, text_fill_color: :transparent, background_fill_color: "black", background_fill_opacity: 0.6)
-    final_image = Image.compose!(base_image, singapore, x: :center, y: :middle)
+    {:ok, final_image} = Image.compose(base_image, singapore, x: :center, y: :middle)
 
     assert_images_equal(final_image, validate_path)
   end

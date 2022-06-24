@@ -435,7 +435,7 @@ defmodule Image do
      `4`, `8` or `16`.  The default is to use the current
      color depth of the image.  For web applications, `8`
      bits would be reasonable for photographic images with
-     lower bit depts for monochromatic images or diagrams.
+     lower bit depths for monochromatic images or diagrams.
 
    * `:progressive` which has the same meaning and values
       as for JPEG images.
@@ -2556,6 +2556,94 @@ defmodule Image do
     case to_rectangular_coordinates(image) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  if Code.ensure_loaded?(Nx) do
+    @doc """
+    Converts an image into an [Nx](https://github.com/packages/nx)
+    tensor.
+
+    ### Arguments
+
+    * `image` is any `t:Vimage.t/0`
+
+    ### Returns
+
+    * An `t:Nx.tensor/0` tensor suitable for use in
+      the `Nx` library.
+
+    ### Example
+
+        iex> {:ok, image} = Vix.Vips.Operation.black(3, 3)
+        iex> Image.to_nx(image)
+        {:ok,
+          Nx.tensor([[[0], [0], [0]], [[0], [0], [0]], [[0], [0], [0]]], type: {:u, 8}, names: [:width, :height, :bands])}
+
+    """
+    @doc since: "0.5.0"
+
+    @spec to_nx(image :: Vimage.t(), options: Keyword.t()) ::
+      {:ok, Nx.tensor()} | {:error, error_message()}
+
+    def to_nx(%Vimage{} = image, options \\ []) do
+      {:ok, tensor} = Vix.Vips.Image.write_to_tensor(image)
+      %Vix.Tensor{data: binary, names: names, shape: shape, type: type} = tensor
+
+      binary
+      |> Nx.from_binary(type, options)
+      |> Nx.reshape(shape, names: names)
+      |> wrap(:ok)
+    end
+
+    @doc """
+    Converts an [Nx](https://github.com/packages/nx) tensor
+    into an image.
+
+    ### Arguments
+
+    * `tensor` is any three dimensional `t:Nx.tensor/0`.
+
+    * `options` is a keyword list of options. For valid
+      options see `Nx.from_binary/2`.
+
+    ### Returns
+
+    * `{:ok, image}` or
+
+    * `{:error, reason}`
+
+    ### Notes
+
+    In order to convert a tensor into an image it must
+    satisfy these constraints:
+
+    * It must have three dimensions.
+
+    * It must have a tensor type that is compatible
+      with `libvips` (most tensors will satisfy this
+      requirement other than tensors whose type is complex).
+
+    * The names of the axes must be `[:width, :height, any_other]`
+      or `[:height, :width, any_other]`.
+
+    ### Example
+
+        iex> {:ok, image} = Vix.Vips.Operation.black(3, 3)
+        iex> {:ok, tensor} = Image.to_nx(image)
+        iex> {:ok, _image_2} = Image.from_nx(tensor)
+
+    """
+    @doc since: "0.5.0"
+
+    @spec from_nx(tensor :: Nx.tensor()) ::  {:ok, Vimage.t()} | {:error, error_message()}
+    def from_nx(tensor) when is_struct(tensor, Nx.Tensor) do
+      with {:ok, tensor} <- Image.Nx.transpose(tensor, Nx.shape(tensor), Nx.names(tensor)),
+           {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
+        {width, height, bands} = Nx.shape(tensor)
+        binary = Nx.to_binary(tensor)
+        Vix.Vips.Image.new_from_binary(binary, width, height, bands, tensor_format)
+      end
     end
   end
 

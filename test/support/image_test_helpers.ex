@@ -37,6 +37,16 @@ defmodule Image.TestSupport do
   defp compare_images(calculated_image, validate_image) do
     use Image.Math
 
+    {calculated_image, validate_image} =
+      if Vimage.format(calculated_image) == Vimage.format(validate_image) do
+        {calculated_image, validate_image}
+      else
+        {
+          Vix.Vips.Operation.cast!(calculated_image, :VIPS_FORMAT_UCHAR),
+          Vix.Vips.Operation.cast!(validate_image, :VIPS_FORMAT_UCHAR)
+        }
+      end
+
     compared = calculated_image == validate_image
     validate_path = Image.filename(validate_image)
 
@@ -51,4 +61,5 @@ defmodule Image.TestSupport do
         flunk("images did not match: #{inspect other}")
     end
   end
+
 end
