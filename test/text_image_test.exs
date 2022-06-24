@@ -1,6 +1,8 @@
 defmodule TextImage.Test do
   use ExUnit.Case, async: true
 
+  @moduletag :full
+
   import Image.TestSupport
 
   alias Image.{Text, Shape}
