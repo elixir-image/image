@@ -18,7 +18,7 @@ jobs:
     name: Lint
     strategy:
       matrix:
-        os: ["ubuntu-20.04"]
+        os: ["ubuntu-22.04"]
         elixir: ["1.13"]
         otp: ["24"]
     steps:
