@@ -2570,7 +2570,7 @@ defmodule Image do
 
     ### Returns
 
-    * An `t:Nx.tensor/0` tensor suitable for use in
+    * An `t:Nx.Tensor.t/0` tensor suitable for use in
       the `Nx` library.
 
     ### Example
@@ -2584,7 +2584,7 @@ defmodule Image do
     @doc since: "0.5.0"
 
     @spec to_nx(image :: Vimage.t(), options: Keyword.t()) ::
-      {:ok, Nx.tensor()} | {:error, error_message()}
+      {:ok, Nx.Tensor.t()} | {:error, error_message()}
 
     def to_nx(%Vimage{} = image, options \\ []) do
       {:ok, tensor} = Vix.Vips.Image.write_to_tensor(image)
@@ -2602,7 +2602,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `tensor` is any three dimensional `t:Nx.tensor/0`.
+    * `tensor` is any three dimensional `t:Nx.Tensor.t/0`.
 
     * `options` is a keyword list of options. For valid
       options see `Nx.from_binary/2`.
@@ -2636,7 +2636,7 @@ defmodule Image do
     """
     @doc since: "0.5.0"
 
-    @spec from_nx(tensor :: Nx.tensor()) ::  {:ok, Vimage.t()} | {:error, error_message()}
+    @spec from_nx(tensor :: Nx.Tensor.t()) ::  {:ok, Vimage.t()} | {:error, error_message()}
     def from_nx(tensor) when is_struct(tensor, Nx.Tensor) do
       with {:ok, tensor} <- Image.Nx.transpose(tensor, Nx.shape(tensor), Nx.names(tensor)),
            {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
