@@ -21,6 +21,15 @@ defmodule Image do
   alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode}
   alias Image.Options.{Resize, Compose, Open}
 
+  @typedoc """
+  A 512 bit binary hash of an image.
+
+  Useful for comparing the similarity of
+  two images. See `Image.dhash/1` and
+  `Image.hamming_distance/2`.
+  """
+  @type image_hash :: binary()
+
   # Default radius of rounded corners
   @default_round_corner_radius 50
 
@@ -1242,11 +1251,11 @@ defmodule Image do
     cannot be used in linear space.
 
   * `:resize` determines if an image may be only upsized, only
-    downsized, or both. The value may be one of `:up`, `:down`
-    or `:both`. The default is `:both`.
+    downsized, or both. The value may be one of `:up`, `:down`,
+    `:both` or `:force`. The default is `:both`.
 
   * `:height` - Size to this height. Default is to maintain
-    the image aspect ratio.
+    the image aspect ratio unless `resize: :force` is set.
 
   ### Returns
 
@@ -2645,6 +2654,123 @@ defmodule Image do
         Vix.Vips.Image.new_from_binary(binary, width, height, bands, tensor_format)
       end
     end
+  end
+
+  @doc """
+  Returns a 512-bit difference hash as a binary.
+
+  Image hashes can be used to compare the similarity
+  of images. See `Image.hamming_distance/2`.
+
+  dhash is generates a "difference hash" for a given image -- a
+  perceptual hash based on Neal Krawetz's dHash algorithm in
+  a [Hacker Factor](http://www.hackerfactor.com/blog/index.php?/archives/529-Kind-of-Like-That.html)
+  blog entry.
+
+  The code is adapted from the Ruby implementation in
+  [dhash-vips](https://github.com/Nakilon/dhash-vips).
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, 512-bit binary}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.6.0"
+
+  @spec dhash(image :: Vimage.t()) :: image_hash()
+  def dhash(%Vimage{} = image, hash_size \\ 8) when is_integer(hash_size) and hash_size > 0 do
+    alias Image.Math
+
+    {:ok, convolution} = Image.Matrix.image_from_matrix([[1, -1]])
+
+    image
+    |> pixelate(hash_size)
+    |> Operation.cast!(:VIPS_FORMAT_INT)
+    |> Operation.conv!(convolution)
+    |> crop!(1, 0, hash_size, hash_size)
+    |> Math.greater_than!(0)
+    |> Math.divide!(255)
+    |> Operation.cast!(:VIPS_FORMAT_UCHAR)
+    |> Vimage.write_to_binary()
+  end
+
+  defp pixelate(%Vimage{} = image, hash_size) do
+    image
+    |> resize!(hash_size + 1, height: hash_size, resize: :force)
+    |> Operation.flatten!()
+    |> to_colorspace!(:bw)
+    |> Operation.extract_band!(0)
+  end
+
+  @doc false
+  def convert_binary_to_hash(binary) do
+    for << byte::integer-8-native <- binary >>, reduce: <<>> do
+      acc ->
+        <<_rest::bitstring-7, bit::bitstring>> = <<byte::integer-8-native>>
+        <<acc :: bitstring, bit :: bitstring>>
+    end
+  end
+
+  @doc """
+  Returns the hamming distance of two images
+  or two image hashes.
+
+  A [hamming distance](https://en.wikipedia.org/wiki/Hamming_distance)
+  gives an indication of the similarity of two images.
+
+  In general, a hamming distance of less than `10` indicates
+  that the images are very similar.  A distance of
+  less than `20` suggests the images are quite similar. Any
+  other distance suggests the images have little in common.
+
+  ### Arguments
+
+  * `image_1` is any `t:Vix.Vips.Image.t/0`
+
+  * `image_2` is any `t:Vix.Vips.Image.t/0`
+
+  Alternatively, both arguments may be image hashes
+  returned by `Image.dhash/1`. Both arguments must
+  be of the same type.
+
+  ### Returns
+
+  * `{:ok, hamming_distance}` where hamming distance is
+    a positive integer or
+
+  * `{:error, reason}`.
+
+  """
+  @doc since: "0.6.0"
+
+  @spec hamming_distance(image_1 :: Vimage.t(), image_2 :: Vimage.t()) ::
+    {:ok, non_neg_integer()} | {:error, error_message()}
+
+  def hamming_distance(%Vimage{} = image_1, %Vimage{} = image_2) do
+    with {:ok, hash_1} <- dhash(image_1),
+         {:ok, hash_2} <- dhash(image_2) do
+      hamming_distance(hash_1, hash_2)
+    end
+  end
+
+  @spec hamming_distance(image_hash(), image_hash()) ::
+    {:ok, non_neg_integer()} | {:error, error_message()}
+
+  def hamming_distance(hash_1, hash_2) when is_binary(hash_1) and is_binary(hash_2) do
+    hash_1
+    |> :crypto.exor(hash_2)
+    |> count_ones()
+    |> wrap(:ok)
+  end
+
+  defp count_ones(binary) when is_binary(binary) do
+    for(<< bit::1 <- binary >>, do: bit) |> Enum.sum
   end
 
   @doc """
