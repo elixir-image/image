@@ -1,13 +1,13 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.5.0"
+  @version "0.6.0-dev"
 
   def project do
     [
       app: :image,
       version: @version,
-      elixir: "~> 1.10",
+      elixir: "~> 1.12",
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       source_url: "https://github.com/kipcole9/image",
