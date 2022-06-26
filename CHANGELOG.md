@@ -2,7 +2,7 @@
 
 ## Image 0.6.0
 
-This is the changelog for Image version 0.6.0 released on June 5th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.6.0 released on ____, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
 
 ### Enhancements
 
@@ -11,6 +11,10 @@ This is the changelog for Image version 0.6.0 released on June 5th, 2022.  For o
 * Adds `Image.hamming_distance/2` to compare the similarity of two images or two image hashes.
 
 * Adds `Image.radial_gradient/3` to great a radial gradient image. This could be used to composite over another image to add a vignette.
+
+* Adds `Image.Math` logical functions `boolean_and/2`, `boolean_or/2`, `boolean_xor/2`, `boolean_lshift/2` and `boolean_rshift/2`. Also includes the `!` versions.
+
+* Add operator `use Image.Math` overloads for image `&&&` (`and`), `|||` (`or`), `<<<` (`lshift`) and `>>>` (`rshift`).
 
 ## Image 0.5.0
 
