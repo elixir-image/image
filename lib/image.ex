@@ -2303,8 +2303,11 @@ defmodule Image do
     use Image.Math
 
     # Lab colors, not RGB
-    start = [100, 0, 0]
-    finish = [0, 0, 0]
+    # Since rgba 0 for transparency means
+    # transparent, and 1 means opaque we
+    # transition from black to white
+    start = [0, 0, 0]
+    finish = [100, 0, 0]
 
     max = max(width, height)
 
