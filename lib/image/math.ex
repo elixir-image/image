@@ -184,6 +184,51 @@ defmodule Image.Math do
     not_equal!(a, b)
   end
 
+  @doc """
+  Matrix bitwise 'and' of
+  two images.
+
+  """
+  def a &&& b do
+    boolean_and!(a, b)
+  end
+
+  @doc """
+  Matrix bitwise 'or' of
+  two images.
+
+  """
+  def a ||| b do
+    boolean_or!(a, b)
+  end
+
+  # @doc """
+  # Matrix bitwise 'xor' of
+  # two images.
+  #
+  # """
+  # def a ^^^ b do
+  #   boolean_xor!(a, b)
+  # end
+
+  @doc """
+  Matrix bitwise 'left shift' of
+  two images.
+
+  """
+  def a <<< b do
+    boolean_lshift!(a, b)
+  end
+
+  @doc """
+  Matrix bitwise 'right shift' of
+  two images.
+
+  """
+  def a >>> b do
+    boolean_rshift!(a, b)
+  end
+
   @spec pow(Vimage.t(), Vimage.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error_message()}
 
@@ -577,6 +622,78 @@ defmodule Image.Math do
   @spec sin!(Vimage.t()) :: Vimage.t() | no_return()
   def sin!(%Vimage{} = image) do
     case sin(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
+  end
+
+  ### Logical operations
+
+  @spec boolean_and(Vimage.t(), Vimage.t()) ::
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  def boolean_and(%Vimage{} = image_1, %Vimage{} = image_2) do
+    Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_AND)
+  end
+
+  @spec boolean_and!(Vimage.t(), Vimage.t()) :: Vimage.t() | no_return()
+  def boolean_and!(%Vimage{} = image_1, %Vimage{} = image_2) do
+    case boolean_and(image_1, image_2) do
+      {:ok, image} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
+  end
+
+  @spec boolean_or(Vimage.t(), Vimage.t()) ::
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  def boolean_or(%Vimage{} = image_1, %Vimage{} = image_2) do
+    Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_OR)
+  end
+
+  @spec boolean_or!(Vimage.t(), Vimage.t()) :: Vimage.t() | no_return()
+  def boolean_or!(%Vimage{} = image_1, %Vimage{} = image_2) do
+    case boolean_or(image_1, image_2) do
+      {:ok, image} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
+  end
+
+  @spec boolean_xor(Vimage.t(), Vimage.t()) ::
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  def boolean_xor(%Vimage{} = image_1, %Vimage{} = image_2) do
+    Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_EOR)
+  end
+
+  @spec boolean_xor!(Vimage.t(), Vimage.t()) :: Vimage.t() | no_return()
+  def boolean_xor!(%Vimage{} = image_1, %Vimage{} = image_2) do
+    case boolean_xor(image_1, image_2) do
+      {:ok, image} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
+  end
+
+  @spec boolean_lshift(Vimage.t(), Vimage.t()) ::
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  def boolean_lshift(%Vimage{} = image_1, %Vimage{} = image_2) do
+    Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_LSHIFT)
+  end
+
+  @spec boolean_lshift!(Vimage.t(), Vimage.t()) :: Vimage.t() | no_return()
+  def boolean_lshift!(%Vimage{} = image_1, %Vimage{} = image_2) do
+    case boolean_xor(image_1, image_2) do
+      {:ok, image} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
+  end
+
+  @spec boolean_rshift(Vimage.t(), Vimage.t()) ::
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  def boolean_rshift(%Vimage{} = image_1, %Vimage{} = image_2) do
+    Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_RSHIFT)
+  end
+
+  @spec boolean_rshift!(Vimage.t(), Vimage.t()) :: Vimage.t() | no_return()
+  def boolean_rshift!(%Vimage{} = image_1, %Vimage{} = image_2) do
+    case boolean_xor(image_1, image_2) do
       {:ok, image} -> image
       {:error, reason} -> raise ArgumentError, reason
     end
