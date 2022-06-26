@@ -2280,9 +2280,6 @@ defmodule Image do
   * `:finish` is the color at which the gradient
     finishes at the end of the gradient.
 
-  * `:radius` is the radius of the gradient. Beyond
-    the radius the gradient is the `:finish` color.
-
   * `:feather` is the slope of the gradient. That it,
     how quickly the gradient moves from the `:start`
     color to the `:finish` color.
@@ -2307,12 +2304,19 @@ defmodule Image do
     finish = [0, 0, 0]
 
     max = max(width, height)
-    radius = Keyword.get(options, :radius, 2)
+
+    # Take a number 0..10 and convert it with :math.pow(2, x) |> trunc
+    # This is a series of strong to week so probably want to do
+    # :math.pow(2, 10 - x) so its weakest to strongest
     feather = Keyword.get(options, :feather, 2)
+
+    # Takes a number from 1 to 10 indicating the radius of
+    # the gradient after which the final color kicks in
+    radius = Keyword.get(options, :radius, 2)
 
     x =  Operation.xyz!(width, height) - [width / 2, height / 2]
 
-    d = (((x[0] ** 2) + (x[1] ** 2)) ** 0.5) / (radius ** 0.05 * max / feather)
+    d = (((x[0] ** 2) + (x[1] ** 2)) ** 0.5) / (feather ** 0.05 * max / radius)
     out = (d * finish) + ((d * -1 + 1) * start)
 
     Operation.copy(out, interpretation: :VIPS_INTERPRETATION_LAB)
