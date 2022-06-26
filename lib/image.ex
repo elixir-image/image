@@ -2256,6 +2256,69 @@ defmodule Image do
   end
 
   @doc """
+  Returns a radial gradient as an image.
+
+  This image might then be composited over
+  another image.
+
+  ### Arguments
+
+  * `width` is the width of the gradient in
+    pixels.
+
+  * `height` is the height of the gradient in
+    pixels.
+
+  * `options` is a keyword list of options. The
+    default is `[]`.
+
+  ### Options
+
+  * `:start` is the color from which the gradient
+    starts in the center of the image.
+
+  * `:finish` is the color at which the gradient
+    finishes at the end of the gradient.
+
+  * `:radius` is the radius of the gradient. Beyond
+    the radius the gradient is the `:finish` color.
+
+  * `:feather` is the slope of the gradient. That it,
+    how quickly the gradient moves from the `:start`
+    color to the `:finish` color.
+
+  ### Returns
+
+  * `{:ok, gradient_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.6.0"
+
+  @spec radial_gradient(width :: pos_integer(), height :: pos_integer(), options :: Keyword.t()) ::
+    {:ok, %Vimage{}} | {:error, error_message()}
+
+  def radial_gradient(width, height, options \\ []) do
+    use Image.Math
+
+    # Lab colors, not RGB
+    start = [100, 0, 0]
+    finish = [0, 0, 0]
+
+    max = max(width, height)
+    radius = Keyword.get(options, :radius, 2)
+    feather = Keyword.get(options, :feather, 2)
+
+    x =  Operation.xyz!(width, height) - [width / 2, height / 2]
+
+    d = (((x[0] ** 2) + (x[1] ** 2)) ** 0.5) / (radius ** 0.05 * max / feather)
+    out = (d * finish) + ((d * -1 + 1) * start)
+
+    Operation.copy(out, interpretation: :VIPS_INTERPRETATION_LAB)
+  end
+
+  @doc """
   Returns the dominant color of an image
   as an RBG triplet value in an integer
   list.
