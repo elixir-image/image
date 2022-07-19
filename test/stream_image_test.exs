@@ -1,4 +1,4 @@
-if Code.ensure_loaded?(Plug) do
+if match?({:module, _module}, Code.ensure_compiled(Plug)) do
   defmodule StreamImage.Test do
     use ExUnit.Case, async: true
     use Plug.Test

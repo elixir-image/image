@@ -391,7 +391,8 @@ defmodule Image do
 
   * `image_path` is the file system path to an image
     file. It may also be a stream created with
-    `File.stream!/3` or with `Stream.resource/3`. Lastly,
+    `File.stream!/3` or with `Stream.resource/3`, a
+    `t:Plug.Conn.t/0` if `Plug` is configured or lastly,
     it can also be `:memory` in which case the image is
     written to a binary.
 
@@ -464,7 +465,7 @@ defmodule Image do
     `:avc`, `:jpeg` and `:av1`. The default is `:hevc`.
 
   """
-  if Code.ensure_loaded?(Plug) do
+  if match?({:module, _module}, Code.ensure_compiled(Plug)) do
     @spec write(
             image :: Vimage.t(),
             image_path :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t() | :memory,
@@ -490,21 +491,23 @@ defmodule Image do
     end
   end
 
-  def write(%Vimage{} = image, %Plug.Conn{} = conn, options) do
-    with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
-      {suffix, options} = Keyword.pop(options, :suffix)
-      options = suffix <> loader_options(options)
+  if match?({:module, _module}, Code.ensure_compiled(Plug)) do
+    def write(%Vimage{} = image, %Plug.Conn{} = conn, options) do
+      with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
+        {suffix, options} = Keyword.pop(options, :suffix)
+        options = suffix <> loader_options(options)
 
-      image
-      |> Vimage.write_to_stream(options)
-      |> Enum.reduce_while(conn, fn (chunk, conn) ->
-        case Plug.Conn.chunk(conn, chunk) do
-          {:ok, conn} ->
-            {:cont, conn}
-          {:error, :closed} ->
-            {:halt, conn}
-        end
-      end)
+        image
+        |> Vimage.write_to_stream(options)
+        |> Enum.reduce_while(conn, fn (chunk, conn) ->
+          case Plug.Conn.chunk(conn, chunk) do
+            {:ok, conn} ->
+              {:cont, conn}
+            {:error, :closed} ->
+              {:halt, conn}
+          end
+        end)
+      end
     end
   end
 
