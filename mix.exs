@@ -38,7 +38,7 @@ defmodule Image.MixProject do
 
   def application do
     [
-      extra_applications: [:logger, :inets]
+      extra_applications: [:logger, :inets, :crypto]
     ]
   end
 
