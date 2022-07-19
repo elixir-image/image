@@ -2650,7 +2650,7 @@ defmodule Image do
     end
   end
 
-  if Code.ensure_loaded?(Nx) do
+  if match?({:module, _module}, Code.ensure_compiled(Nx)) do
     @doc """
     Converts an image into an [Nx](https://github.com/packages/nx)
     tensor.
