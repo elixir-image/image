@@ -2,7 +2,11 @@
 
 ## Image 0.6.0
 
-This is the changelog for Image version 0.6.0 released on ____, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.6.0 released on July 19th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug fixes
+
+* Don't attempt to compile code that refers to `Plug.t` if `Plug` is not configured. Thanks to @kwando. Closes #7.
 
 ### Enhancements
 

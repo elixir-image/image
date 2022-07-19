@@ -464,12 +464,21 @@ defmodule Image do
     `:avc`, `:jpeg` and `:av1`. The default is `:hevc`.
 
   """
-  @spec write(
-          image :: Vimage.t(),
-          image_path :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t() | :memory,
-          options :: Options.Write.image_write_options()
-        ) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+  if Code.ensure_loaded?(Plug) do
+    @spec write(
+            image :: Vimage.t(),
+            image_path :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t() | :memory,
+            options :: Options.Write.image_write_options()
+          ) ::
+            {:ok, Vimage.t()} | {:error, error_message()}
+  else
+    @spec write(
+            image :: Vimage.t(),
+            image_path :: Path.t() | Enumerable.t() | File.Stream.t() | :memory,
+            options :: Options.Write.image_write_options()
+          ) ::
+            {:ok, Vimage.t()} | {:error, error_message()}
+  end
 
   def write(image, image_path, options \\ [])
 
