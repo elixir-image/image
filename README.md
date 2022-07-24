@@ -34,7 +34,7 @@ In addition the following will be required (and would normally be installed by t
 * [pkg-config](https://en.wikipedia.org/wiki/Pkg-config)
 * A `C` compiler
 
-### Configurration
+### Configuration
 
 `Vix` and `libvips` offer various configuration parameters that affect debug output, image caching, concurrency of imaging operations and memory leak detection. Each of these options has reasonable defaults so no action is required in order to start using the library. 
 
@@ -44,7 +44,7 @@ In addition the following will be required (and would normally be installed by t
 
 #### GLib Debug Output
 
-The platform upon which `Image` and `Vix` stand is [libvips](https://www.libvips.org), a `C` library that performs the image manipulation. Its `libvips` that delivers the speed, memory efficiency and functionality.
+The platform upon which `Image` and `Vix` stand is [libvips](https://www.libvips.org), a `C` library that performs the image manipulation. It's `libvips` that delivers the speed, memory efficiency and functionality.
 
 `libvips` uses the [GLib](https://docs.gtk.org/glib/) library which has configurable debug output. This output depends on the setting of the environment variable `G_DEBUG`.  The initial value will depend on the installation method of `libvips` for a given system. It can be changed by setting the `G_DEBUG` environment variable to one of the following:
 
@@ -82,13 +82,13 @@ unset VIPS_LEAK
 
 The default number of threads is equal to the number of cores detected on the running system. This may create CPU contention with other workloads given that image processing is CPU intensive.  Therefore it may be prudent to reduce the number of threads if overall system throughput is being affected.
 
-### Security Cosiderations
+### Security Considerations
 
 There are several considerations in the use of any image processing library and any NIF-based library:
 
 1. If a NIF crashes it will likely bring down the BEAM virtual machine. `libvips` is a robust, time-tested library however this risk cannot be eliminated.
 
-2. Image processing is CPU intensive with its concurrent pipeling model and default concurrency level equal to the number of cores in the host machine, CPU starvation for other parts of the application is a possibility. In such cases, reducing the `libvips` concurrency is recommended.
+2. Image processing is CPU intensive with its concurrent pipelining model and default concurrency level equal to the number of cores in the host machine, CPU starvation for other parts of the application is a possibility. In such cases, reducing the `libvips` concurrency is recommended.
 
 3. Image processing by its nature operates on external data and there have been exploits based upon maliciously crafted images. The two primary vectors are:
     * An invalid image format that causes the image parser to crash and therefore crash the NIF and the BEAM
