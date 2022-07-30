@@ -5,6 +5,18 @@ defmodule Image.BandFormat do
 
   """
 
+  @type t ::
+    {:u, 8} |
+    {:s, 8} |
+    {:u, 16} |
+    {:s, 16} |
+    {:u, 32} |
+    {:s, 32} |
+    {:u, 64} |
+    {:s, 64} |
+    {:f, 32} |
+    {:f, 64}
+
   if Code.ensure_loaded?(Nx) do
     def image_format_from_nx(%Nx.Tensor{} = tensor) do
       tensor

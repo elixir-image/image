@@ -33,3 +33,7 @@ image-*.tar
 
 # Minio
 .minio.sys/
+
+# Performance result images
+test/perf/*.png
+test/perf/*.jpeg

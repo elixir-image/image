@@ -212,6 +212,76 @@ defmodule Image do
   defguard is_pixel(value) when is_number(value) or is_list(value)
 
   @doc """
+  Create a new image of the given dimensions and
+  background color.
+
+  ### Arguments
+
+  * `width` is the image width as an integer.
+
+  * `height` is the image height as an integer.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:bands` defines the number of bands (channels)
+    to be created. The default is `3`.
+
+  * `:color` defines the color of the image. This
+    can be specified as a single integer which will
+    be applied to all bands, or a list of
+    integers representing the color for each
+    band. The default is `0`, meaning black. The color
+    can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `:format` defines the format of the image. The
+    default is `{:u, 8}`.
+
+  * `:interpretation` defines the interpretation of
+    the image. The default is `:srgb`.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`
+
+  ### Examples
+
+        # 100x100 pixel image of dark blue slate color
+        iex> {:ok, _image} = Image.new(100, 100, color: :dark_slate_blue)
+
+        # 100x100 pixel green image, fully transparent
+        iex> {:ok, _image} = Image.new(100, 100, color: [0, 255, 0, 1], bands: 4)
+
+  """
+  @spec new(width :: pos_integer(), height :: pos_integer(), options :: Options.New.t()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def new(width, height, options \\ []) do
+    with {:ok, options} <- Options.New.validate_options(options) do
+      {:ok, pixel} =
+        Vix.Vips.Operation.black!(1, 1, bands: options.bands)
+        |> Image.Math.add!(options.color)
+        |> Operation.cast(options.format)
+
+      {:ok, image} =
+        Operation.embed(pixel, 0, 0, width, height, extend: :VIPS_EXTEND_COPY)
+
+      Operation.copy(image,
+        interpretation: options.interpretation,
+        xres: options.x_res,
+        yres: options.y_res,
+        xoffset: options.x_offset,
+        yoffset: options.y_offset
+      )
+    end
+  end
+
+  @doc """
   Opens an image file or stream for image processing.
 
   ### Arguments
