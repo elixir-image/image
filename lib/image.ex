@@ -2520,8 +2520,25 @@ defmodule Image do
   @spec get_pixel(Vimage.t(), non_neg_integer(), non_neg_integer()) ::
       {:ok, Color.rgb_color()} | {:error, error_message()}
 
-  def get_pixel(image, x, y) do
+  def get_pixel(%Vimage{} = image, x, y) do
     Operation.getpoint(image, x, y)
+  end
+
+  @doc """
+  Mutate an image with through the given
+  function.
+
+  This funcation is a convenience wrapper
+  around `Vix.Vips.Image.mutate/2`.
+
+  """
+  @doc since: "0.7.0"
+
+  @spec mutate(Vimage.t(), (Vix.Vips.MutableImage.t() -> any())) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def mutate(%Vimage{} = image, fun) when is_function(fun, 1) do
+    Vimage.mutate(image, fun)
   end
 
   @doc """

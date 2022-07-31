@@ -12,6 +12,8 @@ defmodule Image.Draw do
   Draw a circle on a mutalable image.
 
   """
+  @doc since: "0.7.0"
+
   @spec circle(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.circle()) ::
     {:ok, Image.t()} | {:error, Image.error_message()}
 
@@ -41,6 +43,8 @@ defmodule Image.Draw do
   image.
 
   """
+  @doc since: "0.7.0"
+
   @spec image(Vimage.t(), Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.image()) ::
     {:ok, Image.t()} | {:error, Image.error_message()}
 
@@ -71,6 +75,8 @@ defmodule Image.Draw do
 
 
   """
+  @doc since: "0.7.0"
+
   @spec flood(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.flood()) ::
     {:ok, Image.t()} | {:error, Image.error_message()}
 
@@ -80,7 +86,7 @@ defmodule Image.Draw do
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
     with {:ok, _options} <- Options.Draw.validate_options(:flood, options) do
       Vimage.mutate image, fn mut_img ->
-        MutableImage.draw_flood(mut_img, x, y, equal: options.equal)
+        MutableImage.draw_flood(mut_img, options.color, x, y, options)
       end
     end
   end
@@ -91,7 +97,7 @@ defmodule Image.Draw do
   def flood(%MutableImage{} = image, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
     with {:ok, _options} <- Options.Draw.validate_options(:flood, options) do
-      MutableImage.draw_flood(image, x, y, equal: options.equal)
+      MutableImage.draw_flood(image, options.color, x, y, options)
     end
   end
 
