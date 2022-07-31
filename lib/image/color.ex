@@ -5,17 +5,6 @@ defmodule Image.Color do
   """
 
   @typedoc """
-  Reference to an ICC color profile
-
-  * `:none` means no profile
-  * `:cmyk`, `:srgb` and `:p3` refer to the built-in color profiles
-  * `Path.t()` means any file system path. If the path is a relative
-    path then is will be loaded from the systems profile directory.
-
-  """
-  @type icc_profile :: :none | :cmyk | :srgb | :p3 | Path.t()
-
-  @typedoc """
   An rbg color expressed as a list of numbers.
 
   The number of list elements and the type
@@ -28,6 +17,24 @@ defmodule Image.Color do
 
   """
   @type rgb_color :: [number()]
+
+  @typedoc """
+  A color can be expressed as a list of numbers or
+  as a CSS color name in atom or string format.
+
+  """
+  @type t :: rgb_color | atom() | String.t()
+
+  @typedoc """
+  Reference to an ICC color profile
+
+  * `:none` means no profile
+  * `:cmyk`, `:srgb` and `:p3` refer to the built-in color profiles
+  * `Path.t()` means any file system path. If the path is a relative
+    path then is will be loaded from the systems profile directory.
+
+  """
+  @type icc_profile :: :none | :cmyk | :srgb | :p3 | Path.t()
 
   @inbuilt_profiles [:none, :srgb, :cmyk, :p3]
 

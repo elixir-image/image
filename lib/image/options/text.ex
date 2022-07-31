@@ -4,6 +4,23 @@ defmodule Image.Options.Text do
   alias Image.Color
   alias Vix.Vips.Image, as: Vimage
 
+  @type t :: [
+    {:font, String.t()},
+    {:font_size, pos_integer()},
+    {:text_fill_color, Color.t()},
+    {:text_stroke_color, Color.t()},
+    {:text_stroke_width, pos_integer()},
+    {:font_weigtht, atom()},
+    {:background_fill_color, Color.t()},
+    {:background_stroke_color, Color.t()},
+    {:background_stroke_width, pos_integer()},
+    {:background_stroke_opacity, float()},
+    {:background_fill_opacity, float()},
+    {:padding, [non_neg_integer(), ...]},
+    {:x, :center | :left | :right},
+    {:y, :middle | :top | :bottom}
+  ]
+
   def default_options do
     [
       font: "Helvetica",
