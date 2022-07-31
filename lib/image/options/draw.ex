@@ -8,10 +8,23 @@ defmodule Image.Options.Draw do
     {:color, Color.t()}
   ]
 
+  @type flood :: [
+    {:equal, boolean()},
+    {:color, Color.t()}
+  ]
+
+
   def default_options(:circle) do
     [
       color: :black,
       fill: true
+    ]
+  end
+
+  def default_options(:flood) do
+    [
+      color: :black,
+      equal: false
     ]
   end
 
@@ -56,7 +69,7 @@ defmodule Image.Options.Draw do
     end
   end
 
-  defp validate_option(:circle, {:color, color}, options) do
+  defp validate_option(type, {:color, color}, options) when type in [:circle, :flood] do
     case Color.rgb_color(color) do
       {:ok, color} ->
         rgb =  if Keyword.keyword?(color), do: Keyword.fetch!(color, :rgb), else: color
