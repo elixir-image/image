@@ -4,14 +4,14 @@ defmodule Image.Options.New do
   alias Image.{Color, BandFormat, Interpretation}
 
   @type t :: [
-    {:bands, pos_integer()},
-    {:format, Image.BandFormat.t()},
-    {:interpretation, Image.Interpretation.t()},
-    {:color, float() | Image.pixel()},
-    {:x_res, number()},
-    {:y_res, number()},
-    {:x_offset, number()},
-    {:y_offset, number()},
+    {:bands, pos_integer()} |
+    {:format, Image.BandFormat.t()} |
+    {:interpretation, Image.Interpretation.t()} |
+    {:color, float() | Image.pixel()} |
+    {:x_res, number()} |
+    {:y_res, number()} |
+    {:x_offset, number()} |
+    {:y_offset, number()}
   ]
 
   def default_options do

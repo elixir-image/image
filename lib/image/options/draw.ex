@@ -4,12 +4,12 @@ defmodule Image.Options.Draw do
   alias Image.Color
 
   @type circle :: [
-    {:fill, boolean()},
+    {:fill, boolean()} |
     {:color, Color.t()}
   ]
 
   @type flood :: [
-    {:equal, boolean()},
+    {:equal, boolean()} |
     {:color, Color.t()}
   ]
 
