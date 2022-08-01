@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.6.0"
+  @version "0.7.0"
 
   def project do
     [
@@ -46,6 +46,7 @@ defmodule Image.MixProject do
     [
       # {:vix, "~> 0.11"},
       {:vix, github: "kipcole9/vix", branch: "draw"},
+      # {:vix, path: "../vix"},
 
       {:sweet_xml, "~> 0.7"},
       {:phoenix_html, "~> 3.2 or ~> 2.14"},

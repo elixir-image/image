@@ -44,7 +44,7 @@ defmodule Image.Color do
 
   """
   defguard is_color(color)
-           when (is_number(color) and color > 0) or (is_list(color) and length(color) in 3..4)
+           when (is_number(color) and color >= 0) or (is_list(color) and length(color) in 3..5)
 
   @doc """
   Guards whether a given profile is one of the inbuilt

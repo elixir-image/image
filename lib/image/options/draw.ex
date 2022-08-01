@@ -21,6 +21,12 @@ defmodule Image.Options.Draw do
     ]
   end
 
+  def default_options(:line) do
+    [
+      color: :black
+    ]
+  end
+
   def default_options(:flood) do
     [
       color: :black,
@@ -65,11 +71,11 @@ defmodule Image.Options.Draw do
     if fill do
       {:cont, Keyword.put(options, :fill, true)}
     else
-      {:halt, {:error, invalid_option(:circle, :fill, fill)}}
+      {:cont, Keyword.put(options, :fill, false)}
     end
   end
 
-  defp validate_option(type, {:color, color}, options) when type in [:circle, :flood] do
+  defp validate_option(type, {:color, color}, options) when type in [:circle, :line, :flood] do
     case Color.rgb_color(color) do
       {:ok, color} ->
         rgb =  if Keyword.keyword?(color), do: Keyword.fetch!(color, :rgb), else: color
@@ -77,6 +83,14 @@ defmodule Image.Options.Draw do
 
       {:error, reason} ->
         {:halt, {:error, reason}}
+    end
+  end
+
+  defp validate_option(:flood, {:equal, equal}, options) do
+    if equal do
+      {:cont, Keyword.put(options, :equal, true)}
+    else
+      {:cont, Keyword.put(options, :equal, false)}
     end
   end
 
