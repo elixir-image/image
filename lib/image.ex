@@ -1276,7 +1276,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec resize(Vimage.t(), width :: pos_integer(), options :: Resize.resize_options()) ::
+  @spec resize(Vimage.t(), width :: pos_integer() | binary(), options :: Resize.resize_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def resize(image_or_path, wide, options \\ [])
@@ -1297,7 +1297,7 @@ defmodule Image do
     end
   end
 
-  @spec resize(Vimage.t() | Path.t(), width :: pos_integer(), options :: Resize.resize_options()) ::
+  @spec resize(Vimage.t() | Path.t(), width :: binary(), options :: Resize.resize_options()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
   def resize(image_or_path, dimensions, options) when is_binary(dimensions) do
@@ -1329,7 +1329,7 @@ defmodule Image do
   """
   @spec resize!(
           Vimage.t() | Path.t(),
-          width :: pos_integer(),
+          width :: pos_integer() | binary(),
           options :: Options.Resize.resize_options()
         ) ::
           Vimage.t() | no_return
