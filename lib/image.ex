@@ -1215,7 +1215,8 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    pathname to an image file.
 
   * `width` is the integer width of the resulting
     image after resizing. It can also be of the form
@@ -1279,7 +1280,7 @@ defmodule Image do
   @spec resize(Vimage.t(), width :: pos_integer() | binary(), options :: Resize.resize_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def resize(image_or_path, wide, options \\ [])
+  def resize(image_or_path, width, options \\ [])
 
   def resize(%Vimage{} = image, width, options) when is_size(width) do
     with {:ok, options} <- Resize.validate_options(options) do
@@ -1297,7 +1298,7 @@ defmodule Image do
     end
   end
 
-  @spec resize(Vimage.t() | Path.t(), width :: binary(), options :: Resize.resize_options()) ::
+  @spec resize(Vimage.t() | Path.t(), dimensions :: binary(), options :: Resize.resize_options()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
   def resize(image_or_path, dimensions, options) when is_binary(dimensions) do
@@ -1312,10 +1313,15 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    pathname to an image file.
 
-  * `width` is the width of the resulting
-    image after resizing.
+  * `width` is the integer width of the resulting
+    image after resizing. It can also be of the form
+    "<width>x<height>". That is, a string with the
+    width and height separated by an `x`. The `<height>`
+    may be omitted in which case it is the same as
+    providing an integer width.
 
   * `options` is a keyword list of options.
     See `Image.resize/3`.
@@ -1329,13 +1335,13 @@ defmodule Image do
   """
   @spec resize!(
           Vimage.t() | Path.t(),
-          width :: pos_integer() | binary(),
+          width_or_dimensions :: pos_integer() | binary(),
           options :: Options.Resize.resize_options()
         ) ::
           Vimage.t() | no_return
 
-  def resize!(%Vimage{} = image, width, options \\ []) do
-    case resize(image, width, options) do
+  def resize!(%Vimage{} = image, width_or_dimensions, options \\ []) do
+    case resize(image, width_or_dimensions, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
