@@ -5,7 +5,7 @@ defmodule Image.Draw do
   """
 
   alias Vix.Vips.Image, as: Vimage
-  alias Vix.Vips.MutableImage
+  alias Vix.Vips.{MutableImage, MutableOperation}
   alias Image.Options
 
   @doc """
@@ -23,7 +23,7 @@ defmodule Image.Draw do
       when is_integer(cx) and is_integer(cy) and cx >= 0 and cy >= 0 and is_integer(radius) and radius > 0 do
     with {:ok, options} <- Options.Draw.validate_options(:circle, options) do
       Vimage.mutate image, fn mut_img ->
-        MutableImage.draw_circle(mut_img, options.color, cx, cy, radius, fill: options.fill)
+        MutableOperation.draw_circle(mut_img, options.color, cx, cy, radius, fill: options.fill)
       end
     end
     |> maybe_wrap()
@@ -35,7 +35,7 @@ defmodule Image.Draw do
   def circle(%MutableImage{} = image, cx, cy, radius, options)
       when is_integer(cx) and is_integer(cy) and cx >= 0 and cy >= 0 and is_integer(radius) and radius > 0 do
     with {:ok, options} <- Options.Draw.validate_options(:circle, options) do
-      MutableImage.draw_circle(image, options.color, cx, cy, radius, fill: options.fill)
+      MutableOperation.draw_circle(image, options.color, cx, cy, radius, fill: options.fill)
     end
     |> maybe_wrap()
   end
@@ -57,7 +57,7 @@ defmodule Image.Draw do
            is_integer(x2) and is_integer(y2) and x2 >= 0 and y2 >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:line, options) do
       Vimage.mutate image, fn mut_img ->
-        MutableImage.draw_line(mut_img, options.color, x1, y1, x2, y2, [])
+        MutableOperation.draw_line(mut_img, options.color, x1, y1, x2, y2, [])
       end
     end
     |> maybe_wrap()
@@ -70,7 +70,7 @@ defmodule Image.Draw do
       when is_integer(x1) and is_integer(y1) and x1 >= 0 and y1 >= 0 and
            is_integer(x2) and is_integer(y2) and x2 >= 0 and y2 >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:line, options) do
-       MutableImage.draw_line(image, options.color, x1, y1, x2, y2, [])
+       MutableOperation.draw_line(image, options.color, x1, y1, x2, y2, [])
     end
     |> maybe_wrap()
   end
@@ -91,7 +91,7 @@ defmodule Image.Draw do
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
     with {:ok, _options} <- Options.Draw.validate_options(:image, options) do
       Vimage.mutate image, fn mut_img ->
-        MutableImage.draw_image(mut_img, sub_image, x, y, mode: :VIPS_COMBINE_MODE_ADD)
+        MutableOperation.draw_image(mut_img, sub_image, x, y, mode: :VIPS_COMBINE_MODE_ADD)
       end
     end
     |> maybe_wrap()
@@ -103,7 +103,7 @@ defmodule Image.Draw do
   def image(%MutableImage{} = image, %Vimage{} = sub_image, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
     with {:ok, _options} <- Options.Draw.validate_options(:image, options) do
-      MutableImage.draw_image(image, sub_image, x, y, mode: :VIPS_COMBINE_MODE_ADD)
+      MutableOperation.draw_image(image, sub_image, x, y, mode: :VIPS_COMBINE_MODE_ADD)
     end
     |> maybe_wrap()
   end
@@ -125,7 +125,7 @@ defmodule Image.Draw do
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:flood, options) do
       Vimage.mutate image, fn mut_img ->
-        MutableImage.draw_flood(mut_img, options.color, x, y, equal: options.equal)
+        MutableOperation.draw_flood(mut_img, options.color, x, y, equal: options.equal)
       end
     end
     |> maybe_wrap()
@@ -138,7 +138,7 @@ defmodule Image.Draw do
   def flood(%MutableImage{} = image, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:flood, options) do
-      MutableImage.draw_flood(image, options.color, x, y, equal: options.equal)
+      MutableOperation.draw_flood(image, options.color, x, y, equal: options.equal)
     end
     |> maybe_wrap()
   end

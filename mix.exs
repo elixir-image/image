@@ -44,8 +44,8 @@ defmodule Image.MixProject do
 
   defp deps do
     [
-      # {:vix, "~> 0.11"},
-      {:vix, github: "kipcole9/vix", branch: "draw"},
+      # {:vix, "~> 0.12"},
+      {:vix, github: "akash-akya/vix"},
       # {:vix, path: "../vix"},
 
       {:sweet_xml, "~> 0.7"},
