@@ -45,7 +45,7 @@ defmodule Image.MixProject do
 
   defp deps do
     [
-      {:vix, "~> 0.11"},
+      {:vix, "~> 0.12"},
       # {:vix, path: "../vix"},
 
       {:sweet_xml, "~> 0.7"},

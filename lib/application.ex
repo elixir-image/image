@@ -20,7 +20,7 @@ defmodule Image.SetSafeLoader do
     unless System.get_env(env_var) do
       System.put_env(env_var, "TRUE")
     end
-    IO.inspect System.get_env()
+
     {:ok, env_var}
   end
 end
