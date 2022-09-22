@@ -154,9 +154,9 @@ defmodule Image.Draw do
 
   def image(%Vimage{} = image, %Vimage{} = sub_image, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
-    with {:ok, _options} <- Options.Draw.validate_options(:image, options) do
+    with {:ok, options} <- Options.Draw.validate_options(:image, options) do
       Vimage.mutate image, fn mut_img ->
-        MutableOperation.draw_image(mut_img, sub_image, x, y, mode: :VIPS_COMBINE_MODE_ADD)
+        MutableOperation.draw_image(mut_img, sub_image, x, y, options)
       end
     end
     |> maybe_wrap()
@@ -167,8 +167,8 @@ defmodule Image.Draw do
 
   def image(%MutableImage{} = image, %Vimage{} = sub_image, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
-    with {:ok, _options} <- Options.Draw.validate_options(:image, options) do
-      MutableOperation.draw_image(image, sub_image, x, y, mode: :VIPS_COMBINE_MODE_ADD)
+    with {:ok, options} <- Options.Draw.validate_options(:image, options) do
+      MutableOperation.draw_image(image, sub_image, x, y, options)
     end
     |> maybe_wrap()
   end

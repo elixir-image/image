@@ -2,6 +2,7 @@ defmodule Image.Options.Draw do
   @moduledoc false
 
   alias Image.Color
+  alias Image.CombineMode
 
   @type circle :: [
     {:fill, boolean()} |
@@ -24,6 +25,10 @@ defmodule Image.Options.Draw do
 
   @type line :: [
     {:color, Color.t()}
+  ]
+
+  @type image :: [
+    {:mode, CombineMode.t()}
   ]
 
   def default_options(:circle) do
@@ -67,7 +72,7 @@ defmodule Image.Options.Draw do
 
   def default_options(:image) do
     [
-
+      mode: :VIPS_COMBINE_MODE_SET
     ]
   end
 
@@ -129,6 +134,16 @@ defmodule Image.Options.Draw do
       {:cont, Keyword.put(options, :equal, true)}
     else
       {:cont, Keyword.put(options, :equal, false)}
+    end
+  end
+
+  defp validate_option(:image, {:mode, mode}, options) do
+    case Image.CombineMode.validate(mode) do
+      {:ok, mode} ->
+        {:cont, Keyword.put(options, :mode, mode)}
+
+      {:error, reason} ->
+        {:halt, {:error, reason}}
     end
   end
 
