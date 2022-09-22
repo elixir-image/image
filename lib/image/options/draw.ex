@@ -8,11 +8,23 @@ defmodule Image.Options.Draw do
     {:color, Color.t()}
   ]
 
+  @type rect :: [
+    {:fill, boolean()} |
+    {:color, Color.t()}
+  ]
+
   @type flood :: [
     {:equal, boolean()} |
     {:color, Color.t()}
   ]
 
+  @type mask :: [
+    {:color, Color.t()}
+  ]
+
+  @type line :: [
+    {:color, Color.t()}
+  ]
 
   def default_options(:circle) do
     [
@@ -21,7 +33,26 @@ defmodule Image.Options.Draw do
     ]
   end
 
+  def default_options(:rect) do
+    [
+      color: :black,
+      fill: true
+    ]
+  end
+
   def default_options(:line) do
+    [
+      color: :black
+    ]
+  end
+
+  def default_options(:point) do
+    [
+      color: :black
+    ]
+  end
+
+  def default_options(:mask) do
     [
       color: :black
     ]
@@ -35,6 +66,12 @@ defmodule Image.Options.Draw do
   end
 
   def default_options(:image) do
+    [
+
+    ]
+  end
+
+  def default_options(:smudge) do
     [
 
     ]
@@ -67,7 +104,7 @@ defmodule Image.Options.Draw do
     end
   end
 
-  defp validate_option(:circle, {:fill, fill}, options) do
+  defp validate_option(type, {:fill, fill}, options) when type in [:circle, :rect] do
     if fill do
       {:cont, Keyword.put(options, :fill, true)}
     else
@@ -75,7 +112,8 @@ defmodule Image.Options.Draw do
     end
   end
 
-  defp validate_option(type, {:color, color}, options) when type in [:circle, :line, :flood] do
+  defp validate_option(type, {:color, color}, options)
+      when type in [:mask, :point, :circle, :rect, :line, :flood] do
     case Color.rgb_color(color) do
       {:ok, color} ->
         rgb =  if Keyword.keyword?(color), do: Keyword.fetch!(color, :rgb), else: color
