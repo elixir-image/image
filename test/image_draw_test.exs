@@ -8,7 +8,7 @@ defmodule Image.Draw.Test do
 
     {:ok, image} =
       Vimage.mutate image, fn mut_img ->
-        :ok = Vix.Vips.MutableImage.draw_circle(mut_img, [0,200,0], cx, cy, 100, fill: true)
+        :ok = Vix.Vips.MutableOperation.draw_circle(mut_img, [0,200,0], cx, cy, 100, fill: true)
       end
 
       Image.write(image, "/Users/kip/Desktop/draw.jpg")
@@ -20,7 +20,7 @@ defmodule Image.Draw.Test do
 
     {:ok, image} =
       Vimage.mutate image, fn mut_img ->
-        :ok = Vix.Vips.MutableImage.draw_image(mut_img, star, 100, 100, mode: :VIPS_COMBINE_MODE_ADD)
+        :ok = Vix.Vips.MutableOperation.draw_image(mut_img, star, 100, 100, mode: :VIPS_COMBINE_MODE_ADD)
       end
 
       Image.write(image, "/Users/kip/Desktop/draw2.png")
