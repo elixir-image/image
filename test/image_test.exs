@@ -228,10 +228,10 @@ defmodule Image.Test do
   test "Convert to rectangular coordinates", %{dir: dir} do
     image = validate_path("polar.jpg")
     {:ok, image} = Vimage.new_from_file(image)
-    {:ok, polar} = Image.to_rectangular_coordinates(image)
+    {:ok, rectangular} = Image.to_rectangular_coordinates(image)
 
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
-    assert :ok = Vimage.write_to_file(polar, out_path)
+    assert :ok = Vimage.write_to_file(rectangular, out_path)
 
     assert_images_equal out_path, validate_path("rectangular.jpg")
   end
