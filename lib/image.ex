@@ -2937,6 +2937,37 @@ defmodule Image do
         Vix.Vips.Image.new_from_binary(binary, width, height, bands, tensor_format)
       end
     end
+
+    # TODO Needs to respect the image type when doing the
+    # color channel order conversion (ie when its an RGB-A etc etc)
+
+    if match?({:module, _module}, Code.ensure_compiled(Evision)) do
+      @doc since: "0.10.0"
+
+      def to_evision(%Vimage{} = image) do
+        with {:ok, tensor} <- to_nx(image) do
+          {:ok, mat} =
+            tensor
+            |> Nx.transpose(axes: [:height, :width, :bands])
+            |> Evision.Nx.to_mat()
+
+          Evision.cvtColor(mat, Evision.cv_COLOR_RGB2BGR())
+        end
+      end
+
+      @doc since: "0.10.0"
+
+      def from_evision(evision_image) do
+        with {:ok, mat} = Evision.cvtColor(evision_image, Evision.cv_COLOR_BGR2RGB()) do
+          tensor = Evision.Nx.to_nx(mat)
+
+          tensor
+          |> Nx.reshape(Nx.shape(tensor), names: [:height, :width, :bands])
+          |> Nx.transpose(axes: [:width, :height, :bands])
+          |> from_nx()
+        end
+      end
+    end
   end
 
   @doc """

@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.10.0"
+  @version "0.10.0-dev"
   @app_name "image"
 
   def project do
