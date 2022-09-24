@@ -49,6 +49,9 @@ defmodule Image.MixProject do
       # {:vix, github: "akash-akya/vix"},
       # {:vix, path: "../vix"},
 
+      # eVision
+      {:evision, "~> 0.1.4", github: "cocoa-xu/evision", tag: "v0.1.4"},
+
       {:sweet_xml, "~> 0.7"},
       {:phoenix_html, "~> 3.2 or ~> 2.14"},
 
