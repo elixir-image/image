@@ -1254,7 +1254,7 @@ defmodule Image do
   * The image width as an integer.
 
   """
-  @spec width(Vimage.t()) :: integer()
+  @spec width(image :: Vimage.t()) :: pos_integer()
   def width(%Vimage{} = image) do
     Vimage.width(image)
   end
@@ -1271,7 +1271,7 @@ defmodule Image do
   * The image height as an integer.
 
   """
-  @spec height(Vimage.t()) :: integer()
+  @spec height(image :: Vimage.t()) :: pos_integer()
   def height(%Vimage{} = image) do
     Vimage.height(image)
   end
@@ -1295,9 +1295,63 @@ defmodule Image do
   * An integer number of bands in the image.
 
   """
-  @spec bands(Vimage.t()) :: integer
+  @spec bands(image :: Vimage.t()) :: pos_integer()
   def bands(%Vimage{} = image) do
     Vimage.bands(image)
+  end
+
+  @doc """
+  Returns the shape of an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * The image shape as a tuple of
+    `{width, height, bands}`
+
+  """
+  @doc since: "0.10.0"
+
+  @spec shape(image :: Vimage.t()) ::
+    {width :: pos_integer(), height :: pos_integer(), bands :: pos_integer()}
+
+  def shape(%Vimage{} = image) do
+    {width(image), height(image), bands(image)}
+  end
+
+  @doc """
+  Returns the image interpretation.
+
+  The interpretation is how `Image` understands
+  the image date. For example, `:srgb` or
+  `:cmyk` or `:bw`.
+
+  For most common web applications, the
+  interpretation will be `:srgb`.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * The image interpretation as an atom.
+
+  ### Notes
+
+  * See also `Image.Interpretation.known_interpretations/0`
+
+  """
+  @doc since: "0.10.0"
+
+  @spec interpretation(image :: Vimage.t()) :: Image.Interpretation.t()
+  def interpretation(%Vimage{} = image) do
+    image
+    |> Vix.Vips.Image.interpretation()
+    |> Image.Interpretation.decode_interpretation()
   end
 
   @doc """
@@ -2971,7 +3025,6 @@ defmodule Image do
             {_, _, bands} when bands in 1..5 ->
               tensor
               |> Nx.reshape(Nx.shape(tensor), names: [:height, :width, :bands])
-              |> Nx.transpose(axes: [:width, :height, :bands])
               |> from_nx()
 
             shape ->
