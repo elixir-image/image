@@ -2831,10 +2831,7 @@ defmodule Image do
             Vix.Vips.Image.new_from_binary(binary, width, height, bands, tensor_format)
 
           shape ->
-            {:error,
-              "The tensor must have the shape {height, width, bands} with bands between" <>
-              "1 and 5. Found shape #{inspect shape}"
-            }
+            shape_error(shape)
         end
       end
     end
@@ -2870,13 +2867,17 @@ defmodule Image do
               |> from_nx()
 
             shape ->
-              {:error,
-                "The tensor must have the shape {height, width, bands} with bands between" <>
-                "1 and 5. Found shape #{inspect shape}"
-              }
+              shape_error(shape)
           end
         end
       end
+    end
+
+    defp shape_error(shape) do
+      {:error,
+        "The tensor must have the shape {height, width, bands} with bands between" <>
+        "1 and 5. Found shape #{inspect shape}"
+      }
     end
   end
 
