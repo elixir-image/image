@@ -2824,9 +2824,18 @@ defmodule Image do
     def from_nx(tensor) when is_struct(tensor, Nx.Tensor) do
       with {:ok, tensor} <- Image.Nx.transpose(tensor, Nx.shape(tensor), Nx.names(tensor)),
            {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
-        {width, height, bands} = Nx.shape(tensor)
-        binary = Nx.to_binary(tensor)
-        Vix.Vips.Image.new_from_binary(binary, width, height, bands, tensor_format)
+
+        case Nx.shape(tensor) do
+          {width, height, bands} when bands in 1..5 ->
+            binary = Nx.to_binary(tensor)
+            Vix.Vips.Image.new_from_binary(binary, width, height, bands, tensor_format)
+
+          shape ->
+            {:error,
+              "The tensor must have the shape {height, width, bands} with bands between" <>
+              "1 and 5. Found shape #{inspect shape}"
+            }
+        end
       end
     end
 
@@ -2853,10 +2862,19 @@ defmodule Image do
         with {:ok, mat} = Evision.cvtColor(evision_image, Evision.cv_COLOR_BGR2RGB()) do
           tensor = Evision.Nx.to_nx(mat)
 
-          tensor
-          |> Nx.reshape(Nx.shape(tensor), names: [:height, :width, :bands])
-          |> Nx.transpose(axes: [:width, :height, :bands])
-          |> from_nx()
+          case Nx.shape(tensor) do
+            {_, _, bands} when bands in 1..5 ->
+              tensor
+              |> Nx.reshape(Nx.shape(tensor), names: [:height, :width, :bands])
+              |> Nx.transpose(axes: [:width, :height, :bands])
+              |> from_nx()
+
+            shape ->
+              {:error,
+                "The tensor must have the shape {height, width, bands} with bands between" <>
+                "1 and 5. Found shape #{inspect shape}"
+              }
+          end
         end
       end
     end
