@@ -189,6 +189,12 @@ defmodule Image do
     {:y_baseline, :nil | :top | :middle | :bottom}
   ]
 
+  @typedoc """
+  The data type of the image, using the same
+  type definitions as `t:Nx.Type.t/0`.
+  """
+  @type format :: {:u | :s | :f | :c | :bf, 8 | 16 | 32 | 64 | 128}
+
   @doc """
   Guards whether the coordinates can be reasonably
   interpreted as a bounding box.
@@ -1352,6 +1358,27 @@ defmodule Image do
     image
     |> Vix.Vips.Image.interpretation()
     |> Image.Interpretation.decode_interpretation()
+  end
+
+  @doc """
+  Returns the data type of the image pixels.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * The image type as a tuple in the same
+    format as `t:Nx.Type.t/0`. For example
+    `{:u, 8}` for a common `:srgb` image.
+
+  """
+  @doc since: "0.10.0"
+
+  @spec type(image :: Vimage.t()) :: format()
+  def type(%Vimage{} = image) do
+    Vix.Tensor.nx_type(image)
   end
 
   @doc """
