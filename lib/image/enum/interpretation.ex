@@ -27,6 +27,9 @@ defmodule Image.Interpretation do
     hsv: :VIPS_INTERPRETATION_HSV
   }
 
+  @reverse_interpretation Enum.map(@interpretation_map, fn {k, v} -> {v, k} end)
+  |> Map.new()
+
   @interpretation Map.keys(@interpretation_map)
   @vips_interpretation Map.values(@interpretation_map)
 
@@ -88,6 +91,11 @@ defmodule Image.Interpretation do
     |> validate_interpretation()
   rescue ArgumentError ->
     {:error, unknown_interpretation_error(interpretation)}
+  end
+
+  @doc false
+  def decode_interpretation(interpretation) do
+    Map.fetch!(@reverse_interpretation, interpretation)
   end
 
   defp unknown_interpretation_error(interpretation) do
