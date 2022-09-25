@@ -3013,24 +3013,13 @@ defmodule Image do
     def from_nx(tensor) when is_struct(tensor, Nx.Tensor) do
       with {:ok, tensor} <- Image.Nx.transpose(tensor, Nx.shape(tensor), Nx.names(tensor)),
            {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
-<<<<<<< HEAD
-=======
-
->>>>>>> 1af4cd3 (Check the shape of the inbound matrix when converting from Nx and Evision)
         case Nx.shape(tensor) do
           {width, height, bands} when bands in 1..5 ->
             binary = Nx.to_binary(tensor)
             Vix.Vips.Image.new_from_binary(binary, width, height, bands, tensor_format)
 
           shape ->
-<<<<<<< HEAD
             shape_error(shape)
-=======
-            {:error,
-              "The tensor must have the shape {height, width, bands} with bands between" <>
-              "1 and 5. Found shape #{inspect shape}"
-            }
->>>>>>> 1af4cd3 (Check the shape of the inbound matrix when converting from Nx and Evision)
         end
       end
     end
