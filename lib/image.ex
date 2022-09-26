@@ -3013,7 +3013,6 @@ defmodule Image do
     def from_nx(tensor) when is_struct(tensor, Nx.Tensor) do
       with {:ok, tensor} <- Image.Nx.transpose(tensor, Nx.shape(tensor), Nx.names(tensor)),
            {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
-        IO.inspect(tensor, label: "From eVision after transpose")
         case Nx.shape(tensor) do
           {width, height, bands} when bands in 1..5 ->
             binary = Nx.to_binary(tensor)
@@ -3027,6 +3026,7 @@ defmodule Image do
 
     # TODO Needs to respect the image type when doing the
     # color channel order conversion (ie when its an RGB-A etc etc)
+    # Same for interpretation (not every image is srgb!)
 
     if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       @doc """
