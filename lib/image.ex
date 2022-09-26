@@ -3013,7 +3013,7 @@ defmodule Image do
     def from_nx(tensor) when is_struct(tensor, Nx.Tensor) do
       with {:ok, tensor} <- Image.Nx.transpose(tensor, Nx.shape(tensor), Nx.names(tensor)),
            {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
-
+        IO.inspect(tensor, label: "From eVision after transpose")
         case Nx.shape(tensor) do
           {width, height, bands} when bands in 1..5 ->
             binary = Nx.to_binary(tensor)
@@ -3029,23 +3029,65 @@ defmodule Image do
     # color channel order conversion (ie when its an RGB-A etc etc)
 
     if match?({:module, _module}, Code.ensure_compiled(Evision)) do
+      @doc """
+      Converts an `Image` image to an [Evision]() image.
+
+      ### Arguments
+
+      * `image` is any `t:Vimage.t/0`
+
+      ### Returns
+
+      * `{:ok, evision_image}`
+
+      ### Notes
+
+      * `Image` images have the shape `{width, height, bands}`
+        whereas `Evision` images have the shape `{height, width, bands}`
+        so this function transposes the dimensions to match.
+
+      * `Image` data is arranged as `rgb` data elements whereas
+        `Evision` requires the data to be in `bgr` order. This function
+        also reorders the data appropriately.
+
+      """
       @doc since: "0.10.0"
 
       def to_evision(%Vimage{} = image) do
-        with {:ok, tensor} <- to_nx(image) do
-          {:ok, mat} =
-            tensor
-            |> Nx.transpose(axes: [:height, :width, :bands])
-            |> Evision.Nx.to_mat()
-
+        with {:ok, tensor} <- to_nx(image),
+             {:ok, mat} <- Evision.Nx.to_mat(tensor),
+             {:ok, mat} <- Evision.Mat.transpose(mat, [1, 0, 2]) do
           Evision.cvtColor(mat, Evision.cv_COLOR_RGB2BGR())
         end
       end
 
+      @doc """
+      Converts to an `Image` image from an [Evision]() image.
+
+      ### Arguments
+
+      * `evision_image` is any `Evision` image.
+
+      ### Returns
+
+      * `{:ok, image}`
+
+      ### Notes
+
+      * `Image` images have the shape `{width, height, bands}`
+        whereas `Evision` images have the shape `{height, width, bands}`
+        so this function transposes the dimensions to match.
+
+      * `Image` data is arranged as `rgb` data elements whereas
+        `Evision` requires the data to be in `bgr` order. This function
+        also reorders the data appropriately.
+
+      """
       @doc since: "0.10.0"
 
       def from_evision(evision_image) do
-        with {:ok, mat} = Evision.cvtColor(evision_image, Evision.cv_COLOR_BGR2RGB()) do
+        with {:ok, mat} = Evision.cvtColor(evision_image, Evision.cv_COLOR_BGR2RGB()),
+             {:ok, mat} = Evision.Mat.transpose(mat, [1, 0, 2]) do
           tensor = Evision.Nx.to_nx(mat)
 
           case Nx.shape(tensor) do
@@ -3545,5 +3587,23 @@ defmodule Image do
     Invalid offset position #{inspect other}.
     Valid positions are :left, :right, :middle, :top, :bottom, :center
     """
+  end
+
+  @doc false
+  def rgb_to_bgr(image) do
+    r = image[0]
+    g = image[1]
+    b = image[2]
+
+    Vix.Vips.Operation.bandjoin([b, g, r])
+  end
+
+  @doc false
+  def bgr_to_rgb(image) do
+    b = image[0]
+    g = image[1]
+    r = image[2]
+
+    Vix.Vips.Operation.bandjoin([r, g, b])
   end
 end
