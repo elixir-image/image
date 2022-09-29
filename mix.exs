@@ -51,10 +51,7 @@ defmodule Image.MixProject do
       # {:vix, path: "../vix"},
 
       # eVision OpenCV bindings
-      if(dev?(), do: {:evision, "~> 0.1.4", github: "cocoa-xu/evision", tag: "v0.1.6"}),
-
-      # eVision OpenCV bindings
-      if(dev?(), do: {:evision, "~> 0.1.4", github: "cocoa-xu/evision", tag: "v0.1.4"}),
+      if(dev?(), do: {:evision, "~> 0.1.6", github: "cocoa-xu/evision", tag: "v0.1.6"}),
 
       {:sweet_xml, "~> 0.7"},
       {:phoenix_html, "~> 3.2 or ~> 2.14"},
