@@ -21,8 +21,11 @@ defmodule Image.Draw do
 
   def point(%Vimage{} = image, left, top, options)
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 do
-    rect(image, left, top, 1, 1, options)
-    |> maybe_wrap()
+    with {:ok, options} <- Options.Draw.validate_options(:point, options) do
+      Vimage.mutate image, fn mut_img ->
+        MutableOperation.draw_rect(mut_img, options.color, left, top, 1, 1)
+      end
+    end
   end
 
   @spec point(MutableImage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.pointe()) ::
@@ -30,12 +33,14 @@ defmodule Image.Draw do
 
   def point(%MutableImage{} = image, left, top, options)
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 do
-    rect(image, left, top, 1, 1, options)
+    with {:ok, options} <- Options.Draw.validate_options(:point, options) do
+      MutableOperation.draw_rect(image, options.color, left, top, 1, 1)
+    end
     |> maybe_wrap()
   end
 
   @doc """
-  Draw a circle on a mutable image.
+  Draw a rectangle on a mutable image.
 
   """
   @doc since: "0.7.0"
