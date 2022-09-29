@@ -15,13 +15,13 @@ defmodule Image.Options.Resize do
 
   """
   @type resize_options :: [
-          {:autorotate, boolean()},
-          {:intent, Image.render_intent()},
-          {:export_icc_profile, Color.icc_profile()},
-          {:import_icc_profile, Color.icc_profile()},
-          {:linear, boolean()},
-          {:resize, resize_dimension()},
-          {:height, pos_integer()},
+          {:autorotate, boolean()} |
+          {:intent, Image.render_intent()} |
+          {:export_icc_profile, Color.icc_profile()} |
+          {:import_icc_profile, Color.icc_profile()} |
+          {:linear, boolean()} |
+          {:resize, resize_dimension()} |
+          {:height, pos_integer()} |
           {:crop, Crop.crop_focus()}
         ]
 

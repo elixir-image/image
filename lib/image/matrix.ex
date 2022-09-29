@@ -1,11 +1,8 @@
 defmodule Image.Matrix do
-  @moduledoc """
-  Functions to create an image from a matrix (list
-  of lists).
+  @moduledoc false
 
-  Adapted from [Nx.tensor/2](https://hexdocs.pm/nx/Nx.html#tensor/2)
+  # Adapted from [Nx.tensor/2](https://hexdocs.pm/nx/Nx.html#tensor/2)
 
-  """
   def image_from_matrix(list) when is_list(list) do
     type = infer_type(list)
     [width, height] = dimensions(list)
@@ -14,15 +11,6 @@ defmodule Image.Matrix do
          {:ok, image} = Vix.Vips.Image.new_matrix_from_array(width, height, list) do
       Vix.Vips.Operation.cast(image, format)
     end
-  end
-
-  @doc """
-  Transposes elements in a 2 dimensional
-  matrix.
-
-  """
-  def transpose(list) do
-    Enum.zip_with(list, &(&1))
   end
 
   ### Helpers

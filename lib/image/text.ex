@@ -122,7 +122,9 @@ defmodule Image.Text do
     `#FF00FF` for the color "Fuchsia".
 
   """
-  @spec text(Phoenix.HTML.safe() | String.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec text(Phoenix.HTML.safe() | String.t(), Options.Text.t()) ::
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
+
   def text(string, options \\ []) when is_list(options) do
     with {:ok, options} <- Options.Text.validate_options(options),
          {:ok, text_layer} <- simple_text(string, options),

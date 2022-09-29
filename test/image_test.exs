@@ -258,4 +258,12 @@ defmodule Image.Test do
     assert {:ok, 180} = Keyword.fetch(flags, :angle)
     assert_images_equal out_path, validate_path("autorotated.jpg")
   end
+
+  test "Image.new/3" do
+    # 100x100 pixel image of dark blue slate color
+    assert {:ok, _image} = Image.new(100, 100, color: :dark_slate_blue)
+
+    # 100x100 pixel green image, fully transparent
+    assert {:ok, _image} = Image.new(100, 100, color: [0, 255, 0, 1], bands: 4)
+  end
 end

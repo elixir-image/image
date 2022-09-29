@@ -5,17 +5,6 @@ defmodule Image.Color do
   """
 
   @typedoc """
-  Reference to an ICC color profile
-
-  * `:none` means no profile
-  * `:cmyk`, `:srgb` and `:p3` refer to the built-in color profiles
-  * `Path.t()` means any file system path. If the path is a relative
-    path then is will be loaded from the systems profile directory.
-
-  """
-  @type icc_profile :: :none | :cmyk | :srgb | :p3 | Path.t()
-
-  @typedoc """
   An rbg color expressed as a list of numbers.
 
   The number of list elements and the type
@@ -29,6 +18,24 @@ defmodule Image.Color do
   """
   @type rgb_color :: [number()]
 
+  @typedoc """
+  A color can be expressed as a list of numbers or
+  as a CSS color name in atom or string format.
+
+  """
+  @type t :: rgb_color | atom() | String.t()
+
+  @typedoc """
+  Reference to an ICC color profile
+
+  * `:none` means no profile
+  * `:cmyk`, `:srgb` and `:p3` refer to the built-in color profiles
+  * `Path.t()` means any file system path. If the path is a relative
+    path then is will be loaded from the systems profile directory.
+
+  """
+  @type icc_profile :: :none | :cmyk | :srgb | :p3 | Path.t()
+
   @inbuilt_profiles [:none, :srgb, :cmyk, :p3]
 
   @doc """
@@ -37,7 +44,7 @@ defmodule Image.Color do
 
   """
   defguard is_color(color)
-           when (is_number(color) and color > 0) or (is_list(color) and length(color) == 3)
+           when (is_number(color) and color >= 0) or (is_list(color) and length(color) in 3..5)
 
   @doc """
   Guards whether a given profile is one of the inbuilt
@@ -92,20 +99,28 @@ defmodule Image.Color do
     @color_map
   end
 
-  def rgb_color!(color) when is_binary(color) do
+  def rgb_color(color) when is_binary(color) or is_atom(color) do
     case color do
       <<"#", r::bytes-2, g::bytes-2, b::bytes-2>> ->
         [String.to_integer(r, 16), String.to_integer(g, 16), String.to_integer(b, 16)]
 
       color ->
-        color_map()
-        |> Map.fetch!(normalize(color))
-        |> Keyword.fetch!(:rgb)
+        case Map.fetch(color_map(), normalize(color)) do
+          {:ok, color} -> {:ok, color}
+          :error -> {:error, "Invalid color #{inspect color}"}
+        end
     end
   end
 
-  def rgb_color!(color) when is_color(color) do
-    color
+  def rgb_color(color) when is_color(color) do
+    {:ok, color}
+  end
+
+  def rgb_color!(color) do
+    case rgb_color(color) do
+      {:ok, color} -> color
+      {:error, reason} -> raise ArgumentError, reason
+    end
   end
 
   @opacity 255
@@ -121,10 +136,11 @@ defmodule Image.Color do
     [r, g, b, a]
   end
 
-  def rgba_color!(color, a) when is_binary(color) and is_float(a) and a >= 0.0 and a <= 1.0 do
+  def rgba_color!(color, a)
+      when (is_binary(color) or is_atom(color)) and is_float(a) and a >= 0.0 and a <= 1.0 do
     a = round(@opacity * a)
 
-    [r, g, b] = rgb_color!(color)
+    [r, g, b] = Keyword.get(rgb_color!(color), :rgb, color)
     [r, g, b, a]
   end
 
