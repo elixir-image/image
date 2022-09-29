@@ -1,11 +1,12 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.7.0"
+  @version "0.8.0"
+  @app_name "image"
 
   def project do
     [
-      app: :image,
+      app: String.to_atom(@app_name),
       version: @version,
       elixir: "~> 1.12",
       deps: deps(),
@@ -49,8 +50,8 @@ defmodule Image.MixProject do
       # {:vix, github: "akash-akya/vix"},
       # {:vix, path: "../vix"},
 
-      # eVision
-      {:evision, "~> 0.1.4", github: "cocoa-xu/evision", tag: "v0.1.4"},
+      # eVision OpenCV bindings
+      if(dev?(), do: {:evision, "~> 0.1.4", github: "cocoa-xu/evision", tag: "v0.1.6"}),
 
       {:sweet_xml, "~> 0.7"},
       {:phoenix_html, "~> 3.2 or ~> 2.14"},
@@ -102,7 +103,8 @@ defmodule Image.MixProject do
       "Readme" => "https://github.com/kipcole9/image/blob/v#{@version}/README.md",
       "Changelog" => "https://github.com/kipcole9/image/blob/v#{@version}/CHANGELOG.md",
       "Vix" => "https://github.com/akash-akya/vix",
-      "libvips" => "https://www.libvips.org"
+      "libvips" => "https://www.libvips.org",
+      "eVision (OpenCV)" => "https://github.com/cocoa-xu/evision"
     }
   end
 
@@ -130,6 +132,15 @@ defmodule Image.MixProject do
       Exif: ~r/Image.Exif.*/,
       Xmp: ~r/Image.Xmp/
     ]
+  end
+
+  # Since hex packages can't have github deps in them
+  # we need a way to configure eVision only if we are
+  # developing the project.  This method relies on the
+  # current directory being the project directory.
+  defp dev? do
+    File.cwd!
+    |> String.ends_with?("/#{@app_name}")
   end
 
   defp otp_release do
