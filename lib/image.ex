@@ -326,7 +326,7 @@ defmodule Image do
     which the image is reduced upon loading. This is an
     optimization that can result in improved performance and
     reduced memory usage if the image is being loaded
-    with the intend to resize it to smaller dimensions. The
+    with the intent to resize it to smaller dimensions. The
     default value is `1` meaning no shrnk-on-load.
 
   * `:autorotate` is a boolean value indicating if
