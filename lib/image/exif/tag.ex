@@ -4,8 +4,11 @@ defmodule Image.Exif.Tag do
 
   @max_signed_32_bit_int 2_147_483_647
 
+  @type value :: binary()
+  @type context :: {value(), non_neg_integer(), (any() -> non_neg_integer())}
+
   # unsigned byte, size = 1
-  @spec value(non_neg_integer(), non_neg_integer(), Exexif.value(), Exexif.context()) :: any()
+  @spec value(non_neg_integer(), non_neg_integer(), value(), context()) :: any()
   def value(1, count, value, context),
     do: decode_numeric(value, count, 2, context)
 
@@ -49,10 +52,10 @@ defmodule Image.Exif.Tag do
   def value(_, _, _, _), do: nil
 
   @spec decode_numeric(
-          value :: Exexif.value(),
+          value :: value(),
           non_neg_integer(),
           non_neg_integer(),
-          Exexif.context()
+          context()
         ) :: any()
   defp decode_numeric(value, count, size, {exif, _offset, ru}) do
     length = count * size
@@ -79,9 +82,9 @@ defmodule Image.Exif.Tag do
   end
 
   @spec decode_ratio(
-          Exexif.value(),
+          value(),
           non_neg_integer(),
-          Exexif.context(),
+          context(),
           :unsigned | :signed
         ) :: any()
   defp decode_ratio(value_offset, count, {exif, _offset, ru}, signed) do
@@ -95,7 +98,7 @@ defmodule Image.Exif.Tag do
   defp do_decode_ratio(result, _), do: result
 
   @spec decode_ratios(
-          value :: Exexif.value(),
+          value :: value(),
           non_neg_integer(),
           non_neg_integer(),
           (any() -> non_neg_integer()),

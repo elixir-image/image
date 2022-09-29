@@ -15,7 +15,7 @@ defmodule Image.Draw do
   @doc since: "0.7.0"
 
   @spec point(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.point()) ::
-    {:ok, Image.t()} | {:error, Image.error_message()}
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def point(image, left, top,  options \\ [])
 
@@ -28,7 +28,7 @@ defmodule Image.Draw do
     end
   end
 
-  @spec point(MutableImage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.pointe()) ::
+  @spec point(MutableImage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.point()) ::
     :ok | {:error, Image.error_message()}
 
   def point(%MutableImage{} = image, left, top, options)
@@ -46,7 +46,7 @@ defmodule Image.Draw do
   @doc since: "0.7.0"
 
   @spec rect(Vimage.t(), non_neg_integer(), non_neg_integer(), pos_integer(), pos_integer(), Options.Draw.rect()) ::
-    {:ok, Image.t()} | {:error, Image.error_message()}
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def rect(image, left, top, width, height, options \\ [])
 
@@ -61,7 +61,7 @@ defmodule Image.Draw do
     |> maybe_wrap()
   end
 
-  @spec rect(MutableImage.t(), non_neg_integer(), non_neg_integer(), pos_integer(), pos_integer(), Options.Draw.recte()) ::
+  @spec rect(MutableImage.t(), non_neg_integer(), non_neg_integer(), pos_integer(), pos_integer(), Options.Draw.rect()) ::
     :ok | {:error, Image.error_message()}
 
   def rect(%MutableImage{} = image, left, top, width, height, options)
@@ -80,7 +80,7 @@ defmodule Image.Draw do
   @doc since: "0.7.0"
 
   @spec circle(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.circle()) ::
-    {:ok, Image.t()} | {:error, Image.error_message()}
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def circle(image, cx, cy, radius, options \\ [])
 
@@ -112,7 +112,7 @@ defmodule Image.Draw do
   @doc since: "0.7.0"
 
   @spec line(Vimage.t(), non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer(), Options.Draw.line()) ::
-    {:ok, Image.t()} | {:error, Image.error_message()}
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def line(image, x1, y1, x2, y2, options \\ [])
 
@@ -128,7 +128,7 @@ defmodule Image.Draw do
   end
 
   @spec line(MutableImage.t(), non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer(), Options.Draw.line()) ::
-    {:ok, Image.t()} | {:error, Image.error_message()}
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def line(%MutableImage{} = image, x1, y1, x2, y2, options)
       when is_integer(x1) and is_integer(y1) and x1 >= 0 and y1 >= 0 and
@@ -147,7 +147,7 @@ defmodule Image.Draw do
   @doc since: "0.7.0"
 
   @spec image(Vimage.t(), Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.image()) ::
-    {:ok, Image.t()} | {:error, Image.error_message()}
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def image(image, sub_image, x, y, options \\ [])
 
@@ -162,7 +162,7 @@ defmodule Image.Draw do
   end
 
   @spec image(MutableImage.t(), Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.image()) ::
-    {:ok, Image.t()} | {:error, Image.error_message()}
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def image(%MutableImage{} = image, %Vimage{} = sub_image, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
@@ -254,7 +254,7 @@ defmodule Image.Draw do
   @doc since: "0.7.0"
 
   @spec smudge(Vimage.t(), non_neg_integer(), non_neg_integer(), pos_integer(), pos_integer(), Options.Draw.smudge()) ::
-    {:ok, Image.t()} | {:error, Image.error_message()}
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def smudge(image, left, top, width, height, options \\ [])
 
@@ -269,7 +269,7 @@ defmodule Image.Draw do
     |> maybe_wrap()
   end
 
-  @spec smudge(MutableImage.t(), non_neg_integer(), non_neg_integer(), pos_integer(), pos_integer(), Options.Draw.smudgee()) ::
+  @spec smudge(MutableImage.t(), non_neg_integer(), non_neg_integer(), pos_integer(), pos_integer(), Options.Draw.smudge()) ::
     :ok | {:error, Image.error_message()}
 
   def smudge(%MutableImage{} = image, left, top, width, height, options)

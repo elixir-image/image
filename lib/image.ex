@@ -364,7 +364,7 @@ defmodule Image do
   * `{:error, message}`
 
   """
-  def open(image_path_or_stream, options \\ [])
+  def open(image_path_or_stream_or_binary, options \\ [])
 
   @spec open(image_path_or_stream :: Path.t() | File.Stream.t(), options :: Open.image_open_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -420,6 +420,39 @@ defmodule Image do
 
   defp loader_options(options) do
     "[" <> Enum.map_join(options, ",", fn {k, v} -> "#{k}=#{v}" end) <> "]"
+  end
+
+  @doc """
+  Returns a image created from an in-memory binary representation
+  of an image.
+
+  The binary must be a complete formatted image such as that
+  returned from `File.read!/2`.
+
+  ### Arguments
+
+  * `binary` is a binary representation of a formatted image
+
+  * `options` is a keyword list of options. See `Image.open/2`
+    for the list of applicable options.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.8.0"
+
+  @spec from_binary(binary :: binary(), options :: Open.image_open_options()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def from_binary(binary, options \\ []) when is_binary(binary) do
+    with {:ok, options} <- Options.Open.validate_options(options) do
+      options = Keyword.delete(options, :access)
+      Vimage.new_from_buffer(binary, options)
+    end
   end
 
   @doc """
@@ -1458,7 +1491,7 @@ defmodule Image do
 
   def avatar(image_path, size, options) when is_binary(image_path) and is_size(size) do
     with {:ok, options} <- Options.Avatar.validate_options(options),
-         :ok = file_exists?(image_path) do
+         {:ok, image_path} = file_exists?(image_path) do
       {:ok, image} = Operation.thumbnail(image_path, size, options)
       circular_mask_and_remove_meta(image)
     end
@@ -1663,7 +1696,7 @@ defmodule Image do
   @spec rotate(
           image :: Vimage.t(),
           angle :: float(),
-          options :: Options.Rotation.rotation_options()
+          options :: Options.Rotate.rotation_options()
         ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
@@ -1707,7 +1740,7 @@ defmodule Image do
   @spec rotate!(
           image :: Vimage.t(),
           angle :: float(),
-          options :: Options.Rotation.rotation_options()
+          options :: Options.Rotate.rotation_options()
         ) ::
           Vimage.t() | no_return()
 
@@ -1794,7 +1827,7 @@ defmodule Image do
 
   def autorotate!(image) do
     case autorotate(image) do
-      {:ok, image, _flags} -> image
+      {:ok, {image, _flags}} -> image
       {:error, reason} -> raise Image.Error, reason
     end
   end

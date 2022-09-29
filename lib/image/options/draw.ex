@@ -14,6 +14,10 @@ defmodule Image.Options.Draw do
     {:color, Color.t()}
   ]
 
+  @type point :: [
+    {:color, Color.t()}
+  ]
+
   @type flood :: [
     {:equal, boolean()} |
     {:color, Color.t()}
@@ -25,6 +29,10 @@ defmodule Image.Options.Draw do
 
   @type line :: [
     {:color, Color.t()}
+  ]
+
+  @type smudge :: [
+
   ]
 
   @type image :: [

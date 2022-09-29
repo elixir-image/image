@@ -2,17 +2,17 @@
 
 ## Image 0.7.0
 
-This is the changelog for Image version 0.7.0 released on ______, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
-
-### Bug Fixes
-
-* Dialyzer passes in the green. Thanks to @timothyvanderaerden for the PR to support this effort.
+This is the changelog for Image version 0.7.0 released on September 30, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
 
 ### Enhancements
 
 * Set the environment variable `VIPS_BLOCK_UNTRUSTED` at application start if it is not already set. As of [libvips 8.13](https://www.libvips.org/2022/05/28/What's-new-in-8.13.html) this environment variable will cause `libvips` to not use any image loaders that are "unfuzzed".
 
-* Add mutable draw operations. These operations mutate an image directly and hence special care is taken to avoid race conditions. All mutuable operations are serialized via a `GenServer`. See the `Image.Draw` module.
+* Add mutable draw operations. These operations mutate an image directly and hence special care is taken to avoid race conditions. All mutuable operations are serialized via a `GenServer`. See the `Image.Draw` module.  These functions are experimental for now pending additional testing.
+
+* Add `Image.from_binary/2` to support creating an image from a raw binary.
+
+* Thanks to @timothyvanderaerden for the PR to support getting dialyzer under control.  Work will continue on this over the next several releases.
 
 ## Image 0.6.0
 
