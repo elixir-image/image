@@ -443,7 +443,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc since: "0.8.0"
+  @doc since: "0.7.0"
 
   @spec from_binary(binary :: binary(), options :: Open.image_open_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
