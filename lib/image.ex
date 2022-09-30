@@ -94,7 +94,7 @@ defmodule Image do
   @typedoc """
   A pixel is represented as a list of float values.
   The number of list elements is determined by
-  the colorspace interpreations. For example:
+  the colorspace interpretations. For example:
 
   * `RGB` colorspace would be represented by
     a list of three floats like `[0.0, 0,0, 0.0]` for black.
@@ -198,14 +198,14 @@ defmodule Image do
                   width > 0 and height > 0
 
   @doc """
-  Guards whether a number can be reasonable interpreted
+  Guards whether a number can be reasonably interpreted
   as a size (as in size of a crop or mask)
 
   """
   defguard is_size(size) when is_integer(size) and size > 0
 
   @doc """
-  Guards whether a term might be reasonable interpreted
+  Guards whether a term might be reasonably interpreted
   as an image pixel.
 
   """
@@ -976,7 +976,7 @@ defmodule Image do
   end
 
   @doc """
-  Compse two images together to form a new image or
+  Compose two images together to form a new image or
   raise an exception.
 
   ### Arguments
