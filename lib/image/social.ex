@@ -18,7 +18,7 @@ defmodule Image.Social do
 
   """
   @type platform ::
-    :facebook | :twitter | :linkedin | :pinterest | :instagram | :tumblr | :youtube | :snapchat | :toktok
+    :facebook | :twitter | :linkedin | :pinterest | :instagram | :tumblr | :youtube | :snapchat | :tiktok
 
   # Before Version 1.0, this content will move from being a static
   # list to a dynamic one that can be updated at runtime
