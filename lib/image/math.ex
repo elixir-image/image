@@ -280,7 +280,7 @@ defmodule Image.Math do
 
   @spec add(Vimage.t(), [number()]) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
   def add(%Vimage{} = image, value) when is_list(value) do
-    Operation.linear(image, [1], value)
+    Operation.linear(image, [1.0], value)
   end
 
   def add(value, %Vimage{} = image) when is_number(value) do
@@ -304,7 +304,7 @@ defmodule Image.Math do
 
   @spec subtract(Vimage.t(), [number()]) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
   def subtract(%Vimage{} = image, value) when is_list(value) do
-    Operation.linear(image, [1], Enum.map(value, &(-&1)))
+    Operation.linear(image, [1.0], Enum.map(value, &(-&1)))
   end
 
   @spec subtract(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
@@ -330,9 +330,9 @@ defmodule Image.Math do
     multiply(image, [value])
   end
 
-  @spec multiply(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec multiply(Vimage.t(), list()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
   def multiply(%Vimage{} = image, value) when is_list(value) do
-    Operation.linear(image, value, [0])
+    Operation.linear(image, value, [0.0])
   end
 
   @spec multiply(number(), number()) :: {:ok, number}
@@ -352,7 +352,7 @@ defmodule Image.Math do
 
   @spec divide(Vimage.t(), [number()]) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
   def divide(%Vimage{} = image, value) when is_list(value) do
-    Operation.linear(image, Enum.map(value, &(1.0 / &1)), [0])
+    Operation.linear(image, Enum.map(value, &(1.0 / &1)), [0.0])
   end
 
   @spec divide(number(), number()) :: {:ok, number}
@@ -378,7 +378,7 @@ defmodule Image.Math do
           {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def less_than_or_equal(%Vimage{} = image, %Vimage{} = other) do
-    Vix.Vips.Operation.relational(image, :VIPS_OPERATION_RELATIONAL_LESSEQ, List.wrap(other))
+    Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_LESSEQ)
   end
 
   @spec less_than_or_equal(Vimage.t(), Image.pixel()) ::
@@ -522,7 +522,7 @@ defmodule Image.Math do
     Kernel.!=(a, b)
   end
 
-  @spec add!(Vimage.t(), Image.pixel()) :: Vimage.t() | no_return()
+  @spec add!(Vimage.t(), Image.pixel() | number()) :: Vimage.t() | no_return()
   def add!(%Vimage{} = image, value) do
     case add(image, value) do
       {:ok, image} -> image
@@ -530,7 +530,7 @@ defmodule Image.Math do
     end
   end
 
-  @spec add!(Image.pixel(), Vimage.t()) :: Vimage.t() | no_return()
+  @spec add!(Image.pixel() | number(), Vimage.t()) :: Vimage.t() | no_return()
   def add!(value, %Vimage{} = image) do
     case add(image, value) do
       {:ok, image} -> image
@@ -564,7 +564,7 @@ defmodule Image.Math do
     Kernel.-(a, b)
   end
 
-  @spec multiply!(Vimage.t(), Image.pixel()) :: Vimage.t() | no_return()
+  @spec multiply!(Vimage.t(), Image.pixel() | number()) :: Vimage.t() | no_return()
   def multiply!(%Vimage{} = image, value) do
     case multiply(image, value) do
       {:ok, image} -> image
@@ -572,7 +572,7 @@ defmodule Image.Math do
     end
   end
 
-  @spec multiply!(Image.pixel(), Vimage.t()) :: Vimage.t() | no_return()
+  @spec multiply!(Image.pixel() | number(), Vimage.t()) :: Vimage.t() | no_return()
   def multiply!(value, %Vimage{} = image) do
     case multiply(image, value) do
       {:ok, image} -> image
@@ -611,6 +611,8 @@ defmodule Image.Math do
     Kernel.**(a, b)
   end
 
+  @dialyzer {:nowarn_function, {:cos!, 1}}
+
   @spec cos!(Vimage.t()) :: Vimage.t() | no_return()
   def cos!(%Vimage{} = image) do
     case cos(image) do
@@ -618,6 +620,8 @@ defmodule Image.Math do
       {:error, reason} -> raise ArgumentError, reason
     end
   end
+
+  @dialyzer {:nowarn_function, {:sin!, 1}}
 
   @spec sin!(Vimage.t()) :: Vimage.t() | no_return()
   def sin!(%Vimage{} = image) do
@@ -719,7 +723,7 @@ defmodule Image.Math do
 
   """
   @spec maxpos(Vimage.t(), Keyword.t()) ::
-          {:ok, maximum :: float(), x_positiom :: integer(), y_position :: integer()}
+          {maximum :: float(), x_positiom :: integer(), y_position :: integer()}
 
   def maxpos(%Vimage{} = image, options \\ []) do
     size = Keyword.get(options, :size, 10)
@@ -748,7 +752,7 @@ defmodule Image.Math do
 
   """
   @spec minpos(Vimage.t(), Keyword.t()) ::
-          {:ok, minimum :: float(), x_positiom :: integer(), y_position :: integer()}
+          {minimum :: float(), x_positiom :: integer(), y_position :: integer()}
 
   def minpos(%Vimage{} = image, options \\ []) do
     size = Keyword.get(options, :size, 10)

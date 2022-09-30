@@ -137,14 +137,13 @@ defmodule Image.Options.Resize do
   @doc false
   def validate_dimensions(dimensions, options) do
     case dimensions(String.split(dimensions, ["x"])) do
-      {width, nil} when is_size(width) ->
+      width when is_size(width) ->
         {:ok, width, options}
 
       {width, height} when is_size(width) and is_size(height) ->
         {:ok, width, Keyword.put(options, :height, height)}
 
-      other ->
-        IO.inspect other
+      _other ->
         {:error, "Invalid dimensions. Found #{inspect(dimensions)}"}
     end
   end

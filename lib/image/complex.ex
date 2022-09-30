@@ -9,13 +9,19 @@ defmodule Image.Complex do
   defguard float_format(format) when format in [:VIPS_FORMAT_FLOAT, :VIPS_FORMAT_DOUBLE]
   defguard even(bands) when rem(bands, 2) === 0
 
+  @dialyzer {:nowarn_function, {:polar, 1}}
+
   def polar(%Vimage{} = image) do
     complex(image, &Operation.complex(&1, :VIPS_OPERATION_COMPLEX_POLAR))
   end
 
+  @dialyzer {:nowarn_function, {:rectangular, 1}}
+
   def rectangular(%Vimage{} = image) do
     complex(image, &Operation.complex(&1, :VIPS_OPERATION_COMPLEX_RECT))
   end
+
+  @dialyzer {:nowarn_function, {:rectangular!, 1}}
 
   def rectangular!(%Vimage{} = image) do
     case rectangular(image) do
@@ -23,6 +29,8 @@ defmodule Image.Complex do
       {:error, reason} -> raise Image.Error, reason
     end
   end
+
+  @dialyzer {:nowarn_function, {:complex, 2}}
 
   defp complex(%Vimage{} = image, fun) do
     bands = Vimage.bands(image)
@@ -36,6 +44,8 @@ defmodule Image.Complex do
   end
 
   # Convert to complex
+
+  @dialyzer {:nowarn_function, {:to_complex, 3}}
 
   defp to_complex(%Vimage{} = _image, format, bands)
        when not complex(format) and not even(bands) do
@@ -61,6 +71,8 @@ defmodule Image.Complex do
   end
 
   # Convert from complex
+
+  @dialyzer {:nowarn_function, {:from_complex, 4}}
 
   defp from_complex(image, original_format, :VIPS_FORMAT_DPCOMPLEX, bands)
        when not complex(original_format) do

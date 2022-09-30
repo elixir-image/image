@@ -5,6 +5,7 @@ defmodule Image.Options.New do
   """
   alias Image.{Color, BandFormat, Interpretation}
 
+
   @type t :: [
     {:bands, pos_integer()} |
     {:format, Image.BandFormat.t()} |

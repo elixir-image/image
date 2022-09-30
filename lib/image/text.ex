@@ -758,6 +758,7 @@ defmodule Image.Text do
   # For transparent text we need to render the text in
   # white which is then converted later to a transparency
   # mask
+  @dialyzer {:nowarn_function, {:render_text, 2}}
 
   defp render_text(text, %{text_fill_color: :transparent} = options) do
     render_text(text, Map.put(options, :text_fill_color, :white))
@@ -786,7 +787,7 @@ defmodule Image.Text do
 
     {:ok, {image, _flags}} = Operation.svgload_buffer(svg)
     {:ok, {x, y, width, height, _flags}} =
-      Operation.find_trim(image, background: @black, threshold: 10)
+      Operation.find_trim(image, background: @black, threshold: 10.0)
     Image.crop(image, x, y, width, height)
   end
 

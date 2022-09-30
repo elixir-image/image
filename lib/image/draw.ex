@@ -79,7 +79,7 @@ defmodule Image.Draw do
   """
   @doc since: "0.7.0"
 
-  @spec circle(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.circle()) ::
+  @spec circle(Vimage.t(), non_neg_integer(), non_neg_integer(), non_neg_integer(), Options.Draw.circle()) ::
     {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def circle(image, cx, cy, radius, options \\ [])
@@ -94,7 +94,7 @@ defmodule Image.Draw do
     |> maybe_wrap()
   end
 
-  @spec circle(MutableImage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.circle()) ::
+  @spec circle(MutableImage.t(), non_neg_integer(), non_neg_integer(), non_neg_integer(), Options.Draw.circle()) ::
     :ok | {:error, Image.error_message()}
 
   def circle(%MutableImage{} = image, cx, cy, radius, options)
@@ -154,9 +154,9 @@ defmodule Image.Draw do
   def image(%Vimage{} = image, %Vimage{} = sub_image, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:image, options) do
-      Vimage.mutate image, fn mut_img ->
+      Vimage.mutate(image, fn mut_img ->
         MutableOperation.draw_image(mut_img, sub_image, x, y, options)
-      end
+      end)
     end
     |> maybe_wrap()
   end

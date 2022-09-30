@@ -266,4 +266,15 @@ defmodule Image.Test do
     # 100x100 pixel green image, fully transparent
     assert {:ok, _image} = Image.new(100, 100, color: [0, 255, 0, 1], bands: 4)
   end
+
+  test "Image.open/2 for different file formats" do
+    jpeg_binary = File.read! image_path("Kip_small.jpg")
+    assert {:ok, _i} = Image.open(jpeg_binary)
+
+    png_binary = File.read! image_path("Kip_small.png")
+    assert {:ok, _i} = Image.open(png_binary)
+
+    webp_binary = File.read! image_path("example.webp")
+    assert {:ok, _i} = Image.open(webp_binary)
+  end
 end

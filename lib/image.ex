@@ -372,10 +372,11 @@ defmodule Image do
   * `{:error, message}`
 
   """
-  def open(image_path_or_stream_or_binary, options \\ [])
 
-  @spec open(image_path_or_stream_or_binary :: image_data(), options :: Open.image_open_options()) ::
+  @spec open(path_or_stream_or_binary :: image_data(), options :: Open.image_open_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
+
+  def open(path_or_stream_or_binary, options \\ [])
 
   # JPEG signature
   def open(<<0xff, 0xd8, 0xff, _::size(24), "JFIF", _::binary>> = image, options) do
@@ -383,12 +384,36 @@ defmodule Image do
   end
 
   # PNG signature
-  def open(<<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _::size(32), "IHDR", _::binary>> = image, options) do
+  png = quote do
+    <<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _::size(32), "IHDR", _::binary>>
+  end
+
+  def open(unquote(png) = image, options) do
     from_binary(image, options)
   end
 
   # WEBP signature
   def open(<<"RIFF", _::size(32), "WEBP", _::binary>> = image, options) do
+    from_binary(image, options)
+  end
+
+  # GIF87a signature
+  def open(<<0x47, 0x49, 0x46, 0x38, 0x37, 0x61, _::binary>> = image, options) do
+    from_binary(image, options)
+  end
+
+  # GIF89a signature
+  def open(<<0x47, 0x49, 0x46, 0x38, 0x39, 0x61, _::binary>> = image, options) do
+    from_binary(image, options)
+  end
+
+  # TIF little endian
+  def open(<<0x49, 0x49, 0x2A, 0x00, _::binary>> = image, options) do
+    from_binary(image, options)
+  end
+
+  # TIF big endian
+  def open(<<0x4D, 0x4D, 0x00, 0x2A, _::binary>> = image, options) do
     from_binary(image, options)
   end
 
@@ -1403,7 +1428,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec resize(Vimage.t(), width :: pos_integer() | binary(), options :: Resize.resize_options()) ::
+  @spec resize(Vimage.t(), width :: pos_integer(), options :: Resize.resize_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def resize(image_or_path, width, options \\ [])
@@ -1869,6 +1894,8 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @dialyzer {:nowarn_function, {:ripple, 1}}
+
   @spec ripple(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def ripple(%Vimage{} = image) do
     use Image.Math
@@ -1916,6 +1943,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @dialyzer {:nowarn_function, {:ripple!, 1}}
+
   @spec ripple!(Vimage.t()) :: Vimage.t() | no_return()
   def ripple!(%Vimage{} = image) do
     case ripple(image) do
@@ -2327,6 +2356,10 @@ defmodule Image do
       {:ok, gradient} = Image.linear_gradient(image, transparent_black, opaque_black)
 
   """
+  @dialyzer {:nowarn_function, {:linear_gradient, 1}}
+  @dialyzer {:nowarn_function, {:linear_gradient, 2}}
+  @dialyzer {:nowarn_function, {:linear_gradient, 3}}
+
   @start_color [0, 0, 0, 0]
   @finish_color [0, 0, 0, 255]
 
@@ -2389,6 +2422,10 @@ defmodule Image do
       gradient = Image.linear_gradient!(image, transparent_black, opaque_black)
 
   """
+  @dialyzer {:nowarn_function, {:linear_gradient!, 1}}
+  @dialyzer {:nowarn_function, {:linear_gradient!, 2}}
+  @dialyzer {:nowarn_function, {:linear_gradient!, 3}}
+
   @spec linear_gradient!(Vimage.t(), start :: Color.rgb_color(), finish :: Color.rgb_color()) ::
           Vimage.t() | no_return()
 
@@ -2438,6 +2475,9 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @dialyzer {:nowarn_function, {:radial_gradient, 2}}
+  @dialyzer {:nowarn_function, {:radial_gradient, 3}}
+
   @doc since: "0.6.0"
 
   @spec radial_gradient(width :: pos_integer(), height :: pos_integer(), options :: Keyword.t()) ::
@@ -2548,7 +2588,7 @@ defmodule Image do
   def histogram(%Vimage{} = image) do
     image
     |> Operation.hist_find!()
-    |> Operation.hist_norm!()
+    |> Operation.hist_norm()
   end
 
   @doc """
@@ -2687,7 +2727,9 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec to_polar_coordinates!(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @dialyzer {:nowarn_function, {:to_polar_coordinates, 1}}
+
+  @spec to_polar_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def to_polar_coordinates(%Vimage{} = image) do
     use Image.Math
 
@@ -2721,6 +2763,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @dialyzer {:nowarn_function, {:to_polar_coordinates!, 1}}
+
   @spec to_polar_coordinates!(Vimage.t()) :: Vimage.t() | no_return()
   def to_polar_coordinates!(%Vimage{} = image) do
     case to_polar_coordinates(image) do
@@ -2750,6 +2794,8 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @dialyzer {:nowarn_function, {:to_rectangular_coordinates, 1}}
+
   @spec to_rectangular_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def to_rectangular_coordinates(%Vimage{} = image) do
     use Image.Math
@@ -2791,6 +2837,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @dialyzer {:nowarn_function, {:to_rectangular_coordinates!, 1}}
+
   @spec to_rectangular_coordinates!(Vimage.t()) :: Vimage.t() | no_return()
   def to_rectangular_coordinates!(%Vimage{} = image) do
     case to_rectangular_coordinates(image) do
@@ -2821,19 +2869,23 @@ defmodule Image do
           Nx.tensor([[[0], [0], [0]], [[0], [0], [0]], [[0], [0], [0]]], type: {:u, 8}, names: [:width, :height, :bands])}
 
     """
+    @dialyzer {:nowarn_function, {:to_nx, 1}}
+    @dialyzer {:nowarn_function, {:to_nx, 2}}
+
     @doc since: "0.5.0"
 
     @spec to_nx(image :: Vimage.t(), options: Keyword.t()) ::
       {:ok, Nx.Tensor.t()} | {:error, error_message()}
 
     def to_nx(%Vimage{} = image, options \\ []) do
-      {:ok, tensor} = Vix.Vips.Image.write_to_tensor(image)
-      %Vix.Tensor{data: binary, names: names, shape: shape, type: type} = tensor
+      with {:ok, tensor} <- Vix.Vips.Image.write_to_tensor(image) do
+        %Vix.Tensor{data: binary, names: names, shape: shape, type: type} = tensor
 
-      binary
-      |> Nx.from_binary(type, options)
-      |> Nx.reshape(shape, names: names)
-      |> wrap(:ok)
+        binary
+        |> Nx.from_binary(type, options)
+        |> Nx.reshape(shape, names: names)
+        |> wrap(:ok)
+      end
     end
 
     @doc """
@@ -2912,6 +2964,9 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @dialyzer {:nowarn_function, {:dhash, 1}}
+  @dialyzer {:nowarn_function, {:dhash, 2}}
+
   @doc since: "0.6.0"
 
   @spec dhash(image :: Vimage.t()) :: image_hash()
@@ -3090,7 +3145,10 @@ defmodule Image do
       Image.rotate(image, skew_angle)
 
   """
+  @dialyzer {:nowarn_function, {:skew_angle, 1}}
+
   @spec skew_angle(Vimage.t()) :: float()
+
   def skew_angle(%Vimage{} = image) do
     {_columns, rows, []} =
       image
@@ -3100,7 +3158,7 @@ defmodule Image do
 
     {_v, _x, y} =
       rows
-      |> Operation.gaussblur!(10)
+      |> Operation.gaussblur!(10.0)
       |> Image.Math.maxpos()
 
     # and turn to an angle in degrees we should counter-rotate by

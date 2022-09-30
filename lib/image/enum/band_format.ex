@@ -5,6 +5,8 @@ defmodule Image.BandFormat do
 
   """
 
+  alias Vix.Vips.Image, as: Vimage
+
   @type t ::
     {:u, 8} |
     {:s, 8} |
@@ -64,8 +66,14 @@ defmodule Image.BandFormat do
     end
   end
 
-  def nx_format(image) do
-    case Vix.Vips.Image.format(image) do
+  @dialyzer {:nowarn_function, {:nx_format, 1}}
+
+  def nx_format(%Vimage{} = image) do
+    nx_format(Vix.Vips.Image.format(image))
+  end
+
+  def nx_format(format) when is_atom(format) do
+    case format do
       :VIPS_FORMAT_UCHAR ->
         {:ok, {:u, 8}}
 

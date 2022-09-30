@@ -1,10 +1,16 @@
 # Changelog
 
+## Image 0.9.0
+
+This is the changelog for Image version 0.9.0 released on October 1st, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+* `Image.open/2` supports opening `.gif` and `.tif` images from raw binary data.
+
 ## Image 0.8.0
 
 This is the changelog for Image version 0.8.0 released on September 30, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
 
-* `Image.open/2` now accepts raw image data for the image types `.jpeg`, `.png`, `.webp` and `.tiff`
+* `Image.open/2` now accepts raw image data for the image types `.jpeg`, `.png`, `.webp`
 
 ## Image 0.7.0
 
