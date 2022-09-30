@@ -427,7 +427,7 @@ defmodule Image do
   of an image.
 
   The binary must be a complete formatted image such as that
-  returned from `File.read!/2`.
+  returned from `File.read!/1`.
 
   ### Arguments
 

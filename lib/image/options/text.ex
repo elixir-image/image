@@ -1,5 +1,8 @@
 defmodule Image.Options.Text do
-  @moduledoc false
+  @moduledoc """
+  Options for text drawing.
+
+  """
 
   alias Image.Color
   alias Vix.Vips.Image, as: Vimage
@@ -41,7 +44,7 @@ defmodule Image.Options.Text do
   end
 
   @doc """
-  Validate the options for `Image.Text.render/3`.
+  Validate the options for `Image.Text.text/2`.
 
   """
   def validate_options(options) do

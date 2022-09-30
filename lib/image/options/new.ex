@@ -1,6 +1,8 @@
 defmodule Image.Options.New do
-  @moduledoc false
+  @moduledoc """
+  Options for new images.
 
+  """
   alias Image.{Color, BandFormat, Interpretation}
 
   @type t :: [
@@ -28,7 +30,7 @@ defmodule Image.Options.New do
   end
 
   @doc """
-  Validate the options for `Image.Text.render/3`.
+  Validate the options for `Image.new/2`.
 
   """
   def validate_options(options) do

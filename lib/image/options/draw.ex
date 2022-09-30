@@ -1,5 +1,8 @@
 defmodule Image.Options.Draw do
-  @moduledoc false
+  @moduledoc """
+  Options for the draw functions.
+
+  """
 
   alias Image.Color
   alias Image.CombineMode
