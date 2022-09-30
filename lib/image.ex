@@ -43,6 +43,12 @@ defmodule Image do
   @square_when_ratio_less_than 0.0
 
   @typedoc """
+  The valid sources of image data when opening an
+  image.
+  """
+  @type image_data :: Path.t() | File.Stream.t() | binary()
+
+  @typedoc """
   The valid rendering intent values. For all
   functions that take an optional intent
   parameter the default is `:perceptual`.
@@ -286,11 +292,13 @@ defmodule Image do
 
   ### Arguments
 
-  * `image_path_or_stream` is the file system path to an image
-    file or a `t:File.Stream.t/0` or any `t:Enumerable.t/0`.
+  * `image_path_or_stream_or_binary` is the file system path to an image
+    file or a `t:File.Stream.t/0` or any `t:Enumerable.t/0`. It
+    can also be any binary `.jpg`, `.png` or `.webp` image.
 
   * `options` is a keyword list of options. The default is
-    `[access: :sequential]`.
+    `[access: :sequential]` for all images except images
+    derived from binary image data.
 
   ### Options
 
@@ -366,8 +374,23 @@ defmodule Image do
   """
   def open(image_path_or_stream_or_binary, options \\ [])
 
-  @spec open(image_path_or_stream :: Path.t() | File.Stream.t(), options :: Open.image_open_options()) ::
+  @spec open(image_path_or_stream_or_binary :: image_data(), options :: Open.image_open_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
+
+  # JPEG signature
+  def open(<<0xff, 0xd8, 0xff, _::size(24), "JFIF", _::binary>> = image, options) do
+    from_binary(image, options)
+  end
+
+  # PNG signature
+  def open(<<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _::size(32), "IHDR", _::binary>> = image, options) do
+    from_binary(image, options)
+  end
+
+  # WEBP signature
+  def open(<<"RIFF", _::size(32), "WEBP", _::binary>> = image, options) do
+    from_binary(image, options)
+  end
 
   def open(image_path, options) when is_binary(image_path) do
     with {:ok, options} <- Options.Open.validate_options(options) do
