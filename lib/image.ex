@@ -1368,6 +1368,8 @@ defmodule Image do
     `{:u, 8}` for a common `:srgb` image.
 
   """
+  @dialyzer {:nowarn_function, {:type, 1}}
+
   @doc since: "0.9.0"
 
   @spec type(image :: Vimage.t()) :: Image.BandFormat.t()
