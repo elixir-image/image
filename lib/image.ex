@@ -1378,7 +1378,7 @@ defmodule Image do
 
   @spec type(image :: Vimage.t()) :: format()
   def type(%Vimage{} = image) do
-    Vix.Tensor.nx_type(image)
+    Image.BandFormat.nx_format(image)
   end
 
   @doc """
