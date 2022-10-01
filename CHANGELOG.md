@@ -4,13 +4,15 @@
 
 This is the changelog for Image version 0.9.0 released on October 1st, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
 
-* `Image.open/2` supports opening `.gif` and `.tif` images from raw binary data.
+* `Image.open/2` supports opening `.gif` and `.tif` images from raw binary data in addition to the previous `.jpeg`, `.png` and `.webp`.
 
 * Add `Image.shape/1`
 
 * Add `Image.interpretation/1`
 
 * Add `Image.type/1`
+
+* Add initial support for [eVision](https://github.com/cocoa-xu/evision). In this release the function `Image.QRcode.decode/1` is provided to decode images that contain a QRcode. See the `eVision` repository for installation instructions since this library is not yet on `hex.pm`.
 
 ## Image 0.8.0
 

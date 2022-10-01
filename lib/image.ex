@@ -3034,6 +3034,9 @@ defmodule Image do
       @doc """
       Converts an `Image` image to an [Evision]() image.
 
+      Note that only images with 3 bands can be transferred
+      to `eVision`.
+
       ### Arguments
 
       * `image` is any `t:Vimage.t/0`
@@ -3057,8 +3060,9 @@ defmodule Image do
 
       def to_evision(%Vimage{} = image) do
         with {:ok, tensor} <- to_nx(image),
-             {:ok, mat} <- Evision.Nx.to_mat(tensor),
-             {:ok, mat} <- Evision.Mat.transpose(mat, [1, 0, 2]) do
+             {width, height, bands} <- validate_transferable_image(image),
+             {:ok, mat} <- Evision.Nx.to_mat(tensor, {height, width, bands}),
+             {:ok, mat} <- Evision.Mat.last_dim_as_channel(mat) do
           Evision.cvtColor(mat, Evision.cv_COLOR_RGB2BGR())
         end
       end
@@ -3591,21 +3595,16 @@ defmodule Image do
     """
   end
 
-  @doc false
-  def rgb_to_bgr(image) do
-    r = image[0]
-    g = image[1]
-    b = image[2]
+  defp validate_transferable_image(image) do
+    case shape(image) do
+      {width, height, bands} when bands == 3 ->
+        {width, height, bands}
 
-    Vix.Vips.Operation.bandjoin([b, g, r])
+      other ->
+        {:error,
+          "Only images with three bands can be transferred to eVision. " <>
+          "Found an image of shape #{inspect other}"}
+    end
   end
 
-  @doc false
-  def bgr_to_rgb(image) do
-    b = image[0]
-    g = image[1]
-    r = image[2]
-
-    Vix.Vips.Operation.bandjoin([r, g, b])
-  end
 end
