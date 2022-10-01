@@ -189,12 +189,6 @@ defmodule Image do
     {:y_baseline, :nil | :top | :middle | :bottom}
   ]
 
-  @typedoc """
-  The data type of the image, using the same
-  type definitions as `t:Nx.Type.t/0`.
-  """
-  @type format :: {:u | :s | :f | :c | :bf, 8 | 16 | 32 | 64 | 128}
-
   @doc """
   Guards whether the coordinates can be reasonably
   interpreted as a bounding box.
@@ -1376,9 +1370,9 @@ defmodule Image do
   """
   @doc since: "0.9.0"
 
-  @spec type(image :: Vimage.t()) :: format()
+  @spec type(image :: Vimage.t()) :: Image.BandFormat.t()
   def type(%Vimage{} = image) do
-    Vix.Tensor.nx_type(image)
+    Image.BandFormat.nx_format(image)
   end
 
   @doc """
