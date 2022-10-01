@@ -189,6 +189,12 @@ defmodule Image do
     {:y_baseline, :nil | :top | :middle | :bottom}
   ]
 
+  @typedoc """
+  The data type of the image, using the same
+  type definitions as `t:Nx.Type.t/0`.
+  """
+  @type format :: {:u | :s | :f | :c | :bf, 8 | 16 | 32 | 64 | 128}
+
   @doc """
   Guards whether the coordinates can be reasonably
   interpreted as a bounding box.
