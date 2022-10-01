@@ -105,9 +105,4 @@ defmodule Image.Interpretation do
     "Unknown interpretation. Found #{inspect(interpretation)}"
   end
 
-  @doc false
-  def decode_interpretation(interpretation) do
-    Map.fetch!(@reverse_interpretation, interpretation)
-  end
-
 end
