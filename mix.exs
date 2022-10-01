@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.10.0-dev"
+  @version "0.9.0"
   @app_name "image"
 
   def project do
@@ -139,8 +139,7 @@ defmodule Image.MixProject do
   # developing the project.  This method relies on the
   # current directory being the project directory.
   defp dev? do
-    File.cwd!
-    |> String.ends_with?("/#{@app_name}")
+    Mix.env() != :release && String.ends_with?(File.cwd!(), "/#{@app_name}")
   end
 
   defp otp_release do
