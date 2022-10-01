@@ -3,13 +3,19 @@ defmodule Image.QRcode.Test do
   import Image.TestSupport
 
   test "QR code detection and decoding" do
-    {:ok, image} = Image.open image_path("qr_code_con.png")
+    {:ok, image} = Image.open image_path("qrcode/qr_code_con.png")
 
     assert Image.QRcode.decode(image) == {:ok, "MECARD:N:Joe;EMAIL:Joe@bloggs.com;;"}
   end
 
+  test "QR code detection from an bigger image with embedded QR code" do
+    {:ok, image} = Image.open image_path("qrcode/qrcode.webp")
+
+    assert Image.QRcode.decode(image) == {:ok, "http://LearnOpenCV.com"}
+  end
+
   test "QR code detection fails unless the image has three bands" do
-    {:ok, image} = Image.open image_path("qrcode_orig.png")
+    {:ok, image} = Image.open image_path("qrcode/qrcode_orig.png")
 
     assert Image.QRcode.decode(image) ==
       {:error,
