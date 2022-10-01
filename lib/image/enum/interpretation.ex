@@ -30,6 +30,9 @@ defmodule Image.Interpretation do
   @interpretation Map.keys(@interpretation_map)
   @vips_interpretation Map.values(@interpretation_map)
 
+  @reverse_interpretation Enum.map(@interpretation_map, fn {k, v} -> {v, k} end)
+  |> Map.new()
+
   @typedoc """
   Defines the known colorspace interpretations.
 
@@ -93,4 +96,10 @@ defmodule Image.Interpretation do
   defp unknown_interpretation_error(interpretation) do
     "Unknown interpretation. Found #{inspect(interpretation)}"
   end
+
+  @doc false
+  def decode_interpretation(interpretation) do
+    Map.fetch!(@reverse_interpretation, interpretation)
+  end
+
 end
