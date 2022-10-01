@@ -3056,7 +3056,9 @@ defmodule Image do
         also reorders the data appropriately.
 
       """
-      @doc since: "0.10.0"
+      @dialyzer {:nowarn_function, {:to_evision, 1}}
+
+      @doc since: "0.9.0"
 
       def to_evision(%Vimage{} = image) do
         with {:ok, tensor} <- to_nx(image),
@@ -3089,11 +3091,12 @@ defmodule Image do
         also reorders the data appropriately.
 
       """
-      @doc since: "0.10.0"
+      @dialyzer {:nowarn_function, {:from_evision, 1}}
+
+      @doc since: "0.9.0"
 
       def from_evision(evision_image) do
-        with {:ok, mat} = Evision.cvtColor(evision_image, Evision.cv_COLOR_BGR2RGB()),
-             {:ok, mat} = Evision.Mat.transpose(mat, [1, 0, 2]) do
+        with {:ok, mat} = Evision.cvtColor(evision_image, Evision.cv_COLOR_BGR2RGB()) do
           tensor = Evision.Nx.to_nx(mat)
 
           case Nx.shape(tensor) do
@@ -3595,7 +3598,8 @@ defmodule Image do
     """
   end
 
-  defp validate_transferable_image(image) do
+  @doc false
+  def validate_transferable_image(image) do
     case shape(image) do
       {width, height, bands} when bands == 3 ->
         {width, height, bands}

@@ -2,7 +2,9 @@
 
 `Image` is an image processing library for Elixir. It is based upon the fabulous [vix](https://hex.pm/packages/vix) library that provides a [libvips](https://www.libvips.org) wrapper for Elixir.
 
-`Image` is intended to provide well-documented common image processing functions in an idiomatic Elixir functional style as a layer above the very comprehensive set of functions in `Vix` and `libvips`.
+`Image` is intended to provide well-documented common image processing functions in an idiomatic Elixir functional style as a layer above the very comprehensive set of functions in `Vix` and `libvips`. 
+
+It is also intended to be an idiomatic API layer over [eVision (OpenCV)](https://github.com/cocoa-xu/evision). As of `Image verison 0.9.0`, the `Image.QRcode.decode/1` function is provided to decode QRcodes with the functionality to do so provided by `eVision`. The `eVision` integration is optional and currently considered experimental.
 
 In a very simple image resizing [benchmark](https://github.com/kipcole9/image/blob/main/bench/image_resize.exs), `Image` is approximately 2 to 3 times faster than `Mogrify` and uses about 5 times less memory.
 
@@ -13,14 +15,14 @@ In a very simple image resizing [benchmark](https://github.com/kipcole9/image/bl
 ```elixir
 def deps do
   [
-    {:image, "~> 0.1.0"}
+    {:image, "~> 0.9.0"}
   ]
 end
 ```
 
 The documentation can be found at [https://hexdocs.pm/image](https://hexdocs.pm/image).
 
-### Installing Dependencies
+### Installing Libvips
 
 Installing `Vix` requires `libvips` with development headers. Installation is platform dependent however the common platform installations are:
 
@@ -34,7 +36,7 @@ In addition the following will be required (and would normally be installed by t
 * [pkg-config](https://en.wikipedia.org/wiki/Pkg-config)
 * A `C` compiler
 
-### Configuration
+### Configuring Libvips
 
 `Vix` and `libvips` offer various configuration parameters that affect debug output, image caching, concurrency of imaging operations and memory leak detection. Each of these options has reasonable defaults so no action is required in order to start using the library. 
 
@@ -96,3 +98,29 @@ There are several considerations in the use of any image processing library and 
     
 In comparison to `Imagemagick` that has a reported [638](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=imagemagick) CVEs, there have been only  [8](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=libvips) CVE's reported for `libvips`, each resolved in a very timely manner.
 
+### Installing eVision
+
+As of [Image version 0.9.0](https://hex,pm/packages/image/0.9.0), experimental support for [eVision (OpenCV)](https://github.com/cocoa-xu/evision) is provided.  Since the library is not yet on `hex.pm` (as of October 1, 2022) it needs to be installed from github.  There is extensive documentation on how to install `eVision` and the required [OpenCV](https://opencv.org). However to most cases the following should be enough:
+
+1. Add `eVision` to your `mix.exs`
+```elixir
+def deps do
+  [
+    ...
+    {:evision, "~> 0.1.6", github: "cocoa-xu/evision", tag: "v0.1.6"}),
+    ...
+  ]
+end
+```
+
+2. Set the EVISION_PREFER_PRECOMPILED environment variable
+```bash
+export EVISION_PREFER_PRECOMPILED=true
+```
+
+3. Get deps
+```elixir
+mix deps.get
+```
+
+Then proceed as normal.  `eVision` will download a precompiled `OpenCV` for the appropriate system architecture and compile both the NIF and elixir code.  Note that many Elixir compiler warnings will be emitted; this is to be expected on the current development versions of `eVision`.
