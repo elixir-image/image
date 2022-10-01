@@ -1319,7 +1319,7 @@ defmodule Image do
     `{width, height, bands}`
 
   """
-  @doc since: "0.10.0"
+  @doc since: "0.9.0"
 
   @spec shape(image :: Vimage.t()) ::
     {width :: pos_integer(), height :: pos_integer(), bands :: pos_integer()}
@@ -1351,7 +1351,7 @@ defmodule Image do
   * See also `Image.Interpretation.known_interpretations/0`
 
   """
-  @doc since: "0.10.0"
+  @doc since: "0.9.0"
 
   @spec interpretation(image :: Vimage.t()) :: Image.Interpretation.t()
   def interpretation(%Vimage{} = image) do
@@ -1374,9 +1374,9 @@ defmodule Image do
     `{:u, 8}` for a common `:srgb` image.
 
   """
-  @doc since: "0.10.0"
+  @doc since: "0.9.0"
 
-  @spec type(image :: Vimage.t()) :: format()
+  @spec type(image :: Vimage.t()) :: Image.BandFormat.t()
   def type(%Vimage{} = image) do
     Image.BandFormat.nx_format(image)
   end
