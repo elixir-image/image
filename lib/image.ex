@@ -1301,6 +1301,81 @@ defmodule Image do
   end
 
   @doc """
+  Returns the shape of an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * The image shape as a tuple of
+    `{width, height, bands}`
+
+  """
+  @doc since: "0.9.0"
+
+  @spec shape(image :: Vimage.t()) ::
+    {width :: pos_integer(), height :: pos_integer(), bands :: pos_integer()}
+
+  def shape(%Vimage{} = image) do
+    {width(image), height(image), bands(image)}
+  end
+
+  @doc """
+  Returns the image interpretation.
+
+  The interpretation is how `Image` understands
+  the image date. For example, `:srgb` or
+  `:cmyk` or `:bw`.
+
+  For most common web applications, the
+  interpretation will be `:srgb`.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * The image interpretation as an atom.
+
+  ### Notes
+
+  * See also `Image.Interpretation.known_interpretations/0`
+
+  """
+  @doc since: "0.9.0"
+
+  @spec interpretation(image :: Vimage.t()) :: Image.Interpretation.t()
+  def interpretation(%Vimage{} = image) do
+    image
+    |> Vix.Vips.Image.interpretation()
+    |> Image.Interpretation.decode_interpretation()
+  end
+
+  @doc """
+  Returns the data type of the image pixels.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * The image type as a tuple in the same
+    format as `t:Nx.Type.t/0`. For example
+    `{:u, 8}` for a common `:srgb` image.
+
+  """
+  @doc since: "0.9.0"
+
+  @spec type(image :: Vimage.t()) :: format()
+  def type(%Vimage{} = image) do
+    Vix.Tensor.nx_type(image)
+  end
+
+  @doc """
   Flip an image horizontally or vertically.
 
   ### Arguments
