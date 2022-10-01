@@ -11,6 +11,41 @@ defmodule Image.Draw do
   @doc """
   Draw a point on a mutable image.
 
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0` or a
+    `t:MutableImage.t/0` upon which the point
+    will be drawn. The image will be mutated.
+
+  * `left` is the 0-based offset from the
+    left edge of the image where the point
+    will be drawn.
+
+  * `top` is the 0-based offset from the
+    top edge of the image where the point
+    will be drawn.
+
+  * `options` is a keyword list of options.
+    The default is `color: :black`.
+
+  ### Options
+
+  * `:color` defines the color of the point. This
+    can be specified as a single integer which will
+    be applied to all bands, or a list of
+    integers representing the color for each
+    band. The color can also be supplied as a CSS color
+    name as a string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  ### Returns
+
+  * `{:ok, image}` where `image` is the same
+    type as that passed as an argument to the
+    function.
+
+  * or `{:error, reason}`
+
   """
   @doc since: "0.7.0"
 
@@ -41,6 +76,49 @@ defmodule Image.Draw do
 
   @doc """
   Draw a rectangle on a mutable image.
+
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0` or a
+    `t:MutableImage.t/0` upon which the rectangle
+    will be drawn. The image will be mutated.
+
+  * `left` is the 0-based offset from the
+    left edge of the image where the rectangle
+    will be drawn.
+
+  * `top` is the 0-based offset from the
+    top edge of the image where the rectangle
+    will be drawn.
+
+  * `width` is the width of the rectangle
+
+  * `height` is the height of the rectangle
+
+  * `options` is a keyword list of options.
+    The default is `color: :black`.
+
+  ### Options
+
+  * `:color` defines the color of the point. This
+    can be specified as a single integer which will
+    be applied to all bands, or a list of
+    integers representing the color for each
+    band. The color can also be supplied as a CSS color
+    name as a string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `:fill` is a boolean indicating whether the
+    rectangle is to be filled with `:color`. The
+    default is `true`.
+
+  ### Returns
+
+  * `{:ok, image}` where `image` is the same
+    type as that passed as an argument to the
+    function.
+
+  * or `{:error, reason}`
 
   """
   @doc since: "0.7.0"
@@ -76,6 +154,47 @@ defmodule Image.Draw do
   @doc """
   Draw a circle on a mutable image.
 
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0` or a
+    `t:MutableImage.t/0` upon which the circle
+    will be drawn. The image will be mutated.
+
+  * `cx` is the 0-based offset from the
+    left edge of the image indicating where
+    the center of the circle will be localed.
+
+  * `cy` is the 0-based offset from the
+    top edge of the image indicating where
+    the center of the circle will be localed.
+
+  * `radius` is the radius of the drawn circle.
+
+  * `options` is a keyword list of options.
+    The default is `color: :black`.
+
+  ### Options
+
+  * `:color` defines the color of the point. This
+    can be specified as a single integer which will
+    be applied to all bands, or a list of
+    integers representing the color for each
+    band. The color can also be supplied as a CSS color
+    name as a string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `:fill` is a boolean indicating whether the
+    rectangle is to be filled with `:color`. The
+    default is `true`.
+
+  ### Returns
+
+  * `{:ok, image}` where `image` is the same
+    type as that passed as an argument to the
+    function.
+
+  * or `{:error, reason}`
+
   """
   @doc since: "0.7.0"
 
@@ -107,6 +226,41 @@ defmodule Image.Draw do
 
   @doc """
   Draw a line on a mutable image.
+
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0` or a
+    `t:MutableImage.t/0` upon which the line
+    will be drawn. The image will be mutated.
+
+  * `x1`, `y1` are the 0-based offsets from the `left`
+    and `top` accordingly indicating the point
+    at the start of the line.
+
+  * `x2`, `y2` are the 0-based offsets from the `left`
+    and `top` accordingly indicating the point
+    at the end of the line.
+
+  * `options` is a keyword list of options.
+    The default is `color: :black`.
+
+  ### Options
+
+  * `:color` defines the color of the point. This
+    can be specified as a single integer which will
+    be applied to all bands, or a list of
+    integers representing the color for each
+    band. The color can also be supplied as a CSS color
+    name as a string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  ### Returns
+
+  * `{:ok, image}` where `image` is the same
+    type as that passed as an argument to the
+    function.
+
+  * or `{:error, reason}`
 
   """
   @doc since: "0.7.0"
@@ -143,19 +297,58 @@ defmodule Image.Draw do
   Draw one image over the top of a mutable
   image.
 
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0` or a
+    `t:MutableImage.t/0` upon which the the
+    other image will be drawn. The image will be
+    mutated.
+
+  * `sub_image` is any `t:Vimage.t/0` that
+    is drawn on top of `image`.
+
+  * `left` is the 0-based offset from the
+    left edge of the image where the sub-image
+    will be drawn.
+
+  * `top` is the 0-based offset from the
+    top edge of the image where the sub-image
+    will be drawn.
+
+  * `options` is a keyword list of options.
+    The default is `color: :black`.
+
+  ### Options
+
+  * `:color` defines the color of the point. This
+    can be specified as a single integer which will
+    be applied to all bands, or a list of
+    integers representing the color for each
+    band. The color can also be supplied as a CSS color
+    name as a string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  ### Returns
+
+  * `{:ok, image}` where `image` is the same
+    type as that passed as an argument to the
+    function.
+
+  * or `{:error, reason}`
+
   """
   @doc since: "0.7.0"
 
   @spec image(Vimage.t(), Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.image()) ::
     {:ok, Vimage.t()} | {:error, Image.error_message()}
 
-  def image(image, sub_image, x, y, options \\ [])
+  def image(image, sub_image, top, left, options \\ [])
 
-  def image(%Vimage{} = image, %Vimage{} = sub_image, x, y, options)
-      when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
+  def image(%Vimage{} = image, %Vimage{} = sub_image, top, left, options)
+      when is_integer(top) and is_integer(left) and left >= 0 and top >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:image, options) do
       Vimage.mutate(image, fn mut_img ->
-        MutableOperation.draw_image(mut_img, sub_image, x, y, options)
+        MutableOperation.draw_image(mut_img, sub_image, top, left, options)
       end)
     end
     |> maybe_wrap()
@@ -173,8 +366,52 @@ defmodule Image.Draw do
   end
 
   @doc """
-  Flood an area of a mutuable image bounded by the
-  given color.
+  Flood-fill image with color, starting at position
+  `top`, `left` .
+
+  The filled area is bounded by pixels that are equal to
+  the `:colour`. That is, it searches for pixels enclosed
+  by an edge of `:color`.
+
+  If `:equal` is `true`, it instead searches for pixels
+  which are equal to the start point and fills them with
+  `:color`.
+
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0` or a
+    `t:MutableImage.t/0` upon which the the
+    other image will be drawn. The image will be
+    mutated.
+
+  * `left` is the 0-based offset from the
+    left edge of the image where the flood
+    will be drawn.
+
+  * `top` is the 0-based offset from the
+    top edge of the image where the flood will
+    drawn.
+
+  * `options` is a keyword list of options.
+    The default is `color: :black`.
+
+  ### Options
+
+  * `:color` defines the color of the point. This
+    can be specified as a single integer which will
+    be applied to all bands, or a list of
+    integers representing the color for each
+    band. The color can also be supplied as a CSS color
+    name as a string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  ### Returns
+
+  * `{:ok, image}` where `image` is the same
+    type as that passed as an argument to the
+    function.
+
+  * or `{:error, reason}`
 
   """
   @doc since: "0.7.0"
@@ -185,11 +422,11 @@ defmodule Image.Draw do
 
   def flood(image, x, y, options \\ [])
 
-  def flood(%Vimage{} = image, x, y, options)
-      when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
+  def flood(%Vimage{} = image, left, top, options)
+      when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:flood, options) do
       Vimage.mutate image, fn mut_img ->
-        MutableOperation.draw_flood(mut_img, options.color, x, y, equal: options.equal)
+        MutableOperation.draw_flood(mut_img, options.color, left, top, equal: options.equal)
       end
     end
     |> maybe_wrap()
