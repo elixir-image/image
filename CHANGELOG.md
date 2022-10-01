@@ -6,6 +6,12 @@ This is the changelog for Image version 0.9.0 released on October 1st, 2022.  Fo
 
 * `Image.open/2` supports opening `.gif` and `.tif` images from raw binary data.
 
+* Add `Image.shape/1`
+
+* Add `Image.interpretation/1`
+
+* Add `Image.type/1`
+
 ## Image 0.8.0
 
 This is the changelog for Image version 0.8.0 released on September 30, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
