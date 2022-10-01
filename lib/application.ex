@@ -1,4 +1,6 @@
 defmodule Image.Application do
+  @moduledoc false
+
   # This env var, if set, will prevent `libvips`
   # from loading untrusted loaders.  We set this to
   # true if it is not otherwise set.
