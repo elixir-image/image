@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.10.0
+
+This is the changelog for Image version 0.10.0 released on October 5th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Since the mix build process does a `File.cwd!/1` to the directory of each dependency we can't use the dirname of the dependency to decide whether to configure `:evision` or not. The strategy is now changed to configure `:evision` only if the environment `CONFIGURE_EVISION` is set.  Note this is only relevant when developing `:image` itself.  Consumers of the library should add `:evision` as a dependency manually in their application `mix.exs` as described in the `readme`.  Thanks to @martosaur for the report.  Closes #13.
+
 ## Image 0.9.0
 
 This is the changelog for Image version 0.9.0 released on October 1st, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

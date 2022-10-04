@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.10.0-rc.0"
+  @version "0.10.0"
   @app_name "image"
 
   def project do
@@ -136,10 +136,9 @@ defmodule Image.MixProject do
 
   # Since hex packages can't have github deps in them
   # we need a way to configure eVision only if we are
-  # developing the project.  This method relies on the
-  # current directory being the project directory.
+  # developing the project.
   defp dev? do
-    (Mix.env() != :release) && String.ends_with?(File.cwd!(), "/#{@app_name}")
+    (Mix.env() != :release) && System.get_env("CONFIGURE_EVISION")
   end
 
   defp otp_release do
