@@ -2932,7 +2932,7 @@ defmodule Image do
 
   if match?({:module, _module}, Code.ensure_compiled(Nx)) do
     @doc """
-    Converts an image into an [Nx](https://github.com/packages/nx)
+    Converts an image into an [Nx](https://hex.pm/packages/nx)
     tensor.
 
     ### Arguments
@@ -2972,7 +2972,7 @@ defmodule Image do
     end
 
     @doc """
-    Converts an [Nx](https://github.com/packages/nx) tensor
+    Converts an [Nx](https://hex.pm/packages/nx) tensor
     into an image.
 
     ### Arguments
