@@ -1,5 +1,12 @@
 # Image/Vix interop with eVision/OpenCV
 
+```elixir
+Mix.install([
+  {:image, "~> 0.9.0"},
+  {:evision, "~> 0.1"}
+])
+```
+
 ## Define a known tensor as the reference image
 
 ```elixir
@@ -31,7 +38,7 @@ tensor = Nx.reshape(tensor, Nx.shape(tensor), names: [:width, :height, :bands])
 
 ```elixir
 {:ok, image} = Image.from_nx(tensor)
-Image.write(image, "/Users/kip/Desktop/ref.png")
+Image.write(image, "/tmp/ref.png")
 ```
 
 ## Import the tensor into eVision
@@ -48,14 +55,14 @@ The tensor as imported from Image to eVision, then exported again to Nx shows th
 Evision.Nx.to_nx(evision)
 ```
 
-Image stores data as {width, height, bands}. eVision stores data as {height, width, bands}. So transpose the axes in eVision.
+Image stores data as `{width, height, bands}`. eVision stores data as `{height, width, bands}`. So transpose the axes in eVision.
 
 <!-- livebook:{"break_markdown":true} -->
 
 Let's save that as an image even though the data is in the wrong order. It should still be a valid image.
 
 ```elixir
-Evision.imwrite("/Users/kip/Desktop/evision.png", evision)
+Evision.imwrite("/tmp/evision.png", evision)
 ```
 
 We get an error writing the image.
@@ -85,7 +92,7 @@ Evision.Nx.to_nx(transposed)
 Save the transposed image and see what it looks like
 
 ```elixir
-Evision.imwrite("/Users/kip/Desktop/transposed.png", transposed)
+Evision.imwrite("/tmp/transposed.png", transposed)
 ```
 
 We get the same error:
@@ -117,14 +124,14 @@ Since Image data is RGB but eVision is BGR we need to convert it.
 Evision.Nx.to_nx(bgr)
 ```
 
-Well thats unexpected.  I would expect `[10, 20, 30]` to become `[30, 20, 10]`??  It also seems the the transposition is largely undone?  The data is in the same order as that of the original tensor, just grouped in `{2, 3}` rather than `{3, 2}`.
+Well that's unexpected.  I would expect `[10, 20, 30]` to become `[30, 20, 10]`??  It also seems the the transposition is largely undone?  The data is in the same order as that of the original tensor, just grouped in `{2, 3}` rather than `{3, 2}`.
 
 <!-- livebook:{"break_markdown":true} -->
 
 And try writing it again
 
 ```elixir
-Evision.imwrite("/Users/kip/Desktop/bgr.png", bgr)
+Evision.imwrite("/tmp/bgr.png", bgr)
 ```
 
 Nope, that data is completely unrecognizable!!!!!
@@ -132,7 +139,7 @@ Nope, that data is completely unrecognizable!!!!!
 ## Try a sample image
 
 ```elixir
-{:ok, i} = Image.open("/Users/kip/Desktop/qrcode.png", access: :random)
+{:ok, i} = Image.open("qrcode.png", access: :random)
 ```
 
 ```elixir
@@ -140,28 +147,28 @@ Nope, that data is completely unrecognizable!!!!!
 {:ok, e2} = Evision.Nx.to_mat(t2)
 {:ok, trans2} = Evision.Mat.transpose(e2, [1, 0, 2])
 {:ok, bgr2} = Evision.cvtColor(trans2, Evision.cv_COLOR_RGB2BGR())
-Evision.imwrite("/Users/kip/Desktop/qrcode_evision.png", bgr2)
+Evision.imwrite("/tmp/qrcode_evision.png", bgr2)
 ```
 
 ## Try Image.from_nx on our original data
 
 ```elixir
 {:ok, i2} = Image.from_nx(t2)
-Image.write(i2, "/Users/kip/Desktop/qrcode_orig.png")
+Image.write(i2, "/tmp/qrcode_orig.png")
 ```
 
 ## Serialize the tensor for debugging purposes
 
 ```elixir
-{:ok, tensor} = Image.open!("/Users/kip/Desktop/color.jpg") |> Image.to_nx()
+{:ok, tensor} = Image.open!("color.jpg") |> Image.to_nx()
 binary = tensor |> :erlang.term_to_binary()
-File.write("/Users/kip/Desktop/color_checker.etf", binary)
+File.write("/tmp/color_checker.etf", binary)
 ```
 
 ## Now recover the etf to confirm its ok
 
 ```elixir
-t3 = File.read!("/Users/kip/Desktop/color_checker.etf") |> :erlang.binary_to_term()
+t3 = File.read!("/tmp/color_checker.etf") |> :erlang.binary_to_term()
 {:ok, i3} = Image.from_nx(t3)
-Image.write(i3, "/Users/kip/Desktop/color_checker_roundtrip.jpg")
+Image.write(i3, "/tmp/color_checker_roundtrip.jpg")
 ```
