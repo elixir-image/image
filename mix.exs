@@ -51,7 +51,7 @@ defmodule Image.MixProject do
       # {:vix, path: "../vix"},
 
       # eVision OpenCV bindings
-      if(dev?(), do: {:evision, "~> 0.1.7", github: "cocoa-xu/evision", tag: "v0.1.7"}),
+      {:evision, "~> 0.1.8", optional: true},
 
       {:sweet_xml, "~> 0.7"},
       {:phoenix_html, "~> 3.2 or ~> 2.14"},
@@ -132,13 +132,6 @@ defmodule Image.MixProject do
       Exif: ~r/Image.Exif.*/,
       Xmp: ~r/Image.Xmp/
     ]
-  end
-
-  # Since hex packages can't have github deps in them
-  # we need a way to configure eVision only if we are
-  # developing the project.
-  defp dev? do
-    (Mix.env() != :release) && System.get_env("CONFIGURE_EVISION")
   end
 
   defp otp_release do
