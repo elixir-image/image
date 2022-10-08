@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.11.0
+
+This is the changelog for Image version 0.11.0 released on October 8th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancements
+
+* Now uses `eVision` version `0.1` or later from [hex.pm](https://hex.pm/packages/evision)
+
 ## Image 0.10.0
 
 This is the changelog for Image version 0.10.0 released on October 5th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
