@@ -23,7 +23,7 @@ defmodule Image.MixProject do
       preferred_cli_env: preferred_cli_env(),
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
-        plt_add_apps: ~w(mix nx plug)a
+        plt_add_apps: ~w(mix nx plug evision)a
       ],
       compilers: Mix.compilers()
     ]
@@ -46,9 +46,13 @@ defmodule Image.MixProject do
 
   defp deps do
     [
-      {:vix, "~> 0.13"},
+      {:vix, "~> 0.14"},
       # {:vix, github: "akash-akya/vix"},
       # {:vix, path: "../vix"},
+
+      # Kino for rendering in Livebook
+      if(Version.compare(System.version(), "1.13.0") in [:gt, :eq],
+        do: {:kino, "~> 0.7", optional: true}),
 
       # eVision OpenCV bindings
       {:evision, "~> 0.1", optional: true},

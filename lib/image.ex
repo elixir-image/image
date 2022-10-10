@@ -3467,8 +3467,7 @@ defmodule Image do
   """
   @spec get_concurrency :: pos_integer()
   def get_concurrency do
-    {:ok, concurrency} = Vix.Vips.concurrency_get()
-    concurrency
+    Vix.Vips.concurrency_get()
   end
 
   @doc """
