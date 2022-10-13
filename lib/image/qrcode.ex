@@ -15,7 +15,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     alias Vix.Vips.Image, as: Vimage
     alias Evision.QRCodeDetector, as: Detector
-    import Detector, only: [qrCodeDetector!: 0]
+    import Detector, only: [qrCodeDetector: 0]
 
     @dialyzer {:nowarn_function, {:decode, 1}}
 
@@ -50,11 +50,11 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     end
 
     def decode(%Evision.Mat{} = evision) do
-      case Detector.detectAndDecode(qrCodeDetector!(), evision) do
-        {:ok, {charlist, %Evision.Mat{}, %Evision.Mat{}}} ->
-          {:ok, List.to_string(charlist)}
+      case Detector.detectAndDecode(qrCodeDetector(), evision) do
+        {string, %Evision.Mat{}, %Evision.Mat{}} ->
+          {:ok, string}
 
-        {:ok, {[], {:error, "empty matrix"}, {:error, "empty matrix"}}} ->
+        {"", {:error, "empty matrix"}, {:error, "empty matrix"}} ->
           {:error, "No QRcode detected in the image"}
       end
     end
