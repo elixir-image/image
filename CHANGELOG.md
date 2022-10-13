@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.12.0
+
+This is the changelog for Image version 0.12.0 released on October 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancements
+
+* Updates to support [eVision 0.1.11](https://hex.pm/packages/evision/0.1.11) which has API breaking changes. There is no change to the `Image.QRcode.decode/1` function which uses `eVision`.
+
 ## Image 0.11.0
 
 This is the changelog for Image version 0.11.0 released on October 8th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

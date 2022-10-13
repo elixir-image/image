@@ -3030,7 +3030,7 @@ defmodule Image do
     # color channel order conversion (ie when its an RGB-A etc etc)
     # Same for interpretation (not every image is srgb!)
 
-    if match?({:module, _module}, Code.ensure_compiled(Evision)) do
+    if Code.ensure_loaded?(Evision) do
       @doc """
       Converts an `Image` image to an [Evision]() image.
 
@@ -3063,9 +3063,10 @@ defmodule Image do
       def to_evision(%Vimage{} = image) do
         with {:ok, tensor} <- to_nx(image),
              {width, height, bands} <- validate_transferable_image(image),
-             {:ok, mat} <- Evision.Nx.to_mat(tensor, {height, width, bands}),
-             {:ok, mat} <- Evision.Mat.last_dim_as_channel(mat) do
-          Evision.cvtColor(mat, Evision.cv_COLOR_RGB2BGR())
+             %Evision.Mat{} = mat <- Evision.Nx.to_mat(tensor, {height, width, bands}),
+             %Evision.Mat{} = mat <- Evision.Mat.last_dim_as_channel(mat),
+             %Evision.Mat{} = mat <- Evision.cvtColor(mat, Evision.cv_COLOR_RGB2BGR()) do
+          {:ok, mat}
         end
       end
 
