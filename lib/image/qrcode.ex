@@ -15,9 +15,34 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     alias Vix.Vips.Image, as: Vimage
     alias Evision.QRCodeDetector, as: Detector
+    alias Evision.QRCodeEncoder, as: Encoder
+
     import Detector, only: [qrCodeDetector: 0]
 
     @dialyzer {:nowarn_function, {:decode, 1}}
+
+    @doc """
+    Encodes a string as a QRCode.
+
+    ### Arguments
+
+    * `string` is any string to be encodedd
+
+    ### Returns
+
+    * `{:ok, image}` or
+
+    * `{:error, reason}`
+
+    """
+
+    @doc since: "0.13.0"
+
+    def encode(string) when is_binary(string) do
+      with %Evision.Mat{} = mat <- Encoder.encode(Encoder.create(), string) do
+        Image.from_evision(mat)
+      end
+    end
 
     @doc """
     Detects and decodes a QR code in an image.
@@ -53,6 +78,9 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       case Detector.detectAndDecode(qrCodeDetector(), evision) do
         {string, %Evision.Mat{}, %Evision.Mat{}} ->
           {:ok, string}
+
+        {"", %Evision.Mat{}, {:error, "empty matrix"}} ->
+          {:error, "No QRcode detected in the image"}
 
         {"", {:error, "empty matrix"}, {:error, "empty matrix"}} ->
           {:error, "No QRcode detected in the image"}
