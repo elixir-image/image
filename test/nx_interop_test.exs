@@ -43,16 +43,5 @@ if Code.ensure_loaded?(Nx) do
 
       assert_images_equal image, image2
     end
-
-    test "That an image round trips to Nx and back with transposition" do
-      image = image_path("Kamchatka-2019-8754.jpg")
-
-      {:ok, image} = Image.open(image, access: :random)
-      {:ok, tensor} = Image.to_nx(image)
-      tensor = Nx.transpose(tensor, axes: [:height, :width, :bands])
-      {:ok, image2} = Image.from_nx(tensor)
-
-      assert_images_equal image, image2
-    end
   end
 end

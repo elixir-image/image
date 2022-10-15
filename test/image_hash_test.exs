@@ -23,7 +23,7 @@ defmodule Image.Hash.Test do
   test "Comparing an image to cropped version of itself is < 10 difference" do
     image = image_path("San-Francisco-2018-04-2549.jpg")
     {:ok, image} = Image.open(image, access: :random)
-    {:ok, image_2} = Image.resize(image, 100)
+    {:ok, image_2} = Image.thumbnail(image, 100)
     {:ok, distance} = Image.hamming_distance(image, image_2)
 
     assert distance < 10

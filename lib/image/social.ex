@@ -18,7 +18,8 @@ defmodule Image.Social do
 
   """
   @type platform ::
-    :facebook | :twitter | :linkedin | :pinterest | :instagram | :tumblr | :youtube | :snapchat | :tiktok
+    :facebook | :twitter | :linkedin | :pinterest | :instagram | :tumblr |
+    :youtube | :snapchat | :tiktok
 
   # Before Version 1.0, this content will move from being a static
   # list to a dynamic one that can be updated at runtime
@@ -202,7 +203,7 @@ defmodule Image.Social do
     platform for which the image should be resized. See
     `Image.Social.image_usages/1`
 
-  * All other options are passed to `Image.resize!/3`.
+  * All other options are passed to `Image.thumbnail!/3`.
 
   ### Returns
 
@@ -224,7 +225,7 @@ defmodule Image.Social do
 
     with {:ok, size} <- get_image_size(platform, usage, orientation) do
       image
-      |> Image.resize!(size, options)
+      |> Image.thumbnail!(size, options)
       |> Image.to_colorspace!(:srgb)
       |> Image.minimize_metadata()
     end
@@ -260,7 +261,7 @@ defmodule Image.Social do
     platform for which the image should be resized. See
     `Image.Social.image_usages/1`
 
-  * All other options are passed to `Image.resize!/3`.
+  * All other options are passed to `Image.thumbnail!/3`.
 
   ## Returns
 

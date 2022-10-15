@@ -19,7 +19,7 @@ defmodule Image do
   alias Vix.Vips.Image, as: Vimage
 
   alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode}
-  alias Image.Options.{Resize, Compose, Open}
+  alias Image.Options.{Resize, Thumbnail, Compose, Open}
 
   @typedoc """
   A 512 bit binary hash of an image.
@@ -1445,7 +1445,45 @@ defmodule Image do
   end
 
   @doc """
-  Resize an image to fit or fill a bounding box.
+  Resize an image.
+
+  If the intent is to thumnail an image then `Image.thumbnail/3`
+  is recommended since it applies a very efficient downsizing
+  algorithm for that use case.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `scale` is a float scale factor.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:centre` is a boolean indicating whether to use
+    the centre downsampling convention. The default is
+    `false`.
+
+  * `:kernel` defines which resampling kernel to apply.
+    The options are `:nearest`, `:linear`, `:cubic`,
+    `:mitchell`, `:lanczos2` or `:lanczos3` (the default).
+
+  """
+
+  @doc since: "0.13.0"
+
+  @spec resize(Vimage.t(), scale :: number(), options :: Resize.resize_options()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def resize(%Vimage{} = image, scale, options \\ []) when scale >= 0 do
+    with {:ok, options} <- Resize.validate_options(options) do
+      Operation.resize(image, scale, options)
+    end
+  end
+
+  @doc """
+  Thumbnail an image to fit or fill a bounding box.
 
   ### Arguments
 
@@ -1511,38 +1549,38 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec resize(Vimage.t(), width :: pos_integer(), options :: Resize.resize_options()) ::
+  @spec thumbnail(Vimage.t(), width :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def resize(image_or_path, width, options \\ [])
+  def thumbnail(image_or_path, width, options \\ [])
 
-  def resize(%Vimage{} = image, width, options) when is_size(width) do
-    with {:ok, options} <- Resize.validate_options(options) do
+  def thumbnail(%Vimage{} = image, width, options) when is_size(width) do
+    with {:ok, options} <- Thumbnail.validate_options(options) do
       Operation.thumbnail_image(image, width, options)
     end
   end
 
-  @spec resize(Path.t(), width :: pos_integer(), options :: Resize.resize_options()) ::
+  @spec thumbnail(Path.t(), width :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def resize(image_path, width, options) when is_binary(image_path) and is_size(width) do
-    with {:ok, options} <- Resize.validate_options(options),
+  def thumbnail(image_path, width, options) when is_binary(image_path) and is_size(width) do
+    with {:ok, options} <- Thumbnail.validate_options(options),
          {:ok, _file} = file_exists?(image_path) do
       Operation.thumbnail(image_path, width, options)
     end
   end
 
-  @spec resize(Vimage.t() | Path.t(), dimensions :: binary(), options :: Resize.resize_options()) ::
+  @spec thumbnail(Vimage.t() | Path.t(), dimensions :: binary(), options :: Thumbnail.thumbnail_options()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
-  def resize(image_or_path, dimensions, options) when is_binary(dimensions) do
-    with {:ok, width, options} <- Resize.validate_dimensions(dimensions, options) do
-      resize(image_or_path, width, options)
+  def thumbnail(image_or_path, dimensions, options) when is_binary(dimensions) do
+    with {:ok, width, options} <- Thumbnail.validate_dimensions(dimensions, options) do
+      thumbnail(image_or_path, width, options)
     end
   end
 
   @doc """
-  Resize an image to fit or fill a bounding box
+  Thumbnail an image to fit or fill a bounding box
   returning an image or raising an exception.
 
   ### Arguments
@@ -1558,7 +1596,7 @@ defmodule Image do
     providing an integer width.
 
   * `options` is a keyword list of options.
-    See `Image.resize/3`.
+    See `Image.thumbnail/3`.
 
   ### Returns
 
@@ -1567,15 +1605,17 @@ defmodule Image do
   * raises an exception.
 
   """
-  @spec resize!(
-          Vimage.t() | Path.t(),
-          width_or_dimensions :: pos_integer() | binary(),
-          options :: Options.Resize.resize_options()
-        ) ::
-          Vimage.t() | no_return
+  @spec thumbnail!(Vimage.t(), width :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
+          Vimage.t() | no_return()
 
-  def resize!(%Vimage{} = image, width_or_dimensions, options \\ []) do
-    case resize(image, width_or_dimensions, options) do
+  @spec thumbnail!(Path.t(), width :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
+          Vimage.t() | no_return()
+
+  @spec thumbnail!(Vimage.t() | Path.t(), dimensions :: binary(), options :: Thumbnail.thumbnail_options()) ::
+          Vimage.t() | no_return()
+
+  def thumbnail!(%Vimage{} = image, width_or_dimensions, options \\ []) do
+    case thumbnail(image, width_or_dimensions, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
@@ -3013,8 +3053,7 @@ defmodule Image do
 
     @spec from_nx(tensor :: Nx.Tensor.t()) ::  {:ok, Vimage.t()} | {:error, error_message()}
     def from_nx(tensor) when is_struct(tensor, Nx.Tensor) do
-      with {:ok, tensor} <- Image.Nx.transpose(tensor, Nx.shape(tensor), Nx.names(tensor)),
-           {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
+      with {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
         case Nx.shape(tensor) do
           {width, height, bands} when bands in 1..5 ->
             binary = Nx.to_binary(tensor)
@@ -3071,11 +3110,11 @@ defmodule Image do
       end
 
       @doc """
-      Converts to an `Image` image from an [Evision]() image.
+      Converts to an `Image` image from an `Evision.Mat` image.
 
       ### Arguments
 
-      * `evision_image` is any `Evision` image.
+      * `evision_image` is any `Evision.Mat` image.
 
       ### Returns
 
@@ -3170,7 +3209,7 @@ defmodule Image do
 
   defp pixelate(%Vimage{} = image, hash_size) do
     image
-    |> resize!(hash_size + 1, height: hash_size, resize: :force)
+    |> thumbnail!(hash_size + 1, height: hash_size, resize: :force)
     |> Operation.flatten!()
     |> to_colorspace!(:bw)
     |> Operation.extract_band!(0)
