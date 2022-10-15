@@ -26,7 +26,17 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     ### Arguments
 
-    * `string` is any string to be encodedd
+    * `string` is any string to be encoded,
+
+    * `options` is a keyword list of options. The
+      default is `size: :auto`.
+
+    ## Options
+
+    * `:size` is the size in pixels of the QRcode
+      dimenstions. The default is `:auto` in which
+      the generated QRcode will be the minimum dimensions
+      necessary to encode the `string`.
 
     ### Returns
 
@@ -38,9 +48,26 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     @doc since: "0.13.0"
 
-    def encode(string) when is_binary(string) do
+    def encode(string, options \\ []) when is_binary(string) do
+      size = Keyword.get(options, :size, :auto)
+
       with %Evision.Mat{} = mat <- Encoder.encode(Encoder.create(), string) do
-        Image.from_evision(mat)
+        case size do
+          :auto ->
+            Image.from_evision(mat)
+
+          size when is_integer(size) and size > 0 ->
+            mat
+            |> Image.from_evision()
+            |> Image.resize(interpolate: :nearest)
+
+          other ->
+          {
+            :error,
+            "Invalid `:size` option. `:size` must be a positive " <>
+            "integer or `:auto`. Found #{inspect other}."
+          }
+        end
       end
     end
 
@@ -76,12 +103,15 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     # The QRcode encoder will encode the smallest possible image
     # as a result, its often not recognised by the decoder. So we
-    # resize to a minimum size.
+    # resize to a minimum size.  Sizes less than 300px do not
+    # reliably decode (based upon informal testing).
 
-    @minimum_dimensions {300, 300}
+    @minumum_dimension 300
+    @dimensions {@minumum_dimension, @minumum_dimension}
 
-    def decode(%Evision.Mat{shape: {height, width, _}} = evision) when height < 300 or width < 300 do
-      resized = Evision.resize(evision, @minimum_dimensions, interpolate: Evision.cv_INTER_AREA)
+    def decode(%Evision.Mat{shape: {height, width, _}} = evision)
+        when height < @minumum_dimension or width < @minumum_dimension do
+      resized = Evision.resize(evision, @dimensions, interpolate: Evision.cv_INTER_NEAREST)
       decode(resized)
     end
 

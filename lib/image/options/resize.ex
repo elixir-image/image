@@ -12,7 +12,7 @@ defmodule Image.Options.Resize do
   """
   @type resize_options :: [
           {:center, boolean()} |
-          {:kernel, Image.Kernel.t()}
+          {:interpolate, Image.Kernel.t()}
         ]
 
   @doc """
@@ -37,8 +37,8 @@ defmodule Image.Options.Resize do
     {:cont, options}
   end
 
-  defp validate_option({:kernel, kernel}, options) do
-    Kernel.validate_kernel(kernel, options)
+  defp validate_option({:interpolate, interpolate}, options) do
+    Kernel.validate_kernel(interpolate, options)
   end
 
   defp validate_option(option, _options) do
