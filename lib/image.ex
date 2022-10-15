@@ -3097,7 +3097,7 @@ defmodule Image do
       @doc since: "0.9.0"
 
       def from_evision(evision_image) do
-        with {:ok, mat} = Evision.cvtColor(evision_image, Evision.cv_COLOR_BGR2RGB()) do
+        with %Evision.Mat{} = mat <- Evision.cvtColor(evision_image, Evision.cv_COLOR_BGR2RGB()) do
           tensor = Evision.Nx.to_nx(mat)
 
           case Nx.shape(tensor) do
