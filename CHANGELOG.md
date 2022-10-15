@@ -1,5 +1,19 @@
 # Changelog
 
+## Image 0.13.0
+
+This is the changelog for Image version 0.13.0 released on October 15th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Breaking change
+
+* `Image.resize/3` renamed to `Image.thumbnail/3`
+
+### Enhancements
+
+* Add `Image.QRcode.encode/1`
+
+* Add `Image.resize/2`
+
 ## Image 0.12.0
 
 This is the changelog for Image version 0.12.0 released on October 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

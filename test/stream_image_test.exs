@@ -28,7 +28,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
         image_path("Singapore-2016-09-5887.jpg")
         |> File.stream!([], 2048)
         |> Image.open!()
-        |> Image.resize!(200)
+        |> Image.thumbnail!(200)
         |> Image.write(out_path)
     end
 
@@ -40,7 +40,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
         image_path("Singapore-2016-09-5887.jpg")
         |> File.stream!([], 2048)
         |> Image.open!()
-        |> Image.resize!(200)
+        |> Image.thumbnail!(200)
         |> Image.write(stream, suffix: ".jpg")
     end
 
@@ -52,7 +52,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
         image_path("Singapore-2016-09-5887.jpg")
         |> File.stream!([], 2048)
         |> Image.open!()
-        |> Image.resize!(200)
+        |> Image.thumbnail!(200)
         |> Image.write(stream, suffix: ".invalid")
     end
 
@@ -64,7 +64,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
         image_path("Singapore-2016-09-5887.jpg")
         |> File.stream!([], 2048)
         |> Image.open!()
-        |> Image.resize!(200)
+        |> Image.thumbnail!(200)
         |> Image.write(stream)
     end
 
@@ -78,7 +78,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
         image_path("Singapore-2016-09-5887.jpg")
         |> File.stream!([], 2048)
         |> Image.open!()
-        |> Image.resize!(200)
+        |> Image.thumbnail!(200)
         |> Image.write(conn, suffix: ".jpg")
     end
 
@@ -92,7 +92,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
         image_path("Singapore-2016-09-5887.jpg")
         |> File.stream!([], 2048)
         |> Image.open!()
-        |> Image.resize!(200)
+        |> Image.thumbnail!(200)
         |> Image.stream!(suffix: ".jpg")
         |> Enum.reduce_while(conn, fn (chunk, conn) ->
           case Plug.Conn.chunk(conn, chunk) do
@@ -112,7 +112,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
           ExAws.S3.download_file("images", "Hong-Kong-2015-07-1998.jpg", :memory)
           |> ExAws.stream!
           |> Image.open!()
-          |> Image.resize!(200)
+          |> Image.thumbnail!(200)
           |> Image.write(out_path)
       end
 
@@ -124,7 +124,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
           ExAws.S3.download_file("images", "Hong-Kong-2015-07-1998.jpg", :memory)
           |> ExAws.stream!
           |> Image.open!()
-          |> Image.resize!(200)
+          |> Image.thumbnail!(200)
           |> Image.write(stream, suffix: ".jpg")
       end
 
@@ -135,7 +135,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
           ExAws.S3.download_file("images", "Hong-Kong-2015-07-1998.jpg", :memory)
           |> ExAws.stream!
           |> Image.open!()
-          |> Image.resize!(200)
+          |> Image.thumbnail!(200)
           |> Image.write(:memory, suffix: ".jpg")
 
         assert {:ok, _} =
@@ -150,7 +150,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
           image_path("Singapore-2016-09-5887.jpg")
           |> File.stream!([], 2048)
           |> Image.open!()
-          |> Image.resize!(200)
+          |> Image.thumbnail!(200)
           |> Image.stream!(suffix: ".jpg", buffer_size: @s3_buffer_size)
           |> ExAws.S3.upload("images", out_path)
           |> ExAws.request()
@@ -161,7 +161,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
           image_path("Singapore-2016-09-5887.jpg")
           |> File.stream!([], 2048)
           |> Image.open!()
-          |> Image.resize!(200)
+          |> Image.thumbnail!(200)
           |> Image.stream!()
         end
       end
@@ -173,7 +173,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
           ExAws.S3.download_file("images", "Hong-Kong-2015-07-1998.jpg", :memory)
           |> ExAws.stream!()
           |> Image.open!()
-          |> Image.resize!(200)
+          |> Image.thumbnail!(200)
           |> Image.stream!(suffix: ".jpg", buffer_size: @s3_buffer_size)
           |> ExAws.S3.upload("images", out_path)
           |> ExAws.request()

@@ -27,4 +27,11 @@ defmodule Image.QRcode.Test do
 
     assert Image.QRcode.decode(image) == {:error, "No QRcode detected in the image"}
   end
+
+  test "QR code encoding and roundtrip validation" do
+    string = "This is a string"
+
+    {:ok, qrcode} = Image.QRcode.encode(string)
+    assert {:ok, ^string} = Image.QRcode.decode(qrcode)
+  end
 end

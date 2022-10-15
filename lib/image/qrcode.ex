@@ -69,9 +69,20 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     @doc since: "0.9.0"
 
     def decode(%Vimage{} = image) do
-      with {:ok, %Evision.Mat{} = evision} <- Image.to_evision(image) do
+      with {:ok, evision} <- Image.to_evision(image) do
         decode(evision)
       end
+    end
+
+    # The QRcode encoder will encode the smallest possible image
+    # as a result, its often not recognised by the decoder. So we
+    # resize to a minimum size.
+
+    @minimum_dimensions {300, 300}
+
+    def decode(%Evision.Mat{shape: {height, width, _}} = evision) when height < 300 or width < 300 do
+      resized = Evision.resize(evision, @minimum_dimensions, interpolate: Evision.cv_INTER_AREA)
+      decode(resized)
     end
 
     def decode(%Evision.Mat{} = evision) do
