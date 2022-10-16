@@ -34,7 +34,7 @@ defmodule Image.Options.Blur do
     end
   end
 
-  defp validate_option({:sigma, sigma}, options) when is_float(sigma) do
+  defp validate_option({:sigma, sigma}, options) when is_number(sigma) and sigma > 0 do
     {:cont, options}
   end
 

@@ -3605,7 +3605,7 @@ defmodule Image do
         encoded_image = Base.encode64(binary, padding: true)
         bin_size = byte_size(binary)
         head = prelude <> "]1337;File=size=#{bin_size};inline=1:"
-        Vix.Nif.nif_write_bin_to_stdout(head <> encoded_image <> epilog)
+        IO.write head <> encoded_image <> epilog
         image
       end
     end
@@ -3642,7 +3642,7 @@ defmodule Image do
   end
 
   defp get_prelude_epilog_for_term(_term) do
-    {@esc, @ctrl_g <> "\r\n"}
+    {@esc, @esc <> "\\" <> "\r\n"}
   end
 
   defp maybe_resize_to_fit(image, {width, _height, _bands}) do
