@@ -3521,6 +3521,8 @@ defmodule Image do
     resized to the maximum width for the preview.
 
   """
+  @doc since: "0.13.0"
+
   @spec preview(Vimage.t()) :: Vimage.t() | {:error, String.t()}
   def preview(%Vimage{} = image) do
     with {:ok, "iTerm2"} <- supported_terminal(System.get_env("LC_TERMINAL")) do
@@ -3537,7 +3539,22 @@ defmodule Image do
     end
   end
 
-  defdelegate p(image), to: __MODULE__, as: :preview
+  @doc """
+  Delegates to `Image.preview/1`.
+
+  Intended to be used as shortcut in `iex`.
+  It can be included in `.iex.exs` file:
+
+      # .iex.exs
+      import_if_available(Image, only: [p: 1])
+
+  """
+  @doc since: "0.13.0"
+
+  @spec p(Vimage.t()) :: Vimage.t() | {:error, String.t()}
+  def p(image) do
+    preview(image)
+  end
 
   defp supported_terminal("iTerm2" = terminal) do
     {:ok, terminal}

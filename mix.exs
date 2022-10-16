@@ -48,7 +48,8 @@ defmodule Image.MixProject do
     [
       # {:vix, "~> 0.14"},
       # {:vix, github: "akash-akya/vix"},
-      {:vix, path: "../vix"},
+      {:vix, github: "kipcole9/vix", branch: "binwrite"},
+      # {:vix, path: "../vix"},
 
       # Kino for rendering in Livebook
       if(Version.compare(System.version(), "1.13.0") in [:gt, :eq],
