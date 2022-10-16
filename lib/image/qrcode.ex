@@ -117,11 +117,11 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     def decode(%Evision.Mat{} = evision) do
       case Detector.detectAndDecode(qrCodeDetector(), evision) do
-        {string, %Evision.Mat{}, %Evision.Mat{}} ->
+        {string, %Evision.Mat{} = _points, %Evision.Mat{} = _rectified} ->
           {:ok, string}
 
         {"", %Evision.Mat{}, {:error, "empty matrix"}} ->
-          {:error, "No QRcode detected in the image"}
+          {:error, "QRcode detected but could not be decoded"}
 
         {"", {:error, "empty matrix"}, {:error, "empty matrix"}} ->
           {:error, "No QRcode detected in the image"}

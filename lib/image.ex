@@ -1864,11 +1864,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec rotate(
-          image :: Vimage.t(),
-          angle :: float(),
-          options :: Options.Rotate.rotation_options()
-        ) ::
+  @spec rotate(image :: Vimage.t(), angle :: float(), options :: Options.Rotate.rotation_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def rotate(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
@@ -1908,16 +1904,92 @@ defmodule Image do
   * raises an exception.
 
   """
-  @spec rotate!(
-          image :: Vimage.t(),
-          angle :: float(),
-          options :: Options.Rotate.rotation_options()
-        ) ::
+  @spec rotate!(image :: Vimage.t(), angle :: float(), options :: Options.Rotate.rotation_options()) ::
           Vimage.t() | no_return()
 
   def rotate!(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
     case rotate(image, angle, options) do
       {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Applies a gaussian blur to an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:sigma` is the `float` size of the mask
+    to use. A larger number makes the image more
+    blurry. A range between `1.0` and `10.0`
+    is normally appropriate.
+
+  * `:min_amplitude` is a `float` thatdetermines
+    the accuracy of the mask. The deault is `0.2`.
+    A smaller number will generate a larger, more
+    accurate mask,
+
+  ### Returns
+
+  * `{:ok, blurred_image}` or
+
+  * `{:error reason}`
+
+  """
+  @doc since: "0.13.0"
+
+  @spec blur(image :: Vimage.t(), options :: Options.Blur.blur_options()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def blur(%Vimage{} = image, options \\ []) do
+    with {:ok, options} <- Options.Blur.validate_options(options) do
+      {sigma, options} = Keyword.pop(options, :sigma)
+      Operation.gaussblur(image, sigma, options)
+    end
+  end
+
+  @doc """
+  Applies a gaussian blur to an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:sigma` is the `float` size of the mask
+    to use. A larger number makes the image more
+    blurry. A range between `1.0` and `10.0`
+    is normally appropriate.
+
+  * `:min_amplitude` is a `float` thatdetermines
+    the accuracy of the mask. The deault is `0.2`.
+    A smaller number will generate a larger, more
+    accurate mask,
+
+  ### Returns
+
+  * `blurred_image` or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.13.0"
+
+  @spec blur!(image :: Vimage.t(), options :: Options.Blur.blur_options()) ::
+          Vimage.t() | no_return()
+
+  def blur!(%Vimage{} = image, options \\ []) do
+    case blur(image, options) do
+      {:ok, blurred_image} -> blurred_image
       {:error, reason} -> raise Image.Error, reason
     end
   end
@@ -2674,7 +2746,7 @@ defmodule Image do
     g = (y * bin_size) + midpoint
     b = (z * bin_size) + midpoint
 
-    [trunc(r), trunc(g), trunc(b)]
+    [round(r), round(g), round(b)]
   end
 
   @doc """
