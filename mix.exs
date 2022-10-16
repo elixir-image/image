@@ -46,8 +46,9 @@ defmodule Image.MixProject do
 
   defp deps do
     [
-      {:vix, "~> 0.14"},
+      # {:vix, "~> 0.14"},
       # {:vix, github: "akash-akya/vix"},
+      {:vix, github: "kipcole9/vix", branch: "binwrite"},
       # {:vix, path: "../vix"},
 
       # Kino for rendering in Livebook

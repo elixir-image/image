@@ -3562,6 +3562,102 @@ defmodule Image do
     end
   end
 
+  # The iTerm2 Image Preview protocol is:
+  # ESC ] 1337 ; File = [arguments] : base-64 encoded file contents ^G
+
+  @esc     <<0x1b>>  # Decimal 27
+  @ctrl_g  <<0x07>>  # Decimal 7
+
+  @default_max_width "1000"
+  @max_width_env_key "IMAGE_PREVIEW_MAX_WIDTH"
+
+  @doc """
+  Outputs an inline preview of an image to
+  an iTerm2 terminal.
+
+  Only iTerm2 terminal windows are supported.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Notes
+
+  * The function `Image.p/1` is delegated to
+    this function.
+
+  * The maximum width of the preview can be set
+    by the environment variable `#{@max_width_env_key}`.
+    The default is `1_000` pixels wide. If the width
+    of the image is greater than the maximum it will be
+    resized to the maximum width for the preview.
+
+  """
+  @doc since: "0.13.0"
+
+  @spec preview(Vimage.t()) :: Vimage.t() | {:error, String.t()}
+  def preview(%Vimage{} = image) do
+    with {:ok, "iTerm2"} <- supported_terminal(System.get_env("LC_TERMINAL")) do
+      {prelude, epilog} = get_prelude_epilog_for_term(System.get_env("TERM"))
+      {:ok, image} = maybe_resize_to_fit(image, shape(image))
+
+      with {:ok, binary} <- Vix.Vips.Image.write_to_buffer(image, ".png") do
+        encoded_image = Base.encode64(binary, padding: true)
+        bin_size = byte_size(binary)
+        head = prelude <> "]1337;File=size=#{bin_size};inline=1:"
+        Vix.Nif.nif_write_bin_to_stdout(head <> encoded_image <> epilog)
+        image
+      end
+    end
+  end
+
+  @doc """
+  Delegates to `Image.preview/1`.
+
+  Intended to be used as shortcut in `iex`.
+  It can be included in `.iex.exs` file:
+
+      # .iex.exs
+      import_if_available(Image, only: [p: 1])
+
+  """
+  @doc since: "0.13.0"
+
+  @spec p(Vimage.t()) :: Vimage.t() | {:error, String.t()}
+  def p(image) do
+    preview(image)
+  end
+
+  defp supported_terminal("iTerm2" = terminal) do
+    {:ok, terminal}
+  end
+
+  defp supported_terminal(terminal) do
+    {:error,
+      "Unsupported terminal #{inspect terminal}. iTerm2 is required for inline image display."}
+  end
+
+  defp get_prelude_epilog_for_term("screen" <> _rest) do
+    {@esc <> "Ptmux;" <> @esc <> @esc, @ctrl_g <> @ctrl_g <> "\\\r\n"}
+  end
+
+  defp get_prelude_epilog_for_term(_term) do
+    {@esc, @ctrl_g <> "\r\n"}
+  end
+
+  defp maybe_resize_to_fit(image, {width, _height, _bands}) do
+    max_width =
+      @max_width_env_key
+      |> System.get_env(@default_max_width)
+      |> String.to_integer()
+
+    if width > max_width do
+      thumbnail(image, max_width)
+    else
+      {:ok, image}
+    end
+  end
+
   @doc """
   Returns the number of operating system
   threads available for use by `libvips`.
