@@ -1010,13 +1010,15 @@ defmodule Image do
     end of the color range to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
-    representing a CSS color name.
+    representing a CSS color name. The default is similar to
+    "chroma green".
 
   * `:less_than` is an rgb color which represents the lower
     end of the color range to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
-    representing a CSS color name.
+    representing a CSS color name.  The default is similar to
+    "chroma green".
 
   """
   @doc since: "0.13.0"
@@ -1057,13 +1059,15 @@ defmodule Image do
     end of the color range to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
-    representing a CSS color name.
+    representing a CSS color name.  The default is similar to
+    "chroma green".
 
   * `:less_than` is an rgb color which represents the lower
     end of the color range to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
-    representing a CSS color name.
+    representing a CSS color name.  The default is similar to
+    "chroma green".
 
   """
   @doc since: "0.13.0"
@@ -1082,7 +1086,7 @@ defmodule Image do
   Chroma key an image.
 
   Chroma keying is the process of removing a background color
-  from an image resulting in a foreground object that may
+  from an image resulting in a foreground image that may
   be composited over another image.
 
   ### Arguments
@@ -1097,13 +1101,15 @@ defmodule Image do
     end of the color range to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
-    representing a CSS color name.
+    representing a CSS color name.  The default is similar to
+    "chroma green".
 
   * `:less_than` is an rgb color which represents the lower
     end of the color range to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
-    representing a CSS color name.
+    representing a CSS color name.  The default is similar to
+    "chroma green".
 
   """
   @doc since: "0.13.0"
@@ -1115,7 +1121,6 @@ defmodule Image do
     with {:ok, options} <- Options.ChromaKey.validate_options(options),
          {:ok, mask} <- chroma_mask(image, options) do
       image = if has_alpha?(image), do: Operation.flatten!(image), else: image
-      IO.inspect Image.shape(image)
       Vix.Vips.Operation.bandjoin([image, mask])
     end
   end
@@ -1125,7 +1130,7 @@ defmodule Image do
   raise an exception.
 
   Chroma keying is the process of removing a background color
-  from an image resulting in a foreground object that may
+  from an image resulting in a foreground image that may
   be composited over another image.
 
   The masking is done in the LCh color space since it's perceptually
@@ -1144,13 +1149,15 @@ defmodule Image do
     end of the color range to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
-    representing a CSS color name.
+    representing a CSS color name.  The default is similar to
+    "chroma green".
 
   * `:less_than` is an rgb color which represents the lower
     end of the color range to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
-    representing a CSS color name.
+    representing a CSS color name.  The default is similar to
+    "chroma green".
 
   """
   @doc since: "0.13.0"
