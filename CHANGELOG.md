@@ -24,9 +24,9 @@ This is the changelog for Image version 0.13.0 released on October ___th, 2022. 
 
 * Add `Image.blur/2`.
 
-* Add `Image.if_then_else/3`
+* Add `Image.if_then_else/3`.
 
-* Add `Image.chroma_key/2`
+* Add `Image.chroma_key/2` and `Image.chroma_mask/2`.
 
 * Add `Image.preview/1` (and `Image.p/1` that delegates to it) to preview and image inline in iTerm2 terminal windows.
 
