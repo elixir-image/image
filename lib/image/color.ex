@@ -4,6 +4,21 @@ defmodule Image.Color do
 
   """
 
+  @priv_dir :code.priv_dir(:image) |> List.to_string()
+  @path Path.join(@priv_dir, "color_map.csv")
+
+  @color_map File.read!(@path)
+  |> String.split("\n", trim: true)
+  |> Enum.map(&String.split(&1, ", "))
+  |> Enum.map(fn [name, hex] ->
+    <<"#", r::bytes-2, g::bytes-2, b::bytes-2>> = hex
+    rgb = [String.to_integer(r, 16), String.to_integer(g, 16), String.to_integer(b, 16)]
+    {String.downcase(name), hex: hex, rgb: rgb}
+  end)
+  |> Map.new()
+
+  @css_color Map.keys(@color_map) |> Enum.map(&String.to_atom/1)
+
   @typedoc """
   An rbg color expressed as a list of numbers.
 
@@ -45,6 +60,7 @@ defmodule Image.Color do
   """
   defguard is_color(color)
            when (is_number(color) and color >= 0) or (is_list(color) and length(color) in 3..5)
+           or (color in @css_color)
 
   @doc """
   Guards whether a given profile is one of the inbuilt
@@ -76,19 +92,6 @@ defmodule Image.Color do
       _other -> false
     end
   end
-
-  @priv_dir :code.priv_dir(:image) |> List.to_string()
-  @path Path.join(@priv_dir, "color_map.csv")
-
-  @color_map File.read!(@path)
-  |> String.split("\n", trim: true)
-  |> Enum.map(&String.split(&1, ", "))
-  |> Enum.map(fn [name, hex] ->
-    <<"#", r::bytes-2, g::bytes-2, b::bytes-2>> = hex
-    rgb = [String.to_integer(r, 16), String.to_integer(g, 16), String.to_integer(b, 16)]
-    {String.downcase(name), hex: hex, rgb: rgb}
-  end)
-  |> Map.new()
 
   @doc """
   Returns a mapping from CSS color names to CSS hex values

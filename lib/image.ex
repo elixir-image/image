@@ -21,6 +21,8 @@ defmodule Image do
   alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode}
   alias Image.Options.{Resize, Thumbnail, Compose, Open}
 
+  import Image.Color, only: :macros
+
   @typedoc """
   A 512 bit binary hash of an image.
 
@@ -971,17 +973,105 @@ defmodule Image do
     Operation.ifthenelse(condition_image, if_image, else_image)
   end
 
-  def if_then_else(%Vimage{} = condition_image, if_color, else_image_or_color) when is_pixel(if_color) do
-    with {:ok, if_color} <- Color.rgb_color(if_color),
+  def if_then_else(%Vimage{} = condition_image, if_color, else_image_or_color) when is_color(if_color) do
+    with {:ok, [hex: _hex, rgb: if_color]} <- Color.rgb_color(if_color),
          {:ok, if_image} <- new(condition_image, color: if_color) do
       if_then_else(condition_image, if_image, else_image_or_color)
     end
   end
 
-  def if_then_else(%Vimage{} = condition_image, if_image_or_color, else_color) when is_pixel(else_color) do
-    with {:ok, else_color} <- Color.rgb_color(else_color),
+  def if_then_else(%Vimage{} = condition_image, if_image_or_color, else_color) when is_color(else_color) do
+    with {:ok, [hex: _hex, rgb: else_color]} <- Color.rgb_color(else_color),
          {:ok, else_image} <- new(condition_image, color: else_color) do
       if_then_else(condition_image, if_image_or_color, else_image)
+    end
+  end
+
+  @doc """
+  Return a chroma-based masked image.
+
+  Chroma masking is the process of removing a background color
+  from an image and returning the remaining content as an alpha
+  mask.
+
+  The masking is done in the LCh color space since it's perceptually
+  more uniform.  The returned mask in reverted to the interpretation
+  of the original image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:hue` is an integer or integer range representing
+    the hue of the color to be masked out of the image.
+    A hue is between `0` and `360` in the LCh color space.
+    The value can also be `:green` which will be interpreted
+    to mean [chroma green](https://en.wikipedia.org/wiki/Chroma_key)
+    using the hue range of `100..170`. The default is `:green`.
+
+  """
+  @doc since: "0.13.0"
+
+  @spec chroma_mask(image :: Vimage.t(), options :: Options.ChromaKey.chroma_key_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def chroma_mask(%Vimage{} = image, options \\ []) do
+    with {:ok, options} <- Options.ChromaKey.validate_options(options),
+         %Range{first: first_hue, last: last_hue} <- Map.fetch!(options, :hue),
+         {:ok, image_lch} <- Image.to_colorspace(image, :lch) do
+      # Create a color mask
+      {:ok, greater} = Image.Math.greater_than(image_lch[2], first_hue)
+      {:ok, less} = Image.Math.less_than(image_lch[2], last_hue)
+      {:ok, color_mask} = Image.Math.boolean_and(greater, less)
+
+      # Reduce to a single band and invert to create an alpha mask
+      {:ok, mask} = Vix.Vips.Operation.bandbool(color_mask, :VIPS_OPERATION_BOOLEAN_AND)
+      {:ok, converted_mask} = Image.to_colorspace(mask, Image.interpretation(image))
+      Vix.Vips.Operation.invert(converted_mask)
+    end
+  end
+
+  @doc """
+  Return a chroma-based masked image or raises
+  an exception.
+
+  Chroma masking is the process of removing a background color
+  from an image and returning the remaining content as an alpha
+  mask.
+
+  The masking is done in the LCh color space since it's perceptually
+  more uniform.  The returned mask in reverted to the interpretation
+  of the original image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:hue` is an integer or integer range representing
+    the hue of the color to be masked out of the image.
+    A hue is between `0` and `360` in the LCh color space.
+    The value can also be `:green` which will be interpreted
+    to mean [chroma green](https://en.wikipedia.org/wiki/Chroma_key)
+    using the hue range of `100..170`. The default is `:green`.
+
+  """
+  @doc since: "0.13.0"
+
+  @spec chroma_mask!(image :: Vimage.t(), options :: Options.ChromaKey.chroma_key_options()) ::
+    Vimage.t() | no_return()
+
+  def chroma_mask!(%Vimage{} = image, options \\ []) do
+    case chroma_mask(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -992,6 +1082,25 @@ defmodule Image do
   from an image resulting in a foreground object that may
   be composited over another image.
 
+  The masking is done in the LCh color space since it's perceptually
+  more uniform.  The returned mask in reverted to the interpretation
+  of the original image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:hue` is an integer or integer range representing
+    the hue of the color to be masked out of the image.
+    A hue is between `0` and `360` in the LCh color space.
+    The value can also be `:green` which will be interpreted
+    to mean [chroma green](https://en.wikipedia.org/wiki/Chroma_key)
+    using the hue range of `100..170`. The default is `:green`.
+
   """
   @doc since: "0.13.0"
 
@@ -999,17 +1108,51 @@ defmodule Image do
     {:ok, Vimage.t()} | {:error, error_message()}
 
   def chroma_key(%Vimage{} = image, options \\ []) do
-    use Image.Math
+    with {:ok, options} <- Options.ChromaKey.validate_options(options),
+         {:ok, mask} <- chroma_mask(image, options) do
+      image = if has_alpha?(image), do: Operation.flatten!(image), else: image
+      Vix.Vips.Operation.bandjoin([image, mask])
+    end
+  end
 
-    image =
-      (image > [0.0, 100.0, 0.0])
-      |>if_then_else(:black, image)
+  @doc """
+  Chroma key an image and return an image or
+  raise an exception.
 
-    image =
-      (image < [100.0, 255.0, 95.0])
-      |>if_then_else(:white, image)
+  Chroma keying is the process of removing a background color
+  from an image resulting in a foreground object that may
+  be composited over another image.
 
-    {:ok, image}
+  The masking is done in the LCh color space since it's perceptually
+  more uniform.  The returned mask in reverted to the interpretation
+  of the original image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:hue` is an integer or integer range representing
+    the hue of the color to be masked out of the image.
+    A hue is between `0` and `360` in the LCh color space.
+    The value can also be `:green` which will be interpreted
+    to mean [chroma green](https://en.wikipedia.org/wiki/Chroma_key)
+    using the hue range of `100..170`. The default is `:green`.
+
+  """
+  @doc since: "0.13.0"
+
+  @spec chroma_key!(image :: Vimage.t(), options :: Options.ChromaKey.chroma_key_options()) ::
+    Vimage.t() | no_return()
+
+  def chroma_key!(%Vimage{} = image, options \\ []) do
+    case chroma_key(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
   end
 
   @doc """
