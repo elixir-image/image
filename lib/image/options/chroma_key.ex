@@ -43,7 +43,8 @@ defmodule Image.Options.ChromaKey do
 
   defp validate_option({:color, color} = option, options) do
     case Color.rgb_color(color) do
-      {:ok, color} -> {:cont, Keyword.put(options, :from, color)}
+      {:ok, hex: _hex, rgb: color}  -> {:cont, Keyword.put(options, key, color)}
+      {:ok, color}  -> {:cont, Keyword.put(options, key, color)}
       _other -> {:halt, invalid_option(option)}
     end
   end
