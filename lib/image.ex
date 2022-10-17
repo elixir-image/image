@@ -106,7 +106,10 @@ defmodule Image do
   @type error_message :: term()
 
   @typedoc """
-  A pixel is represented as a list of float values.
+  A pixel is represented as a list of number values or
+  a single number (which is then assumed to be the value
+  for all bands).
+
   The number of list elements is determined by
   the colorspace interpretations. For example:
 
@@ -122,7 +125,7 @@ defmodule Image do
     in a list to represent the pixel.
 
   """
-  @type pixel :: [float()]
+  @type pixel :: [number()] | number()
 
   @typedoc """
   Image orientation.
@@ -1065,15 +1068,19 @@ defmodule Image do
   def chroma_mask(%Vimage{} = image, options \\ []) do
     alias Image.Math
 
-    with {:ok, options} <- Options.ChromaKey.validate_options(options) do
-      color = maybe_calculate_color(image, options.color)
+    case Options.ChromaKey.validate_options(options) do
+      {:ok, options} ->
+        color = maybe_calculate_color(image, options.color)
 
-      image
-      |> Math.subtract!(color)
-      |> Math.pow!(2)
-      |> Operation.bandmean!()
-      |> Math.greater_than!(3 * options.threshold ** 2)
-      |> wrap(:ok)
+        image
+        |> Math.subtract!(color)
+        |> Math.pow!(2)
+        |> Operation.bandmean!()
+        |> Math.greater_than!(3 * options.threshold ** 2)
+        |> wrap(:ok)
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -1162,7 +1169,7 @@ defmodule Image do
     with {:ok, options} <- Options.ChromaKey.validate_options(options),
          {:ok, mask} <- chroma_mask(image, options) do
       image = if has_alpha?(image), do: Operation.flatten!(image), else: image
-      Vix.Vips.Operation.bandjoin([image, mask])
+      Operation.bandjoin([image, mask])
     end
   end
 
