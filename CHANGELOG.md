@@ -16,11 +16,17 @@ This is the changelog for Image version 0.13.0 released on October ___th, 2022. 
 
 ### Enhancements
 
-* Add `Image.QRcode.encode/1` and `Image.QRcode.decode/1`
+* Add `Image.QRcode.encode/1` and `Image.QRcode.decode/1`.
 
-* Add `Image.resize/3`
+* Add `Image.new/2` that creates a new image of the same shape as the provided image.
 
-* Add `Image.blur/2`
+* Add `Image.resize/3`.
+
+* Add `Image.blur/2`.
+
+* Add `Image.if_then_else/3`
+
+* Add `Image.chroma_key/2`
 
 * Add `Image.preview/1` (and `Image.p/1` that delegates to it) to preview and image inline in iTerm2 terminal windows.
 

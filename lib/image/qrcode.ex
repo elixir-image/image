@@ -57,9 +57,8 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
             Image.from_evision(mat)
 
           size when is_integer(size) and size > 0 ->
-            mat
-            |> Image.from_evision()
-            |> Image.resize(interpolate: :nearest)
+            {:ok, image} = Image.from_evision(mat)
+            Image.resize(image, size, interpolate: :nearest)
 
           other ->
           {

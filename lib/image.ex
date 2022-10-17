@@ -49,6 +49,12 @@ defmodule Image do
   @type image_data :: Path.t() | File.Stream.t() | binary()
 
   @typedoc """
+  Represents either in image, or a color
+  that is used to fill a new image
+  """
+  @type image_or_color :: Vimage.t() | Color.t()
+
+  @typedoc """
   The valid rendering intent values. For all
   functions that take an optional intent
   parameter the default is `:perceptual`.
@@ -270,10 +276,30 @@ defmodule Image do
         iex> {:ok, _image} = Image.new(100, 100, color: [0, 255, 0, 1], bands: 4)
 
   """
+
+  @spec new(width :: pos_integer(), height :: pos_integer()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def new(width, height)
+      when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
+    new(width, height, [])
+  end
+
+  @spec new(image :: %Vimage{}, options :: Options.New.t()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def new(%Vimage{} = image, options) do
+    {width, height, bands} = Image.shape(image)
+    options = Keyword.put_new(options, :bands, bands)
+
+    new(width, height, options)
+  end
+
   @spec new(width :: pos_integer(), height :: pos_integer(), options :: Options.New.t()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
-  def new(width, height, options \\ []) do
+  def new(width, height, options)
+      when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
     with {:ok, options} <- Options.New.validate_options(options) do
       {:ok, pixel} =
         Vix.Vips.Operation.black!(1, 1, bands: options.bands)
@@ -291,6 +317,58 @@ defmodule Image do
         yoffset: options.y_offset
       )
     end
+  end
+
+  @doc """
+  Create a new image of the same shape as the
+  provided image.
+
+  The function creates a new image with the same
+  width, height and bands as the image argument.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` from
+    which the new images `width` and `height` and
+  ` bands` will be derived.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:bands` defines the number of bands (channels)
+    to be created. The default is the number of bands
+    in `image`.
+
+  * `:color` defines the color of the image. This
+    can be specified as a single integer which will
+    be applied to all bands, or a list of
+    integers representing the color for each
+    band. The default is `0`, meaning black. The color
+    can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `:format` defines the format of the image. The
+    default is `{:u, 8}`.
+
+  * `:interpretation` defines the interpretation of
+    the image. The default is `:srgb`.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.1.13"
+
+  @spec new(image :: %Vimage{} ) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def new(%Vimage{} = image) do
+    new(image, [])
   end
 
   @doc """
@@ -841,6 +919,97 @@ defmodule Image do
       end
 
     Stream.chunk_while(stream, [], chunker, final)
+  end
+
+  @doc """
+  Scans the condition image cond and uses it to select
+  pixels from either the then `if_image` or the `else_image`.
+
+  Non-zero means copy a pixel from `if_image`, `0` means
+  copy a pixel from `else_iamge`.
+
+  ### Arguments
+
+  * `condition_image` is any image. Typically it is an image
+    formed by the relation operations such as `Image.Math.greater_than/2`.
+
+  * `if_image_or_color` is either an `t:Vimage.t/0` or
+    a ``t:Image.Color.t/0`. If a color is provided then
+    an image is constructed with the same shape as `condition_image`
+    filled with the provided color.
+
+  * `else_image_or_color` is either an `t:Vimage.t/0` or
+    a ``t:Image.Color.t/0`. If a color is provided then
+    an image is constructed with the same shape as `condition_image`
+    filled with the provided color.
+
+  ### Notes
+
+  Any image can have either 1 band or `n` bands, where `n`
+  is the same for all the non-1-band images. Single band
+  images are then effectively copied to make n-band images.
+
+  Images `if_image` and `else_iamge` are cast up to the
+  smallest common format. The `condition_iamge` is cast to
+  `{:u, 8}`.
+
+  If the images differ in size, the smaller images are
+  enlarged to match the largest by adding zero pixels along
+  the bottom and right.
+
+  The output image is calculated pixel by pixel as:
+
+      (condition_image / 255) * if_image + (1 - condition_image / 255) *`else_iamge`
+
+  """
+  @doc since: "0.13.0"
+
+  @spec if_then_else(condition_image :: Vimage.t(), if_image :: image_or_color(), else_image :: image_or_color()) ::
+    {:ok, Vimage.t} | {:error, error_message()}
+
+  def if_then_else(%Vimage{} = condition_image, %Vimage{} = if_image, %Vimage{} = else_image) do
+    Operation.ifthenelse(condition_image, if_image, else_image)
+  end
+
+  def if_then_else(%Vimage{} = condition_image, if_color, else_image_or_color) when is_pixel(if_color) do
+    with {:ok, if_color} <- Color.rgb_color(if_color),
+         {:ok, if_image} <- new(condition_image, color: if_color) do
+      if_then_else(condition_image, if_image, else_image_or_color)
+    end
+  end
+
+  def if_then_else(%Vimage{} = condition_image, if_image_or_color, else_color) when is_pixel(else_color) do
+    with {:ok, else_color} <- Color.rgb_color(else_color),
+         {:ok, else_image} <- new(condition_image, color: else_color) do
+      if_then_else(condition_image, if_image_or_color, else_image)
+    end
+  end
+
+  @doc """
+  Chroma key an image.
+
+  Chroma keying is the process of removing a background color
+  from an image resulting in a foreground object that may
+  be composited over another image.
+
+  """
+  @doc since: "0.13.0"
+
+  @spec chroma_key(image :: Vimage.t(), options :: Options.ChromaKey.chroma_key_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def chroma_key(%Vimage{} = image, options \\ []) do
+    use Image.Math
+
+    image =
+      (image > [0.0, 100.0, 0.0])
+      |>if_then_else(:black, image)
+
+    image =
+      (image < [100.0, 255.0, 95.0])
+      |>if_then_else(:white, image)
+
+    {:ok, image}
   end
 
   @doc """

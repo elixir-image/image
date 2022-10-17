@@ -348,7 +348,7 @@ defmodule Image.Draw do
       when is_integer(top) and is_integer(left) and left >= 0 and top >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:image, options) do
       Vimage.mutate(image, fn mut_img ->
-        MutableOperation.draw_image(mut_img, sub_image, top, left, options)
+        MutableOperation.draw_image(mut_img, sub_image, top, left, Map.to_list(options))
       end)
     end
     |> maybe_wrap()
@@ -357,10 +357,10 @@ defmodule Image.Draw do
   @spec image(MutableImage.t(), Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.image()) ::
     {:ok, Vimage.t()} | {:error, Image.error_message()}
 
-  def image(%MutableImage{} = image, %Vimage{} = sub_image, x, y, options)
-      when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
+  def image(%MutableImage{} = image, %Vimage{} = sub_image, top, left, options)
+      when is_integer(top) and is_integer(left) and top >= 0 and left >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:image, options) do
-      MutableOperation.draw_image(image, sub_image, x, y, options)
+      MutableOperation.draw_image(image, sub_image, top, left, Map.to_list(options))
     end
     |> maybe_wrap()
   end
