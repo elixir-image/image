@@ -988,6 +988,40 @@ defmodule Image do
   end
 
   @doc """
+  Automatically determine the chroma key
+  color of an image.
+
+  The top left 10x10 pixels are averaged
+  to produce a color sample that can
+  then be used my `Image.chroma_mask/2`
+  and `Image.chroma_key/2`.
+
+  ### Argument
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * An RGB color as a three-element list of
+    integers.
+
+  """
+  # Original python code
+  #   this will be an RGB triple eg. [10, 10, 240]
+  #   key_colour = [i.avg() for i in foreground.crop(0, 0, 10, 10).bandsplit()]
+
+  @doc since: "0.13.0"
+
+  @spec chroma_color(image :: Vimage.t()) :: Color.t()
+  def chroma_color(%Vimage{} = image) do
+    with {:ok, cropped} <- Image.crop(image, 0, 0, 10, 10) do
+      for i <- 0..Image.bands(cropped) - 1 do
+        Operation.avg!(image[i]) |> round()
+      end
+    end
+  end
+
+  @doc """
   Return a chroma-based masked image.
 
   Chroma masking is the process of removing a background color
@@ -1006,38 +1040,45 @@ defmodule Image do
 
   ### Options
 
-  * `:greater_than` is an rgb color which represents the upper
-    end of the color range to be masked. The color can be an
+  * `:color` is an RGB color which represents the the
+    chroma key to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
-    representing a CSS color name. The default is similar to
-    "chroma green".
+    representing a CSS color name. The default is
+    `:auto` in which the average of the top left `10x10`
+    pixels of the image is used.
 
-  * `:less_than` is an rgb color which represents the lower
-    end of the color range to be masked. The color can be an
-    integer between `0..255`, a three-element list of
-    integers representing an RGB color or an atom
-    representing a CSS color name.  The default is similar to
-    "chroma green".
+  * `:threshold`is a positive integer to indicate the
+    threshold around `:color` when calculating the mask.
+    The default is `20`.
 
   """
+  # Orginal python code from: https://github.com/libvips/libvips/discussions/3097#discussioncomment-3892994
+  #    threshold = 20
+  #    mask = ((foreground - key_colour) ** 2).bandmean() > (3 * threshold ** 2)
+
   @doc since: "0.13.0"
 
   @spec chroma_mask(image :: Vimage.t(), options :: Options.ChromaKey.chroma_key_options()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
   def chroma_mask(%Vimage{} = image, options \\ []) do
-    with {:ok, options} <- Options.ChromaKey.validate_options(options) do
-      # Create a color mask
-      {:ok, greater} = Image.Math.greater_than(image, options.greater_than)
-      {:ok, less} = Image.Math.less_than(image, options.less_than)
-      {:ok, color_mask} = Image.Math.boolean_and(greater, less)
+    alias Image.Math
 
-      # Reduce to a single band and invert to create an alpha mask
-      {:ok, mask} = Vix.Vips.Operation.bandbool(color_mask, :VIPS_OPERATION_BOOLEAN_AND)
-      Vix.Vips.Operation.invert(mask)
+    with {:ok, options} <- Options.ChromaKey.validate_options(options) do
+      color = maybe_calculate_color(image, options.color)
+
+      image
+      |> Math.subtract!(color)
+      |> Math.pow!(2)
+      |> Operation.bandmean!()
+      |> Math.greater_than!(3 * options.threshold ** 2)
+      |> wrap(:ok)
     end
   end
+
+  defp maybe_calculate_color(image, :auto), do: chroma_color(image)
+  defp maybe_calculate_color(_image, color), do: color
 
   @doc """
   Return a chroma-based masked image or raises
@@ -1055,19 +1096,17 @@ defmodule Image do
 
   ### Options
 
-  * `:greater_than` is an rgb color which represents the upper
-    end of the color range to be masked. The color can be an
+  * `:color` is an RGB color which represents the the
+    chroma key to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
-    representing a CSS color name.  The default is similar to
-    "chroma green".
+    representing a CSS color name. The default is
+    `:auto` in which the average of the top left `10x10`
+    pixels of the image is used.
 
-  * `:less_than` is an rgb color which represents the lower
-    end of the color range to be masked. The color can be an
-    integer between `0..255`, a three-element list of
-    integers representing an RGB color or an atom
-    representing a CSS color name.  The default is similar to
-    "chroma green".
+  * `:threshold`is a positive integer to indicate the
+    threshold around `:color` when calculating the mask.
+    The default is `20`.
 
   """
   @doc since: "0.13.0"
@@ -1101,19 +1140,17 @@ defmodule Image do
 
   ### Options
 
-  * `:greater_than` is an rgb color which represents the upper
-    end of the color range to be masked. The color can be an
+  * `:color` is an RGB color which represents the the
+    chroma key to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
-    representing a CSS color name.  The default is similar to
-    "chroma green".
+    representing a CSS color name. The default is
+    `:auto` in which the average of the top left `10x10`
+    pixels of the image is used.
 
-  * `:less_than` is an rgb color which represents the lower
-    end of the color range to be masked. The color can be an
-    integer between `0..255`, a three-element list of
-    integers representing an RGB color or an atom
-    representing a CSS color name.  The default is similar to
-    "chroma green".
+  * `:threshold`is a positive integer to indicate the
+    threshold around `:color` when calculating the mask.
+    The default is `20`.
 
   """
   @doc since: "0.13.0"
@@ -1149,19 +1186,17 @@ defmodule Image do
 
   ### Options
 
-  * `:greater_than` is an rgb color which represents the upper
-    end of the color range to be masked. The color can be an
+  * `:color` is an RGB color which represents the the
+    chroma key to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
-    representing a CSS color name.  The default is similar to
-    "chroma green".
+    representing a CSS color name. The default is
+    `:auto` in which the average of the top left `10x10`
+    pixels of the image is used.
 
-  * `:less_than` is an rgb color which represents the lower
-    end of the color range to be masked. The color can be an
-    integer between `0..255`, a three-element list of
-    integers representing an RGB color or an atom
-    representing a CSS color name.  The default is similar to
-    "chroma green".
+  * `:threshold`is a positive integer to indicate the
+    threshold around `:color` when calculating the mask.
+    The default is `20`.
 
   """
   @doc since: "0.13.0"
@@ -1268,25 +1303,27 @@ defmodule Image do
 
       # Compose images over a base image using
       # absolute coordinates from the base image
-      # to place each overlay image
-      #==> {:ok, image} = Image.compose(base_image, polygon, x: :middle, y: :top)
-      #==> {:ok, image} = Image.compose(image, explore_new, x: 260, y: 200)
-      #==> {:ok, image} = Image.compose(image, places, x: 260, y: 260)
-      #==> {:ok, image} = Image.compose(image, blowout, x: 260, y: 340)
-      #==> {:ok, image} = Image.compose(image, start_saving, x: 260, y: 400)
+      # to place each overlay image.
+
+      #=> {:ok, image} = Image.compose(base_image, polygon, x: :middle, y: :top)
+      #=> {:ok, image} = Image.compose(image, explore_new, x: 260, y: 200)
+      #=> {:ok, image} = Image.compose(image, places, x: 260, y: 260)
+      #=> {:ok, image} = Image.compose(image, blowout, x: 260, y: 340)
+      #=> {:ok, image} = Image.compose(image, start_saving, x: 260, y: 400)
 
       # Compose images over a base image
       # using a composition list and coordinates
       # that are either absolute with respect to the
       # base image or relative to the previously
-      # composed image
-      #==> Image.compose(base_image, [
-      ...>   {polygon, x: :center, y: :top},
-      ...>   {explore_new, y_baseline: :top, x_baseline: :left, dx: 20, dy: 200},
-      ...>   {places, dy: 10},
-      ...>   {blowout, dy: 20},
-      ...>   {start_saving, dy: 50}
-      ...> ])
+      # composed image.
+
+      #=> Image.compose(base_image, [
+      ..>   {polygon, x: :center, y: :top},
+      ..>   {explore_new, y_baseline: :top, x_baseline: :left, dx: 20, dy: 200},
+      ..>   {places, dy: 10},
+      ..>   {blowout, dy: 20},
+      ..>   {start_saving, dy: 50}
+      ..> ])
 
   """
   @spec compose(base_image::Vimage.t(), overlay_image::Vimage.t(), options::Keyword.t()) ::

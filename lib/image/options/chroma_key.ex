@@ -37,11 +37,20 @@ defmodule Image.Options.ChromaKey do
     {:ok, options}
   end
 
-  defp validate_option({key, color} = option, options) when key in [:greater_than, :less_than] do
+  defp validate_option({:color, :auto}, options) do
+    {:cont, options}
+  end
+
+  defp validate_option({:color, color} = option, options) do
     case Color.rgb_color(color) do
       {:ok, color} -> {:cont, Keyword.put(options, :from, color)}
       _other -> {:halt, invalid_option(option)}
     end
+  end
+
+  defp validate_option({:threshold, threshold}, options)
+      when is_integer(threshold) and threshold > 0 do
+    {:cont, options}
   end
 
   defp validate_option({:sigma, sigma}, options) when is_number(sigma) and sigma > 0 do
@@ -62,8 +71,8 @@ defmodule Image.Options.ChromaKey do
 
   defp default_options do
     [
-      greater_than: [0.0, 100.0, 0.0],
-      less_than: [100.0, 255.0, 95.0]
+      color: :auto,
+      threshold: 20
     ]
   end
 end
