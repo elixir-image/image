@@ -12,6 +12,8 @@ defmodule Image.Options.ChromaKey do
   @type chroma_key_options :: [
           {:color, Color.t() | :auto} |
           {:threshold, non_neg_integer()} |
+          {:greater_than, Color.t()} |
+          {:less_than, Color.t()} |
           {:sigma, float()} |
           {:min_amplitude, float()}
           ] | map()
@@ -30,7 +32,7 @@ defmodule Image.Options.ChromaKey do
         {:error, value}
 
       options ->
-        {:ok, Map.new(options)}
+        select_strategy(Map.new(options))
     end
   end
 
@@ -42,10 +44,11 @@ defmodule Image.Options.ChromaKey do
     {:cont, options}
   end
 
-  defp validate_option({:color, color} = option, options) do
+  defp validate_option({key, color} = option, options)
+      when key in [:greater_than, :less_than, :color] do
     case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color}  -> {:cont, Keyword.put(options, :color, color)}
-      {:ok, color}  -> {:cont, Keyword.put(options, :color, color)}
+      {:ok, hex: _hex, rgb: color}  -> {:cont, Keyword.put(options, key, color)}
+      {:ok, color}  -> {:cont, Keyword.put(options, key, color)}
       _other -> {:halt, invalid_option(option)}
     end
   end
@@ -69,6 +72,32 @@ defmodule Image.Options.ChromaKey do
 
   defp invalid_option(option) do
     "Invalid option or option value: #{inspect(option)}"
+  end
+
+  defp select_strategy(%{greater_than: _, less_than: _} = options) do
+    options =
+      options
+      |> Map.delete(:color)
+      |> Map.delete(:threshold)
+
+    {:ok, options}
+  end
+
+  defp select_strategy(%{color: _, threshold: _} = options) do
+    options =
+      options
+      |> Map.delete(:greater_than)
+      |> Map.delete(:less_than)
+
+    {:ok, options}
+  end
+
+  defp select_strategy(options) do
+    {
+      :error,
+      "Invalid options #{inspect options}. Options need to have either :greater_than " <>
+      " and :less_than or :color and :threshold."
+    }
   end
 
   defp default_options do

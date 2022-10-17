@@ -20,6 +20,7 @@ defmodule Image do
 
   alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode}
   alias Image.Options.{Resize, Thumbnail, Compose, Open}
+  alias Image.Options.ChromaKey
 
   import Image.Color, only: :macros
 
@@ -1043,6 +1044,12 @@ defmodule Image do
 
   ### Options
 
+  There are two masking strategies available: the
+  thresholding strategy (default) and the color
+  range strategy.
+
+  #### Threshold strategy
+
   * `:color` is an RGB color which represents the the
     chroma key to be masked. The color can be an
     integer between `0..255`, a three-element list of
@@ -1055,32 +1062,60 @@ defmodule Image do
     threshold around `:color` when calculating the mask.
     The default is `20`.
 
+  #### Color range strategy
+
+  * `:greater_than` is an RGB color which represents the upper
+     end of the color range to be masked. The color can be an
+     integer between `0..255`, a three-element list of
+     integers representing an RGB color or an atom
+     representing a CSS color name.
+
+   * `:less_than` is an RGB color which represents the lower
+     end of the color range to be masked. The color can be an
+     integer between `0..255`, a three-element list of
+     integers representing an RGB color or an atom
+     representing a CSS color name.
+
   """
-  # Orginal python code from: https://github.com/libvips/libvips/discussions/3097#discussioncomment-3892994
+
+  # Orginal python code for thresholding from: https://github.com/libvips/libvips/discussions/3097#discussioncomment-3892994
   #    threshold = 20
   #    mask = ((foreground - key_colour) ** 2).bandmean() > (3 * threshold ** 2)
 
   @doc since: "0.13.0"
 
-  @spec chroma_mask(image :: Vimage.t(), options :: Options.ChromaKey.chroma_key_options()) ::
+  @spec chroma_mask(image :: Vimage.t(), options :: ChromaKey.chroma_key_options() | map()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
-  def chroma_mask(%Vimage{} = image, options \\ []) do
+  def chroma_mask(image, options \\ [])
+
+  def chroma_mask(%Vimage{} = image, options) when is_list(options) do
     alias Image.Math
 
-    case Options.ChromaKey.validate_options(options) do
-      {:ok, options} ->
-        color = maybe_calculate_color(image, options.color)
+    with  {:ok, options} <- Options.ChromaKey.validate_options(options) do
+      chroma_mask(image, options)
+    end
+  end
 
-        image
-        |> Math.subtract!(color)
-        |> Math.pow!(2)
-        |> Operation.bandmean!()
-        |> Math.greater_than!(3 * options.threshold ** 2)
-        |> wrap(:ok)
+  def chroma_mask(%Vimage{} = image, %{color: color, threshold: threshold}) do
+    alias Image.Math
 
-      {:error, reason} ->
-        {:error, reason}
+    color = maybe_calculate_color(image, color)
+
+    image
+    |> Math.subtract!(color)
+    |> Math.pow!(2)
+    |> Operation.bandmean!()
+    |> Math.greater_than!(3 * threshold ** 2)
+    |> wrap(:ok)
+  end
+
+  def chroma_mask(%Vimage{} = image, %{greater_than: greater_than, less_than: less_than}) do
+    with {:ok, greater} <- Image.Math.greater_than(image, greater_than),
+         {:ok, less} = Image.Math.less_than(image, less_than),
+         {:ok, color_mask} = Image.Math.boolean_and(greater, less),
+         {:ok, mask} = Vix.Vips.Operation.bandbool(color_mask, :VIPS_OPERATION_BOOLEAN_AND) do
+      Vix.Vips.Operation.invert(mask)
     end
   end
 
@@ -1103,6 +1138,12 @@ defmodule Image do
 
   ### Options
 
+  There are two masking strategies available: the
+  thresholding strategy (default) and the color
+  range strategy.
+
+  #### Threshold strategy
+
   * `:color` is an RGB color which represents the the
     chroma key to be masked. The color can be an
     integer between `0..255`, a three-element list of
@@ -1115,10 +1156,24 @@ defmodule Image do
     threshold around `:color` when calculating the mask.
     The default is `20`.
 
+  #### Color range strategy
+
+  * `:greater_than` is an RGB color which represents the upper
+     end of the color range to be masked. The color can be an
+     integer between `0..255`, a three-element list of
+     integers representing an RGB color or an atom
+     representing a CSS color name.
+
+   * `:less_than` is an RGB color which represents the lower
+     end of the color range to be masked. The color can be an
+     integer between `0..255`, a three-element list of
+     integers representing an RGB color or an atom
+     representing a CSS color name.
+
   """
   @doc since: "0.13.0"
 
-  @spec chroma_mask!(image :: Vimage.t(), options :: Options.ChromaKey.chroma_key_options()) ::
+  @spec chroma_mask!(image :: Vimage.t(), options :: ChromaKey.chroma_key_options()) ::
     Vimage.t() | no_return()
 
   def chroma_mask!(%Vimage{} = image, options \\ []) do
@@ -1147,6 +1202,12 @@ defmodule Image do
 
   ### Options
 
+  There are two masking strategies available: the
+  thresholding strategy (default) and the color
+  range strategy.
+
+  #### Threshold strategy
+
   * `:color` is an RGB color which represents the the
     chroma key to be masked. The color can be an
     integer between `0..255`, a three-element list of
@@ -1159,10 +1220,24 @@ defmodule Image do
     threshold around `:color` when calculating the mask.
     The default is `20`.
 
+  #### Color range strategy
+
+  * `:greater_than` is an RGB color which represents the upper
+     end of the color range to be masked. The color can be an
+     integer between `0..255`, a three-element list of
+     integers representing an RGB color or an atom
+     representing a CSS color name.
+
+   * `:less_than` is an RGB color which represents the lower
+     end of the color range to be masked. The color can be an
+     integer between `0..255`, a three-element list of
+     integers representing an RGB color or an atom
+     representing a CSS color name.
+
   """
   @doc since: "0.13.0"
 
-  @spec chroma_key(image :: Vimage.t(), options :: Options.ChromaKey.chroma_key_options()) ::
+  @spec chroma_key(image :: Vimage.t(), options :: ChromaKey.chroma_key_options()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
   def chroma_key(%Vimage{} = image, options \\ []) do
@@ -1193,6 +1268,12 @@ defmodule Image do
 
   ### Options
 
+  There are two masking strategies available: the
+  thresholding strategy (default) and the color
+  range strategy.
+
+  #### Threshold strategy
+
   * `:color` is an RGB color which represents the the
     chroma key to be masked. The color can be an
     integer between `0..255`, a three-element list of
@@ -1205,10 +1286,24 @@ defmodule Image do
     threshold around `:color` when calculating the mask.
     The default is `20`.
 
+  #### Color range strategy
+
+  * `:greater_than` is an RGB color which represents the upper
+     end of the color range to be masked. The color can be an
+     integer between `0..255`, a three-element list of
+     integers representing an RGB color or an atom
+     representing a CSS color name.
+
+   * `:less_than` is an RGB color which represents the lower
+     end of the color range to be masked. The color can be an
+     integer between `0..255`, a three-element list of
+     integers representing an RGB color or an atom
+     representing a CSS color name.
+
   """
   @doc since: "0.13.0"
 
-  @spec chroma_key!(image :: Vimage.t(), options :: Options.ChromaKey.chroma_key_options()) ::
+  @spec chroma_key!(image :: Vimage.t(), options :: ChromaKey.chroma_key_options()) ::
     Vimage.t() | no_return()
 
   def chroma_key!(%Vimage{} = image, options \\ []) do
