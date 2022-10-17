@@ -385,7 +385,7 @@ defmodule Image do
   def open(path_or_stream_or_binary, options \\ [])
 
   # JPEG signature
-  def open(<<0xff, 0xd8, 0xff, _::size(24), "JFIF", _::binary>> = image, options) do
+  def open(<<0xff, 0xd8, 0xff, _::binary>> = image, options) do
     from_binary(image, options)
   end
 

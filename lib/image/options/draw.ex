@@ -113,6 +113,7 @@ defmodule Image.Options.Draw do
     case options do
       {:ok, options} ->
         options
+        |> Map.new()
         |> wrap(:ok)
 
       other -> other

@@ -8,13 +8,17 @@ This is the changelog for Image version 0.13.0 released on October ___th, 2022. 
 
 * `Image.resize/3` renamed to `Image.thumbnail/3`
 
+### Bug fixes
+
+* Fix `Image.open/2` when opening JPEG images from a binary. Seems JPEG files agree on the `<<0xff, 0xd8, 0xff>>` header for the first three bytes. But not completely consistent with the following bytes.
+
+* Fix options for `Image.Draw` functions which are expected to be a map after validation (but were a keyword list).
+
 ### Enhancements
 
-* Add `Image.QRcode.encode/1`
+* Add `Image.QRcode.encode/1` and `Image.QRcode.decode/1`
 
 * Add `Image.resize/3`
-
-* Add `Image.blur/2`
 
 * Add `Image.blur/2`
 
