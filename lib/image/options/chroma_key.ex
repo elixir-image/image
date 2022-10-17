@@ -3,9 +3,7 @@ defmodule Image.Options.ChromaKey do
   Options and option validation for `Image.chroma_key/2`.
 
   """
-
-  @hue_range 0..360
-  @chroma_green_hue 100..170
+  alias Image.Color
 
   @typedoc """
   Options applicable to Image.chroma_key/2
@@ -39,17 +37,11 @@ defmodule Image.Options.ChromaKey do
     {:ok, options}
   end
 
-  defp validate_option({:hue, :green}, options) do
-    {:cont, Keyword.put(options, :hue, @chroma_green_hue)}
-  end
-
-  defp validate_option({:hue, first..last}, options) when last >= first do
-    {:cont, options}
-  end
-
-  defp validate_option({:hue, number}, options)
-      when is_integer(number) and number in @hue_range do
-    {:cont, Keyword.put(options, :hue, number..number)}
+  defp validate_option({key, color} = option, options) when key in [:greater_than, :less_than] do
+    case Color.rgb_color(color) do
+      {:ok, color} -> {:cont, Keyword.put(options, :from, color)}
+      _other -> {:halt, invalid_option(option)}
+    end
   end
 
   defp validate_option({:sigma, sigma}, options) when is_number(sigma) and sigma > 0 do
@@ -70,7 +62,8 @@ defmodule Image.Options.ChromaKey do
 
   defp default_options do
     [
-      hue: @chroma_green_hue
+      greater_than: [0.0, 100.0, 0.0],
+      less_than: [100.0, 255.0, 95.0]
     ]
   end
 end

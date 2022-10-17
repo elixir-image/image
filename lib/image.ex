@@ -1006,12 +1006,17 @@ defmodule Image do
 
   ### Options
 
-  * `:hue` is an integer or integer range representing
-    the hue of the color to be masked out of the image.
-    A hue is between `0` and `360` in the LCh color space.
-    The value can also be `:green` which will be interpreted
-    to mean [chroma green](https://en.wikipedia.org/wiki/Chroma_key)
-    using the hue range of `100..170`. The default is `:green`.
+  * `:greater_than` is an rgb color which represents the upper
+    end of the color range to be masked. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name.
+
+  * `:less_than` is an rgb color which represents the lower
+    end of the color range to be masked. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name.
 
   """
   @doc since: "0.13.0"
@@ -1020,18 +1025,15 @@ defmodule Image do
     {:ok, Vimage.t()} | {:error, error_message()}
 
   def chroma_mask(%Vimage{} = image, options \\ []) do
-    with {:ok, options} <- Options.ChromaKey.validate_options(options),
-         %Range{first: first_hue, last: last_hue} <- Map.fetch!(options, :hue),
-         {:ok, image_lch} <- Image.to_colorspace(image, :lch) do
+    with {:ok, options} <- Options.ChromaKey.validate_options(options) do
       # Create a color mask
-      {:ok, greater} = Image.Math.greater_than(image_lch[2], first_hue)
-      {:ok, less} = Image.Math.less_than(image_lch[2], last_hue)
+      {:ok, greater} = Image.Math.greater_than(image, options.greater_than)
+      {:ok, less} = Image.Math.less_than(image, options.less_than)
       {:ok, color_mask} = Image.Math.boolean_and(greater, less)
 
       # Reduce to a single band and invert to create an alpha mask
       {:ok, mask} = Vix.Vips.Operation.bandbool(color_mask, :VIPS_OPERATION_BOOLEAN_AND)
-      {:ok, converted_mask} = Image.to_colorspace(mask, Image.interpretation(image))
-      Vix.Vips.Operation.invert(converted_mask)
+      Vix.Vips.Operation.invert(mask)
     end
   end
 
@@ -1043,10 +1045,6 @@ defmodule Image do
   from an image and returning the remaining content as an alpha
   mask.
 
-  The masking is done in the LCh color space since it's perceptually
-  more uniform.  The returned mask in reverted to the interpretation
-  of the original image.
-
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
@@ -1055,12 +1053,17 @@ defmodule Image do
 
   ### Options
 
-  * `:hue` is an integer or integer range representing
-    the hue of the color to be masked out of the image.
-    A hue is between `0` and `360` in the LCh color space.
-    The value can also be `:green` which will be interpreted
-    to mean [chroma green](https://en.wikipedia.org/wiki/Chroma_key)
-    using the hue range of `100..170`. The default is `:green`.
+  * `:greater_than` is an rgb color which represents the upper
+    end of the color range to be masked. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name.
+
+  * `:less_than` is an rgb color which represents the lower
+    end of the color range to be masked. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name.
 
   """
   @doc since: "0.13.0"
@@ -1082,10 +1085,6 @@ defmodule Image do
   from an image resulting in a foreground object that may
   be composited over another image.
 
-  The masking is done in the LCh color space since it's perceptually
-  more uniform.  The returned mask in reverted to the interpretation
-  of the original image.
-
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
@@ -1094,12 +1093,17 @@ defmodule Image do
 
   ### Options
 
-  * `:hue` is an integer or integer range representing
-    the hue of the color to be masked out of the image.
-    A hue is between `0` and `360` in the LCh color space.
-    The value can also be `:green` which will be interpreted
-    to mean [chroma green](https://en.wikipedia.org/wiki/Chroma_key)
-    using the hue range of `100..170`. The default is `:green`.
+  * `:greater_than` is an rgb color which represents the upper
+    end of the color range to be masked. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name.
+
+  * `:less_than` is an rgb color which represents the lower
+    end of the color range to be masked. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name.
 
   """
   @doc since: "0.13.0"
@@ -1111,6 +1115,7 @@ defmodule Image do
     with {:ok, options} <- Options.ChromaKey.validate_options(options),
          {:ok, mask} <- chroma_mask(image, options) do
       image = if has_alpha?(image), do: Operation.flatten!(image), else: image
+      IO.inspect Image.shape(image)
       Vix.Vips.Operation.bandjoin([image, mask])
     end
   end
@@ -1135,12 +1140,17 @@ defmodule Image do
 
   ### Options
 
-  * `:hue` is an integer or integer range representing
-    the hue of the color to be masked out of the image.
-    A hue is between `0` and `360` in the LCh color space.
-    The value can also be `:green` which will be interpreted
-    to mean [chroma green](https://en.wikipedia.org/wiki/Chroma_key)
-    using the hue range of `100..170`. The default is `:green`.
+  * `:greater_than` is an rgb color which represents the upper
+    end of the color range to be masked. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name.
+
+  * `:less_than` is an rgb color which represents the lower
+    end of the color range to be masked. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name.
 
   """
   @doc since: "0.13.0"
