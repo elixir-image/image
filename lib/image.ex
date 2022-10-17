@@ -1089,6 +1089,10 @@ defmodule Image do
   from an image resulting in a foreground image that may
   be composited over another image.
 
+  If the image already has an alpha band then the
+  image is flattened before adding the image mask
+  as a new alpha band.
+
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
@@ -1133,9 +1137,9 @@ defmodule Image do
   from an image resulting in a foreground image that may
   be composited over another image.
 
-  The masking is done in the LCh color space since it's perceptually
-  more uniform.  The returned mask in reverted to the interpretation
-  of the original image.
+  If the image already has an alpha band then the
+  image is flattened before adding the image mask
+  as a new alpha band.
 
   ### Arguments
 
