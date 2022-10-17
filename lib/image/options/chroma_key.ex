@@ -10,7 +10,8 @@ defmodule Image.Options.ChromaKey do
 
   """
   @type chroma_key_options :: [
-          {:hue, non_neg_integer() | Range.t()} |
+          {:color, Color.t() | :auto} |
+          {:threshold, non_neg_integer()} |
           {:sigma, float()} |
           {:min_amplitude, float()}
           ] | map()
@@ -43,8 +44,8 @@ defmodule Image.Options.ChromaKey do
 
   defp validate_option({:color, color} = option, options) do
     case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color}  -> {:cont, Keyword.put(options, key, color)}
-      {:ok, color}  -> {:cont, Keyword.put(options, key, color)}
+      {:ok, hex: _hex, rgb: color}  -> {:cont, Keyword.put(options, :color, color)}
+      {:ok, color}  -> {:cont, Keyword.put(options, :color, color)}
       _other -> {:halt, invalid_option(option)}
     end
   end
