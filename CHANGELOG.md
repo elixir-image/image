@@ -28,7 +28,9 @@ This is the changelog for Image version 0.13.0 released on October ___th, 2022. 
 
 * Add `Image.chroma_key/2` and `Image.chroma_mask/2`.
 
-* Add `Image.preview/1` (and `Image.p/1` that delegates to it) to preview and image inline in iTerm2 terminal windows.
+* Add `Image.preview/1` (and `Image.p/1` that delegates to it) to preview an image inline in an iTerm2 terminal windows.
+
+* Add `Image.split_bands/1` to return a list single band images, one for each band in the original image
 
 ## Image 0.12.0
 

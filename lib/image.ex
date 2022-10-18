@@ -3967,6 +3967,29 @@ defmodule Image do
   end
 
   @doc """
+  Split the image into a list of its component
+  bands.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * a list of single band images extracted
+    from `image`.
+
+  """
+  @doc since: "0.13.0"
+
+  @spec split_bands(Vimage.t()) :: [Vimage.t()]
+  def split_bands(%Viamge{} = image) do
+    for i <- max_band_index(image) do
+      image[i]
+    end
+  end
+
+  @doc """
   Convert an image into a mask returning
   an image or raising an exception.
 
