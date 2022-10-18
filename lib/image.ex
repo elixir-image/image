@@ -3983,7 +3983,7 @@ defmodule Image do
   @doc since: "0.13.0"
 
   @spec split_bands(Vimage.t()) :: [Vimage.t()]
-  def split_bands(%Viamge{} = image) do
+  def split_bands(%Vimage{} = image) do
     for i <- max_band_index(image) do
       image[i]
     end
