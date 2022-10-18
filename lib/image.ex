@@ -1019,10 +1019,18 @@ defmodule Image do
   @spec chroma_color(image :: Vimage.t()) :: Color.t()
   def chroma_color(%Vimage{} = image) do
     with {:ok, cropped} <- Image.crop(image, 0, 0, 10, 10) do
-      for i <- 0..Image.bands(cropped) - 1 do
+      for i <- band_range(cropped) do
         Operation.avg!(image[i]) |> round()
       end
     end
+  end
+
+  defp max_band_index(image) do
+    Image.bands(image) - 1
+  end
+
+  defp band_range(image) do
+    0..max_band_index(image)
   end
 
   @doc """
