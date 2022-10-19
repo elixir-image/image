@@ -4231,10 +4231,16 @@ defmodule Image do
     of the image is greater than the maximum it will be
     resized to the maximum width for the preview.
 
+  * Intended to be used as shortcut in `iex`.
+    It can be included in `.iex.exs` file:
+
+      # .iex.exs
+      import_if_available(Image, only: [preview: 1])
+
   """
   @doc since: "0.13.0"
 
-  @spec preview(Vimage.t()) :: Vimage.t() | {:error, String.t()}
+  @spec preview(Vimage.t()) :: Vimage.t() | {:error, error_message()}
   def preview(%Vimage{} = image) do
     with {:ok, "iTerm2"} <- supported_terminal(System.get_env("LC_TERMINAL")) do
       {prelude, epilog} = get_prelude_epilog_for_term(System.get_env("TERM"))
@@ -4251,10 +4257,30 @@ defmodule Image do
   end
 
   @doc """
-  Delegates to `Image.preview/1`.
+  Outputs an inline preview of an image to
+  an iTerm2 terminal.
 
-  Intended to be used as shortcut in `iex`.
-  It can be included in `.iex.exs` file:
+  Only iTerm2 terminal windows are supported.
+
+  Delegates to `Image.preview/1`
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Notes
+
+  * The function `Image.p/1` is delegated to
+    this function.
+
+  * The maximum width of the preview can be set
+    by the environment variable `#{@max_width_env_key}`.
+    The default is `1_000` pixels wide. If the width
+    of the image is greater than the maximum it will be
+    resized to the maximum width for the preview.
+
+  * Intended to be used as shortcut in `iex`.
+    It can be included in `.iex.exs` file:
 
       # .iex.exs
       import_if_available(Image, only: [p: 1])
@@ -4262,7 +4288,7 @@ defmodule Image do
   """
   @doc since: "0.13.0"
 
-  @spec p(Vimage.t()) :: Vimage.t() | {:error, String.t()}
+  @spec p(Vimage.t()) :: Vimage.t() | {:error, error_message()}
   def p(image) do
     preview(image)
   end
