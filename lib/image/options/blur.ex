@@ -11,7 +11,14 @@ defmodule Image.Options.Blur do
   @type blur_options :: [
           {:sigma, float()} |
           {:min_amplitude, float()}
-        ]
+          ] | map()
+
+  @default_blur_sigma 5
+
+  @doc false
+  def default_blur_sigma do
+    @default_blur_sigma
+  end
 
   @doc """
   Validate the options for `Image.blur/2`.
@@ -54,7 +61,7 @@ defmodule Image.Options.Blur do
 
   defp default_options do
     [
-      sigma: 1.0,
+      sigma: @default_blur_sigma,
       min_amplitude: 0.2
     ]
   end

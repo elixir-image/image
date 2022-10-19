@@ -40,6 +40,10 @@ defmodule Image do
   # this library
   @default_avatar_size 180
 
+  # The default sigma applied to a gaussian blur.
+  # Used by blur/3 and feather/2
+  @default_blur_sigma Options.Blur.default_blur_sigma()
+
   # if the ratio between width and height differs
   # by less than this amount, consider the image
   # to be square
@@ -1322,6 +1326,139 @@ defmodule Image do
   end
 
   @doc """
+  Feather (blur the edgest) of an image
+  mask.
+
+  Applies a gaussian blur to a one-band image
+  that can be used to smooth the blending of
+  one image into another.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` that is either
+    a single band image or an image with an alpha band.
+
+  * `:sigma` is the gradient of the blur. A
+    typical range will be `1` to `20`. The default is
+     #{@default_blur_sigma}`.
+
+  ### Returns
+
+  * `{:ok, blurred_mask_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.13.0"
+
+  @spec feather(image :: Vimage.t(), options :: Options.Blur.blur_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def feather(%Vimage{} = image, options \\ []) do
+    with {:ok, options} <- Options.Blur.validate_options(options) do
+      cond do
+        has_alpha?(image) ->
+          {image, alpha} = split_alpha(image)
+          {:ok, alpha} = feather(alpha, options)
+          Operation.bandjoin([image, alpha])
+
+        bands(image) == 1 ->
+          margin = options.sigma * 2
+
+          crop!(image, margin, margin, width(image) - 2 * margin, height(image) - 2 * margin)
+          |> Operation.embed!(margin, margin, width(image), height(image))
+          |> blur!(options)
+          |> wrap(:ok)
+
+        true ->
+          {:error, "Image has no alpha band and is not a single band image"}
+      end
+    end
+  end
+  @doc """
+  Feather (blur the edgest) of an image
+  mask.
+
+  Applies a gaussian blur to a one-band image
+  that can be used to smooth the blending of
+  one image into another.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` that is either
+    a single band image or an image with an alpha band.
+
+  * `:sigma` is the gradient of the blur. A
+    typical range will be `1` to `20`. The default is
+     #{@default_blur_sigma}`.
+
+  ### Returns
+
+  * `{:ok, blurred_mask_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.13.0"
+
+  @spec feather(image :: Vimage.t(), options :: Options.Blur.blur_options()) ::
+    Vimage.t() | no_return()
+
+  def feather!(%Vimage{} = image, options \\ []) do
+    case feather(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+
+  @doc """
+  Split an image to separate the alpha band
+  from the other image bands.
+
+  ### Arguments
+
+    * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{image_bands_without_alpha, alpha_band}` or
+
+  * `{:image_bands, nil}`
+
+  """
+  @doc since: "0.13.0"
+
+  @spec split_bands(image :: Vimage.t()) :: {bands :: Vimage.t(), alpha :: Vimage.t() | nil}
+  def split_alpha(%Vimage{} = image) do
+    if has_alpha?(image) do
+      alpha_band = image[alpha_band(image)]
+      image = Operation.extract_band!(image, 0, n: alpha_band(image) - 1)
+      {image, alpha_band}
+    else
+      {image, nil}
+    end
+  end
+
+  # if Operation.
+  # -- split to alpha + image data
+  #   local alpha = image:extract_band(image:bands() - 1)
+  #   local image = image:extract_band(0, {n = image:bands() - 1})
+  #
+  #   -- we need to place a black border on the alpha we can then feather into,
+  #   -- and scale this border with sigma
+  #   local margin = sigma * 2
+  #   alpha = alpha
+  #       :crop(margin, margin,
+  #           image:width() - 2 * margin, image:height() - 2 * margin)
+  #       :embed(margin, margin, image:width(), image:height())
+  #       :gaussblur(sigma)
+  #
+  #   -- and reattach
+  #   return image:bandjoin(alpha)
+
+
+  @doc """
   Compose two images together to form a new image.
 
   ### Arguments
@@ -2408,7 +2545,8 @@ defmodule Image do
   * `:sigma` is the `float` size of the mask
     to use. A larger number makes the image more
     blurry. A range between `1.0` and `10.0`
-    is normally appropriate.
+    is normally appropriate. The default is
+    `#{@default_blur_sigma}`.
 
   * `:min_amplitude` is a `float` thatdetermines
     the accuracy of the mask. The deault is `0.2`.
@@ -3984,9 +4122,7 @@ defmodule Image do
 
   @spec split_bands(Vimage.t()) :: [Vimage.t()]
   def split_bands(%Vimage{} = image) do
-    for i <- max_band_index(image) do
-      image[i]
-    end
+    for i <- max_band_index(image), do: image[i]
   end
 
   @doc """
