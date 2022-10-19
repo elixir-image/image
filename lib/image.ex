@@ -2567,8 +2567,8 @@ defmodule Image do
 
   def blur(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Blur.validate_options(options) do
-      {sigma, options} = Keyword.pop(options, :sigma)
-      Operation.gaussblur(image, sigma, options)
+      {sigma, options} = Map.pop(options, :sigma)
+      Operation.gaussblur(image, sigma, Map.to_list(options))
     end
   end
 
