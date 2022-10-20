@@ -26,7 +26,7 @@ defmodule Image.Options.Blur do
   See `t:Image.Options.Resize.resize_options/0`.
 
   """
-  def validate_options(options) do
+  def validate_options(options) when is_list(options) do
     options = Keyword.merge(default_options(), options)
 
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
@@ -37,8 +37,12 @@ defmodule Image.Options.Blur do
         {min_ampl, options} = Keyword.pop(options, :min_amplitude)
         options = Keyword.put(options, :"min-ampl", min_ampl)
 
-        {:ok, options}
+        {:ok, Map.new(options)}
     end
+  end
+
+  def validate_options(%{} = options) do
+    {:ok, options}
   end
 
   defp validate_option({:sigma, sigma}, options) when is_number(sigma) and sigma > 0 do
