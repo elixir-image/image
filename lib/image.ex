@@ -3820,7 +3820,7 @@ defmodule Image do
       def to_evision(%Vimage{} = image) do
         with {:ok, tensor} <- to_nx(image),
              {width, height, bands} <- validate_transferable_image(image),
-             %Evision.Mat{} = mat <- Evision.Nx.to_mat(tensor, {height, width, bands}),
+             %Evision.Mat{} = mat <- Evision.Mat.from_nx(tensor, {height, width, bands}),
              %Evision.Mat{} = mat <- Evision.Mat.last_dim_as_channel(mat),
              %Evision.Mat{} = mat <- Evision.cvtColor(mat, Evision.cv_COLOR_RGB2BGR()) do
           {:ok, mat}
@@ -3855,7 +3855,7 @@ defmodule Image do
 
       def from_evision(evision_image) do
         with %Evision.Mat{} = mat <- Evision.cvtColor(evision_image, Evision.cv_COLOR_BGR2RGB()) do
-          tensor = Evision.Nx.to_nx(mat)
+          tensor = Evision.Mat.to_nx(mat)
 
           case Nx.shape(tensor) do
             {_, _, bands} when bands in 1..5 ->
