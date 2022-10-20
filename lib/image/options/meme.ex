@@ -1,16 +1,18 @@
-defmodule Image.Options.Blur do
+defmodule Image.Options.Meme do
   @moduledoc """
   Options and option validation for `Image.blur/2`.
 
   """
+
+  alias Image.Color
 
   @typedoc """
   Options applicable to Image.blur/2
 
   """
   @type blur_options :: [
-          {:sigma, float()} |
-          {:min_amplitude, float()}
+          {:text, String.t()} |
+          {:color, Color.t()}
           ] | map()
 
   @default_blur_sigma 5
@@ -27,7 +29,7 @@ defmodule Image.Options.Blur do
 
   """
   def validate_options(options) when is_list(options) do
-    options = Keyword.merge(default_options(), options)
+    options = Keyword.merge(default_options(), options) |> IO.inspect
 
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
       {:error, value} ->
@@ -42,13 +44,23 @@ defmodule Image.Options.Blur do
     {:ok, options}
   end
 
-  defp validate_option({:sigma, sigma}, options) when is_number(sigma) and sigma > 0 do
+  defp validate_option({:text, text}, options) when is_binary(text) do
     {:cont, options}
   end
 
-  defp validate_option({:min_amplitude, min_amplitude}, options) when is_float(min_amplitude) do
-    options = Keyword.put(options, :min_amplitude, min_amplitude)
+  defp validate_option({:color, color}, options) do
+    case Color.rgb_color(color) do
+      {:ok, hex: _hex, rgb: color}  -> {:cont, Keyword.put(options, :color, color)}
+      {:ok, color}  -> {:cont, Keyword.put(options, :color, color)}
+      _other -> {:halt, invalid_option(color)}
+    end
+  end
 
+  defp validate_option({:font, font}, options) when is_binary(font) do
+    {:cont, options}
+  end
+
+  defp validate_option({:sigma, sigma}, options) when is_number(sigma) and sigma > 0 do
     {:cont, options}
   end
 
@@ -62,8 +74,9 @@ defmodule Image.Options.Blur do
 
   defp default_options do
     [
-      sigma: @default_blur_sigma,
-      min_amplitude: 0.2
+      text: "",
+      font: "Impact 120",
+      color: :white
     ]
   end
 end
