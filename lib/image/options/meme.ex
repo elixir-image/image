@@ -12,7 +12,8 @@ defmodule Image.Options.Meme do
   """
   @type blur_options :: [
           {:text, String.t()} |
-          {:color, Color.t()}
+          {:color, Color.t()} |
+          {:justify, boolean()}
           ] | map()
 
   @default_blur_sigma 5
@@ -29,7 +30,7 @@ defmodule Image.Options.Meme do
 
   """
   def validate_options(options) when is_list(options) do
-    options = Keyword.merge(default_options(), options) |> IO.inspect
+    options = Keyword.merge(default_options(), options)
 
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
       {:error, value} ->
@@ -48,6 +49,10 @@ defmodule Image.Options.Meme do
     {:cont, options}
   end
 
+  defp validate_option({:justify, justify}, options) when is_boolean(justify) do
+    {:cont, options}
+  end
+
   defp validate_option({:color, color}, options) do
     case Color.rgb_color(color) do
       {:ok, hex: _hex, rgb: color}  -> {:cont, Keyword.put(options, :color, color)}
@@ -57,10 +62,6 @@ defmodule Image.Options.Meme do
   end
 
   defp validate_option({:font, font}, options) when is_binary(font) do
-    {:cont, options}
-  end
-
-  defp validate_option({:sigma, sigma}, options) when is_number(sigma) and sigma > 0 do
     {:cont, options}
   end
 
@@ -75,8 +76,9 @@ defmodule Image.Options.Meme do
   defp default_options do
     [
       text: "",
-      font: "Impact 120",
-      color: :white
+      font: "sans 120",
+      color: :white,
+      justify: true
     ]
   end
 end

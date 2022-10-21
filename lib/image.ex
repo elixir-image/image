@@ -1878,16 +1878,21 @@ defmodule Image do
     {:ok, Vimage.t()} | {:error, error_message()}
 
   def meme(%Vimage{} = image, headline, options \\ []) do
-    with {:ok, options} <-
-           Options.Meme.validate_options(options),
-         {:ok, {headline, _}} <-
-           Operation.text(headline, font: options.font, width: width(image) - 100),
-         {:ok, headline} <- Operation.copy(headline, interpretation: :VIPS_INTERPRETATION_sRGB),
-         {:ok, background} <- new(headline, color: options.color, bands: 3),
-         {:ok, overlay} <- Operation.bandjoin([background, headline]) do
+    with {:ok, options} <- Options.Meme.validate_options(options),
+         {:ok, headline} <- text_overlay(headline, Image.width(image) - 100, options) do
       x = (width(image) - width(headline)) / 2 |> round()
       y = height(image) * 0.05 |> round()
-      compose(image, overlay, x: x, y: y)
+      compose(image, headline, x: x, y: y)
+    end
+  end
+
+  defp text_overlay(text, width, %{font: font, color: color}) do
+    text = "<b>" <> text <> "</b>"
+
+    with {:ok, {text, _}} <- Operation.text(text, font: font, width: width, align: :VIPS_ALIGN_CENTRE),
+         {:ok, text} <- Operation.copy(text, interpretation: :VIPS_INTERPRETATION_sRGB),
+         {:ok, background} <- new(text, color: color, bands: 3) do
+      Operation.bandjoin([background, text])
     end
   end
 
