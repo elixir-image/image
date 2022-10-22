@@ -2040,6 +2040,9 @@ defmodule Image do
 
   ### Options
 
+  * `:text` is the second line of text at the bottom of the
+    meme image. The default is `""`.
+
   * `:font` is the name of the font family to be applied.
     The default is `Impact`.
 
@@ -2099,6 +2102,9 @@ defmodule Image do
   * `options` is a keyword list of options.
 
   ### Options
+
+  * `:text` is the second line of text at the bottom of the
+    meme image. The default is `""`.
 
   * `:font` is the name of the font family to be applied.
     The default is `Impact`.
