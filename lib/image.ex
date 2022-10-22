@@ -2064,7 +2064,7 @@ defmodule Image do
     The default is calculated proportional to the size of the
     image.
 
-  * `:text_size` is the size of the headline text in points.
+  * `:text_size` is the size of the bottom text in points.
     The default is calculated proportional to the size of the
     image.
 
@@ -2075,10 +2075,10 @@ defmodule Image do
     {:ok, Vimage.t()} | {:error, error_message()}
 
   def meme(%Vimage{} = image, headline, options \\ []) when is_binary(headline) do
+    working_width = Image.width(image) - 50
     with {:ok, options} <- Options.Meme.validate_options(image, options),
-         {:ok, headline} <- text_overlay(headline, options.headline_size, Image.width(image) - 50, options),
-         {:ok, text} <- text_overlay(options.text, options.text_size, Image.width(image) - 50, options) do
-
+         {:ok, headline} <- text_overlay(headline, options.headline_size, working_width, options),
+         {:ok, text} <- text_overlay(options.text, options.text_size, working_width, options) do
       image
       |> compose!(headline, headline_location(image, headline))
       |> compose(text, text_location(image, text))
@@ -2123,7 +2123,7 @@ defmodule Image do
     The default is calculated proportional to the size of the
     image.
 
-  * `:text_size` is the size of the headline text in points.
+  * `:text_size` is the size of the bottom text in points.
     The default is calculated proportional to the size of the
     image.
 
