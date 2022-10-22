@@ -1099,12 +1099,12 @@ defmodule Image do
     formed by the relation operations such as `Image.Math.greater_than/2`.
 
   * `if_image_or_color` is either an `t:Vimage.t/0` or
-    a ``t:Image.Color.t/0`. If a color is provided then
+    a `t:Image.Color.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
 
   * `else_image_or_color` is either an `t:Vimage.t/0` or
-    a ``t:Image.Color.t/0`. If a color is provided then
+    a `t:Image.Color.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
 

@@ -40,7 +40,7 @@ defmodule Image.Kernel do
   ### Arguments
 
   * `kernel` is any atom or string value
-    in `Image.Kernel.known_interpretations/0`.
+    in `Image.Kernel.known_kernel/0`.
 
   ### Returns
 
