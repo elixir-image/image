@@ -1383,7 +1383,7 @@ defmodule Image do
     `:auto` in which the average of the top left `10x10`
     pixels of the image is used.
 
-  * `:threshold`is a positive integer to indicate the
+  * `:threshold` is a positive integer to indicate the
     threshold around `:color` when calculating the mask.
     The default is `20`.
 
@@ -1395,7 +1395,7 @@ defmodule Image do
      integers representing an RGB color or an atom
      representing a CSS color name.
 
-   * `:less_than` is an RGB color which represents the lower
+  *  `:less_than` is an RGB color which represents the lower
      end of the color range to be masked. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
@@ -1449,7 +1449,7 @@ defmodule Image do
     `:auto` in which the average of the top left `10x10`
     pixels of the image is used.
 
-  * `:threshold`is a positive integer to indicate the
+  * `:threshold` is a positive integer to indicate the
     threshold around `:color` when calculating the mask.
     The default is `20`.
 
@@ -1461,7 +1461,7 @@ defmodule Image do
      integers representing an RGB color or an atom
      representing a CSS color name.
 
-   * `:less_than` is an RGB color which represents the lower
+  *  `:less_than` is an RGB color which represents the lower
      end of the color range to be masked. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
@@ -1575,9 +1575,20 @@ defmodule Image do
   * `image` is any `t:Vix.Vips.Image.t/0` that is either
     a single band image or an image with an alpha band.
 
-  * `:sigma` is the gradient of the blur. A
-    typical range will be `1` to `20`. The default is
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:sigma` is the `float` size of the mask
+    to use. A larger number makes the image more
+    blurry. A range between `1.0` and `10.0`
+    is normally appropriate. The default is
     `#{@default_blur_sigma}`.
+
+  * `:min_amplitude` is a `float` that determines
+    the accuracy of the mask. The default is `0.2`.
+    A smaller number will generate a larger, more
+    accurate mask,
 
   ### Returns
 
@@ -1628,9 +1639,20 @@ defmodule Image do
   * `image` is any `t:Vix.Vips.Image.t/0` that is either
     a single band image or an image with an alpha band.
 
-  * `:sigma` is the gradient of the blur. A
-    typical range will be `1` to `20`. The default is
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:sigma` is the `float` size of the mask
+    to use. A larger number makes the image more
+    blurry. A range between `1.0` and `10.0`
+    is normally appropriate. The default is
     `#{@default_blur_sigma}`.
+
+  * `:min_amplitude` is a `float` that determines
+    the accuracy of the mask. The default is `0.2`.
+    A smaller number will generate a larger, more
+    accurate mask,
 
   ### Returns
 
@@ -1658,18 +1680,19 @@ defmodule Image do
 
   ### Arguments
 
-    * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
   * `{image_bands_without_alpha, alpha_band}` or
 
-  * `{:image_bands, nil}`
+  * `{:image_bands, nil}` if there is not
+    alpha band detected.
 
   """
   @doc since: "0.13.0"
 
-  @spec split_bands(image :: Vimage.t()) :: {bands :: Vimage.t(), alpha :: Vimage.t() | nil}
+  @spec split_alpha(image :: Vimage.t()) :: {bands :: Vimage.t(), alpha :: Vimage.t() | nil}
   def split_alpha(%Vimage{} = image) do
     if has_alpha?(image) do
       alpha_band = image[alpha_band(image)]
@@ -1679,23 +1702,6 @@ defmodule Image do
       {image, nil}
     end
   end
-
-  # if Operation.
-  # -- split to alpha + image data
-  #   local alpha = image:extract_band(image:bands() - 1)
-  #   local image = image:extract_band(0, {n = image:bands() - 1})
-  #
-  #   -- we need to place a black border on the alpha we can then feather into,
-  #   -- and scale this border with sigma
-  #   local margin = sigma * 2
-  #   alpha = alpha
-  #       :crop(margin, margin,
-  #           image:width() - 2 * margin, image:height() - 2 * margin)
-  #       :embed(margin, margin, image:width(), image:height())
-  #       :gaussblur(sigma)
-  #
-  #   -- and reattach
-  #   return image:bandjoin(alpha)
 
 
   @doc """
@@ -2043,6 +2049,14 @@ defmodule Image do
   * `:text` is the second line of text at the bottom of the
     meme image. The default is `""`.
 
+  * `:text_size` is the size of the bottom text in points.
+    The default is calculated proportional to the size of the
+    image.
+
+  * `:headline_size` is the size of the headline text in points.
+    The default is calculated proportional to the size of the
+    image.
+
   * `:font` is the name of the font family to be applied.
     The default is `Impact`.
 
@@ -2060,12 +2074,9 @@ defmodule Image do
     integers representing an RGB color or an atom
     representing a CSS color name. The default is `:black`.
 
-  * `:headline_size` is the size of the headline text in points.
-    The default is calculated proportional to the size of the
-    image.
-
-  * `:text_size` is the size of the bottom text in points.
-    The default is calculated proportional to the size of the
+  * `:margin` is the width of the margin in pixels. The margin is
+    applied to both the left and right sides of the image. The
+    default is calculated proportional to the size of the
     image.
 
   """
@@ -2075,10 +2086,10 @@ defmodule Image do
     {:ok, Vimage.t()} | {:error, error_message()}
 
   def meme(%Vimage{} = image, headline, options \\ []) when is_binary(headline) do
-    working_width = Image.width(image) - 50
     with {:ok, options} <- Options.Meme.validate_options(image, options),
-         {:ok, headline} <- text_overlay(headline, options.headline_size, working_width, options),
-         {:ok, text} <- text_overlay(options.text, options.text_size, working_width, options) do
+         {:ok, width} <- text_box_width(image, options),
+         {:ok, headline} <- text_overlay(headline, options.headline_size, width, options),
+         {:ok, text} <- text_overlay(options.text, options.text_size, width, options) do
       image
       |> compose!(headline, headline_location(image, headline))
       |> compose(text, text_location(image, text))
@@ -2106,8 +2117,29 @@ defmodule Image do
   * `:text` is the second line of text at the bottom of the
     meme image. The default is `""`.
 
+  * `:text_size` is the size of the bottom text in points.
+    The default is calculated proportional to the size of the
+    image.
+
+  * `:headline_size` is the size of the headline text in points.
+    The default is calculated proportional to the size of the
+    image.
+
   * `:font` is the name of the font family to be applied.
     The default is `Impact`.
+
+  * `:weight` is the font weight. The options are `:ultralight`,
+    `:light`, `:normal`, `:bold`, `:ultrabold` or `:heavy`. The
+    default is `:bold`.
+
+  * `:justify` is a boolean indicating if the headline and text
+    are to be justified. If `true` then space is added between
+    words so that both edges of each line are aligned with both
+    margins. The default is `false`.
+
+  * `:transform` determines how the text is presented. The
+    options are `:upcase`, `:downcase`, `:capitalize` and `:none`.
+    The default is `:upcase`.
 
   * `:color` is an RGB color of the text. The color can be an
     integer between `0..255`, a three-element list of
@@ -2119,12 +2151,9 @@ defmodule Image do
     integers representing an RGB color or an atom
     representing a CSS color name. The default is `:black`.
 
-  * `:headline_size` is the size of the headline text in points.
-    The default is calculated proportional to the size of the
-    image.
-
-  * `:text_size` is the size of the bottom text in points.
-    The default is calculated proportional to the size of the
+  * `:margin` is the width of the margin in pixels. The margin is
+    applied to both the left and right sides of the image. The
+    default is calculated proportional to the size of the
     image.
 
   """
@@ -2138,6 +2167,10 @@ defmodule Image do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
+  end
+
+  defp text_box_width(image, %{margin: margin}) do
+    {:ok, width(image) - (2 * margin)}
   end
 
   defp text_overlay("", _size, _width, _options) do
@@ -2154,17 +2187,18 @@ defmodule Image do
     end
   end
 
-  @radius 5
+  defp outline(image, %{color: color, outline_color: outline_color} = options) do
+    radius = round(options.headline_size / 10)
+    width = width(image) + 2 * radius
+    height = height(image) + 2 * radius
 
-  defp outline(image, %{color: color, outline_color: outline_color}) do
-    width = width(image) + 2 * @radius
-    height = height(image) + 2 * @radius
-    {:ok, text} = Operation.embed(image, @radius, @radius, width, height)
+    {:ok, text} =
+      Operation.embed(image, radius, radius, width, height)
 
     {:ok, circle_mask} =
-      Operation.black!(@radius * 2 + 1, @radius * 2 + 1)
+      Operation.black!(radius * 2 + 1, radius * 2 + 1)
       |> Math.add!(128)
-      |> Draw.circle(@radius, @radius, @radius, fill: true, color: :white)
+      |> Draw.circle(radius, radius, radius, fill: true, color: :white)
 
     {:ok, outlined} =
       text

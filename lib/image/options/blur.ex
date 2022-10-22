@@ -23,7 +23,7 @@ defmodule Image.Options.Blur do
   @doc """
   Validate the options for `Image.blur/2`.
 
-  See `t:Image.Options.Resize.resize_options/0`.
+  See `t:Image.Options.Blur.blur_options/0`.
 
   """
   def validate_options(options) when is_list(options) do
