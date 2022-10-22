@@ -2,7 +2,7 @@
 
 ## Image 0.13.0
 
-This is the changelog for Image version 0.13.0 released on October ___th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.13.0 released on October 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
 
 ### Breaking change
 
@@ -16,23 +16,23 @@ This is the changelog for Image version 0.13.0 released on October ___th, 2022. 
 
 ### Enhancements
 
+* Add `Image.chroma_key/2` and `Image.chroma_mask/2`.
+
+* Add `Image.meme/3` and `Image.meme!/3`.
+
 * Add `Image.QRcode.encode/1` and `Image.QRcode.decode/1`.
-
-* Add `Image.new/2` that creates a new image of the same shape as the provided image.
-
-* Add `Image.resize/3`.
 
 * Add `Image.blur/2`.
 
 * Add `Image.feather/2`.
 
+* Add `Image.new/2` that creates a new image of the same shape as the provided image.
+
+* Add `Image.resize/3`.
+
 * Add `Image.split_bands/1`.
 
 * Add `Image.if_then_else/3`.
-
-* Add `Image.chroma_key/2` and `Image.chroma_mask/2`.
-
-* Add `Image.meme/3` and `Image.meme!/3`.
 
 * Add `Image.preview/1` (and `Image.p/1` that delegates to it) to preview an image inline in an iTerm2 terminal windows.
 
