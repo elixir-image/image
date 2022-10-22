@@ -95,7 +95,7 @@ defmodule Image.Options.Meme do
       outline_color: :black,
       justify: true,
       transform: :upcase,
-      headline_size: div(width, 10),
+      headline_size: div(width, 12),
       text_size: div(width, 20)
     ]
   end
