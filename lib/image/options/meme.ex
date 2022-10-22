@@ -13,7 +13,9 @@ defmodule Image.Options.Meme do
   @type blur_options :: [
           {:text, String.t()} |
           {:color, Color.t()} |
-          {:justify, boolean()}
+          {:outline_color, Color.t()} |
+          {:justify, boolean()} |
+          {:transform, :capitalize | :upcase | :downcase | :none}
           ] | map()
 
   @default_blur_sigma 5
@@ -29,8 +31,8 @@ defmodule Image.Options.Meme do
   See `t:Image.Options.Resize.resize_options/0`.
 
   """
-  def validate_options(options) when is_list(options) do
-    options = Keyword.merge(default_options(), options)
+  def validate_options(image, options) when is_list(options) do
+    options = Keyword.merge(default_options(image), options)
 
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
       {:error, value} ->
@@ -49,15 +51,25 @@ defmodule Image.Options.Meme do
     {:cont, options}
   end
 
+  defp validate_option({:transform, transform}, options)
+      when transform in [:upcase, :downcase, :capitalize, :none] do
+    {:cont, options}
+  end
+
   defp validate_option({:justify, justify}, options) when is_boolean(justify) do
     {:cont, options}
   end
 
-  defp validate_option({:color, color}, options) do
+  defp validate_option({key, size}, options)
+      when key in [:headline_size, :text_size] and is_integer(size) and size > 0 do
+    {:cont, options}
+  end
+
+  defp validate_option({key, color} = option, options) when key in [:color, :outline_color] do
     case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color}  -> {:cont, Keyword.put(options, :color, color)}
-      {:ok, color}  -> {:cont, Keyword.put(options, :color, color)}
-      _other -> {:halt, invalid_option(color)}
+      {:ok, hex: _hex, rgb: color}  -> {:cont, Keyword.put(options, key, color)}
+      {:ok, color}  -> {:cont, Keyword.put(options, key, color)}
+      _other -> {:halt, invalid_option(option)}
     end
   end
 
@@ -73,12 +85,18 @@ defmodule Image.Options.Meme do
     "Invalid option or option value: #{inspect(option)}"
   end
 
-  defp default_options do
+  defp default_options(image) do
+    width = Image.width(image)
+
     [
       text: "",
-      font: "sans 120",
+      font: "Impact",
       color: :white,
-      justify: true
+      outline_color: :black,
+      justify: true,
+      transform: :upcase,
+      headline_size: div(width, 10),
+      text_size: div(width, 20)
     ]
   end
 end

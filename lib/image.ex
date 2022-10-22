@@ -21,6 +21,8 @@ defmodule Image do
   alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode}
   alias Image.Options.{Resize, Thumbnail, Compose, Open}
   alias Image.Options.ChromaKey
+  alias Image.Math
+  alias Image.Draw
 
   import Image.Color, only: :macros
 
@@ -240,14 +242,19 @@ defmodule Image do
   defguard is_pixel(value) when is_number(value) or is_list(value)
 
   @doc """
-  Create a new image of the given dimensions and
-  background color.
+  Create a new image of the given dimensions.
 
   ### Arguments
+
+  Either `width` and `height` OR `image` should be
+  provided.
 
   * `width` is the image width as an integer.
 
   * `height` is the image height as an integer.
+
+  * `image` is an image from which the `width`, `height` are
+    derived.
 
   * `options` is a keyword list of options.
 
@@ -276,6 +283,11 @@ defmodule Image do
   * `{:ok, image}` or
 
   * `{:error, reason}`
+
+  ### Notes
+
+  * Either `width` and `height` OR `image` should
+    be provided as arguments but NOT both.
 
   ### Examples
 
@@ -330,6 +342,97 @@ defmodule Image do
   end
 
   @doc """
+  Return a new image of the given dimensions and
+  background color or raise an exception.
+
+  ### Arguments
+
+  Either `width` and `height` OR `image` should be
+  provided.
+
+  * `width` is the image width as an integer.
+
+  * `height` is the image height as an integer.
+
+  * `image` is an image from which the `width`, `height` re
+    derived.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:bands` defines the number of bands (channels)
+    to be created. The default is `3`.
+
+  * `:color` defines the color of the image. This
+    can be specified as a single integer which will
+    be applied to all bands, or a list of
+    integers representing the color for each
+    band. The default is `0`, meaning black. The color
+    can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `:format` defines the format of the image. The
+    default is `{:u, 8}`.
+
+  * `:interpretation` defines the interpretation of
+    the image. The default is `:srgb`.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`
+
+  ### Notes
+
+  * Either `width` and `height` OR `image` should
+    be provided as arguments but NOT both.
+
+  ### Examples
+
+        # 100x100 pixel image of dark blue slate color
+        iex> {:ok, _image} = Image.new(100, 100, color: :dark_slate_blue)
+
+        # 100x100 pixel green image, fully transparent
+        iex> {:ok, _image} = Image.new(100, 100, color: [0, 255, 0, 1], bands: 4)
+
+  """
+
+  @spec new!(width :: pos_integer(), height :: pos_integer()) ::
+    Vimage.t() | no_return()
+
+  def new!(width, height)
+      when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
+    case new(width, height) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @spec new!(image :: %Vimage{}, options :: Options.New.t()) ::
+    Vimage.t() | no_return()
+
+  def new!(%Vimage{} = image, options) do
+    case new(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @spec new!(width :: pos_integer(), height :: pos_integer(), options :: Options.New.t()) ::
+    Vimage.t() | no_return()
+
+  def new!(width, height, options)
+      when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
+    case new(width, height, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Create a new image of the same shape as the
   provided image.
 
@@ -379,6 +482,58 @@ defmodule Image do
 
   def new(%Vimage{} = image) do
     new(image, [])
+  end
+
+  @doc """
+  Return a new image of the same shape as the
+  provided image or raise an exception.
+
+  The function creates a new image with the same
+  width, height and bands as the image argument.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` from
+    which the new images `width` and `height` and
+  ` bands` will be derived.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:bands` defines the number of bands (channels)
+    to be created. The default is the number of bands
+    in `image`.
+
+  * `:color` defines the color of the image. This
+    can be specified as a single integer which will
+    be applied to all bands, or a list of
+    integers representing the color for each
+    band. The default is `0`, meaning black. The color
+    can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `:format` defines the format of the image. The
+    default is `{:u, 8}`.
+
+  * `:interpretation` defines the interpretation of
+    the image. The default is `:srgb`.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.1.13"
+
+  def new!(%Vimage{} = image) do
+    case new(image, []) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
   end
 
   @doc """
@@ -1823,26 +1978,26 @@ defmodule Image do
       # Compose images over a base image using
       # absolute  coordinates from the base image
       # to place each overlay image
-      #==> base_image
-      ...> |> Image.compose!(polygon, x: :middle, y: :top)
-      ...> |> Image.compose!(explore_new, x: 260, y: 200)
-      ...> |> Image.compose!(places, x: 260, y: 260)
-      ...> |> Image.compose!(blowout, x: 260, y: 340)
-      ...> |> Image.compose!(start_saving, x: 260, y: 400)
+      #=> base_image
+      ..> |> Image.compose!(polygon, x: :middle, y: :top)
+      ..> |> Image.compose!(explore_new, x: 260, y: 200)
+      ..> |> Image.compose!(places, x: 260, y: 260)
+      ..> |> Image.compose!(blowout, x: 260, y: 340)
+      ..> |> Image.compose!(start_saving, x: 260, y: 400)
 
       # Compose images over a base image
       # using a composition list and coordinates
       # that are either absolute with respect to the
       # base image or relative to the previously
       # composed image
-      #==> base_image
-      ...> |> Image.compose!([
-      ...>   {polygon, x: :center, y: :top},
-      ...>   {explore_new, y_baseline: :top, x_baseline: :left, dx: 20, dy: 200},
-      ...>   {places, dy: 10},
-      ...>   {blowout, dy: 20},
-      ...>   {start_saving, dy: 50}
-      ...> ])
+      #=> base_image
+      ..> |> Image.compose!([
+      ..>   {polygon, x: :center, y: :top},
+      ..>   {explore_new, y_baseline: :top, x_baseline: :left, dx: 20, dy: 200},
+      ..>   {places, dy: 10},
+      ..>   {blowout, dy: 20},
+      ..>   {start_saving, dy: 50}
+      ..> ])
 
   """
   @spec compose!(base_image::Vimage.t(), overlay_image::Vimage.t(),  options::Keyword.t()) ::
@@ -1871,29 +2026,182 @@ defmodule Image do
   Create a meme image from a base image and
   one or two lines of text.
 
+  The size of the text is determined by the size
+  of the base image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` over which
+    the meme text will be composed.
+
+  * `headline` is the top line of the meme text.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:font` is the name of the font family to be applied.
+    The default is `Impact`.
+
+  * `:transform` determines how the text is presented. The
+    options are `:upcase`, `:downcase`, `:capitalize` and `:none`.
+    The default is `:upcase`.
+
+  * `:color` is an RGB color of the text. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name. The default is `:white`.
+
+  * `:outline_color` is an RGB color of the text outline. The
+    color can be an integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name. The default is `:black`.
+
+  * `:headline_size` is the size of the headline text in points.
+    The default is calculated proportional to the size of the
+    image.
+
+  * `:text_size` is the size of the headline text in points.
+    The default is calculated proportional to the size of the
+    image.
+
   """
   @doc since: "0.13.0"
 
   @spec meme(image :: Vimage.t(), headline :: String.t(), options :: Options.Meme.meme_options()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
-  def meme(%Vimage{} = image, headline, options \\ []) do
-    with {:ok, options} <- Options.Meme.validate_options(options),
-         {:ok, headline} <- text_overlay(headline, Image.width(image) - 100, options) do
-      x = (width(image) - width(headline)) / 2 |> round()
-      y = height(image) * 0.05 |> round()
-      compose(image, headline, x: x, y: y)
+  def meme(%Vimage{} = image, headline, options \\ []) when is_binary(headline) do
+    with {:ok, options} <- Options.Meme.validate_options(image, options),
+         {:ok, headline} <- text_overlay(headline, options.headline_size, Image.width(image) - 50, options),
+         {:ok, text} <- text_overlay(options.text, options.text_size, Image.width(image) - 50, options) do
+
+      image
+      |> compose!(headline, headline_location(image, headline))
+      |> compose(text, text_location(image, text))
     end
   end
 
-  defp text_overlay(text, width, %{font: font, color: color}) do
-    text = "<b>" <> text <> "</b>"
+  @doc """
+  Return a meme image from a base image and
+  one or two lines of text or raise an exception.
 
-    with {:ok, {text, _}} <- Operation.text(text, font: font, width: width, align: :VIPS_ALIGN_CENTRE),
-         {:ok, text} <- Operation.copy(text, interpretation: :VIPS_INTERPRETATION_sRGB),
-         {:ok, background} <- new(text, color: color, bands: 3) do
-      Operation.bandjoin([background, text])
+  The size of the text is determined by the size
+  of the base image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` over which
+    the meme text will be composed.
+
+  * `headline` is the top line of the meme text.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:font` is the name of the font family to be applied.
+    The default is `Impact`.
+
+  * `:color` is an RGB color of the text. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name. The default is `:white`.
+
+  * `:outline_color` is an RGB color of the text outline. The
+    color can be an integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name. The default is `:black`.
+
+  * `:headline_size` is the size of the headline text in points.
+    The default is calculated proportional to the size of the
+    image.
+
+  * `:text_size` is the size of the headline text in points.
+    The default is calculated proportional to the size of the
+    image.
+
+  """
+  @doc since: "0.13.0"
+
+  @spec meme!(image :: Vimage.t(), headline :: String.t(), options :: Options.Meme.meme_options()) ::
+    Vimage.t() | no_return()
+
+  def meme!(%Vimage{} = image, headline, options \\ []) when is_binary(headline) do
+    case meme(image, headline, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
     end
+  end
+
+  defp text_overlay("", _size, _width, _options) do
+    Operation.black(1,1)
+  end
+
+  defp text_overlay(text, size, width, %{font: font} = options) do
+    text = "<b>" <> transform(text, options.transform) <> "</b>"
+    font = "#{font} #{size}"
+
+    with {:ok, {text, _}} <-
+        Operation.text(text, font: font, width: width, align: :VIPS_ALIGN_CENTRE) do
+      outline(text, options)
+    end
+  end
+
+  @radius 5
+
+  defp outline(image, %{color: color, outline_color: outline_color}) do
+    width = width(image) + 2 * @radius
+    height = height(image) + 2 * @radius
+    {:ok, text} = Operation.embed(image, @radius, @radius, width, height)
+
+    {:ok, circle_mask} =
+      Operation.black!(@radius * 2 + 1, @radius * 2 + 1)
+      |> Math.add!(128)
+      |> Draw.circle(@radius, @radius, @radius, fill: true, color: :white)
+
+    {:ok, outlined} =
+      text
+      |> Operation.morph!(circle_mask, :VIPS_OPERATION_MORPHOLOGY_DILATE)
+      |> blur(sigma: 0.5, min_amplitude: 0.1)
+
+    {:ok, background_text} =
+      outlined
+      |> new!(color: outline_color, bands: 3)
+      |> bandjoin!(outlined)
+      |> Operation.copy(interpretation: :VIPS_INTERPRETATION_sRGB)
+
+    {:ok, foreground_text} =
+      text
+      |> new!(color: color, bands: 3)
+      |> bandjoin!(text)
+      |> Operation.copy(interpretation: :VIPS_INTERPRETATION_sRGB)
+
+    compose(background_text, foreground_text)
+  end
+
+  defp transform(text, :none), do: text
+  defp transform(text, :capitalize), do: String.capitalize(text)
+  defp transform(text, :upcase), do: String.upcase(text)
+  defp transform(text, :downcase), do: String.downcase(text)
+
+  defp bandjoin!(a, b) do
+    Operation.bandjoin!([a, b])
+  end
+
+  @headline_distance_from_top 0.03
+  @text_distance_from_bottom 0.03
+
+  defp headline_location(image, text) do
+    x = (width(image) - width(text)) / 2 |> round()
+    y = height(image) * @headline_distance_from_top |> round()
+    [x: x, y: y]
+  end
+
+  defp text_location(image, text) do
+    x = (width(image) - width(text)) / 2 |> round()
+    y = (height(image) - height(text)) - (height(image) * @text_distance_from_bottom) |> round()
+    [x: x, y: y]
   end
 
   @doc """
