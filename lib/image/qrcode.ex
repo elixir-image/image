@@ -58,7 +58,8 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
           size when is_integer(size) and size > 0 ->
             {:ok, image} = Image.from_evision(mat)
-            Image.resize(image, size, interpolate: :nearest)
+            scale = scale_from_size(image, size)
+            Image.resize(image, scale, interpolate: :nearest)
 
           other ->
           {
@@ -68,6 +69,11 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
           }
         end
       end
+    end
+
+    defp scale_from_size(image, size) do
+      width = Image.width(image)
+      max(size / width, 1)
     end
 
     @doc """
