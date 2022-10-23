@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.13.1
+
+This is the changelog for Image version 0.13.1 released on October 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug fixes
+
+* Since a font named `Impact` isn't available on all systems, default meme generator can produce unexpected results for the rendered text.  The `Impact` font is now included in `Image` and will be used if the font name is `Impact`.
+
 ## Image 0.13.0
 
 This is the changelog for Image version 0.13.0 released on October 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

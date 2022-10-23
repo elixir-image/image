@@ -2060,6 +2060,19 @@ defmodule Image do
   * `:font` is the name of the font family to be applied.
     The default is `Impact`.
 
+  * `:font_file` is the path name to a font file that will be
+    loaded. The default is `:default` which will load the included
+    `Impact` font if the font family is `Impact`. If the font family
+    is not `Impact` and the `:font_file` is `:default` then the
+    font displayed is resolved by the underyling operating system.
+    If `:font_file` is a string, then it is expected to be a valid
+    font file. If `:font_file` is set to a path then the `:font` option
+    should also be set to the correct font name.
+
+  * `:font_file` is the path to a font file that will be loaded.
+    The default is "Impact" which will resolve to the included
+    `unicode.impact.ttf` font file.
+
   * `:transform` determines how the text is presented. The
     options are `:upcase`, `:downcase`, `:capitalize` and `:none`.
     The default is `:upcase`.
@@ -2126,7 +2139,19 @@ defmodule Image do
     image.
 
   * `:font` is the name of the font family to be applied.
-    The default is `Impact`.
+    The default is `Impact`. If the font family name is `"Impact"`
+    then the included `unicode.impact.ttf` font file will also be
+    loaded. This ensures that the `Impact` font is available on all
+    systems.
+
+  * `:font_file` is the path name to a font file that will be
+    loaded. The default is `:default` which will load the included
+    `Impact` font if the font family is `Impact`. If the font family
+    is not `Impact` and the `:font_file` is `:default` then the
+    font displayed is resolved by the underyling operating system.
+    If `:font_file` is a string, then it is expected to be a valid
+    font file. If `:font_file` is set to a path then the `:font` option
+    should also be set to the correct font name.
 
   * `:weight` is the font weight. The options are `:ultralight`,
     `:light`, `:normal`, `:bold`, `:ultrabold` or `:heavy`. The
@@ -2180,11 +2205,21 @@ defmodule Image do
   defp text_overlay(text, size, width, %{font: font} = options) do
     text = "<b>" <> transform(text, options.transform) <> "</b>"
     font = "#{font} #{size}"
+    text_options =
+      [font: font, width: width, align: :VIPS_ALIGN_CENTRE]
+      |> maybe_add_fontfile(options[:fontfile])
 
-    with {:ok, {text, _}} <-
-        Operation.text(text, font: font, width: width, align: :VIPS_ALIGN_CENTRE) do
+    with {:ok, {text, _}} <- Operation.text(text, text_options) do
       outline(text, options)
     end
+  end
+
+  defp maybe_add_fontfile(options, nil) do
+    options
+  end
+
+  defp maybe_add_fontfile(options, font_file) do
+    Keyword.put(options, :fontfile, font_file)
   end
 
   defp outline(image, %{color: color, outline_color: outline_color} = options) do

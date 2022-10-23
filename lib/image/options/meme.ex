@@ -38,6 +38,16 @@ defmodule Image.Options.Meme do
         {:error, value}
 
       options ->
+        options =
+          cond do
+            options[:font] == "Impact" && options[:fontfile] == :default ->
+              Keyword.put(options, :fontfile, font_file("Impact"))
+            options[:fontfile] == :default ->
+              Keyword.delete(options, :fontfile)
+            true ->
+              options
+          end
+
         {:ok, Map.new(options)}
     end
   end
@@ -47,6 +57,30 @@ defmodule Image.Options.Meme do
   end
 
   defp validate_option({:font, font}, options) when is_binary(font) do
+    {:cont, options}
+  end
+
+  defp validate_option({:font_file, font_file}, options) when is_binary(font_file) do
+    font_file = font_file(font_file)
+
+    if File.exists?(font_file) do
+      options =
+        options
+        |> Keyword.delete(:font_file)
+        |> Keyword.put(:fontfile, font_file)
+
+      {:cont, options}
+    else
+      {:halt, {:error, no_such_font_file(font_file)}}
+    end
+  end
+
+  defp validate_option({:font_file, :default}, options) do
+    options =
+      options
+      |> Keyword.delete(:font_file)
+      |> Keyword.put(:fontfile, :default)
+
     {:cont, options}
   end
 
@@ -93,12 +127,17 @@ defmodule Image.Options.Meme do
     "Invalid option or option value: #{inspect(option)}"
   end
 
+  def no_such_font_file(file) do
+    "Font file #{inspect file} could not be found"
+  end
+
   defp default_options(image) do
     height = Image.height(image)
 
     [
       text: "",
       font: "Impact",
+      font_file: :default,
       weight: :bold,
       color: :white,
       outline_color: :black,
@@ -124,5 +163,13 @@ defmodule Image.Options.Meme do
 
   defp height_in_points(height) do
     div(height, 72)
+  end
+
+  defp font_file("Impact") do
+    Path.join(to_string(:code.priv_dir(:image)), "fonts/unicode.impact.ttf")
+  end
+
+  defp font_file(name) when is_binary(name) do
+    name
   end
 end

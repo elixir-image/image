@@ -93,7 +93,7 @@ defmodule Image.MixProject do
       links: links(),
       files: [
         "lib",
-        "priv/color_map.csv",
+        "priv",
         "mix.exs",
         "README*",
         "CHANGELOG*",
