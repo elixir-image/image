@@ -82,8 +82,15 @@ defmodule Image.Kernel do
 
   @doc false
   def validate_kernel(kernel, options) when kernel in @kernel do
-    kernel = Map.fetch!(@kernel_map, kernel)
-    {:cont, Keyword.put(options, :kernel, kernel)}
+    kernel =
+      Map.fetch!(@kernel_map, kernel)
+
+    options =
+      options
+      |> Keyword.delete(:interpolate)
+      |> Keyword.put(:kernel, kernel)
+
+    {:cont, options}
   end
 
   def validate_kernel(kernel, options) when kernel in @vips_kernel do

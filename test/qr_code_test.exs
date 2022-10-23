@@ -34,4 +34,10 @@ defmodule Image.QRcode.Test do
     {:ok, qrcode} = Image.QRcode.encode(string)
     assert {:ok, ^string} = Image.QRcode.decode(qrcode)
   end
+
+  test "QRcode generation with a size parameter" do
+    string = "This is a string"
+
+    assert Image.QRcode.encode(string, size: 50)
+  end
 end
