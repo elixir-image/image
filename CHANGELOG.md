@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.14.0
+
+This is the changelog for Image version 0.14.0 released on ____, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancements
+
+* Add `Image.pixelate/2` and `Image.pixelate!/2`
+
+* Add `Image.resize!/3`
+
 ## Image 0.13.1
 
 This is the changelog for Image version 0.13.1 released on October 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

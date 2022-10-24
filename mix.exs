@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.13.0"
+  @version "0.14.0"
   @app_name "image"
 
   def project do
@@ -56,7 +56,7 @@ defmodule Image.MixProject do
         do: {:kino, "~> 0.7", optional: true}),
 
       # eVision OpenCV bindings
-      {:evision, ">= 0.1.13", optional: true},
+      {:evision, ">= 0.1.14", optional: true},
 
       {:sweet_xml, "~> 0.7"},
       {:phoenix_html, "~> 3.2 or ~> 2.14"},

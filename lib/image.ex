@@ -42,6 +42,11 @@ defmodule Image do
   # this library
   @default_avatar_size 180
 
+  # When pixelating an image resize to this scale
+  # the scale up by the inverse using nearest_neighbour
+  # scaling
+  @pixelate_scale 0.05
+
   # The default sigma applied to a gaussian blur.
   # Used by blur/3 and feather/2
   @default_blur_sigma Options.Blur.default_blur_sigma()
@@ -2579,9 +2584,15 @@ defmodule Image do
     the centre downsampling convention. The default is
     `false`.
 
-  * `:kernel` defines which resampling kernel to apply.
+  * `:interpolate` defines which resampling kernel to apply.
     The options are `:nearest`, `:linear`, `:cubic`,
     `:mitchell`, `:lanczos2` or `:lanczos3` (the default).
+
+  ### Returns
+
+  * `{:ok, resized_image}` or
+
+  * raises an exception
 
   """
 
@@ -2593,6 +2604,118 @@ defmodule Image do
   def resize(%Vimage{} = image, scale, options \\ []) when scale >= 0 do
     with {:ok, options} <- Resize.validate_options(options) do
       Operation.resize(image, scale, options)
+    end
+  end
+
+  @doc """
+  Resize an image or raise an exception.
+
+  If the intent is to thumnail an image then `Image.thumbnail/3`
+  is recommended since it applies a very efficient downsizing
+  algorithm for that use case.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `scale` is a float scale factor.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:centre` is a boolean indicating whether to use
+    the centre downsampling convention. The default is
+    `false`.
+
+  * `:interpolate` defines which resampling kernel to apply.
+    The options are `:nearest`, `:linear`, `:cubic`,
+    `:mitchell`, `:lanczos2` or `:lanczos3` (the default).
+
+  ### Returns
+
+  * `resized_image` or
+
+  * raises an exception
+
+  """
+
+  @doc since: "0.14.0"
+
+  @spec resize!(Vimage.t(), scale :: number(), options :: Resize.resize_options()) ::
+          Vimage.t() | no_return()
+
+  def resize!(%Vimage{} = image, scale, options \\ []) when scale >= 0 do
+    case resize(image, scale, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Pixelates an image.
+
+  Pixelation is the process of reducing the image
+  resolution while retaining the image dimensions.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `scale` is the scale factor to apply to
+    the image when it is pixelated. This means that
+    one "pixel" is `image width * scale`. The default
+    is `#{@pixelate_scale}`.
+
+  ### Returns
+
+  * `{:ok, pixelated_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.14.0"
+
+  @spec pixelate(image :: Vimage.t(), scale :: number()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def pixelate(%Vimage{} = image, scale \\ @pixelate_scale) when is_number(scale) and scale > 0 do
+    image
+    |> resize!(scale)
+    |> resize(1 / scale, interpolate: :nearest)
+  end
+
+  @doc """
+  Pixelates an image or raise an exception.
+
+  Pixelation is the process of reducing the image
+  resolution while retaining the image dimensions.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `scale` is the scale factor to apply to
+    the image when it is pixelated. This means that
+    one "pixel" is `image width * scale`. The default
+    is `#{@pixelate_scale}`.
+
+  ### Returns
+
+  * `{:ok, pixelated_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.14.0"
+
+  @spec pixelate!(image :: Vimage.t(), scale :: number()) ::
+    Vimage.t() | no_return()
+
+  def pixelate!(%Vimage{} = image, scale \\ @pixelate_scale) when is_number(scale) and scale > 0 do
+    case pixelate(image, scale) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -3487,15 +3610,6 @@ defmodule Image do
     end)
   end
 
-  defp remove_meta(image, field) when is_atom(field) and field in @metadata_names do
-    field = Map.fetch!(@metadata_fields, field)
-    remove_meta(image, field)
-  end
-
-  defp remove_meta(image, field) do
-    MutableImage.remove(image, field)
-  end
-
   @doc """
   Remove metadata from an image returning
   an image or raising an exception.
@@ -3544,6 +3658,15 @@ defmodule Image do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
+  end
+
+  defp remove_meta(image, field) when is_atom(field) and field in @metadata_names do
+    field = Map.fetch!(@metadata_fields, field)
+    remove_meta(image, field)
+  end
+
+  defp remove_meta(image, field) do
+    MutableImage.remove(image, field)
   end
 
   @y_band 1
@@ -4303,7 +4426,7 @@ defmodule Image do
     {:ok, convolution} = Image.Matrix.image_from_matrix([[1, -1]])
 
     image
-    |> pixelate(hash_size)
+    |> pixelate_for_hash(hash_size)
     |> Operation.cast!(:VIPS_FORMAT_INT)
     |> Operation.conv!(convolution)
     |> crop!(1, 0, hash_size, hash_size)
@@ -4313,7 +4436,7 @@ defmodule Image do
     |> Vimage.write_to_binary()
   end
 
-  defp pixelate(%Vimage{} = image, hash_size) do
+  defp pixelate_for_hash(%Vimage{} = image, hash_size) do
     image
     |> thumbnail!(hash_size + 1, height: hash_size, resize: :force)
     |> Operation.flatten!()
@@ -4809,7 +4932,7 @@ defmodule Image do
 
   ### Example
 
-      iex> puppy = Image.open!(Path.expand("images/puppy.webp"))
+      iex> puppy = Image.open!(Path.expand("test/support/images/puppy.webp"))
       iex> Image.orientation(puppy, square_ratio: 0.05)
       :landscape
 
