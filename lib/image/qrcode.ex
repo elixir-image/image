@@ -34,7 +34,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     ## Options
 
     * `:size` is the size in pixels of the QRcode
-      dimenstions. The default is `:auto` in which
+      dimensions. The default is `:auto` in which
       the generated QRcode will be the minimum dimensions
       necessary to encode the `string`.
 

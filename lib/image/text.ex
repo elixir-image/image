@@ -40,7 +40,7 @@ defmodule Image.Text do
   ### Arguments
 
   * `string` is any string. The string will be
-    HTML-escapeed to avoid malicious code injection. If you
+    HTML-escaped to avoid malicious code injection. If you
     are completely confident that the text is safe then
     you can pass it by calling with `Phoenix.HTML.raw/1`
     on the string first.
@@ -53,7 +53,7 @@ defmodule Image.Text do
     The default is"Helvetica".
 
   * `:font_size` is an integer font size in pixels. The
-    dfault is `50`.
+    default is `50`.
 
   * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
     The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
@@ -165,7 +165,7 @@ defmodule Image.Text do
   ### Arguments
 
   * `string` is any string. The string will be
-    HTML-escapeed to avoid malicious code injection. If you
+    HTML-escaped to avoid malicious code injection. If you
     are completely confident that the text is safe then
     you can pass it by calling with `Phoenix.HTML.raw/1`
     on the string first.
@@ -178,7 +178,7 @@ defmodule Image.Text do
     The default is"Helvetica".
 
   * `:font_size` is an integer font size in pixels. The
-    dfault is `50`.
+    default is `50`.
 
   * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
     The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
@@ -264,7 +264,7 @@ defmodule Image.Text do
   ### Arguments
 
   * `string` is any string. The string will be
-    HTML-escapeed to avoid malicious code injection. If you
+    HTML-escaped to avoid malicious code injection. If you
     are completely confident that the text is safe then
     you can pass it by calling with `Phoenix.HTML.raw/1`
     on the string first.
@@ -277,7 +277,7 @@ defmodule Image.Text do
     The default is"Helvetica".
 
   * `:font_size` is an integer font size in pixels. The
-    dfault is `50`.
+    default is `50`.
 
   * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
     The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
@@ -347,7 +347,7 @@ defmodule Image.Text do
   ### Arguments
 
   * `string` is any string. The string will be
-    HTML-escapeed to avoid malicious code injection. If you
+    HTML-escaped to avoid malicious code injection. If you
     are completely confident that the text is safe then
     you can pass it by calling with `Phoenix.HTML.raw/1`
     on the string first.
@@ -360,7 +360,7 @@ defmodule Image.Text do
     The default is"Helvetica".
 
   * `:font_size` is an integer font size in pixels. The
-    dfault is `50`.
+    default is `50`.
 
   * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
     The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,

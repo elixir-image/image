@@ -1,11 +1,11 @@
 defmodule Image.Options.Compose do
   @moduledoc false
 
-  # This module propvides functions to calculate
+  # This module provides functions to calculate
   # x, y positions for compositions.
 
-  # Since x,y can be relateive or absolution, can be symbolid
-  # or numeric and can even by a function this becomse more
+  # Since x,y can be relative or absolution, can be symbolic
+  # or numeric and can even by a function this becomes more
   # complex that it might initially seem
 
   @doc false

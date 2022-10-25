@@ -156,7 +156,7 @@ defmodule Image.Social do
   @doc """
   Returns the default image type that an
   image is resized to for a given platform
-  is no `:type` parameter is peovided.
+  is no `:type` parameter is provided.
 
   ### Arguments
 

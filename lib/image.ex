@@ -561,11 +561,11 @@ defmodule Image do
   #### All image types
 
   * `:access` is the file access mode, either `:random`
-    or `:sequential`. The default is `:sequentual`.
+    or `:sequential`. The default is `:sequential`.
     When `:sequential`, `Image` (via `Vix`) is able
     to support streaming transformations and optimise
-    memory usage more effectively. Howwevef `:sequenial`
-    also means that some operationas cannot be completed
+    memory usage more effectively. However `:sequential`
+    also means that some operations cannot be completed
     because they would require non-sequential access to
     the image. In these cases, `:random` access is required.
 
@@ -581,7 +581,7 @@ defmodule Image do
     optimization that can result in improved performance and
     reduced memory usage if the image is being loaded
     with the intent to resize it to smaller dimensions. The
-    default value is `1` meaning no shrnk-on-load.
+    default value is `1` meaning no shrink-on-load.
 
   * `:autorotate` is a boolean value indicating if
     the image should be rotated according to the orientation
@@ -1017,7 +1017,7 @@ defmodule Image do
 
   * `:buffer_size` is the size in bytes for
     each chunk in the stream being written.
-    Some services, like AWS S3, require a minumum
+    Some services, like AWS S3, require a minimum
     5 MiB per chunk to be delivered and this option
     can be used to satisfy that requirement.
 
@@ -1096,7 +1096,7 @@ defmodule Image do
   pixels from either the then `if_image` or the `else_image`.
 
   Non-zero means copy a pixel from `if_image`, `0` means
-  copy a pixel from `else_iamge`.
+  copy a pixel from `else_image`.
 
   ### Arguments
 
@@ -1119,8 +1119,8 @@ defmodule Image do
   is the same for all the non-1-band images. Single band
   images are then effectively copied to make n-band images.
 
-  Images `if_image` and `else_iamge` are cast up to the
-  smallest common format. The `condition_iamge` is cast to
+  Images `if_image` and `else_image` are cast up to the
+  smallest common format. The `condition_image` is cast to
   `{:u, 8}`.
 
   If the images differ in size, the smaller images are
@@ -1129,7 +1129,7 @@ defmodule Image do
 
   The output image is calculated pixel by pixel as:
 
-      (condition_image / 255) * if_image + (1 - condition_image / 255) *`else_iamge`
+      (condition_image / 255) * if_image + (1 - condition_image / 255) *`else_image`
 
   """
   @doc since: "0.13.0"
@@ -1250,7 +1250,7 @@ defmodule Image do
 
   """
 
-  # Orginal python code for thresholding from: https://github.com/libvips/libvips/discussions/3097#discussioncomment-3892994
+  # Original python code for thresholding from: https://github.com/libvips/libvips/discussions/3097#discussioncomment-3892994
   #    threshold = 20
   #    mask = ((foreground - key_colour) ** 2).bandmean() > (3 * threshold ** 2)
 
@@ -1726,7 +1726,7 @@ defmodule Image do
   ### Options for a single overlay image
 
   * `:blend_mode` is the manner in which the two
-    images are composited. See `t:Image.BkendMode.t/0`.
+    images are composited. See `t:Image.BlendMode.t/0`.
     The default is `:over` which is the most common blend
     mode.
 
@@ -2069,7 +2069,7 @@ defmodule Image do
     loaded. The default is `:default` which will load the included
     `Impact` font if the font family is `Impact`. If the font family
     is not `Impact` and the `:font_file` is `:default` then the
-    font displayed is resolved by the underyling operating system.
+    font displayed is resolved by the underlying operating system.
     If `:font_file` is a string, then it is expected to be a valid
     font file. If `:font_file` is set to a path then the `:font` option
     should also be set to the correct font name.
@@ -2153,7 +2153,7 @@ defmodule Image do
     loaded. The default is `:default` which will load the included
     `Impact` font if the font family is `Impact`. If the font family
     is not `Impact` and the `:font_file` is `:default` then the
-    font displayed is resolved by the underyling operating system.
+    font displayed is resolved by the underlying operating system.
     If `:font_file` is a string, then it is expected to be a valid
     font file. If `:font_file` is set to a path then the `:font` option
     should also be set to the correct font name.
@@ -2566,7 +2566,7 @@ defmodule Image do
   @doc """
   Resize an image.
 
-  If the intent is to thumnail an image then `Image.thumbnail/3`
+  If the intent is to thumbnail an image then `Image.thumbnail/3`
   is recommended since it applies a very efficient downsizing
   algorithm for that use case.
 
@@ -2610,7 +2610,7 @@ defmodule Image do
   @doc """
   Resize an image or raise an exception.
 
-  If the intent is to thumnail an image then `Image.thumbnail/3`
+  If the intent is to thumbnail an image then `Image.thumbnail/3`
   is recommended since it applies a very efficient downsizing
   algorithm for that use case.
 
@@ -2976,7 +2976,7 @@ defmodule Image do
   * `left` is 0-indexed. That is, the leftmost
     edge of the image starts at `0`.
 
-  * `top` is 0-indexed. That is, the toptmost
+  * `top` is 0-indexed. That is, the topmost
     edge of the image starts at `0`.
 
   ### Returns
@@ -3472,7 +3472,7 @@ defmodule Image do
   and copyright (if available).
 
   Removing metadata from an image can greatly reduce
-  the overall size of an image. The proprtional
+  the overall size of an image. The proportional
   reduction is most noticeable with smaller images
   which are very common in web applications.
 
@@ -4184,7 +4184,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image_in_rectuangular_coordinates` or
+  * `image_in_rectangular_coordinates` or
 
   * raises an exception.
 
