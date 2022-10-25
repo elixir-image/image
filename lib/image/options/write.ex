@@ -57,7 +57,7 @@ defmodule Image.Options.Write do
         ]
 
   @typedoc """
-  Allowble compression types for heif images.
+  Allowable compression types for heif images.
 
   """
   @type compression :: :hevc | :avc | :jpeg | :av1
