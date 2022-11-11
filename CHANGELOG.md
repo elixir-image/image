@@ -2,7 +2,11 @@
 
 ## Image 0.14.0
 
-This is the changelog for Image version 0.14.0 released on ____, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.14.0 released on November 11th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Fixes extracting exif data when there is an exif blob but no exif tags. Closes #21.  Thanks to @feld for the report.
 
 ### Enhancements
 
