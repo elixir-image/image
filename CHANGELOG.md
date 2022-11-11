@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.14.1
+
+This is the changelog for Image version 0.14.1 released on November 11th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Fix streaming image writes. Previously the stream chunks were being written in reverse order. Closes #19. Thanks to @loics2 for the report.
+
 ## Image 0.14.0
 
 This is the changelog for Image version 0.14.0 released on November 11th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

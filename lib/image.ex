@@ -1064,7 +1064,7 @@ defmodule Image do
     end
   end
 
-  # Rebuffers a steram into chunks of a minimum size.
+  # Rebuffers a stream into chunks of a minimum size.
   # This is useful when streaming to AWS S3 which requires
   # a minimum 5 MiB chunk size for multi-part uploads.
 
@@ -1076,9 +1076,9 @@ defmodule Image do
         if IO.iodata_length(bin) + acc_size >= buffer_size do
           size = buffer_size - acc_size
           <<chunk::binary-size(size), rest::binary>> = bin
-          {:cont, IO.iodata_to_binary([chunk | acc]), [rest]}
+          {:cont, IO.iodata_to_binary([acc, chunk]), [rest]}
         else
-          {:cont, [bin | acc]}
+          {:cont, [acc, bin]}
         end
       end
 

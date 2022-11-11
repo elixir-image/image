@@ -97,7 +97,7 @@ defmodule Image.Options.Write do
   end
 
   defp validate_option({:buffer_size, buffer_size}, options)
-       when (is_integer(buffer_size) and buffer_size >= 9) or buffer_size == :unbuffered do
+       when (is_integer(buffer_size) and buffer_size >= 0) or buffer_size == :unbuffered do
     {:cont, options}
   end
 
