@@ -23,6 +23,7 @@ defmodule Image.Exif.Decode do
   def tag(:tiff, 0x0128, value), do: {:resolution_units, resolution(value)}
   def tag(:tiff, 0x0131, value), do: {:software, value}
   def tag(:tiff, 0x0132, value), do: {:modify_date, date_time(value)}
+  def tag(:tiff, 0x0213, value), do: {:YCbCr_positioning, ycbcr_positioning(value)}
 
   def tag(:tiff, 0x8769, value), do: {:exif, value}
   def tag(:tiff, 0x8825, value), do: {:gps, value}
@@ -311,6 +312,10 @@ defmodule Image.Exif.Decode do
   defp flash(0x5D), do: "Auto, Fired, Red-eye reduction, Return not detected"
   defp flash(0x5F), do: "Auto, Fired, Red-eye reduction, Return detected"
   defp flash(other), do: "Unknown (#{other})"
+
+  defp ycbcr_positioning(1), do: "Centered"
+  defp ycbcr_positioning(2), do: "Co-sited"
+  defp ycbcr_positioning(other), do: "Unknown (#{other})"
 
   @spec version(charlist()) :: binary()
   defp version([?0, major, minor1, minor2]) do
