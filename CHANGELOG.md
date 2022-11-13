@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.14.2
+
+This is the changelog for Image version 0.14.2 released on November 13th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Fix `Image.split_bands/1`
+
+* Fix `Image.split_alpha/1`
+
 ## Image 0.14.1
 
 This is the changelog for Image version 0.14.1 released on November 11th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

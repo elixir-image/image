@@ -277,4 +277,16 @@ defmodule Image.Test do
     webp_binary = File.read! image_path("example.webp")
     assert {:ok, _i} = Image.open(webp_binary)
   end
+
+  test "Splitting an image into its bands" do
+    image = Image.open! image_path("/2x2-maze.png")
+    assert [_, _, _, _] = Image.split_bands(image)
+  end
+
+  test "Split alpha band" do
+    image = Image.open! image_path("2x2-maze.png")
+    {bands, alpha} = Image.split_alpha(image)
+    assert Image.bands(bands) == 3
+    assert Image.bands(alpha) == 1
+  end
 end

@@ -1701,7 +1701,7 @@ defmodule Image do
   def split_alpha(%Vimage{} = image) do
     if has_alpha?(image) do
       alpha_band = image[alpha_band(image)]
-      image = Operation.extract_band!(image, 0, n: alpha_band(image) - 1)
+      image = Operation.extract_band!(image, 0, n: Image.bands(image) - 1)
       {image, alpha_band}
     else
       {image, nil}
@@ -4661,7 +4661,7 @@ defmodule Image do
 
   @spec split_bands(Vimage.t()) :: [Vimage.t()]
   def split_bands(%Vimage{} = image) do
-    for i <- max_band_index(image), do: image[i]
+    for i <- 0..max_band_index(image), do: image[i]
   end
 
   @doc """
