@@ -131,24 +131,37 @@ defmodule Image.Color do
   def rgba_color!(color, a \\ @opacity)
 
   def rgba_color!(color, _a) when color in [:none, :transparent] do
-    [0.0, 0.0, 0.0, 1.0]
+    [0, 0, 0, 1.0]
   end
 
   def rgba_color!(color, a) when is_binary(color) and is_integer(a) do
-    [r, g, b] = rgb_color!(color)
+    [r, g, b] =
+      case rgb_color!(color) do
+        [hex: _hex, rgb: rgb_color] -> rgb_color
+        [_r, _g, _b] = rgb_color -> rgb_color
+      end
+
     [r, g, b, a]
   end
 
   def rgba_color!(color, a)
       when (is_binary(color) or is_atom(color)) and is_float(a) and a >= 0.0 and a <= 1.0 do
     a = round(@opacity * a)
-
-    [r, g, b] = Keyword.get(rgb_color!(color), :rgb, color)
-    [r, g, b, a]
+    rgba_color!(color, a)
   end
 
-  def rgba_color!([r, g, b], a) do
-    [r, g, b, a]
+  def rgba_color!(color, a)
+      when (is_binary(color) or is_atom(color)) and is_integer(a) and a >= 0 do
+    [r, g, b] = Keyword.get(rgb_color!(color), :rgb, color)
+    [r, g, b, a / @opacity]
+  end
+
+  def rgba_color!(color, a) when is_integer(color) and color >= 0 do
+    rgba_color!([color, color, color], a)
+  end
+
+  def rgba_color!([r, g, b], a) when is_integer(a) and a >= 0 do
+    [r, g, b, a / @opacity]
   end
 
   def normalize(color) do
