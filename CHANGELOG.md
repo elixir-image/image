@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.14.3
+
+This is the changelog for Image version 0.14.3 released on November 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Fixes the rbga color model for integer alpha values (which are automatically cast to the appropriate float value).
+
+* Casts the color to the correct number of bands in `Image.Draw` functions. This will either add or remove an alpha band to the color of the shape being drawn to match the underlying image.  Thanks to @andreyuhai for the PR. Closes #22.
+
 ## Image 0.14.2
 
 This is the changelog for Image version 0.14.2 released on November 13th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
