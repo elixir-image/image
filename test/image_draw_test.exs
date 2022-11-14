@@ -26,4 +26,19 @@ defmodule Image.Draw.Test do
       Image.write(image, "/Users/kip/Desktop/draw2.png")
   end
 
+  describe "line/6" do
+    test "draws a line on given image" do
+      {:ok, image} = Vix.Vips.Operation.black(5, 5, bands: 1)
+      {:ok, image} = Image.Draw.line(image, 0, 0, 0, 4, color: :white)
+
+      assert {
+        :ok,
+        <<255, 0, 0, 0, 0,
+          255, 0, 0, 0, 0,
+          255, 0, 0, 0, 0,
+          255, 0, 0, 0, 0,
+          255, 0, 0, 0, 0>>
+      } = Vix.Vips.Image.write_to_binary(image)
+    end
+  end
 end
