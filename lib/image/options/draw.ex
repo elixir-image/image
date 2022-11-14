@@ -129,15 +129,9 @@ defmodule Image.Options.Draw do
   end
 
   defp validate_option(type, {:color, color}, options)
-      when type in [:mask, :point, :circle, :rect, :line, :flood] do
-    case Color.rgb_color(color) do
-      {:ok, color} ->
-        rgb =  if Keyword.keyword?(color), do: Keyword.fetch!(color, :rgb), else: color
-        {:cont, Keyword.put(options, :color, rgb)}
-
-      {:error, reason} ->
-        {:halt, {:error, reason}}
-    end
+    when type in [:mask, :point, :circle, :rect, :line, :flood] do
+      rgba = Color.rgba_color!(color)
+      {:cont, Keyword.put(options, :color, rgba)}
   end
 
   defp validate_option(:flood, {:equal, equal}, options) do
