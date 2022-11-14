@@ -147,6 +147,14 @@ defmodule Image.Color do
     [r, g, b, a]
   end
 
+  def rgba_color!(color, a)
+  when (is_binary(color) or is_atom(color)) and is_integer(a) do
+    a = Integer.mod(a, 256)
+
+    [r, g, b] = Keyword.get(rgb_color!(color), :rgb, color)
+    [r, g, b, a]
+  end
+
   def rgba_color!([r, g, b], a) do
     [r, g, b, a]
   end
