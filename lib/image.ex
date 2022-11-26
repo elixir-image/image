@@ -902,16 +902,22 @@ defmodule Image do
         {suffix, options} = Keyword.pop(options, :suffix)
         options = suffix <> loader_options(options)
 
-        image
-        |> Vimage.write_to_stream(options)
-        |> Enum.reduce_while(conn, fn (chunk, conn) ->
-          case Plug.Conn.chunk(conn, chunk) do
-            {:ok, conn} ->
-              {:cont, conn}
-            {:error, :closed} ->
-              {:halt, conn}
-          end
-        end)
+        result =
+          image
+          |> Vimage.write_to_stream(options)
+          |> Enum.reduce_while(conn, fn chunk, conn ->
+            case Plug.Conn.chunk(conn, chunk) do
+              {:ok, conn} ->
+                {:cont, conn}
+
+              {:error, :closed} = error ->
+                {:halt, error}
+            end
+          end)
+
+        with %Plug.Conn{} <- result do
+          {:ok, image}
+        end
       end
     end
   end

@@ -76,7 +76,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
         |> conn("/")
         |> Plug.Conn.send_chunked(200)
 
-      assert %Plug.Conn{} =
+      assert {:ok, _image} =
         image_path("Singapore-2016-09-5887.jpg")
         |> File.stream!([], 2048)
         |> Image.open!()
