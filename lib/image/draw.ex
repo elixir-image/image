@@ -6,6 +6,7 @@ defmodule Image.Draw do
 
   alias Vix.Vips.Image, as: Vimage
   alias Vix.Vips.{MutableImage, MutableOperation}
+  alias Image.Color
   alias Image.Options
 
   @doc """
@@ -530,6 +531,13 @@ defmodule Image.Draw do
   end
 
   ## Helpers
+  @spec maybe_add_alpha(Vimage.t() | MutableImage.t(), Color.t()) :: Color.t()
+
+  # TODO Mutable images don't have a call to get the image
+  # depth
+  def maybe_add_alpha(%MutableImage{} = _image, color) do
+    color
+  end
 
   def maybe_add_alpha(image, color) when length(color) == 3 do
     if Image.has_alpha?(image) do

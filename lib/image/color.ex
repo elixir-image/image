@@ -31,7 +31,7 @@ defmodule Image.Color do
   it will be considered as an alpha transparency band.
 
   """
-  @type rgb_color :: [number()]
+  @type rgb_color :: [number()] | number()
 
   @typedoc """
   A color can be expressed as a list of numbers or
@@ -126,12 +126,13 @@ defmodule Image.Color do
     end
   end
 
-  @opacity 255
+  @max_opacity 255
+  @min_opacity 0
 
-  def rgba_color!(color, a \\ @opacity)
+  def rgba_color!(color, a \\ @max_opacity)
 
   def rgba_color!(color, _a) when color in [:none, :transparent] do
-    [0, 0, 0, 1.0]
+    [0, 0, 0, @min_opacity]
   end
 
   def rgba_color!(color, a) when is_binary(color) and is_integer(a) do
@@ -146,14 +147,14 @@ defmodule Image.Color do
 
   def rgba_color!(color, a)
       when (is_binary(color) or is_atom(color)) and is_float(a) and a >= 0.0 and a <= 1.0 do
-    a = round(@opacity * a)
+    a = round(@max_opacity * a)
     rgba_color!(color, a)
   end
 
   def rgba_color!(color, a)
       when (is_binary(color) or is_atom(color)) and is_integer(a) and a >= 0 do
     [r, g, b] = Keyword.get(rgb_color!(color), :rgb, color)
-    [r, g, b, a / @opacity]
+    [r, g, b, a]
   end
 
   def rgba_color!(color, a) when is_integer(color) and color >= 0 do
@@ -161,7 +162,7 @@ defmodule Image.Color do
   end
 
   def rgba_color!([r, g, b], a) when is_integer(a) and a >= 0 do
-    [r, g, b, a / @opacity]
+    [r, g, b, a]
   end
 
   def normalize(color) do

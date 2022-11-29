@@ -876,14 +876,14 @@ defmodule Image do
             image_path :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t() | :memory,
             options :: Options.Write.image_write_options()
           ) ::
-            {:ok, Vimage.t()} | {:error, error_message()}
+            {:ok, Vimage.t()} | {:ok, binary()} | {:error, error_message()}
   else
     @spec write(
             image :: Vimage.t(),
             image_path :: Path.t() | Enumerable.t() | File.Stream.t() | :memory,
             options :: Options.Write.image_write_options()
           ) ::
-            {:ok, Vimage.t()} | {:error, error_message()}
+            {:ok, Vimage.t()} | {:ok, binary()} | {:error, error_message()}
   end
 
   def write(image, image_path, options \\ [])
@@ -922,20 +922,20 @@ defmodule Image do
     end
   end
 
-  def write(%Vimage{} = image, :memory, options) do
-    with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
-      {suffix, options} = Keyword.pop(options, :suffix)
-      options = suffix <> loader_options(options)
-      Vimage.write_to_buffer(image, options)
-    end
-  end
-
   def write(%Vimage{} = image, %module{} = stream, options) when module in [File.Stream, Stream] do
     with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
       case write_stream(image, stream, options) do
         :ok -> {:ok, image}
         other -> other
       end
+    end
+  end
+
+  def write(%Vimage{} = image, :memory, options) do
+    with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
+      {suffix, options} = Keyword.pop(options, :suffix)
+      options = suffix <> loader_options(options)
+      Vimage.write_to_buffer(image, options)
     end
   end
 
