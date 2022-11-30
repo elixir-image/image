@@ -265,9 +265,6 @@ defmodule Image do
 
   ### Options
 
-  * `:bands` defines the number of bands (channels)
-    to be created. The default is `3`.
-
   * `:color` defines the color of the image. This
     can be specified as a single integer which will
     be applied to all bands, or a list of
@@ -276,6 +273,11 @@ defmodule Image do
     can also be supplied as a CSS color name as a
     string or atom. For example: `:misty_rose`. See
     `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `:bands` defines the number of bands (channels)
+    to be created. The default is the number of bands of
+    `:color` option or if `:color` is an integer then the
+    default value is `3`.
 
   * `:format` defines the format of the image. The
     default is `{:u, 8}`.

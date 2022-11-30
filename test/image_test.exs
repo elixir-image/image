@@ -289,4 +289,9 @@ defmodule Image.Test do
     assert Image.bands(bands) == 3
     assert Image.bands(alpha) == 1
   end
+
+  test "Image/new 3 default bands" do
+    assert Image.bands(Image.new!(20,20, color: [0,0,0,0])) == 4
+    assert Image.bands(Image.new!(20,20, color: [0,0,0])) == 3
+  end
 end

@@ -17,9 +17,10 @@ defmodule Image.Options.New do
     {:y_offset, number()}
   ]
 
+  @default_bands 3
+
   def default_options do
     [
-      bands: 3,
       format: {:u, 8},
       interpretation: :srgb,
       color: 0,
@@ -51,6 +52,7 @@ defmodule Image.Options.New do
       {:ok, options} ->
         options
         |> Map.new()
+        |> set_default_bands()
         |> wrap(:ok)
 
       other -> other
@@ -96,7 +98,7 @@ defmodule Image.Options.New do
   defp validate_option({:color, color}, options) do
     case Color.rgb_color(color) do
       {:ok, color} ->
-        rgb =  if Keyword.keyword?(color), do: Keyword.fetch!(color, :rgb), else: color
+        rgb = if Keyword.keyword?(color), do: Keyword.fetch!(color, :rgb), else: color
         {:cont, Keyword.put(options, :color, rgb)}
 
       {:error, reason} ->
@@ -106,6 +108,18 @@ defmodule Image.Options.New do
 
   defp validate_option({option, value}, _options) do
     {:halt, {:error, invalid_option(option, value)}}
+  end
+
+  def set_default_bands(%{bands: _bands} = options) do
+    options
+  end
+
+  def set_default_bands(%{color: color} = options) when is_integer(color) do
+    Map.put(options, :bands, @default_bands)
+  end
+
+  def set_default_bands(%{color: color} = options) when is_list(color) do
+    Map.put(options, :bands, length(color))
   end
 
   @doc false
