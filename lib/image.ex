@@ -811,7 +811,7 @@ defmodule Image do
   The available options depends on the type of image
   file being opened.
 
-  ### All image types
+  #### All image types
 
   * `:profile` is the name of any
     [ICC color profile](https://en.wikipedia.org/wiki/ICC_profile).
@@ -835,7 +835,7 @@ defmodule Image do
   * `:suffix` must be specified so that the image is written
     in the correct format. For example: `suffix: ".jpg"`.
 
-  ### JPEG images
+  #### JPEG images
 
   * `:progressive` is a boolean indicating if the image
     should be interleaved rather than baseline. Progressive
@@ -845,7 +845,7 @@ defmodule Image do
     to be preferred but validation of this assumption for
     specific use cases is required.
 
-  ### PNG images
+  #### PNG images
 
    * `:color_depth` is an integer describing the number
      of bits for each color. The value can be `1`, `2`,
@@ -860,16 +860,23 @@ defmodule Image do
    * `:compression` is the image compression factor as an
       image between `0..9`. The default is `6`.
 
-  ### TIFF images
+  #### TIFF images
 
   * `:color_depth` which has the same meaning as for
     PNG images.
 
-  ### Heif images
+  #### Heif images
 
   * `:compression` is the compression strategy to
     be applied. The allowable values are `:hevc`,
     `:avc`, `:jpeg` and `:av1`. The default is `:hevc`.
+
+  ### Returns
+
+  * `{:ok, image}` (or `{:ok, binary}` is the destination is
+    `:memory`) or
+
+  * `{:error, reason}`
 
   """
   if match?({:module, _module}, Code.ensure_compiled(Plug)) do
@@ -992,7 +999,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image` or
+  * `image` (or a binary is the destination is `:memory) or
 
   * raises an exception.
 
@@ -1002,7 +1009,7 @@ defmodule Image do
           image_path_or_stream :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t(),
           options :: Options.Write.image_write_options()
         ) ::
-          Vimage.t() | no_return()
+          Vimage.t() | binary() | no_return()
 
   def write!(%Vimage{} = image, image_path, options \\ []) do
     case write(image, image_path, options) do

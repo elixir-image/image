@@ -1,12 +1,24 @@
 # Changelog
 
+## Image 0.14.4
+
+This is the changelog for Image version 0.14.4 released on November 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Fix the return type for `Image.write/3` for `Plug.Conn`. Thanks to @andreyuhai for the PR.
+
+* Fix type specs for `Image.write/3` when the destination is `:memory`. Thanks to @georgfaust for raising the issue.
+
+* Fixes the rbga color model for integer alpha values *again* (which are automatically cast to the appropriate float value). Thanks to @andreyuhai for your patience and collaboration while this was sorted out.
+
 ## Image 0.14.3
 
 This is the changelog for Image version 0.14.3 released on November 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
 
 ### Bug Fixes
 
-* Fixes the rbga color model for integer alpha values (which are automatically cast to the appropriate float value).
+* Fixes the rbga color model for integer alpha values (which are automatically cast to the appropriate float value). Thanks to @andreyuhai for your patience and collaboration while this was sorted out.
 
 * Casts the color to the correct number of bands in `Image.Draw` functions. This will either add or remove an alpha band to the color of the shape being drawn to match the underlying image.  Thanks to @andreyuhai for the PR. Closes #22.
 
