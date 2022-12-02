@@ -15,7 +15,7 @@ In a very simple image resizing [benchmark](https://github.com/kipcole9/image/bl
 ```elixir
 def deps do
   [
-    {:image, "~> 0.9.0"}
+    {:image, "~> 0.14.0"}
   ]
 end
 ```
