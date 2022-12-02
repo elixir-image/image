@@ -999,7 +999,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image` (or a binary is the destination is `:memory) or
+  * `image` (or a binary is the destination is `:memory`) or
 
   * raises an exception.
 

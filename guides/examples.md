@@ -46,19 +46,19 @@
 <div class="row">
 <div class="column">
   <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_crop_none.jpg" alt="Image.resize/3">
+      <img src="https://raw.githubusercontent.com/kipcole9/image/main/guides/images/puppy_crop_none.jpg" alt="Image.resize/3">
   </figure>
   <figcaption>Image.resize(image, 200, crop: :none)</figcaption>
 </div>
 <div class="column">
   <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_crop_attention.jpg" alt="Image.resize/3">
+      <img src="https://raw.githubusercontent.com/kipcole9/image/main/guides/images/puppy_crop_attention.jpg" alt="Image.resize/3">
   </figure>
   <figcaption>Image.resize(image, 200, crop: :attention)</figcaption>
 </div>
 <div class="column">
   <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_crop_550_320_200_200.jpg" alt="Image.crop/5">
+      <img src="https://raw.githubusercontent.com/kipcole9/image/main/guides/images/puppy_crop_550_320_200_200.jpg" alt="Image.crop/5">
   </figure>
   <figcaption>Image.crop!(image, 550, 320, 200, 200)</figcaption>
 </div>
@@ -67,13 +67,13 @@
 <div class="row">
 <div class="column">
   <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_rounded.png" alt="Image.rounded/2">
+      <img src="https://raw.githubusercontent.com/kipcole9/image/main/guides/images/puppy_rounded.png" alt="Image.rounded/2">
   </figure>
   <figcaption>image |> Image.resize!(200, crop: :attention) |> Image.rounded!()</figcaption>
 </div>
 <div class="column">
   <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/images/puppy_avatar.png"
+      <img src="https://raw.githubusercontent.com/kipcole9/image/main/guides/images/puppy_avatar.png"
       alt="Image.avatar/3">
   </figure>
   <figcaption>Image.avatar(image, 200)</figcaption>
