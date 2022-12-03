@@ -2234,11 +2234,12 @@ defmodule Image do
     end
   end
 
-  defp maybe_add_fontfile(options, nil) do
+  @doc false
+  def maybe_add_fontfile(options, nil) do
     options
   end
 
-  defp maybe_add_fontfile(options, font_file) do
+  def maybe_add_fontfile(options, font_file) do
     Keyword.put(options, :fontfile, font_file)
   end
 
@@ -4976,6 +4977,8 @@ defmodule Image do
     Vix.Vips.version()
     |> Version.parse()
   end
+
+  ### Helpers
 
   defp wrap(item, atom) do
     {atom, item}

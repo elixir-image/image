@@ -273,16 +273,22 @@ defmodule Image.Text do
 
   ### Options
 
-  * `:font` is any font recognised on the host system.
-    The default is"Helvetica".
+  The applicable options vary slightly depending on
+  whether `:autofit` is set to `true` or `false`.
 
-  * `:font_size` is an integer font size in pixels. The
-    default is `50`.
+  When `false` (the default), the text is rendered using
+  svg and therefore separate text stroke color, text
+  fill colour, text stroke width cand font weight an be
+  specified.  However the size of the text box will be
+  determined by the combination of the font size and
+  text length - there is no line wrapping.
 
-  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
-    The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
-    or an integer between `1` and `1_000`. The default is `:normal`
-    which is equivalent to `400`.
+  If `true` the text is formatted to fit within the options
+  `:width` and `:height` and the text is sized to fit
+  within the box. `:height` can be ommitted and it will
+  expand to fit the text of the specified size.
+
+  #### Options for when autofit: false
 
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
@@ -295,7 +301,38 @@ defmodule Image.Text do
 
   * `:text_stroke_width` is the integer width in
     pixels of the outline of each character in the string.
-    The default is `1`.
+    The default is `1`
+
+  * `:font_size` is an integer font size in pixels. The
+    default is `50`.
+
+  #### Options for when autofit: true
+
+  * `:width` is the width of the generated text image.
+
+  * `:height` is the height of the generated text image.
+
+  * `:font_size` is an integer font size in pixels. The
+    default is `50`. If set to `0`, the font size will
+    be calculated to fit the text within the specified `:width`
+    and `:height`.
+
+  * `:justify` is a boolean indicating whether to justify text.
+    The default is `false`.
+
+  * `:align` indicates how multiple lines of text are aligned.
+    The options are `:left`, `:right` and `:center`. The default
+    is `:left`.
+
+  #### Options applicable in all cases
+
+  * `:font` is any font recognised on the host system.
+    The default is"Helvetica".
+
+  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
+    The alternatives are `:normal`, `:bold`, `:lighter`, `:bolder`,
+    or an integer between `1` and `1_000`. The default is `:normal`
+    which is equivalent to `400`.
 
   ### Returns
 
@@ -356,16 +393,22 @@ defmodule Image.Text do
 
   ### Options
 
-  * `:font` is any font recognised on the host system.
-    The default is"Helvetica".
+  The applicable options vary slightly depending on
+  whether `:autofit` is set to `true` or `false`.
 
-  * `:font_size` is an integer font size in pixels. The
-    default is `50`.
+  When `false` (the default), the text is rendered using
+  svg and therefore separate text stroke color, text
+  fill colour, text stroke width cand font weight an be
+  specified.  However the size of the text box will be
+  determined by the combination of the font size and
+  text length - there is no line wrapping.
 
-  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
-    The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
-    or an integer between `1` and `1_000`. The default is `:normal`
-    which is equivalent to `400`.
+  If `true` the text is formatted to fit within the options
+  `:width` and `:height` and the text is sized to fit
+  within the box. `:height` can be ommitted and it will
+  expand to fit the text of the specified size.
+
+  #### Options for when autofit: false
 
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
@@ -378,7 +421,38 @@ defmodule Image.Text do
 
   * `:text_stroke_width` is the integer width in
     pixels of the outline of each character in the string.
-    The default is `1`.
+    The default is `1`
+
+  * `:font_size` is an integer font size in pixels. The
+    default is `50`.
+
+  #### Options for when autofit: true
+
+  * `:width` is the width of the generated text image.
+
+  * `:height` is the height of the generated text image.
+
+  * `:font_size` is an integer font size in pixels. The
+    default is `50`. If set to `0`, the font size will
+    be calculated to fit the text within the specified `:width`
+    and `:height`.
+
+  * `:justify` is a boolean indicating whether to justify text.
+    The default is `false`.
+
+  * `:align` indicates how multiple lines of text are aligned.
+    The options are `:left`, `:right` and `:center`. The default
+    is `:left`.
+
+  #### Options applicable in all cases
+
+  * `:font` is any font recognised on the host system.
+    The default is"Helvetica".
+
+  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
+    The alternatives are `:normal`, `:bold`, `:lighter`, `:bolder`,
+    or an integer between `1` and `1_000`. The default is `:normal`
+    which is equivalent to `400`.
 
   ### Returns
 
@@ -764,7 +838,7 @@ defmodule Image.Text do
     render_text(text, Map.put(options, :text_fill_color, :white))
   end
 
-  defp render_text(text, %{} = options) do
+  defp render_text(text, %{autofit: false} = options) do
     height = Map.get(options, :height, round(options.font_size * 1.5))
     dy = div(height - options.font_size, 2)
 
@@ -789,6 +863,29 @@ defmodule Image.Text do
     {:ok, {x, y, width, height, _flags}} =
       Operation.find_trim(image, background: @black, threshold: 10.0)
     Image.crop(image, x, y, width, height)
+  end
+
+  @points_to_pixels 1.333
+
+  defp render_text(text, %{autofit: true} = options) do
+    font_size = if options.font_size > 0, do: " #{round(options.font_size / @points_to_pixels)}", else: ""
+    font = options.font <> font_size
+
+    text_options =
+      [font: font, width: options.width, height: options.height, align: options.align, justify: options.justify]
+      |> Image.maybe_add_fontfile(options[:fontfile])
+
+    with {:ok, {text_mask, _}} <- Operation.text(text, text_options),
+         {:ok, color_layer} <- Image.new(text_mask, color: options.text_fill_color),
+         {:ok, joined} <- Operation.bandjoin([color_layer, text_mask]) do
+
+      # The text image isn't guaranteed to be the exact dimensions
+      # provided so we embed in an image of the exact size
+      x = div(options.width - Image.width(joined), 2)
+      y = div(options.height - Image.height(joined), 2)
+
+      Operation.embed(joined, x, y, options.width, options.height)
+    end
   end
 
   # Render a background rectangle and return

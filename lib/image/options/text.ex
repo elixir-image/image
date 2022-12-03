@@ -21,7 +21,13 @@ defmodule Image.Options.Text do
     {:background_fill_opacity, float()} |
     {:padding, [non_neg_integer(), ...]} |
     {:x, :center | :left | :right} |
-    {:y, :middle | :top | :bottom}
+    {:y, :middle | :top | :bottom} |
+    {:autofit, boolean()} |
+    {:width, pos_integer() | nil} |
+    {:height, pos_integer() | nil} |
+    {:fontfile, String.t() | nil} |
+    {:align, :left | :right | :center} |
+    {:justify, boolean()}
   ]
 
   def default_options do
@@ -39,7 +45,11 @@ defmodule Image.Options.Text do
       background_fill_opacity: 0.7,
       padding: [0, 0],
       x: :center,
-      y: :middle
+      y: :middle,
+      autofit: false,
+      fontfile: nil,
+      align: :left,
+      justify: false
     ]
   end
 
@@ -65,10 +75,16 @@ defmodule Image.Options.Text do
         options
         |> Map.new()
         |> ensure_background_color_if_transparent_text()
-        |> wrap(:ok)
+        |> validate_size_if_autofit_true()
 
       other -> other
     end
+  end
+
+  defp validate_option({:autofit, autofit}, options) do
+    autofit = if autofit, do: true, else: false
+    options = Keyword.put(options, :autofit, autofit)
+    {:cont, options}
   end
 
   defp validate_option({:x, x}, options) when is_integer(x) and x >= 0 do
@@ -76,6 +92,22 @@ defmodule Image.Options.Text do
   end
 
   defp validate_option({:y, y}, options) when is_integer(y) and y >= 0 do
+    {:cont, options}
+  end
+
+  defp validate_option({:width, width}, options) when is_integer(width) and width >= 0 do
+    {:cont, options}
+  end
+
+  defp validate_option({:width, nil}, options) do
+    {:cont, options}
+  end
+
+  defp validate_option({:height, height}, options) when is_integer(height) and height >= 0 do
+    {:cont, options}
+  end
+
+  defp validate_option({:height, nil}, options) do
     {:cont, options}
   end
 
@@ -153,6 +185,38 @@ defmodule Image.Options.Text do
     padding_top = div(Image.height(image), 2)
 
     {:cont, Keyword.put(options, option, [padding_left, padding_top])}
+  end
+
+  defp validate_option({:fontfile, nil}, options) do
+    {:cont, options}
+  end
+
+  defp validate_option({:fontfile, fontfile}, options) when is_binary(fontfile) do
+    {:cont, options}
+  end
+
+  defp validate_option({:align, :right}, options) do
+    options = Keyword.put(options, :align, :VIPS_ALIGN_HIGH)
+    {:cont, options}
+  end
+
+  defp validate_option({:align, :left}, options) do
+    options = Keyword.put(options, :align, :VIPS_ALIGN_LOW)
+    {:cont, options}
+  end
+
+  defp validate_option({:align, :center}, options) do
+    options = Keyword.put(options, :align, :VIPS_ALIGN_CENTRE)
+    {:cont, options}
+  end
+
+  defp validate_option({:align, align}, options) when align in [:VIPS_ALIGN_LOW, :VIPS_ALIGN_LOW, :VIPS_ALIGN_CENTRE] do
+    {:cont, options}
+  end
+
+  defp validate_option({:justify, justify}, options) do
+    justify = if justify, do: true, else: false
+    {:cont, Keyword.put(options, :justify, justify)}
   end
 
   defp validate_option(option, _options) do
@@ -235,6 +299,18 @@ defmodule Image.Options.Text do
     |> round()
     |> Integer.to_string(16)
     |> String.pad_leading(2, "0")
+  end
+
+  defp validate_size_if_autofit_true(%{autofit: false} = options) do
+    wrap(options, :ok)
+  end
+
+  defp validate_size_if_autofit_true(%{autofit: true, height: height, width: width} = options) do
+    if is_integer(height) and is_integer(width) do
+      wrap(options, :ok)
+    else
+      {:error, ":height and :width must be specified when autofit: true"}
+    end
   end
 
   @doc false

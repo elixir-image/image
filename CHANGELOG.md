@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.15.0
+
+This is the changelog for Image version 0.15.0 released on Decmber 3rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancements
+
+* Add `:autofit` option to `Image.Text.text/2`. When set to `true`, text is rendered with `Vix.Vips.Operation.text/2`. The default, `false`, uses SVG rendering. There are pros and cons to both strategies. The main difference is that `autofit: true` will automatically size the text and perform line wrapping to fit the specified `:width` and `:height`.
+
 ## Image 0.14.4
 
 This is the changelog for Image version 0.14.4 released on November 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

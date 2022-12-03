@@ -74,4 +74,39 @@ defmodule TextImage.Test do
 
     assert_images_equal(final_image, validate_path)
   end
+
+  test "Autofit text default colors" do
+     validate_path = validate_path("text/autofit_default.tif")
+     {:ok, image} = Image.Text.text("This is some multiline text", height: 300, width: 300, autofit: true)
+
+     assert {300, 300, 4} = Image.shape(image)
+     assert_images_equal(image, validate_path)
+  end
+
+  test "Autofit text default colors and justification" do
+     validate_path = validate_path("text/autofit_default_with_justify.tif")
+     {:ok, image} = Image.Text.text("This is some multiline text", height: 300, width: 300, autofit: true, justify: true)
+
+     # Image.write(image, validate_path)
+     assert {300, 300, 4} = Image.shape(image)
+     assert_images_equal(image, validate_path)
+  end
+
+  test "Autofit text alternate colors" do
+     validate_path = validate_path("text/autofit_default_with_alternate_color.tif")
+     {:ok, image} = Image.Text.text("This is some multiline text", height: 300, width: 300, autofit: true, text_fill_color: :green)
+
+     # Image.write(image, validate_path)
+     assert {300, 300, 4} = Image.shape(image)
+     assert_images_equal(image, validate_path)
+  end
+
+  test "Autofit text composed over a base image", %{image: base_image} do
+    validate_path = validate_path("text/autofit_default_composed_on_base_image.tif")
+    {:ok, text_image} = Image.Text.text("This is some multiline text", height: 300, width: 300, autofit: true, text_fill_color: :green)
+    {:ok, final_image} = Image.compose(base_image, text_image, x: :middle, y: :center)
+
+    # Image.write(final_image, validate_path)
+    assert_images_equal(final_image, validate_path)
+  end
 end
