@@ -103,7 +103,7 @@ defmodule TextImage.Test do
 
   test "Autofit text composed over a base image", %{image: base_image} do
     validate_path = validate_path("text/autofit_default_composed_on_base_image.tif")
-    {:ok, text_image} = Image.Text.text("This is some multiline text", height: 300, width: 300, autofit: true, text_fill_color: :green)
+    {:ok, text_image} = Image.Text.text("Singapore skyline text in a 300x300 centred box", height: 300, width: 300, autofit: true, text_fill_color: :white)
     {:ok, final_image} = Image.compose(base_image, text_image, x: :middle, y: :center)
 
     # Image.write(final_image, validate_path)

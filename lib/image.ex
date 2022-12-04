@@ -2743,12 +2743,12 @@ defmodule Image do
   * `image` is any `t:Vix.Vips.Image.t/0` or a
     pathname to an image file.
 
-  * `width` is the integer width of the resulting
-    image after resizing. It can also be of the form
-    "<width>x<height>". That is, a string with the
-    width and height separated by an `x`. The `<height>`
-    may be omitted in which case it is the same as
-    providing an integer width.
+  * `length` is the integer length of the longest
+    side of the resulting image after resizing. It c
+    an also be of the form "<width>x<height>". That
+    is, a string with the width and height separated
+    by an `x`. The `<height>` may be omitted in which
+    case it is the same as providing an integer length.
 
   * `options` is a keyword list of options.
 
@@ -2802,24 +2802,24 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @spec thumbnail(Vimage.t(), width :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
+  @spec thumbnail(Vimage.t(), length :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def thumbnail(image_or_path, width, options \\ [])
+  def thumbnail(image_or_path, length, options \\ [])
 
-  def thumbnail(%Vimage{} = image, width, options) when is_size(width) do
+  def thumbnail(%Vimage{} = image, length, options) when is_size(length) do
     with {:ok, options} <- Thumbnail.validate_options(options) do
-      Operation.thumbnail_image(image, width, options)
+      Operation.thumbnail_image(image, length, options)
     end
   end
 
-  @spec thumbnail(Path.t(), width :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
+  @spec thumbnail(Path.t(), length :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def thumbnail(image_path, width, options) when is_binary(image_path) and is_size(width) do
+  def thumbnail(image_path, length, options) when is_binary(image_path) and is_size(length) do
     with {:ok, options} <- Thumbnail.validate_options(options),
          {:ok, _file} = file_exists?(image_path) do
-      Operation.thumbnail(image_path, width, options)
+      Operation.thumbnail(image_path, length, options)
     end
   end
 
@@ -2827,8 +2827,8 @@ defmodule Image do
     {:ok, Vimage.t()} | {:error, error_message()}
 
   def thumbnail(image_or_path, dimensions, options) when is_binary(dimensions) do
-    with {:ok, width, options} <- Thumbnail.validate_dimensions(dimensions, options) do
-      thumbnail(image_or_path, width, options)
+    with {:ok, length, options} <- Thumbnail.validate_dimensions(dimensions, options) do
+      thumbnail(image_or_path, length, options)
     end
   end
 
@@ -2841,12 +2841,12 @@ defmodule Image do
   * `image` is any `t:Vix.Vips.Image.t/0` or a
     pathname to an image file.
 
-  * `width` is the integer width of the resulting
-    image after resizing. It can also be of the form
-    "<width>x<height>". That is, a string with the
-    width and height separated by an `x`. The `<height>`
-    may be omitted in which case it is the same as
-    providing an integer width.
+  * `length` is the integer length of the longest
+    side of the resulting image after resizing. It c
+    an also be of the form "<width>x<height>". That
+    is, a string with the width and height separated
+    by an `x`. The `<height>` may be omitted in which
+    case it is the same as providing an integer length.
 
   * `options` is a keyword list of options.
     See `Image.thumbnail/3`.
@@ -2858,17 +2858,17 @@ defmodule Image do
   * raises an exception.
 
   """
-  @spec thumbnail!(Vimage.t(), width :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
+  @spec thumbnail!(Vimage.t(), length :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
           Vimage.t() | no_return()
 
-  @spec thumbnail!(Path.t(), width :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
+  @spec thumbnail!(Path.t(), length :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
           Vimage.t() | no_return()
 
   @spec thumbnail!(Vimage.t() | Path.t(), dimensions :: binary(), options :: Thumbnail.thumbnail_options()) ::
           Vimage.t() | no_return()
 
-  def thumbnail!(%Vimage{} = image, width_or_dimensions, options \\ []) do
-    case thumbnail(image, width_or_dimensions, options) do
+  def thumbnail!(%Vimage{} = image, length_or_dimensions, options \\ []) do
+    case thumbnail(image, length_or_dimensions, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
@@ -3504,6 +3504,9 @@ defmodule Image do
   size due to the removal of most EXIF and all
   IPTC and XMP metadata.
 
+  Note that the minimized metadata is only materialized when
+  the minimized image is saved to a file.
+
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`
@@ -3517,16 +3520,11 @@ defmodule Image do
   """
   @spec minimize_metadata(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def minimize_metadata(%Vimage{} = image) do
-    with {:ok, _exif} <- exif(image),
+    with {:ok, exif} <- exif(image),
          {:ok, image} <- remove_metadata(image) do
-      {:ok, artist} = Exif.get_metadata(image, :artist)
-      {:ok, copyright} = Exif.get_metadata(image, :copyright)
-
       Vimage.mutate(image, fn mut_img ->
-        :ok = MutableImage.set(mut_img, "exif-data", :VipsBlob, <<0>>)
-
-        Exif.put_metadata(mut_img, :copyright, copyright)
-        Exif.put_metadata(mut_img, :artist, artist)
+        :ok = Exif.put_metadata(mut_img, :copyright, exif.copyright)
+        :ok = Exif.put_metadata(mut_img, :artist, exif.artist)
       end)
     end
   end
