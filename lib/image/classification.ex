@@ -13,8 +13,10 @@ defmodule Image.Classification do
   end
 
   def classify(%Vimage{} = image) do
-    with {:ok, binary} <- Image.to_nx(image) do
-      Nx.Serving.batched_run(Image.Serving, binary)
+    with {:ok, mat} <- Image.to_evision(image) do
+      binary = Evision.Mat.to_nx(mat)
+      tensor = Nx.backend_transfer(binary, EXLA.Backend)
+      Nx.Serving.batched_run(Image.Serving, tensor)
     end
   end
 
