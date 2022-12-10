@@ -64,8 +64,13 @@ defmodule Image.MixProject do
       # For streaming writes
       {:plug, "~> 1.13", optional: true},
 
-      # For NX interchange testing
-      if(otp_release() >= 24, do: {:nx, "~> 0.2", optional: true}),
+      # For NX interchange testing and
+      # Bumblebee for image classification
+      if(otp_release() >= 24, do: [
+        {:nx, "~> 0.4.1", optional: true},
+        {:bumblebee, "~> 0.1.0", optional: true},
+        {:exla, "~> 0.4.1", optional: true}
+      ]),
 
       # For testing and benchmarking
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
@@ -78,11 +83,12 @@ defmodule Image.MixProject do
       # For testing HTTP streaming
       {:ex_aws_s3, "~> 2.3", optional: true, only: [:dev, :test]},
       {:hackney, "~> 1.18", optional: true, only: [:dev, :test]},
-      {:jason, "~> 1.0", optional: true, only: [:dev, :test]}
+      {:jason, "~> 1.4", optional: true}
 
       # Only used for benchmarking
       # {:mogrify, "~> 0.9.1", only: :dev, optional: true}
     ]
+    |> List.flatten()
     |> Enum.reject(&is_nil/1)
   end
 
