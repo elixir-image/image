@@ -53,11 +53,11 @@ defmodule Image.MixProject do
 
       # Kino for rendering in Livebook
       if(Version.compare(System.version(), "1.13.0") in [:gt, :eq],
-        do: {:kino, "~> 0.7", optional: true}),
+        do: {:kino, "~> 0.7", optional: true}
+      ),
 
       # eVision OpenCV bindings
       {:evision, ">= 0.1.14", optional: true},
-
       {:sweet_xml, "~> 0.7"},
       {:phoenix_html, "~> 3.2 or ~> 2.14"},
 
@@ -66,11 +66,13 @@ defmodule Image.MixProject do
 
       # For NX interchange testing and
       # Bumblebee for image classification
-      if(otp_release() >= 24, do: [
-        {:nx, "~> 0.4.1", optional: true},
-        {:bumblebee, "~> 0.1.0", optional: true},
-        {:exla, "~> 0.4.1", optional: true}
-      ]),
+      if(otp_release() >= 24,
+        do: [
+          {:nx, "~> 0.4.1", optional: true},
+          {:bumblebee, "~> 0.1.0", optional: true},
+          {:exla, "~> 0.4.1", optional: true}
+        ]
+      ),
 
       # For testing and benchmarking
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
@@ -147,7 +149,7 @@ defmodule Image.MixProject do
 
   defp otp_release do
     :erlang.system_info(:otp_release)
-    |> List.to_integer
+    |> List.to_integer()
   end
 
   defp preferred_cli_env() do

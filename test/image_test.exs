@@ -5,6 +5,7 @@ defmodule Image.Test do
   alias Vix.Vips.Image, as: Vimage
 
   doctest Image
+  doctest Image.Classification
 
   setup do
     Temp.track!()
@@ -268,30 +269,30 @@ defmodule Image.Test do
   end
 
   test "Image.open/2 for different file formats" do
-    jpeg_binary = File.read! image_path("Kip_small.jpg")
+    jpeg_binary = File.read!(image_path("Kip_small.jpg"))
     assert {:ok, _i} = Image.open(jpeg_binary)
 
-    png_binary = File.read! image_path("Kip_small.png")
+    png_binary = File.read!(image_path("Kip_small.png"))
     assert {:ok, _i} = Image.open(png_binary)
 
-    webp_binary = File.read! image_path("example.webp")
+    webp_binary = File.read!(image_path("example.webp"))
     assert {:ok, _i} = Image.open(webp_binary)
   end
 
   test "Splitting an image into its bands" do
-    image = Image.open! image_path("/2x2-maze.png")
+    image = Image.open!(image_path("/2x2-maze.png"))
     assert [_, _, _, _] = Image.split_bands(image)
   end
 
   test "Split alpha band" do
-    image = Image.open! image_path("2x2-maze.png")
+    image = Image.open!(image_path("2x2-maze.png"))
     {bands, alpha} = Image.split_alpha(image)
     assert Image.bands(bands) == 3
     assert Image.bands(alpha) == 1
   end
 
   test "Image/new 3 default bands" do
-    assert Image.bands(Image.new!(20,20, color: [0,0,0,0])) == 4
-    assert Image.bands(Image.new!(20,20, color: [0,0,0])) == 3
+    assert Image.bands(Image.new!(20, 20, color: [0, 0, 0, 0])) == 4
+    assert Image.bands(Image.new!(20, 20, color: [0, 0, 0])) == 3
   end
 end

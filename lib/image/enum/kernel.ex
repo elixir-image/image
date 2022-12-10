@@ -18,13 +18,13 @@ defmodule Image.Kernel do
   @vips_kernel Map.values(@kernel_map)
 
   @reverse_kernel Enum.map(@kernel_map, fn {k, v} -> {v, k} end)
-  |> Map.new()
+                  |> Map.new()
 
   @typedoc """
   Defines the known kernel resampling methods.
 
   """
-  @type t ::  unquote(Enum.reduce(@kernel, &{:|, [], [&1, &2]}))
+  @type t :: unquote(Enum.reduce(@kernel, &{:|, [], [&1, &2]}))
 
   @doc """
   Returns the known colorspace interpretations
@@ -76,14 +76,14 @@ defmodule Image.Kernel do
     |> String.downcase()
     |> String.to_existing_atom()
     |> validate_kernel()
-  rescue ArgumentError ->
-    {:error, unknown_kernel_error(kernel)}
+  rescue
+    ArgumentError ->
+      {:error, unknown_kernel_error(kernel)}
   end
 
   @doc false
   def validate_kernel(kernel, options) when kernel in @kernel do
-    kernel =
-      Map.fetch!(@kernel_map, kernel)
+    kernel = Map.fetch!(@kernel_map, kernel)
 
     options =
       options
@@ -109,5 +109,4 @@ defmodule Image.Kernel do
   defp unknown_kernel_error(kernel) do
     "Unknown kernel. Found #{inspect(kernel)}"
   end
-
 end

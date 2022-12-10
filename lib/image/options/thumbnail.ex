@@ -15,14 +15,14 @@ defmodule Image.Options.Thumbnail do
 
   """
   @type thumbnail_options :: [
-          {:autorotate, boolean()} |
-          {:intent, Image.render_intent()} |
-          {:export_icc_profile, Color.icc_profile()} |
-          {:import_icc_profile, Color.icc_profile()} |
-          {:linear, boolean()} |
-          {:resize, resize_dimension()} |
-          {:height, pos_integer()} |
-          {:crop, Crop.crop_focus()}
+          {:autorotate, boolean()}
+          | {:intent, Image.render_intent()}
+          | {:export_icc_profile, Color.icc_profile()}
+          | {:import_icc_profile, Color.icc_profile()}
+          | {:linear, boolean()}
+          | {:resize, resize_dimension()}
+          | {:height, pos_integer()}
+          | {:crop, Crop.crop_focus()}
         ]
 
   @type resize_dimension :: :width | :height | :both

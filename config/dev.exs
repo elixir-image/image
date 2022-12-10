@@ -17,3 +17,7 @@ config :nx,
 
 config :logger,
   level: :debug
+
+# config :image,
+#   classification_model: {:hf, "google/vit-base-patch16-224"},
+#   classification_featurizer: {:hf, "google/vit-base-patch16-224"}

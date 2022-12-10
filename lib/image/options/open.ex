@@ -20,37 +20,37 @@ defmodule Image.Options.Open do
           | other_open_options()
 
   @type jpeg_open_options :: [
-          {:shrink, 1..16} |
-          {:autorotate, boolean()} |
-          {:access, file_access()} |
-          {:fail_on, fail_on()}
+          {:shrink, 1..16}
+          | {:autorotate, boolean()}
+          | {:access, file_access()}
+          | {:fail_on, fail_on()}
         ]
 
   @type png_open_options :: [
-          {:access, file_access()} |
-          {:fail_on, fail_on()}
+          {:access, file_access()}
+          | {:fail_on, fail_on()}
         ]
 
   @type tiff_open_options :: [
-          {:autorotate, boolean()} |
-          {:access, file_access()} |
-          {:fail_on, fail_on()} |
-          {:pages, pos_integer()} |
-          {:page, 1..100_000}
+          {:autorotate, boolean()}
+          | {:access, file_access()}
+          | {:fail_on, fail_on()}
+          | {:pages, pos_integer()}
+          | {:page, 1..100_000}
         ]
 
   @type webp_open_options :: [
-          {:autorotate, boolean()} |
-          {:access, file_access()} |
-          {:fail_on, fail_on()} |
-          {:pages, pos_integer()} |
-          {:page, 1..100_000} |
-          {:scale, 1..1024}
+          {:autorotate, boolean()}
+          | {:access, file_access()}
+          | {:fail_on, fail_on()}
+          | {:pages, pos_integer()}
+          | {:page, 1..100_000}
+          | {:scale, 1..1024}
         ]
 
   @type other_open_options :: [
-          {:access, file_access()} |
-          {:fail_on, fail_on()}
+          {:access, file_access()}
+          | {:fail_on, fail_on()}
         ]
 
   @typedoc """

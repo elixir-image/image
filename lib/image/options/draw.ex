@@ -8,39 +8,37 @@ defmodule Image.Options.Draw do
   alias Image.CombineMode
 
   @type circle :: [
-    {:fill, boolean()} |
-    {:color, Color.t()}
-  ]
+          {:fill, boolean()}
+          | {:color, Color.t()}
+        ]
 
   @type rect :: [
-    {:fill, boolean()} |
-    {:color, Color.t()}
-  ]
+          {:fill, boolean()}
+          | {:color, Color.t()}
+        ]
 
   @type point :: [
-    {:color, Color.t()}
-  ]
+          {:color, Color.t()}
+        ]
 
   @type flood :: [
-    {:equal, boolean()} |
-    {:color, Color.t()}
-  ]
+          {:equal, boolean()}
+          | {:color, Color.t()}
+        ]
 
   @type mask :: [
-    {:color, Color.t()}
-  ]
+          {:color, Color.t()}
+        ]
 
   @type line :: [
-    {:color, Color.t()}
-  ]
+          {:color, Color.t()}
+        ]
 
-  @type smudge :: [
-
-  ]
+  @type smudge :: []
 
   @type image :: [
-    {:mode, CombineMode.t()}
-  ]
+          {:mode, CombineMode.t()}
+        ]
 
   def default_options(:circle) do
     [
@@ -88,9 +86,7 @@ defmodule Image.Options.Draw do
   end
 
   def default_options(:smudge) do
-    [
-
-    ]
+    []
   end
 
   @doc """
@@ -98,8 +94,7 @@ defmodule Image.Options.Draw do
 
   """
   def validate_options(type, options) do
-    options =
-      Keyword.merge(default_options(type), options)
+    options = Keyword.merge(default_options(type), options)
 
     options =
       case Enum.reduce_while(options, options, &validate_option(type, &1, &2)) do
@@ -116,7 +111,8 @@ defmodule Image.Options.Draw do
         |> Map.new()
         |> wrap(:ok)
 
-      other -> other
+      other ->
+        other
     end
   end
 
@@ -129,10 +125,10 @@ defmodule Image.Options.Draw do
   end
 
   defp validate_option(type, {:color, color}, options)
-      when type in [:mask, :point, :circle, :rect, :line, :flood] do
+       when type in [:mask, :point, :circle, :rect, :line, :flood] do
     case Color.rgb_color(color) do
       {:ok, color} ->
-        rgb =  if Keyword.keyword?(color), do: Keyword.fetch!(color, :rgb), else: color
+        rgb = if Keyword.keyword?(color), do: Keyword.fetch!(color, :rgb), else: color
         {:cont, Keyword.put(options, :color, rgb)}
 
       {:error, reason} ->
@@ -169,7 +165,7 @@ defmodule Image.Options.Draw do
 
   @doc false
   def invalid_option(type, option, value) do
-    "Invalid option or option value for draw_#{type}: #{option}: #{inspect value}"
+    "Invalid option or option value for draw_#{type}: #{option}: #{inspect(value)}"
   end
 
   defp wrap(term, atom) do

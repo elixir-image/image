@@ -6,7 +6,7 @@ defmodule TextImage.Test do
   alias Image.{Text, Shape}
 
   @points [[0, 0], [0, 100], [70, 100], [90, 0]]
-  @polygon_color  [116, 214, 245]
+  @polygon_color [116, 214, 245]
 
   setup do
     image = image_path("Singapore-2016-09-5887.jpg")
@@ -18,11 +18,26 @@ defmodule TextImage.Test do
   test "compositing several images in a pipeline", %{image: base_image} do
     validate_path = validate_path("compose/composition_1.tif")
 
-    {:ok, polygon} = Shape.polygon(@points, fill_color:  @polygon_color, stroke_color: "none", height: Image.height(base_image), opacity: 0.8)
+    {:ok, polygon} =
+      Shape.polygon(@points,
+        fill_color: @polygon_color,
+        stroke_color: "none",
+        height: Image.height(base_image),
+        opacity: 0.8
+      )
+
     {:ok, explore_new} = Text.text("EXPLORE NEW", font_size: 95, font: "DIN Alternate")
     {:ok, places} = Text.text("PLACES", font_size: 95, font: "DIN Alternate")
     {:ok, blowout} = Text.text("BLOWOUT SINGAPORE SALE", font_size: 40, font: "DIN Alternate")
-    {:ok, start_saving} = Text.text("START SAVING", font_size: 30, padding: 20, background_fill_color: "none", background_stroke_color: "white", background_stroke_width: 5)
+
+    {:ok, start_saving} =
+      Text.text("START SAVING",
+        font_size: 30,
+        padding: 20,
+        background_fill_color: "none",
+        background_stroke_color: "white",
+        background_stroke_width: 5
+      )
 
     final_image =
       base_image
@@ -38,7 +53,16 @@ defmodule TextImage.Test do
   test "Transparent text on a full image background", %{image: base_image} do
     validate_path = validate_path("compose/composition_2.png")
 
-    {:ok, singapore} = Text.text("SINGAPORE", font_size: 250, font: "DIN Alternate", padding: base_image, text_fill_color: :transparent, background_fill_color: "black", background_fill_opacity: 0.6)
+    {:ok, singapore} =
+      Text.text("SINGAPORE",
+        font_size: 250,
+        font: "DIN Alternate",
+        padding: base_image,
+        text_fill_color: :transparent,
+        background_fill_color: "black",
+        background_fill_opacity: 0.6
+      )
+
     {:ok, final_image} = Image.compose(base_image, singapore, x: :center, y: :middle)
 
     assert_images_equal(final_image, validate_path)
@@ -56,11 +80,26 @@ defmodule TextImage.Test do
   test "compositing several images in a composition list", %{image: base_image} do
     validate_path = validate_path("compose/composition_4.tif")
 
-    {:ok, polygon} = Shape.polygon(@points, fill_color:  @polygon_color, stroke_color: "none", height: Image.height(base_image), opacity: 0.8)
+    {:ok, polygon} =
+      Shape.polygon(@points,
+        fill_color: @polygon_color,
+        stroke_color: "none",
+        height: Image.height(base_image),
+        opacity: 0.8
+      )
+
     {:ok, explore_new} = Text.text("EXPLORE NEW", font_size: 95, font: "DIN Alternate")
     {:ok, places} = Text.text("PLACES", font_size: 95, font: "DIN Alternate")
     {:ok, blowout} = Text.text("BLOWOUT SINGAPORE SALE", font_size: 40, font: "DIN Alternate")
-    {:ok, start_saving} = Text.text("START SAVING", font_size: 30, padding: 20, background_fill_color: "none", background_stroke_color: "white", background_stroke_width: 5)
+
+    {:ok, start_saving} =
+      Text.text("START SAVING",
+        font_size: 30,
+        padding: 20,
+        background_fill_color: "none",
+        background_stroke_color: "white",
+        background_stroke_width: 5
+      )
 
     final_image =
       base_image
@@ -76,34 +115,58 @@ defmodule TextImage.Test do
   end
 
   test "Autofit text default colors" do
-     validate_path = validate_path("text/autofit_default.tif")
-     {:ok, image} = Image.Text.text("This is some multiline text", height: 300, width: 300, autofit: true)
+    validate_path = validate_path("text/autofit_default.tif")
 
-     assert {300, 300, 4} = Image.shape(image)
-     assert_images_equal(image, validate_path)
+    {:ok, image} =
+      Image.Text.text("This is some multiline text", height: 300, width: 300, autofit: true)
+
+    assert {300, 300, 4} = Image.shape(image)
+    assert_images_equal(image, validate_path)
   end
 
   test "Autofit text default colors and justification" do
-     validate_path = validate_path("text/autofit_default_with_justify.tif")
-     {:ok, image} = Image.Text.text("This is some multiline text", height: 300, width: 300, autofit: true, justify: true)
+    validate_path = validate_path("text/autofit_default_with_justify.tif")
 
-     # Image.write(image, validate_path)
-     assert {300, 300, 4} = Image.shape(image)
-     assert_images_equal(image, validate_path)
+    {:ok, image} =
+      Image.Text.text("This is some multiline text",
+        height: 300,
+        width: 300,
+        autofit: true,
+        justify: true
+      )
+
+    # Image.write(image, validate_path)
+    assert {300, 300, 4} = Image.shape(image)
+    assert_images_equal(image, validate_path)
   end
 
   test "Autofit text alternate colors" do
-     validate_path = validate_path("text/autofit_default_with_alternate_color.tif")
-     {:ok, image} = Image.Text.text("This is some multiline text", height: 300, width: 300, autofit: true, text_fill_color: :green)
+    validate_path = validate_path("text/autofit_default_with_alternate_color.tif")
 
-     # Image.write(image, validate_path)
-     assert {300, 300, 4} = Image.shape(image)
-     assert_images_equal(image, validate_path)
+    {:ok, image} =
+      Image.Text.text("This is some multiline text",
+        height: 300,
+        width: 300,
+        autofit: true,
+        text_fill_color: :green
+      )
+
+    # Image.write(image, validate_path)
+    assert {300, 300, 4} = Image.shape(image)
+    assert_images_equal(image, validate_path)
   end
 
   test "Autofit text composed over a base image", %{image: base_image} do
     validate_path = validate_path("text/autofit_default_composed_on_base_image.tif")
-    {:ok, text_image} = Image.Text.text("Singapore skyline text in a 300x300 centred box", height: 300, width: 300, autofit: true, text_fill_color: :white)
+
+    {:ok, text_image} =
+      Image.Text.text("Singapore skyline text in a 300x300 centred box",
+        height: 300,
+        width: 300,
+        autofit: true,
+        text_fill_color: :white
+      )
+
     {:ok, final_image} = Image.compose(base_image, text_image, x: :middle, y: :center)
 
     # Image.write(final_image, validate_path)

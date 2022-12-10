@@ -9,29 +9,31 @@ if Code.ensure_loaded?(Nx) do
 
       %Vix.Tensor{data: binary, names: names, shape: shape, type: type} = tensor
 
-      assert Nx.tensor([
-          [
-            [0],
-            [0],
-            [0]
-          ],
-          [
-            [0],
-            [0],
-            [0]
-          ],
-          [
-            [0],
-            [0],
-            [0]
-          ]
-          ],
-          type: {:u, 8},
-          names: names) ==
-        binary
-        |> Nx.from_binary(type)
-        |> Nx.reshape(shape, names: names)
-
+      assert Nx.tensor(
+               [
+                 [
+                   [0],
+                   [0],
+                   [0]
+                 ],
+                 [
+                   [0],
+                   [0],
+                   [0]
+                 ],
+                 [
+                   [0],
+                   [0],
+                   [0]
+                 ]
+               ],
+               type: {:u, 8},
+               names: names,
+               backend: Nx.BinaryBackend
+             ) ==
+               binary
+               |> Nx.from_binary(type, backend: Nx.BinaryBackend)
+               |> Nx.reshape(shape, names: names)
     end
 
     test "That an image round trips to Nx and back" do

@@ -28,19 +28,19 @@ defmodule Image.Interpretation do
   }
 
   @reverse_interpretation Enum.map(@interpretation_map, fn {k, v} -> {v, k} end)
-  |> Map.new()
+                          |> Map.new()
 
   @interpretation Map.keys(@interpretation_map)
   @vips_interpretation Map.values(@interpretation_map)
 
   @reverse_interpretation Enum.map(@interpretation_map, fn {k, v} -> {v, k} end)
-  |> Map.new()
+                          |> Map.new()
 
   @typedoc """
   Defines the known colorspace interpretations.
 
   """
-  @type t ::  unquote(Enum.reduce(@interpretation, &{:|, [], [&1, &2]}))
+  @type t :: unquote(Enum.reduce(@interpretation, &{:|, [], [&1, &2]}))
 
   @doc """
   Returns the known colorspace interpretations
@@ -92,8 +92,9 @@ defmodule Image.Interpretation do
     |> String.downcase()
     |> String.to_existing_atom()
     |> validate_interpretation()
-  rescue ArgumentError ->
-    {:error, unknown_interpretation_error(interpretation)}
+  rescue
+    ArgumentError ->
+      {:error, unknown_interpretation_error(interpretation)}
   end
 
   @doc false
@@ -104,5 +105,4 @@ defmodule Image.Interpretation do
   defp unknown_interpretation_error(interpretation) do
     "Unknown interpretation. Found #{inspect(interpretation)}"
   end
-
 end

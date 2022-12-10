@@ -8,27 +8,27 @@ defmodule Image.Options.Text do
   alias Vix.Vips.Image, as: Vimage
 
   @type t :: [
-    {:font, String.t()} |
-    {:font_size, pos_integer()} |
-    {:text_fill_color, Color.t()} |
-    {:text_stroke_color, Color.t()} |
-    {:text_stroke_width, pos_integer()} |
-    {:font_weigtht, atom()} |
-    {:background_fill_color, Color.t()} |
-    {:background_stroke_color, Color.t()} |
-    {:background_stroke_width, pos_integer()} |
-    {:background_stroke_opacity, float()} |
-    {:background_fill_opacity, float()} |
-    {:padding, [non_neg_integer(), ...]} |
-    {:x, :center | :left | :right} |
-    {:y, :middle | :top | :bottom} |
-    {:autofit, boolean()} |
-    {:width, pos_integer() | nil} |
-    {:height, pos_integer() | nil} |
-    {:fontfile, String.t() | nil} |
-    {:align, :left | :right | :center} |
-    {:justify, boolean()}
-  ]
+          {:font, String.t()}
+          | {:font_size, pos_integer()}
+          | {:text_fill_color, Color.t()}
+          | {:text_stroke_color, Color.t()}
+          | {:text_stroke_width, pos_integer()}
+          | {:font_weigtht, atom()}
+          | {:background_fill_color, Color.t()}
+          | {:background_stroke_color, Color.t()}
+          | {:background_stroke_width, pos_integer()}
+          | {:background_stroke_opacity, float()}
+          | {:background_fill_opacity, float()}
+          | {:padding, [non_neg_integer(), ...]}
+          | {:x, :center | :left | :right}
+          | {:y, :middle | :top | :bottom}
+          | {:autofit, boolean()}
+          | {:width, pos_integer() | nil}
+          | {:height, pos_integer() | nil}
+          | {:fontfile, String.t() | nil}
+          | {:align, :left | :right | :center}
+          | {:justify, boolean()}
+        ]
 
   def default_options do
     [
@@ -58,8 +58,7 @@ defmodule Image.Options.Text do
 
   """
   def validate_options(options) do
-    options =
-      Keyword.merge(default_options(), options)
+    options = Keyword.merge(default_options(), options)
 
     options =
       case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
@@ -77,7 +76,8 @@ defmodule Image.Options.Text do
         |> ensure_background_color_if_transparent_text()
         |> validate_size_if_autofit_true()
 
-      other -> other
+      other ->
+        other
     end
   end
 
@@ -124,17 +124,17 @@ defmodule Image.Options.Text do
   end
 
   defp validate_option({:font_weight, font_weight}, options)
-      when is_binary(font_weight) or is_atom(font_weight) do
+       when is_binary(font_weight) or is_atom(font_weight) do
     {:cont, options}
   end
 
   defp validate_option({:font_weight, font_weight}, options)
-      when is_integer(font_weight) and font_weight in 1..1000 do
+       when is_integer(font_weight) and font_weight in 1..1000 do
     {:cont, options}
   end
 
   defp validate_option({:font_size, font_size}, options)
-     when is_integer(font_size) and font_size >= 0 do
+       when is_integer(font_size) and font_size >= 0 do
     {:cont, options}
   end
 
@@ -171,12 +171,12 @@ defmodule Image.Options.Text do
   end
 
   defp validate_option({:padding, [left, right]}, options)
-      when is_integer(left) and is_integer(right) and left >= 0 and right >= 0 do
+       when is_integer(left) and is_integer(right) and left >= 0 and right >= 0 do
     {:cont, options}
   end
 
   defp validate_option({:padding = option, padding}, options)
-      when is_integer(padding) and padding > 0 do
+       when is_integer(padding) and padding > 0 do
     {:cont, Keyword.put(options, option, [padding, padding])}
   end
 
@@ -210,7 +210,8 @@ defmodule Image.Options.Text do
     {:cont, options}
   end
 
-  defp validate_option({:align, align}, options) when align in [:VIPS_ALIGN_LOW, :VIPS_ALIGN_LOW, :VIPS_ALIGN_CENTRE] do
+  defp validate_option({:align, align}, options)
+       when align in [:VIPS_ALIGN_LOW, :VIPS_ALIGN_LOW, :VIPS_ALIGN_CENTRE] do
     {:cont, options}
   end
 
@@ -281,7 +282,7 @@ defmodule Image.Options.Text do
 
   @doc false
   def invalid_option(option, value) do
-    "Invalid option or option value: #{option}: #{inspect value}"
+    "Invalid option or option value: #{option}: #{inspect(value)}"
   end
 
   defp ensure_background_color_if_transparent_text(options) do

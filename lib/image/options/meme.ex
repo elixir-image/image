@@ -13,16 +13,18 @@ defmodule Image.Options.Meme do
   @type text_transform :: :capitalize | :upcase | :downcase | :none
 
   @typedoc "Options applicable to Image.meme/3"
-  @type meme_options :: [
-          {:text, String.t()} |
-          {:font, String.t()} |
-          {:weight, font_weight()} |
-          {:color, Color.t()} |
-          {:outline_color, Color.t()} |
-          {:justify, boolean()} |
-          {:transform, text_transform()} |
-          {:width, pos_integer()}
-          ] | map()
+  @type meme_options ::
+          [
+            {:text, String.t()}
+            | {:font, String.t()}
+            | {:weight, font_weight()}
+            | {:color, Color.t()}
+            | {:outline_color, Color.t()}
+            | {:justify, boolean()}
+            | {:transform, text_transform()}
+            | {:width, pos_integer()}
+          ]
+          | map()
 
   @doc """
   Validate the options for `Image.meme/3`.
@@ -42,8 +44,10 @@ defmodule Image.Options.Meme do
           cond do
             options[:font] == "Impact" && options[:fontfile] == :default ->
               Keyword.put(options, :fontfile, font_file("Impact"))
+
             options[:fontfile] == :default ->
               Keyword.delete(options, :fontfile)
+
             true ->
               options
           end
@@ -93,12 +97,12 @@ defmodule Image.Options.Meme do
   end
 
   defp validate_option({:weight, weight}, options)
-      when weight in [:light, :normal, :bold, :ultrabold, :heavy] do
+       when weight in [:light, :normal, :bold, :ultrabold, :heavy] do
     {:cont, options}
   end
 
   defp validate_option({:transform, transform}, options)
-      when transform in [:upcase, :downcase, :capitalize, :none] do
+       when transform in [:upcase, :downcase, :capitalize, :none] do
     {:cont, options}
   end
 
@@ -107,14 +111,14 @@ defmodule Image.Options.Meme do
   end
 
   defp validate_option({key, size}, options)
-      when key in [:headline_size, :text_size] and is_integer(size) and size > 0 do
+       when key in [:headline_size, :text_size] and is_integer(size) and size > 0 do
     {:cont, options}
   end
 
   defp validate_option({key, color} = option, options) when key in [:color, :outline_color] do
     case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color}  -> {:cont, Keyword.put(options, key, color)}
-      {:ok, color}  -> {:cont, Keyword.put(options, key, color)}
+      {:ok, hex: _hex, rgb: color} -> {:cont, Keyword.put(options, key, color)}
+      {:ok, color} -> {:cont, Keyword.put(options, key, color)}
       _other -> {:halt, invalid_option(option)}
     end
   end
@@ -128,7 +132,7 @@ defmodule Image.Options.Meme do
   end
 
   def no_such_font_file(file) do
-    "Font file #{inspect file} could not be found"
+    "Font file #{inspect(file)} could not be found"
   end
 
   defp default_options(image) do
@@ -158,7 +162,7 @@ defmodule Image.Options.Meme do
   end
 
   defp default_text_size(height) do
-     height_in_points(height) * 6
+    height_in_points(height) * 6
   end
 
   defp height_in_points(height) do

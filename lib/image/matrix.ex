@@ -58,7 +58,7 @@ defmodule Image.Matrix do
 
   defp infer_type(value) do
     raise ArgumentError,
-      "invalid value given to Image.Matrix.binary_from_list/1, got: #{inspect(value)}"
+          "invalid value given to Image.Matrix.binary_from_list/1, got: #{inspect(value)}"
   end
 
   defp infer(value) when is_integer(value), do: {:s, 64}

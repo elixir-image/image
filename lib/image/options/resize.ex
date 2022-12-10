@@ -11,8 +11,8 @@ defmodule Image.Options.Resize do
 
   """
   @type resize_options :: [
-          {:center, boolean()} |
-          {:interpolate, Image.Kernel.t()}
+          {:center, boolean()}
+          | {:interpolate, Image.Kernel.t()}
         ]
 
   @doc """

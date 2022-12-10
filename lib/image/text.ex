@@ -123,7 +123,7 @@ defmodule Image.Text do
 
   """
   @spec text(Phoenix.HTML.safe() | String.t(), Options.Text.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def text(string, options \\ []) when is_list(options) do
     with {:ok, options} <- Options.Text.validate_options(options),
@@ -516,7 +516,8 @@ defmodule Image.Text do
     `#FF00FF` for the color "Fuchsia".
 
   """
-  @spec add_background(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec add_background(Vimage.t(), Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
   def add_background(image, options \\ [])
 
   def add_background(%Vimage{} = image, options) when is_list(options) do
@@ -635,7 +636,7 @@ defmodule Image.Text do
 
   """
   @spec add_background_padding(Vimage.t(), Keyword.t()) ::
-      {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def add_background_padding(image, options \\ [])
 
@@ -644,12 +645,13 @@ defmodule Image.Text do
       add_background_padding(image, options)
     end
   end
+
   #
   # def add_background_padding(%Vimage{} = image, %{background_fill_color: :none} = _options) do
   #   {:ok, image}
   # end
 
-  def add_background_padding(%Vimage{} = image, %{} = options)  do
+  def add_background_padding(%Vimage{} = image, %{} = options) do
     [padding_left, padding_top] = options.padding
 
     options =
@@ -667,7 +669,8 @@ defmodule Image.Text do
       |> Image.Color.rgba_color!(opacity)
 
     Operation.embed(image, padding_left, padding_top, width, height,
-      background: background_fill_color)
+      background: background_fill_color
+    )
   end
 
   @doc """
@@ -761,7 +764,8 @@ defmodule Image.Text do
     `#FF00FF` for the color "Fuchsia".
 
   """
-  @spec add_background_border(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec add_background_border(Vimage.t(), Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
   def add_background_border(image, options \\ [])
 
   def add_background_border(%Vimage{} = image, options) when is_list(options) do
@@ -860,25 +864,34 @@ defmodule Image.Text do
     """
 
     {:ok, {image, _flags}} = Operation.svgload_buffer(svg)
+
     {:ok, {x, y, width, height, _flags}} =
       Operation.find_trim(image, background: @black, threshold: 10.0)
+
     Image.crop(image, x, y, width, height)
   end
 
   @points_to_pixels 1.333
 
   defp render_text(text, %{autofit: true} = options) do
-    font_size = if options.font_size > 0, do: " #{round(options.font_size / @points_to_pixels)}", else: ""
+    font_size =
+      if options.font_size > 0, do: " #{round(options.font_size / @points_to_pixels)}", else: ""
+
     font = options.font <> font_size
 
     text_options =
-      [font: font, width: options.width, height: options.height, align: options.align, justify: options.justify]
+      [
+        font: font,
+        width: options.width,
+        height: options.height,
+        align: options.align,
+        justify: options.justify
+      ]
       |> Image.maybe_add_fontfile(options[:fontfile])
 
     with {:ok, {text_mask, _}} <- Operation.text(text, text_options),
          {:ok, color_layer} <- Image.new(text_mask, color: options.text_fill_color),
          {:ok, joined} <- Operation.bandjoin([color_layer, text_mask]) do
-
       # The text image isn't guaranteed to be the exact dimensions
       # provided so we embed in an image of the exact size
       x = div(options.width - Image.width(joined), 2)
@@ -911,6 +924,7 @@ defmodule Image.Text do
     """
 
     {:ok, {rectangle, _flags}} = Operation.svgload_buffer(svg)
+
     if transparent_text?(options) do
       Operation.extract_band(rectangle, 0, n: 3)
     else

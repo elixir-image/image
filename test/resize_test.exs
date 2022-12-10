@@ -59,4 +59,3 @@ defmodule Image.Resize.Test do
     assert_images_equal(resized, validate_path)
   end
 end
-

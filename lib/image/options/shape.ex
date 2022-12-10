@@ -21,8 +21,7 @@ defmodule Image.Options.Shape do
 
   """
   def validate_options(options, default_options) do
-    options =
-      Keyword.merge(default_options, options)
+    options = Keyword.merge(default_options, options)
 
     options =
       case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
@@ -39,7 +38,8 @@ defmodule Image.Options.Shape do
         |> Map.new()
         |> wrap(:ok)
 
-      other -> other
+      other ->
+        other
     end
   end
 
@@ -70,5 +70,4 @@ defmodule Image.Options.Shape do
   defp validate_option(option, _options) do
     {:halt, {:error, invalid_option(option)}}
   end
-
 end

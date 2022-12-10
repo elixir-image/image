@@ -9,14 +9,16 @@ defmodule Image.Options.ChromaKey do
   Options applicable to Image.chroma_key/2
 
   """
-  @type chroma_key_options :: [
-          {:color, Color.t() | :auto} |
-          {:threshold, non_neg_integer()} |
-          {:greater_than, Color.t()} |
-          {:less_than, Color.t()} |
-          {:sigma, float()} |
-          {:min_amplitude, float()}
-          ] | map()
+  @type chroma_key_options ::
+          [
+            {:color, Color.t() | :auto}
+            | {:threshold, non_neg_integer()}
+            | {:greater_than, Color.t()}
+            | {:less_than, Color.t()}
+            | {:sigma, float()}
+            | {:min_amplitude, float()}
+          ]
+          | map()
 
   @doc """
   Validate the options for `Image.blur/2`.
@@ -45,16 +47,16 @@ defmodule Image.Options.ChromaKey do
   end
 
   defp validate_option({key, color} = option, options)
-      when key in [:greater_than, :less_than, :color] do
+       when key in [:greater_than, :less_than, :color] do
     case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color}  -> {:cont, Keyword.put(options, key, color)}
-      {:ok, color}  -> {:cont, Keyword.put(options, key, color)}
+      {:ok, hex: _hex, rgb: color} -> {:cont, Keyword.put(options, key, color)}
+      {:ok, color} -> {:cont, Keyword.put(options, key, color)}
       _other -> {:halt, invalid_option(option)}
     end
   end
 
   defp validate_option({:threshold, threshold}, options)
-      when is_integer(threshold) and threshold > 0 do
+       when is_integer(threshold) and threshold > 0 do
     {:cont, options}
   end
 
@@ -95,8 +97,8 @@ defmodule Image.Options.ChromaKey do
   defp select_strategy(options) do
     {
       :error,
-      "Invalid options #{inspect options}. Options need to have either :greater_than " <>
-      " and :less_than or :color and :threshold."
+      "Invalid options #{inspect(options)}. Options need to have either :greater_than " <>
+        " and :less_than or :color and :threshold."
     }
   end
 

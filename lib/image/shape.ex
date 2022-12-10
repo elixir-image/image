@@ -106,8 +106,8 @@ defmodule Image.Shape do
   ### Examples
 
   """
-  @spec polygon(points::path(), options::Keyword.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec polygon(points :: path(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def polygon(points, options \\ [])
 
@@ -151,15 +151,15 @@ defmodule Image.Shape do
     end
   end
 
-  @spec polygon(sides::pos_integer(), options::Keyword.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec polygon(sides :: pos_integer(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def polygon(sides, options) when is_integer(sides) and sides > 2 do
     {radius, options} = Keyword.pop(options, :radius, @default_radius)
     {rotation, options} = Keyword.pop(options, :rotation, @default_rotation)
 
-    segment = :math.pi * 2 / sides
-    rotation = rotation * :math.pi / 180
+    segment = :math.pi() * 2 / sides
+    rotation = rotation * :math.pi() / 180
 
     for side <- 1..sides do
       [
@@ -247,8 +247,8 @@ defmodule Image.Shape do
   ### Examples
 
   """
-  @spec polygon!(points::path(), options::Keyword.t()) ::
-    Vimage.t() | no_return()
+  @spec polygon!(points :: path(), options :: Keyword.t()) ::
+          Vimage.t() | no_return()
 
   def polygon!(points, options \\ []) do
     case polygon(points, options) do
@@ -294,19 +294,19 @@ defmodule Image.Shape do
       #=> {:ok, star} = Image.Shape.star 5, rotation: 90, fill_color: :red, stroke_color: :green
 
   """
-  @spec star(points :: pos_integer(), options::Keyword.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec star(points :: pos_integer(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def star(points \\ @default_star_points, options \\ []) when points > 3 do
     {inner_radius, options} = Keyword.pop(options, :inner_radius, @default_star_inner_radius)
     {outer_radius, options} = Keyword.pop(options, :outer_radius, @default_star_outer_radius)
     {rotation, options} = Keyword.pop(options, :rotation, @default_star_rotation)
 
-    rotation = (rotation * :math.pi / 180)
+    rotation = rotation * :math.pi() / 180
 
     Enum.reduce(1..points, [], fn point, polygon ->
-      inner_angle = 2 * :math.pi * point / points
-      outer_angle = inner_angle + :math.pi / points
+      inner_angle = 2 * :math.pi() * point / points
+      outer_angle = inner_angle + :math.pi() / points
 
       inner_angle = inner_angle + rotation
       outer_angle = outer_angle + rotation
@@ -363,7 +363,7 @@ defmodule Image.Shape do
       #=> star = Image.Shape.star! 5, rotation: 90, fill_color: :red, stroke_color: :green
 
   """
-  @spec star!(points :: pos_integer(), options::Keyword.t()) :: Vimage.t() | no_return()
+  @spec star!(points :: pos_integer(), options :: Keyword.t()) :: Vimage.t() | no_return()
   def star!(points \\ @default_star_points, options \\ []) do
     case star(points, options) do
       {:ok, image} -> image
@@ -391,7 +391,7 @@ defmodule Image.Shape do
     for [x, y] <- polygon do
       [
         rescale(x, from_x_min, from_x_max, x_min, x_max),
-        rescale(y, from_y_min, from_y_max, y_min, y_max),
+        rescale(y, from_y_min, from_y_max, y_min, y_max)
       ]
     end
   end
@@ -418,14 +418,14 @@ defmodule Image.Shape do
   end
 
   defp polygon_scale(polygon) do
-    Enum.reduce polygon, {10_000_000, -10_000_000, 10_000_000, -10_000_000}, fn
+    Enum.reduce(polygon, {10_000_000, -10_000_000, 10_000_000, -10_000_000}, fn
       [x, y], {x_min, x_max, y_min, y_max} ->
         x_min = min(x, x_min)
         x_max = max(x, x_max)
         y_min = min(y, y_min)
         y_max = max(y, y_max)
         {x_min, x_max, y_min, y_max}
-    end
+    end)
   end
 
   defp points_to_path(points) when is_binary(points) do
@@ -434,5 +434,4 @@ defmodule Image.Shape do
     |> Enum.map(&String.to_integer/1)
     |> Enum.chunk_every(2)
   end
-
 end
