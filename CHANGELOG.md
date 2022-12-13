@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.15.1
+
+This is the changelog for Image version 0.15.1 released on Decmber 13th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Fixes interpretation of color encoded as `#xxxxxx`. Closes #26. Thanks to @a8t for the report.
+
 ## Image 0.15.0
 
 This is the changelog for Image version 0.15.0 released on Decmber 4th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
