@@ -8,10 +8,12 @@ defmodule Image.Options.Blur do
   Options applicable to Image.blur/2
 
   """
-  @type blur_options :: [
-          {:sigma, float()} |
-          {:min_amplitude, float()}
-          ] | map()
+  @type blur_options ::
+          [
+            {:sigma, float()}
+            | {:min_amplitude, float()}
+          ]
+          | map()
 
   @default_blur_sigma 5
 

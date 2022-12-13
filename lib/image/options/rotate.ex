@@ -10,11 +10,11 @@ defmodule Image.Options.Rotate do
 
   """
   @type rotation_options :: [
-          {:idy, float()} |
-          {:idx, float()} |
-          {:ody, float()} |
-          {:odx, float()} |
-          {:background, Image.pixel()}
+          {:idy, float()}
+          | {:idx, float()}
+          | {:ody, float()}
+          | {:odx, float()}
+          | {:background, Image.pixel()}
         ]
 
   @valid_options [:idy, :idx, :ody, :odx]

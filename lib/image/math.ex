@@ -47,7 +47,7 @@ defmodule Image.Math do
   @doc false
   defmacro __using__(_opts) do
     quote do
-      import Kernel, except: [+: 2, -: 2, "*": 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
+      import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
       import Image.Math
     end
   end
@@ -634,7 +634,7 @@ defmodule Image.Math do
   ### Logical operations
 
   @spec boolean_and(Vimage.t(), Vimage.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
   def boolean_and(%Vimage{} = image_1, %Vimage{} = image_2) do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_AND)
   end
@@ -648,7 +648,7 @@ defmodule Image.Math do
   end
 
   @spec boolean_or(Vimage.t(), Vimage.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
   def boolean_or(%Vimage{} = image_1, %Vimage{} = image_2) do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_OR)
   end
@@ -662,7 +662,7 @@ defmodule Image.Math do
   end
 
   @spec boolean_xor(Vimage.t(), Vimage.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
   def boolean_xor(%Vimage{} = image_1, %Vimage{} = image_2) do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_EOR)
   end
@@ -676,7 +676,7 @@ defmodule Image.Math do
   end
 
   @spec boolean_lshift(Vimage.t(), Vimage.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
   def boolean_lshift(%Vimage{} = image_1, %Vimage{} = image_2) do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_LSHIFT)
   end
@@ -690,7 +690,7 @@ defmodule Image.Math do
   end
 
   @spec boolean_rshift(Vimage.t(), Vimage.t()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
   def boolean_rshift(%Vimage{} = image_1, %Vimage{} = image_2) do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_RSHIFT)
   end

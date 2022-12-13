@@ -14,8 +14,7 @@ defmodule Image.Meme.Test do
   test "Meme image generation", %{dir: dir} do
     image = image_path("meme.jpg")
 
-    {:ok, image} =
-      Vimage.new_from_file(image)
+    {:ok, image} = Vimage.new_from_file(image)
 
     {:ok, meme} =
       Image.meme(image, "One simply cannot", text: "Enjoy image processing without libvips")

@@ -40,16 +40,16 @@ defmodule Image.BlendMode do
   # underlying Vix/libvips terms
 
   @blend_mode_map @vips_blend_mode_list
-  |> Enum.map(fn mode ->
-    ["", key] =
-      mode
-      |> to_string
-      |> String.downcase()
-      |> String.split("vips_blend_mode_")
+                  |> Enum.map(fn mode ->
+                    ["", key] =
+                      mode
+                      |> to_string
+                      |> String.downcase()
+                      |> String.split("vips_blend_mode_")
 
-    {String.to_atom(key), mode}
-  end)
-  |> Map.new()
+                    {String.to_atom(key), mode}
+                  end)
+                  |> Map.new()
 
   @blend_modes Map.keys(@blend_mode_map)
 
@@ -88,7 +88,7 @@ defmodule Image.BlendMode do
   * `:exclusion` somewhat like :difference, but lower-contrast
 
   """
-  @type t ::  unquote(Enum.reduce(@blend_modes, &{:|, [], [&1, &2]}))
+  @type t :: unquote(Enum.reduce(@blend_modes, &{:|, [], [&1, &2]}))
 
   @doc """
   Returns the known blending modes.
@@ -165,12 +165,12 @@ defmodule Image.BlendMode do
     |> String.downcase()
     |> String.to_existing_atom()
     |> validate_blend_mode()
-  rescue ArgumentError ->
-    {:error, unknown_blend_mode_error(blend_mode)}
+  rescue
+    ArgumentError ->
+      {:error, unknown_blend_mode_error(blend_mode)}
   end
 
   defp unknown_blend_mode_error(blend_mode) do
     {:error, "Unknown blend mode. Found #{inspect(blend_mode)}"}
   end
-
 end

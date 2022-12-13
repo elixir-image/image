@@ -28,5 +28,4 @@ defmodule Image.Hash.Test do
 
     assert distance < 10
   end
-
 end

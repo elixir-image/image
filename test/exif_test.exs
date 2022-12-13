@@ -7,13 +7,13 @@ defmodule Image.ExitTest do
     {:ok, image} = Image.open(image, access: :random)
 
     assert Image.exif(image) ==
-      {:ok,
-       %{
-         YCbCr_positioning: "Centered",
-         image_description: "a descriptive white pixel",
-         resolution_units: "Pixels/in",
-         x_resolution: 97,
-         y_resolution: 97
-       }}
-    end
+             {:ok,
+              %{
+                YCbCr_positioning: "Centered",
+                image_description: "a descriptive white pixel",
+                resolution_units: "Pixels/in",
+                x_resolution: 97,
+                y_resolution: 97
+              }}
   end
+end

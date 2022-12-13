@@ -12,7 +12,6 @@ defmodule Image.Application do
   def start(_type, _args) do
     GenServer.start_link(Image.SetSafeLoader, @untrusted_env_var, name: :check_safe_image_loading)
   end
-
 end
 
 defmodule Image.SetSafeLoader do

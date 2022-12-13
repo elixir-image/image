@@ -5,17 +5,16 @@ defmodule Image.Options.New do
   """
   alias Image.{Color, BandFormat, Interpretation}
 
-
   @type t :: [
-    {:bands, pos_integer()} |
-    {:format, Image.BandFormat.t()} |
-    {:interpretation, Image.Interpretation.t()} |
-    {:color, float() | Image.pixel()} |
-    {:x_res, number()} |
-    {:y_res, number()} |
-    {:x_offset, number()} |
-    {:y_offset, number()}
-  ]
+          {:bands, pos_integer()}
+          | {:format, Image.BandFormat.t()}
+          | {:interpretation, Image.Interpretation.t()}
+          | {:color, float() | Image.pixel()}
+          | {:x_res, number()}
+          | {:y_res, number()}
+          | {:x_offset, number()}
+          | {:y_offset, number()}
+        ]
 
   @default_bands 3
 
@@ -36,8 +35,7 @@ defmodule Image.Options.New do
 
   """
   def validate_options(options) do
-    options =
-      Keyword.merge(default_options(), options)
+    options = Keyword.merge(default_options(), options)
 
     options =
       case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
@@ -55,7 +53,8 @@ defmodule Image.Options.New do
         |> set_default_bands()
         |> wrap(:ok)
 
-      other -> other
+      other ->
+        other
     end
   end
 
@@ -91,7 +90,7 @@ defmodule Image.Options.New do
 
   @numeric_options [:x_res, :y_res, :x_offset, :y_offset, :bands]
   defp validate_option({option, value}, options)
-      when option in @numeric_options and is_number(value) and value >= 0 do
+       when option in @numeric_options and is_number(value) and value >= 0 do
     {:cont, options}
   end
 
@@ -129,7 +128,7 @@ defmodule Image.Options.New do
 
   @doc false
   def invalid_option(option, value) do
-    "Invalid option or option value: #{option}: #{inspect value}"
+    "Invalid option or option value: #{option}: #{inspect(value)}"
   end
 
   defp wrap(term, atom) do

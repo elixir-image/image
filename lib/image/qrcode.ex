@@ -62,11 +62,11 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
             Image.resize(image, scale, interpolate: :nearest)
 
           other ->
-          {
-            :error,
-            "Invalid `:size` option. `:size` must be a positive " <>
-            "integer or `:auto`. Found #{inspect other}."
-          }
+            {
+              :error,
+              "Invalid `:size` option. `:size` must be a positive " <>
+                "integer or `:auto`. Found #{inspect(other)}."
+            }
         end
       end
     end
@@ -116,7 +116,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     def decode(%Evision.Mat{shape: {height, width, _}} = evision)
         when height < @minumum_dimension or width < @minumum_dimension do
-      resized = Evision.resize(evision, @dimensions, interpolate: Evision.cv_INTER_NEAREST)
+      resized = Evision.resize(evision, @dimensions, interpolate: Evision.cv_INTER_NEAREST())
       decode(resized)
     end
 

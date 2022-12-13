@@ -18,8 +18,15 @@ defmodule Image.Social do
 
   """
   @type platform ::
-    :facebook | :twitter | :linkedin | :pinterest | :instagram | :tumblr |
-    :youtube | :snapchat | :tiktok
+          :facebook
+          | :twitter
+          | :linkedin
+          | :pinterest
+          | :instagram
+          | :tumblr
+          | :youtube
+          | :snapchat
+          | :tiktok
 
   # Before Version 1.0, this content will move from being a static
   # list to a dynamic one that can be updated at runtime
@@ -150,7 +157,7 @@ defmodule Image.Social do
     media_sizes()
     |> Map.fetch!(platform)
     |> Map.delete(:default)
-    |> Map.keys
+    |> Map.keys()
   end
 
   @doc """
@@ -213,7 +220,7 @@ defmodule Image.Social do
 
   """
   @spec resize(Vimage.t(), platform(), Keyword.t()) ::
-      {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def resize(image, platform, options \\ [])
 
@@ -271,7 +278,7 @@ defmodule Image.Social do
 
   """
   @spec resize!(Vimage.t(), platform(), Keyword.t()) ::
-      Vimage.t() | no_return
+          Vimage.t() | no_return
 
   def resize!(%Vimage{} = image, platform, options \\ []) do
     case resize(image, platform, options) do
@@ -314,7 +321,7 @@ defmodule Image.Social do
   end
 
   defp unknown_platform_error(platform) do
-    "Unknown social platform #{inspect platform}"
+    "Unknown social platform #{inspect(platform)}"
   end
 
   defp unknown_usage_error(:default) do
@@ -322,10 +329,10 @@ defmodule Image.Social do
   end
 
   defp unknown_usage_error(usage) do
-    "Unknown image usage #{inspect usage}"
+    "Unknown image usage #{inspect(usage)}"
   end
 
   defp unknown_orientation_error(orientation) do
-    "Unknown orientation #{inspect orientation}"
+    "Unknown orientation #{inspect(orientation)}"
   end
 end

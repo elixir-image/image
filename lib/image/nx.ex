@@ -17,17 +17,17 @@ if match?({:module, _module}, Code.ensure_compiled(Nx)) do
     end
 
     def transpose(_tensor, {_, _, bands}, _names) when bands not in 1..5 do
-      {:error, "Tensor must be in the range of 1 and 5 image bands. Found #{inspect bands}."}
+      {:error, "Tensor must be in the range of 1 and 5 image bands. Found #{inspect(bands)}."}
     end
 
     def transpose(_tensor, shape, _names) when tuple_size(shape) > 3 do
-      {:error, "Tensor must have only three dimensions. Found #{inspect tuple_size(shape)}."}
+      {:error, "Tensor must have only three dimensions. Found #{inspect(tuple_size(shape))}."}
     end
 
     def transpose(_tensor, _shape, names) do
       {:error,
-        "Tensor must have dimension names of [:height, :width, :bands] or " <>
-        "[:width, :height, :bands]. Found #{inspect names}."}
+       "Tensor must have dimension names of [:height, :width, :bands] or " <>
+         "[:width, :height, :bands]. Found #{inspect(names)}."}
     end
   end
 end

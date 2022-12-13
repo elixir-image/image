@@ -51,21 +51,21 @@ defmodule Image.Draw do
   @doc since: "0.7.0"
 
   @spec point(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.point()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
-  def point(image, left, top,  options \\ [])
+  def point(image, left, top, options \\ [])
 
   def point(%Vimage{} = image, left, top, options)
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:point, options) do
-      Vimage.mutate image, fn mut_img ->
+      Vimage.mutate(image, fn mut_img ->
         MutableOperation.draw_rect(mut_img, options.color, left, top, 1, 1)
-      end
+      end)
     end
   end
 
   @spec point(MutableImage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.point()) ::
-    :ok | {:error, Image.error_message()}
+          :ok | {:error, Image.error_message()}
 
   def point(%MutableImage{} = image, left, top, options)
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 do
@@ -125,8 +125,15 @@ defmodule Image.Draw do
   """
   @doc since: "0.7.0"
 
-  @spec rect(Vimage.t(), non_neg_integer(), non_neg_integer(), pos_integer(), pos_integer(), Options.Draw.rect()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec rect(
+          Vimage.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          pos_integer(),
+          pos_integer(),
+          Options.Draw.rect()
+        ) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def rect(image, left, top, width, height, options \\ [])
 
@@ -135,15 +142,23 @@ defmodule Image.Draw do
       when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
     with {:ok, options} <- Options.Draw.validate_options(:rect, options) do
       color = maybe_add_alpha(image, options.color)
-      Vimage.mutate image, fn mut_img ->
+
+      Vimage.mutate(image, fn mut_img ->
         MutableOperation.draw_rect(mut_img, color, left, top, width, height, fill: options.fill)
-      end
+      end)
     end
     |> maybe_wrap()
   end
 
-  @spec rect(MutableImage.t(), non_neg_integer(), non_neg_integer(), pos_integer(), pos_integer(), Options.Draw.rect()) ::
-    :ok | {:error, Image.error_message()}
+  @spec rect(
+          MutableImage.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          pos_integer(),
+          pos_integer(),
+          Options.Draw.rect()
+        ) ::
+          :ok | {:error, Image.error_message()}
 
   def rect(%MutableImage{} = image, left, top, width, height, options)
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0
@@ -202,27 +217,42 @@ defmodule Image.Draw do
   """
   @doc since: "0.7.0"
 
-  @spec circle(Vimage.t(), non_neg_integer(), non_neg_integer(), non_neg_integer(), Options.Draw.circle()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec circle(
+          Vimage.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          Options.Draw.circle()
+        ) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def circle(image, cx, cy, radius, options \\ [])
 
   def circle(%Vimage{} = image, cx, cy, radius, options)
-      when is_integer(cx) and is_integer(cy) and cx >= 0 and cy >= 0 and is_integer(radius) and radius > 0 do
+      when is_integer(cx) and is_integer(cy) and cx >= 0 and cy >= 0 and is_integer(radius) and
+             radius > 0 do
     with {:ok, options} <- Options.Draw.validate_options(:circle, options) do
       color = maybe_add_alpha(image, options.color)
-      Vimage.mutate image, fn mut_img ->
+
+      Vimage.mutate(image, fn mut_img ->
         MutableOperation.draw_circle(mut_img, color, cx, cy, radius, fill: options.fill)
-      end
+      end)
     end
     |> maybe_wrap()
   end
 
-  @spec circle(MutableImage.t(), non_neg_integer(), non_neg_integer(), non_neg_integer(), Options.Draw.circle()) ::
-    :ok | {:error, Image.error_message()}
+  @spec circle(
+          MutableImage.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          Options.Draw.circle()
+        ) ::
+          :ok | {:error, Image.error_message()}
 
   def circle(%MutableImage{} = image, cx, cy, radius, options)
-      when is_integer(cx) and is_integer(cy) and cx >= 0 and cy >= 0 and is_integer(radius) and radius > 0 do
+      when is_integer(cx) and is_integer(cy) and cx >= 0 and cy >= 0 and is_integer(radius) and
+             radius > 0 do
     with {:ok, options} <- Options.Draw.validate_options(:circle, options) do
       color = maybe_add_alpha(image, options.color)
       MutableOperation.draw_circle(image, color, cx, cy, radius, fill: options.fill)
@@ -271,32 +301,47 @@ defmodule Image.Draw do
   """
   @doc since: "0.7.0"
 
-  @spec line(Vimage.t(), non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer(), Options.Draw.line()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec line(
+          Vimage.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          Options.Draw.line()
+        ) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def line(image, x1, y1, x2, y2, options \\ [])
 
   def line(%Vimage{} = image, x1, y1, x2, y2, options)
       when is_integer(x1) and is_integer(y1) and x1 >= 0 and y1 >= 0 and
-           is_integer(x2) and is_integer(y2) and x2 >= 0 and y2 >= 0 do
+             is_integer(x2) and is_integer(y2) and x2 >= 0 and y2 >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:line, options) do
       color = maybe_add_alpha(image, options.color)
-      Vimage.mutate image, fn mut_img ->
+
+      Vimage.mutate(image, fn mut_img ->
         MutableOperation.draw_line(mut_img, color, x1, y1, x2, y2, [])
-      end
+      end)
     end
     |> maybe_wrap()
   end
 
-  @spec line(MutableImage.t(), non_neg_integer(), non_neg_integer(), non_neg_integer(), non_neg_integer(), Options.Draw.line()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec line(
+          MutableImage.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          non_neg_integer(),
+          Options.Draw.line()
+        ) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def line(%MutableImage{} = image, x1, y1, x2, y2, options)
       when is_integer(x1) and is_integer(y1) and x1 >= 0 and y1 >= 0 and
-           is_integer(x2) and is_integer(y2) and x2 >= 0 and y2 >= 0 do
+             is_integer(x2) and is_integer(y2) and x2 >= 0 and y2 >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:line, options) do
       color = maybe_add_alpha(image, options.color)
-       MutableOperation.draw_line(image, color, x1, y1, x2, y2, [])
+      MutableOperation.draw_line(image, color, x1, y1, x2, y2, [])
     end
     |> maybe_wrap()
   end
@@ -348,7 +393,7 @@ defmodule Image.Draw do
   @doc since: "0.7.0"
 
   @spec image(Vimage.t(), Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.image()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def image(image, sub_image, top, left, options \\ [])
 
@@ -362,8 +407,14 @@ defmodule Image.Draw do
     |> maybe_wrap()
   end
 
-  @spec image(MutableImage.t(), Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.image()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec image(
+          MutableImage.t(),
+          Vimage.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          Options.Draw.image()
+        ) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def image(%MutableImage{} = image, %Vimage{} = sub_image, top, left, options)
       when is_integer(top) and is_integer(left) and top >= 0 and left >= 0 do
@@ -425,8 +476,9 @@ defmodule Image.Draw do
   @doc since: "0.7.0"
 
   @spec flood(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.flood()) ::
-    {:ok, {Vimage.t(), [height: integer(), width: integer(), top: integer(), left: integer()]}} |
-    {:error, Image.error_message()}
+          {:ok,
+           {Vimage.t(), [height: integer(), width: integer(), top: integer(), left: integer()]}}
+          | {:error, Image.error_message()}
 
   def flood(image, x, y, options \\ [])
 
@@ -434,16 +486,18 @@ defmodule Image.Draw do
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:flood, options) do
       color = maybe_add_alpha(image, options.color)
-      Vimage.mutate image, fn mut_img ->
+
+      Vimage.mutate(image, fn mut_img ->
         MutableOperation.draw_flood(mut_img, color, left, top, equal: options.equal)
-      end
+      end)
     end
     |> maybe_wrap()
   end
 
   @spec flood(MutableImage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.flood()) ::
-    {:ok, {Vimage.t(), [height: integer(), width: integer(), top: integer(), left: integer()]}} |
-    {:error, Image.error_message()}
+          {:ok,
+           {Vimage.t(), [height: integer(), width: integer(), top: integer(), left: integer()]}}
+          | {:error, Image.error_message()}
 
   def flood(%MutableImage{} = image, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
@@ -464,8 +518,9 @@ defmodule Image.Draw do
   @doc since: "0.7.0"
 
   @spec mask(Vimage.t(), Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.mask()) ::
-    {:ok, {Vimage.t(), [height: integer(), width: integer(), top: integer(), left: integer()]}} |
-    {:error, Image.error_message()}
+          {:ok,
+           {Vimage.t(), [height: integer(), width: integer(), top: integer(), left: integer()]}}
+          | {:error, Image.error_message()}
 
   def mask(image, mask, x, y, options \\ [])
 
@@ -473,16 +528,24 @@ defmodule Image.Draw do
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:mask, options) do
       color = maybe_add_alpha(image, options.color)
-      Vimage.mutate image, fn mut_img ->
+
+      Vimage.mutate(image, fn mut_img ->
         MutableOperation.draw_mask(mut_img, color, mask, x, y)
-      end
+      end)
     end
     |> maybe_wrap()
   end
 
-  @spec mask(MutableImage.t(),Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.mask()) ::
-    {:ok, {Vimage.t(), [height: integer(), width: integer(), top: integer(), left: integer()]}} |
-    {:error, Image.error_message()}
+  @spec mask(
+          MutableImage.t(),
+          Vimage.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          Options.Draw.mask()
+        ) ::
+          {:ok,
+           {Vimage.t(), [height: integer(), width: integer(), top: integer(), left: integer()]}}
+          | {:error, Image.error_message()}
 
   def mask(%MutableImage{} = image, %Vimage{} = mask, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
@@ -502,8 +565,15 @@ defmodule Image.Draw do
   """
   @doc since: "0.7.0"
 
-  @spec smudge(Vimage.t(), non_neg_integer(), non_neg_integer(), pos_integer(), pos_integer(), Options.Draw.smudge()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec smudge(
+          Vimage.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          pos_integer(),
+          pos_integer(),
+          Options.Draw.smudge()
+        ) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def smudge(image, left, top, width, height, options \\ [])
 
@@ -511,15 +581,22 @@ defmodule Image.Draw do
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0
       when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
     with {:ok, _options} <- Options.Draw.validate_options(:smudge, options) do
-      Vimage.mutate image, fn mut_img ->
+      Vimage.mutate(image, fn mut_img ->
         MutableOperation.draw_smudge(mut_img, left, top, width, height)
-      end
+      end)
     end
     |> maybe_wrap()
   end
 
-  @spec smudge(MutableImage.t(), non_neg_integer(), non_neg_integer(), pos_integer(), pos_integer(), Options.Draw.smudge()) ::
-    :ok | {:error, Image.error_message()}
+  @spec smudge(
+          MutableImage.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          pos_integer(),
+          pos_integer(),
+          Options.Draw.smudge()
+        ) ::
+          :ok | {:error, Image.error_message()}
 
   def smudge(%MutableImage{} = image, left, top, width, height, options)
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0

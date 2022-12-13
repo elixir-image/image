@@ -1,7 +1,8 @@
 defmodule Image.CombineMode do
   @type t :: :VIPS_COMBINE_MODE_SET | :VIPS_COMBINE_MODE_ADD | :VIPS_COMBINE_MODE_LAST
 
-  def validate(mode) when mode in [:VIPS_COMBINE_MODE_SET, :VIPS_COMBINE_MODE_ADD, :VIPS_COMBINE_MODE_LAST] do
+  def validate(mode)
+      when mode in [:VIPS_COMBINE_MODE_SET, :VIPS_COMBINE_MODE_ADD, :VIPS_COMBINE_MODE_LAST] do
     {:ok, mode}
   end
 
@@ -10,6 +11,6 @@ defmodule Image.CombineMode do
   def validate(:last), do: {:ok, VIPS_COMBINE_MODE_LAST}
 
   def validate(other) do
-    {:error, "Invalid combine mode #{inspect other}. The valid modes are :set, :add or :last"}
+    {:error, "Invalid combine mode #{inspect(other)}. The valid modes are :set, :add or :last"}
   end
 end
