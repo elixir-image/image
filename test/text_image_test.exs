@@ -172,4 +172,13 @@ defmodule TextImage.Test do
     # Image.write(final_image, validate_path)
     assert_images_equal(final_image, validate_path)
   end
+
+  test "simple text generation" do
+    assert Image.Text.simple_text("name",
+             autofit: true,
+             width: 290,
+             height: 50,
+             text_fill_color: "#A15B35"
+           )
+  end
 end

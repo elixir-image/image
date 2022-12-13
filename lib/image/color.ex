@@ -105,7 +105,7 @@ defmodule Image.Color do
   def rgb_color(color) when is_binary(color) or is_atom(color) do
     case color do
       <<"#", r::bytes-2, g::bytes-2, b::bytes-2>> ->
-        [String.to_integer(r, 16), String.to_integer(g, 16), String.to_integer(b, 16)]
+        {:ok, [String.to_integer(r, 16), String.to_integer(g, 16), String.to_integer(b, 16)]}
 
       color ->
         case Map.fetch(color_map(), normalize(color)) do
