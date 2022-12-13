@@ -23,7 +23,7 @@ defmodule Image.MixProject do
       preferred_cli_env: preferred_cli_env(),
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
-        plt_add_apps: ~w(mix nx plug evision)a
+        plt_add_apps: ~w(mix nx plug evision bumblebee)a
       ],
       compilers: Mix.compilers()
     ]
@@ -70,7 +70,8 @@ defmodule Image.MixProject do
         do: [
           {:nx, "~> 0.4.1", optional: true},
           {:bumblebee, "~> 0.1.0", optional: true},
-          {:exla, "~> 0.4.1", optional: true}
+          {:exla, "~> 0.4.1", optional: true},
+          {:stb_image, "~> 0.6"}
         ]
       ),
 

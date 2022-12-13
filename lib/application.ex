@@ -18,8 +18,7 @@ defmodule Image.Application do
     if Code.ensure_loaded?(Bumblebee) do
       Application.ensure_all_started(:exla)
 
-      model =
-        Application.get_env(:image, :classification_model, @default_classification_model)
+      model = Application.get_env(:image, :classification_model, @default_classification_model)
 
       featurizer =
         Application.get_env(:image, :classification_featurizer, @default_classification_featurizer)

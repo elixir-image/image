@@ -4336,6 +4336,11 @@ defmodule Image do
 
       * `image` is any `t:Vimage.t/0`
 
+      * `convert_to_bgr` is a boolean indicating if the
+        color order should be converted from `RGB` to `BGR`
+        which is the normal channel layout for OpenCV. The
+        default is `true`.
+
       ### Returns
 
       * `{:ok, evision_image}`
@@ -4355,12 +4360,13 @@ defmodule Image do
 
       @doc since: "0.9.0"
 
-      def to_evision(%Vimage{} = image) do
+      def to_evision(%Vimage{} = image, convert_to_bgr \\ true) do
         with {:ok, tensor} <- to_nx(image),
              {width, height, bands} <- validate_transferable_image(image),
              %Evision.Mat{} = mat <- Evision.Mat.from_nx(tensor, {height, width, bands}),
-             %Evision.Mat{} = mat <- Evision.Mat.last_dim_as_channel(mat),
-             %Evision.Mat{} = mat <- Evision.cvtColor(mat, Evision.cv_COLOR_RGB2BGR()) do
+             %Evision.Mat{} = mat <- Evision.Mat.last_dim_as_channel(mat) do
+          mat = if convert_to_bgr, do: Evision.cvtColor(mat, Evision.cv_COLOR_RGB2BGR()), else: mat
+
           {:ok, mat}
         end
       end

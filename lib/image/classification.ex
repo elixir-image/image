@@ -39,11 +39,14 @@ if Image.ml_configured?() do
         %{predictions: [%{label: "suspension bridge", score: 0.9412655830383301}]}
 
     """
-    @spec classify(image :: Vimage.t(), backend :: Nx.backend()) ::
-            %{predictions: list()} | {:error, Image.error_message()}
+
+    # Based upon: https://github.com/cocoa-xu/evision/issues/80
+
+    @spec classify(image :: Vimage.t(), backend :: Nx.Backend.t()) ::
+            %{predictions: [%{label: String.t(), score: float()}]} | {:error, Image.error_message()}
 
     def classify(%Vimage{} = image, backend \\ Nx.default_backend()) do
-      with {:ok, mat} <- Image.to_evision(image) do
+      with {:ok, mat} <- Image.to_evision(image, false) do
         binary = Evision.Mat.to_nx(mat, backend)
         Nx.Serving.batched_run(Image.Serving, binary)
       end
@@ -83,7 +86,8 @@ if Image.ml_configured?() do
         ["sports car", "sport car"]
 
     """
-    @spec labels(image :: Vimage.t(), options :: Keyword.t()) :: [String.t()]
+    @spec labels(image :: Vimage.t(), options :: Keyword.t()) ::
+            [String.t()] | {:error, Image.error_message()}
 
     def labels(%Vimage{} = image, options \\ []) do
       backend = Keyword.get(options, :backend, Nx.default_backend())
@@ -94,18 +98,6 @@ if Image.ml_configured?() do
         |> Enum.filter(fn %{score: score} -> score >= min_score end)
         |> Enum.flat_map(fn %{label: label} -> String.split(label, ", ") end)
       end
-    end
-  end
-else
-  defmodule Image.Classification do
-    @spec classify(image :: Vimage.t(), backend :: Nx.backend()) :: {:error, Image.error_message()}
-    def classify(%Vimage{} = image, backend \\ Nx.default_backend()) do
-      {:error, ":nx, :exla, :bumblebee and :evision nust be configured in order to classify images"}
-    end
-
-    @spec labels(image :: Vimage.t(), options :: Keyword.t()) :: [String.t()]
-    def labels(%Vimage{} = image, options \\ []) do
-      {:error, ":nx, :exla, :bumblebee and :evision nust be configured in order to classify images and return labels"}
     end
   end
 end
