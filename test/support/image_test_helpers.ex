@@ -72,10 +72,12 @@ defmodule Image.TestSupport do
 
       Image.write!(comparison_image, path)
 
-      flunk("images did not match. \
-        They are #{(similarity_percentage * 100) |> trunc()}% similar. \
-        This is below our threshold of %{@acceptible_similarity * 100 }% \
-        See the image at #{path} for the image diff.")
+      flunk(
+        "Calculated image did not match pre-existing validation image. " <>
+          "They are #{(similarity_percentage * 100) |> trunc()}% similar. " <>
+          "This is below our threshold of #{@acceptible_similarity * 100}% " <>
+          "See the image at #{path} for the image diff."
+      )
     end
   end
 end
