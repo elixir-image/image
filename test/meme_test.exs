@@ -13,6 +13,7 @@ defmodule Image.Meme.Test do
 
   test "Meme image generation", %{dir: dir} do
     image = image_path("meme.jpg")
+    validate_path = validate_path("meme/meme.jpg")
 
     {:ok, image} = Vimage.new_from_file(image)
 
@@ -22,6 +23,6 @@ defmodule Image.Meme.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(meme, out_path)
 
-    assert_images_equal out_path, validate_path("meme/meme.jpg")
+    assert_images_equal out_path, validate_path
   end
 end

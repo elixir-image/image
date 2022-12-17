@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.16.0
+
+This is the changelog for Image version 0.15.1 released on Decmber 13th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancements
+
+* Allow percentages to be specified as `Image.crop/5` parameters for left, top, width and height.  Percentages are expressed as floats in the range -1.0 to 1.0.
+
 ## Image 0.15.1
 
 This is the changelog for Image version 0.15.1 released on Decmber 13th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

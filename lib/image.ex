@@ -247,6 +247,18 @@ defmodule Image do
   defguard is_pixel(value) when is_number(value) or is_list(value)
 
   @doc """
+  Guards whether a value is a percentage as representeed
+  by a float between `-1.0` and `1.0`.
+  """
+  defguard is_percent(value) when is_float(value) and value >= -1.0 and value <= 1.0
+
+  @doc """
+  Guards whether a value is a positive percentage as representeed
+  by a float greater than `0.0` and less than or equal to `1.0`.
+  """
+  defguard is_positive_percent(value) when is_float(value) and value > 0.0 and value <= 1.0
+
+  @doc """
   Create a new image of the given dimensions.
 
   ### Arguments
@@ -2761,7 +2773,7 @@ defmodule Image do
 
   * `:crop` determines if the strategy is "resize to fit"
     (crop is `:none`) or "resize to fill" (when the crop
-    option is not `:none`. The value may be one of
+    option is not `:none`). The value may be one of
     `:none`, `:center`, `:entropy`, `:attention`, `:low`
     or `:high`. The default is `:none`. See also `t:Image.Options.Crop.crop_focus/0`.
 
@@ -2985,20 +2997,32 @@ defmodule Image do
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `left` is the top edge of crop area as an
-    integer. If `left` is positive it is relative to
+    integer or a float in the range `-1.0..1.0`.
+    If `left` is an integer it is the absolute number
+    of pixels. If `left` a float is fraction of the width
+    of the image. If `left` is positive it is relative to
     the left edge of the image. If it is negative it is
     relative to the right edge of the image.
 
   * `top` is the top edge of crop area as an
-    integer. If `top` is positive it is relative to
+    integer or a float in the range `-1.0..1.0`.
+    If `top` is an integer it is the absolute number of
+    pixels. If `top` is a float is fraction of the height
+    of the image. If `top` is positive it is relative to
     the top edge of the image. If it is negative it is
     relative to the bottom edge of the image.
 
   * `width` is the width of area remaining as a
-    positive integer.
+    positive integer or float in the range `0.0..1.0`.
+    If `width` is an integer it is the absolute nunber
+    of pixels. If `width` is a float it is the fraction
+    of the original image width.
 
-  * `height` is the height of the area remaining
-    as a positive integer.
+  * `height` is the width of area remaining as a
+    positive integer or float in the range `0.0..1.0`.
+    If `height` is an integer it is the absolute nunber
+    of pixels. If `height` is a float it is the fraction
+    of the original image height.
 
   ### Notes
 
@@ -3040,6 +3064,17 @@ defmodule Image do
     left = width(image) + left - width
     top = height(image) + top - height
     Operation.extract_area(image, left, top, width, height)
+  end
+
+  def crop(%Vimage{} = image, left, top, width, height) do
+    with {left, top, width, height} <-
+           Options.Crop.normalize_box(dims(image), left, top, width, height) do
+      crop(image, left, top, width, height)
+    end
+  end
+
+  defp dims(%Vimage{} = image) do
+    {width(image), height(image)}
   end
 
   @doc """
