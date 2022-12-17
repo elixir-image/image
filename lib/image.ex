@@ -2777,6 +2777,34 @@ defmodule Image do
     `:none`, `:center`, `:entropy`, `:attention`, `:low`
     or `:high`. The default is `:none`. See also `t:Image.Options.Crop.crop_focus/0`.
 
+  * `:height` - Size to this height. Default is to maintain
+    the image aspect ratio unless `resize: :force` is set. If
+    `resize; :force` is set then the default `:height` is the
+    height of `image`.
+
+  * `:fit` sets the `:crop` and `:resize` options to align
+    with the CSS [object-fit](https://www.w3schools.com/css/css3_object-fit.asp)
+    property. Note that using the `:fit` option overwrites the
+    options `:crop` and `:resize`. Since options are processed in
+    the order in which they are presented, `:crop` and `:resize`
+    may still be force set if they are after the `:fit` option.
+    `:fit` takes one of the following values:
+
+    * `:fill` - the image is resized to fill the given dimension.
+      If necessary, the image will be stretched or squished to fit.
+      This is the same as setting `resize: :force`. Note that is
+      `:height` is not specified it will be the same height as `image`.
+
+    * `:contain` - the image keeps its aspect ratio, but is resized
+      to fit within the given dimension. This is the same as
+      setting `crop: :none` and `resize: :both`.
+
+    * `:cover` - the image keeps its aspect ratio and fills the given
+      dimensions. The image will be clipped to fit. Clipping will default to
+      `:center` unless `:crop` is already set to a value other
+      than `:none`. This is the same as setting `crop: :center`
+      (if `:crop` is not already set) and `resize: :both`.
+
   * `:autorotate` is a boolean indicating if the image should
     be autorated based upon the image metadata. The default
     is `true`.
@@ -2806,15 +2834,13 @@ defmodule Image do
     cannot be used in linear space.
 
   * `:resize` determines if an image may be only upsized, only
-    downsized, or both. The value may be one of `:up`, `:down`,
-    `:both` or `:force`. The default is `:both`.
-
-  * `:height` - Size to this height. Default is to maintain
-    the image aspect ratio unless `resize: :force` is set.
+    downsized, both or a foced aspect ratio is applied. The value
+    may be one of `:up`, `:down`, `:both` or `:force`. The default
+    is `:both`.
 
   ### Returns
 
-  * `{:ok, resized_image}` or
+  * `{:ok, thumbnailed_image}` or
 
   * `{:error, reason}`
 

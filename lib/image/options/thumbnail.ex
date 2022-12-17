@@ -23,6 +23,7 @@ defmodule Image.Options.Thumbnail do
           | {:resize, resize_dimension()}
           | {:height, pos_integer()}
           | {:crop, Crop.crop_focus()}
+          | {:file, :fill | :contain | :cover}
         ]
 
   @type resize_dimension :: :width | :height | :both
@@ -124,6 +125,37 @@ defmodule Image.Options.Thumbnail do
     else
       {:halt, {:error, "The color profile #{inspect(profile)} is not known"}}
     end
+  end
+
+  defp validate_option({:fit, :fill}, options) do
+    options =
+      options
+      |> Keyword.put(:size, :VIPS_SIZE_FORCE)
+      |> Keyword.delete(:fit)
+
+    {:cont, options}
+  end
+
+  defp validate_option({:fit, :contain}, options) do
+    options =
+      options
+      |> Keyword.put(:crop,  :VIPS_INTERESTING_NONE)
+      |> Keyword.put(:size, :VIPS_SIZE_BOTH)
+
+    {:cont, options}
+  end
+
+  defp validate_option({:fit, :cover}, options) do
+    current_crop = Keyword.get(options, :crop, :VIPS_INTERESTING_NONE)
+    crop = if current_crop == :VIPS_INTERESTING_NONE, do: :VIPS_INTERESTING_CENTRE, else: current_crop
+
+    options =
+      options
+      |> Keyword.put(:crop, crop)
+      |> Keyword.put(:size, :VIPS_SIZE_BOTH)
+      |> Keyword.delete(:fit)
+
+    {:cont, options}
   end
 
   defp validate_option(option, _options) do

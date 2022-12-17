@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.17.0
+
+This is the changelog for Image version 0.17.0 released on ______, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancements
+
+* Adds a `:fit` option to `Image.thumbnail/3` that uses the same terminology as the CSS [object-fit](https://www.w3schools.com/css/css3_object-fit.asp) property. This option sets overwrites the options `:crop` and `:resize` to produce the specified outcome.
+
 ## Image 0.16.0
 
 This is the changelog for Image version 0.16.0 released on Decmber 18th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
