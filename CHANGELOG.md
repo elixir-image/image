@@ -6,13 +6,13 @@ This is the changelog for Image version 0.17.0 released on December 19, 2022.  F
 
 ### Breaking change
 
-* Change `Image.orientation/1` to be `Image.aspect/1` to better reflect its purpose. Orientation has a more specific meaning in image metadata and in `Vips.Vix.Image.orientation/1`.
+* Rename `Image.orientation/1` to be `Image.aspect/1` to better reflect its purpose. Orientation has a more specific meaning in image metadata and in `Vips.Vix.Image.orientation/1`.
 
 ### Bug Fixes
 
 * Fix `Image.aspect/1` for exactly square images.
 
-* Draw functions now default to opaque if the base image has an alpha layer (previously they would be transparent). Thanks for @kwando for the collaboration. Closes #32.
+* Draw functions now default to opaque if the base image has an alpha band (previously they would be transparent). Thanks for @kwando for the collaboration. Closes #32.
 
 ### Enhancements
 
