@@ -2,11 +2,21 @@
 
 ## Image 0.17.0
 
-This is the changelog for Image version 0.17.0 released on ______, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.17.0 released on December 19, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Breaking change
+
+* Change `Image.orientation/1` to be `Image.aspect/1` to better reflect its purpose. Orientation has a more specific meaning in image metadata and in `Vips.Vix.Image.orientation/1`.
+
+### Bug Fixes
+
+* Fix `Image.aspect/1` for exactly square images.
 
 ### Enhancements
 
 * Adds a `:fit` option to `Image.thumbnail/3` that uses the same terminology as the CSS [object-fit](https://www.w3schools.com/css/css3_object-fit.asp) property. This option sets overwrites the options `:crop` and `:resize` to produce the specified outcome.
+
+* Add `Image.Draw.point!/4`, `Image.Draw.rect!/6`, `Image.Draw.circle!/5` and `Image.Draw.line!/6`.
 
 ## Image 0.16.0
 

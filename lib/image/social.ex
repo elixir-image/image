@@ -191,7 +191,7 @@ defmodule Image.Social do
   This function:
 
   * Resizes an image to the correct dimensions, including being
-    image orientation aware
+    image aspect aware
   * Converts to the sRGB color space
   * Minimises metadata (retains only Artist and Copyright)
 
@@ -227,10 +227,10 @@ defmodule Image.Social do
   def resize(%Vimage{} = image, platform, options) when platform in @social_platforms do
     {usage, options} = Keyword.pop(options, :usage, :default)
     options = Keyword.put_new(options, :crop, :attention)
-    orientation = Image.orientation(image)
+    aspect = Image.aspect(image)
     platform = Map.fetch!(media_sizes(), platform)
 
-    with {:ok, size} <- get_image_size(platform, usage, orientation) do
+    with {:ok, size} <- get_image_size(platform, usage, aspect) do
       image
       |> Image.thumbnail!(size, options)
       |> Image.to_colorspace!(:srgb)

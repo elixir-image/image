@@ -143,7 +143,7 @@ defmodule Image do
   Image orientation.
 
   """
-  @type orientation :: :landscape | :portrait | :square
+  @type aspect :: :landscape | :portrait | :square
 
   @typedoc """
   A composition is a 2-tuple defining an image
@@ -4997,7 +4997,7 @@ defmodule Image do
   end
 
   @doc """
-  Returns the orientation of an image.
+  Returns the aspect of an image.
 
   ### Arguments
 
@@ -5022,19 +5022,19 @@ defmodule Image do
   ### Example
 
       iex> puppy = Image.open!(Path.expand("test/support/images/puppy.webp"))
-      iex> Image.orientation(puppy, square_ratio: 0.05)
+      iex> Image.aspect(puppy, square_ratio: 0.05)
       :landscape
 
   """
-  @spec orientation(Vimage.t()) :: orientation()
-  def orientation(%Vimage{} = image, options \\ []) do
+  @spec aspect(Vimage.t()) :: aspect()
+  def aspect(%Vimage{} = image, options \\ []) do
     square_ratio = Keyword.get(options, :square_ratio, @square_when_ratio_less_than)
     width = Image.width(image)
     height = Image.height(image)
     ratio = abs(1.0 - width / height)
 
     cond do
-      ratio < square_ratio -> :square
+      ratio <= square_ratio -> :square
       width > height -> :landscape
       height > width -> :portrait
     end
