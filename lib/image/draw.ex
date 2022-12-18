@@ -901,16 +901,16 @@ defmodule Image.Draw do
   @spec maybe_add_alpha(Vimage.t() | MutableImage.t(), Color.t()) :: Color.t()
 
   @doc false
-  def maybe_add_alpha(image, color) when length(color) == 3 do
-    if Image.has_alpha?(image) do
+  def maybe_add_alpha(%module{} = image, color) when length(color) == 3 do
+    if module.has_alpha?(image) do
       List.insert_at(color, -1, Color.max_opacity())
     else
       color
     end
   end
 
-  def maybe_add_alpha(image, color) when length(color) == 4 do
-    if Image.has_alpha?(image) do
+  def maybe_add_alpha(%module{} = image, color) when length(color) == 4 do
+    if module.has_alpha?(image) do
       color
     else
       List.delete_at(color, -1)
