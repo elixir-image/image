@@ -4799,6 +4799,10 @@ defmodule Image do
     Vimage.has_alpha?(image)
   end
 
+  def has_alpha?(%MutableImage{} = image) do
+    MutableImage.has_alpha?(image)
+  end
+
   @doc """
   Returns the band number of the alpha
   channel of an image, or nil if it doesn't

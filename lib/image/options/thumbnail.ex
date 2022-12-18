@@ -139,7 +139,7 @@ defmodule Image.Options.Thumbnail do
   defp validate_option({:fit, :contain}, options) do
     options =
       options
-      |> Keyword.put(:crop,  :VIPS_INTERESTING_NONE)
+      |> Keyword.put(:crop, :VIPS_INTERESTING_NONE)
       |> Keyword.put(:size, :VIPS_SIZE_BOTH)
 
     {:cont, options}
@@ -147,7 +147,9 @@ defmodule Image.Options.Thumbnail do
 
   defp validate_option({:fit, :cover}, options) do
     current_crop = Keyword.get(options, :crop, :VIPS_INTERESTING_NONE)
-    crop = if current_crop == :VIPS_INTERESTING_NONE, do: :VIPS_INTERESTING_CENTRE, else: current_crop
+
+    crop =
+      if current_crop == :VIPS_INTERESTING_NONE, do: :VIPS_INTERESTING_CENTRE, else: current_crop
 
     options =
       options

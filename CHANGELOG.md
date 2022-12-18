@@ -12,6 +12,8 @@ This is the changelog for Image version 0.17.0 released on December 19, 2022.  F
 
 * Fix `Image.aspect/1` for exactly square images.
 
+* Draw functions now default to opaque if the base image has an alpha layer (previously they would be transparent).
+
 ### Enhancements
 
 * Adds a `:fit` option to `Image.thumbnail/3` that uses the same terminology as the CSS [object-fit](https://www.w3schools.com/css/css3_object-fit.asp) property. This option sets overwrites the options `:crop` and `:resize` to produce the specified outcome.

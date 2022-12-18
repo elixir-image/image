@@ -129,6 +129,16 @@ defmodule Image.Color do
   @max_opacity 255
   @min_opacity 0
 
+  @doc false
+  def max_opacity do
+    @max_opacity
+  end
+
+  @doc false
+  def min_opacity do
+    @min_opacity
+  end
+
   def rgba_color!(color, a \\ @max_opacity)
 
   def rgba_color!(color, _a) when color in [:none, :transparent] do
@@ -163,6 +173,10 @@ defmodule Image.Color do
 
   def rgba_color!([r, g, b], a) when is_integer(a) and a >= 0 do
     [r, g, b, a]
+  end
+
+  def rgba_color!([_r, _g, _b, _a] = color, _alpha) do
+    color
   end
 
   def normalize(color) do

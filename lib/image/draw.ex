@@ -63,8 +63,10 @@ defmodule Image.Draw do
   def point(%Vimage{} = image, left, top, options)
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:point, options) do
+      color = maybe_add_alpha(image, options.color)
+
       Vimage.mutate(image, fn mut_img ->
-        MutableOperation.draw_rect(mut_img, options.color, left, top, 1, 1)
+        MutableOperation.draw_rect(mut_img, color, left, top, 1, 1)
       end)
     end
   end
@@ -118,7 +120,12 @@ defmodule Image.Draw do
 
   @doc since: "0.17.0"
 
-  @spec point!(Vimage.t() | MutableImage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.point()) ::
+  @spec point!(
+          Vimage.t() | MutableImage.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          Options.Draw.point()
+        ) ::
           Vimage.t() | MutableImage.t() | no_return()
 
   def point!(image, left, top, options) do
@@ -890,17 +897,13 @@ defmodule Image.Draw do
   end
 
   ## Helpers
+
   @spec maybe_add_alpha(Vimage.t() | MutableImage.t(), Color.t()) :: Color.t()
 
-  # TODO Mutable images don't have a call to get the image
-  # depth
-  def maybe_add_alpha(%MutableImage{} = _image, color) do
-    color
-  end
-
+  @doc false
   def maybe_add_alpha(image, color) when length(color) == 3 do
     if Image.has_alpha?(image) do
-      List.insert_at(color, -1, 1.0)
+      List.insert_at(color, -1, Color.max_opacity())
     else
       color
     end
