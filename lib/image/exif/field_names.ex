@@ -1,12 +1,11 @@
 defmodule Image.Exif.FieldNames do
-  @moduledoc """
-  Defines the field names with mapping to the relevant
-  EXIF IFD.
-
-  This is useful for mapping developer and user friendly
-  names to the internal header names in `libvips`.
-
-  """
+  @moduledoc false
+  
+  # Defines the field names with mapping to the relevant
+  # EXIF IFD.
+  #
+  # This is useful for mapping developer and user friendly
+  # names to theinternal header names in `libvips`.
 
   @field_names [
     ["ifd3", "GPSDateStamp"],

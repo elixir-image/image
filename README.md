@@ -4,9 +4,13 @@
 
 `Image` is intended to provide well-documented common image processing functions in an idiomatic Elixir functional style as a layer above the very comprehensive set of functions in `Vix` and `libvips`.
 
-It is also intended to be an idiomatic API layer over [eVision (OpenCV)](https://github.com/cocoa-xu/evision). As of `Image verison 0.9.0`, the `Image.QRcode.decode/1` function is provided to decode QRcodes with the functionality to do so provided by `eVision`. The `eVision` integration is optional and currently considered experimental.
+As of version 0.18.0, `Image` provides optional integration with [Bumblebee](https://hex.pm/packages/bumblebee) allowing machine learning models to be deployed as part of an image processing pipeline.
+
+`Image` is also intended to be an idiomatic API layer over [eVision (OpenCV)](https://github.com/cocoa-xu/evision). As of `Image verison 0.9.0`, the `Image.QRcode.decode/1` function is provided to decode QRcodes with the functionality to do so provided by `eVision`. The `eVision` integration is optional and currently considered experimental.
 
 In a very simple image resizing [benchmark](https://github.com/kipcole9/image/blob/main/bench/image_resize.exs), `Image` is approximately 2 to 3 times faster than `Mogrify` and uses about 5 times less memory.
+
+The documentation can be found at [https://hexdocs.pm/image](https://hexdocs.pm/image).
 
 ## Installation
 
@@ -15,12 +19,10 @@ In a very simple image resizing [benchmark](https://github.com/kipcole9/image/bl
 ```elixir
 def deps do
   [
-    {:image, "~> 0.14.0"}
+    {:image, "~> 0.18.0"}
   ]
 end
 ```
-
-The documentation can be found at [https://hexdocs.pm/image](https://hexdocs.pm/image).
 
 ### Installing Libvips
 
@@ -84,7 +86,100 @@ unset VIPS_LEAK
 
 The default number of threads is equal to the number of cores detected on the running system. This may create CPU contention with other workloads given that image processing is CPU intensive.  Therefore it may be prudent to reduce the number of threads if overall system throughput is being affected.
 
-### Security Considerations
+### Installing Nx
+
+[Nx](https://hex.pm/packages/nx) provides multi-dimensional arrays (tensors) and numerical definitions for Elixir. These tensors can also be used as an interchange format for binary image data. When `Nx` is installed and `Image` is compiled, the functions `Image.to_nx/2` and `Image.from_nx/1` are defined. 
+
+`Nx` is required in order to support the functions in `Image.Classification`. It is also required to support [eVision](https://hex.pm/packages/evision) and [Bumblebee](https://hex.pm/packages/bumblebee) integrations.
+
+1. Add `Nx` to your `mix.exs`
+```elixir
+def deps do
+  [
+    ...
+    {:nx, "~> 0.4"},
+    ...
+  ]
+end
+```
+
+2. Add a default `Nx` backend to `config.exs`
+
+`Nx` supports a variety of backends that provide CPU and GPU acceleration. The CPU backend that provides the widest platform compatibility is `EXLA.Backend`.
+
+```elixir
+config :nx,
+  default_backend: EXLA.Backend
+```
+
+3. Update dependencies
+```elixir
+mix deps.get
+```
+
+### Installing Bumblebee
+
+[Bumblebee](https://hex.pm/packages/bumblebee) provides pre-trained and transformer Neural Network models in Axon that can be used for a variety of image classification, segmentation and detection operations. When `Bumblebee` and `Nx` are configured, the functions in `Image.Classification` become available.
+
+1. Add `Bumblebee`, `Nx` and `exla` to your `mix.exs`
+
+`Nx` is required for image data interoperability and model execution.  `exla` is required in order to provide CPU or GPU acceleration for the models in order to deliver acceptable performance.
+
+```elixir
+def deps do
+  [
+    ...
+    {:nx, "~> 0.4"},
+    {:exla, "~> 0.4"},
+    {:bumblebee, "~> 0.1"}
+    ...
+  ]
+end
+```
+
+2. Add a default Nx backend to `config.exs`
+
+`Nx` supports a variety of backends that provide CPU and GPU acceleration. The CPU backend that provides the widest platform compatibility is `EXLA.Backend`.
+
+```elixir
+config :nx,
+  default_backend: EXLA.Backend
+```
+
+3. Update dependencies
+```elixir
+mix deps.get
+```
+
+### Installing eVision
+
+[eVision (OpenCV)](https://github.com/cocoa-xu/evision) provides Elixir bindings to [OpenCV](https://opencv.org), the most well-known computer vision library.
+
+As of [Image version 0.9.0](https://hex,pm/packages/image/0.9.0), experimental support for [eVision (OpenCV)](https://github.com/cocoa-xu/evision) is provided. There is extensive documentation on how to install `eVision` and the required [OpenCV](https://opencv.org). However to most cases the following should be enough:
+
+1. Add `eVision`, `Nx` to your `mix.exs`
+
+[exla](https://hex.pm/packages/exla) may be optionally configured too, see the `Nx` installation section above.
+
+```elixir
+def deps do
+  [
+    ...
+    {:nx, "~> 0.4"},
+    {:evision, "~> 0.1"},
+    ...
+  ]
+end
+```
+
+2. Update dependencies
+```elixir
+mix deps.get
+```
+
+Then proceed as normal.  `eVision` will download a precompiled `OpenCV` for the appropriate system architecture and compile both the NIF and Elixir code.
+
+## Security Considerations
 
 There are several considerations in the use of any image processing library and any NIF-based library:
 
@@ -98,24 +193,3 @@ There are several considerations in the use of any image processing library and 
 
 In comparison to `Imagemagick` that has a reported [638](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=imagemagick) CVEs, there have been only  [8](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=libvips) CVE's reported for `libvips`, each resolved in a very timely manner.
 
-### Installing eVision
-
-As of [Image version 0.9.0](https://hex,pm/packages/image/0.9.0), experimental support for [eVision (OpenCV)](https://github.com/cocoa-xu/evision) is provided. There is extensive documentation on how to install `eVision` and the required [OpenCV](https://opencv.org). However to most cases the following should be enough:
-
-1. Add `eVision` to your `mix.exs`
-```elixir
-def deps do
-  [
-    ...
-    {:evision, "~> 0.1"},
-    ...
-  ]
-end
-```
-
-2. Get deps
-```elixir
-mix deps.get
-```
-
-Then proceed as normal.  `eVision` will download a precompiled `OpenCV` for the appropriate system architecture and compile both the NIF and elixir code.  Note that many Elixir compiler warnings will be emitted; this is to be expected on the current development versions of `eVision`.

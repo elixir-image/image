@@ -139,11 +139,21 @@ defmodule Image.MixProject do
     ]
   end
 
+  @enum_modules [
+    Image.BandFormat,
+    Image.BlendMode,
+    Image.CombineMode,
+    Image.Interpretation,
+    Image.Kernel
+  ]
+
   defp groups_for_modules do
     [
+      Exif: [Image.Exif],
+      Xmp: [Image.Xmp],
+      Kino: [Image.Kino],
       Options: ~r/Image.Options.*/,
-      Exif: ~r/Image.Exif.*/,
-      Xmp: ~r/Image.Xmp/
+      Enums: @enum_modules
     ]
   end
 

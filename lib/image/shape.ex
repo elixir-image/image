@@ -408,11 +408,11 @@ defmodule Image.Shape do
     rescale(polygon, min, width, min, height, {from_x_min, from_x_max, from_y_min, from_y_max})
   end
 
-  def aspect_ratio(%Vimage{} = image) do
+  defp aspect_ratio(%Vimage{} = image) do
     Image.width(image) / Image.height(image)
   end
 
-  def aspect_ratio(polygon) when is_list(polygon) do
+  defp aspect_ratio(polygon) when is_list(polygon) do
     {from_x_min, from_x_max, from_y_min, from_y_max} = polygon_scale(polygon)
     (from_x_max - from_x_min) / (from_y_max - from_y_min)
   end

@@ -1,20 +1,45 @@
 defmodule Image.Kino do
-  @moduledoc false
+  @moduledoc """
+  Helper functions to simplify rendering images in Kino.
 
-  # A convenience module to use with livebooks
-  # to render an image using Kino.
-  #
+  """
+
   # Since Kino is not a dependency we
   # avoid compiler warnings by using `apply/3`
 
-  alias Vix.Vips.{Operation, Image}
+  alias Vix.Vips.Operation
+  alias Vix.Vips.Image, as: Vimage
 
   @default_max_height 200
 
-  def show(%Image{} = image, opts \\ []) do
+  @doc """
+  Renders an image in [Kino](https://hex.pm/packages/kino),
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:max_height` determines the maximum height for the
+    rendered image. The aspect ratio of the rendered
+    image is unchanged.  THe default is `#{inspect @default_max_height}`.
+
+  ### Returns
+
+  * `:ok`
+
+  """
+  @doc since: "0.18.0"
+
+  @spec show(image :: Vimage.t(), options :: Keyword.t()) :: :ok
+
+  def show(%Vimage{} = image, opts \\ []) do
     image = maybe_resize_image(image, opts)
 
-    {:ok, image_bin} = Image.write_to_buffer(image, ".png")
+    {:ok, image_bin} = Vimage.write_to_buffer(image, ".png")
     kino_image = apply(Kino.Image, :new, [image_bin, "image/png"])
     apply(Kino, :render, [kino_image])
 

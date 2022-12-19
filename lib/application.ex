@@ -37,6 +37,8 @@ defmodule Image.Application do
 end
 
 defmodule Image.SetSafeLoader do
+  @moduledoc false
+
   def set(env_var) do
     unless System.get_env(env_var) do
       System.put_env(env_var, "TRUE")
