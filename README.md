@@ -103,10 +103,8 @@ def deps do
 end
 ```
 
-2. Add a default `Nx` backend to `config.exs`
-
+2. Add a default `Nx` backend to `config.exs`.
 `Nx` supports a variety of backends that provide CPU and GPU acceleration. The CPU backend that provides the widest platform compatibility is `EXLA.Backend`.
-
 ```elixir
 config :nx,
   default_backend: EXLA.Backend
@@ -121,10 +119,8 @@ mix deps.get
 
 [Bumblebee](https://hex.pm/packages/bumblebee) provides pre-trained and transformer Neural Network models in Axon that can be used for a variety of image classification, segmentation and detection operations. When `Bumblebee` and `Nx` are configured, the functions in `Image.Classification` become available.
 
-1. Add `Bumblebee`, `Nx` and `exla` to your `mix.exs`
-
+1. Add `Bumblebee`, `Nx` and `exla` to your `mix.exs`.
 `Nx` is required for image data interoperability and model execution.  `exla` is required in order to provide CPU or GPU acceleration for the models in order to deliver acceptable performance.
-
 ```elixir
 def deps do
   [
@@ -137,10 +133,8 @@ def deps do
 end
 ```
 
-2. Add a default Nx backend to `config.exs`
-
+2. Add a default Nx backend to `config.exs`.
 `Nx` supports a variety of backends that provide CPU and GPU acceleration. The CPU backend that provides the widest platform compatibility is `EXLA.Backend`.
-
 ```elixir
 config :nx,
   default_backend: EXLA.Backend
@@ -157,10 +151,7 @@ mix deps.get
 
 As of [Image version 0.9.0](https://hex,pm/packages/image/0.9.0), experimental support for [eVision (OpenCV)](https://github.com/cocoa-xu/evision) is provided. There is extensive documentation on how to install `eVision` and the required [OpenCV](https://opencv.org). However to most cases the following should be enough:
 
-1. Add `eVision`, `Nx` to your `mix.exs`
-
-[exla](https://hex.pm/packages/exla) may be optionally configured too, see the `Nx` installation section above.
-
+1. Add `eVision`, `Nx` to your `mix.exs`. [exla](https://hex.pm/packages/exla) may be optionally configured too, see the `Nx` installation section above.
 ```elixir
 def deps do
   [
