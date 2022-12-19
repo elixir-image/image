@@ -5,6 +5,7 @@ defmodule Image.Test do
   alias Vix.Vips.Image, as: Vimage
 
   doctest Image
+  doctest Image.Classification
 
   setup do
     Temp.track!()

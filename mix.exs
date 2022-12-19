@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.17.0"
+  @version "0.18.0-dev"
   @app_name "image"
 
   def project do
@@ -23,7 +23,7 @@ defmodule Image.MixProject do
       preferred_cli_env: preferred_cli_env(),
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
-        plt_add_apps: ~w(mix nx plug evision)a
+        plt_add_apps: ~w(mix nx plug evision bumblebee)a
       ],
       compilers: Mix.compilers()
     ]
@@ -64,8 +64,15 @@ defmodule Image.MixProject do
       # For streaming writes
       {:plug, "~> 1.13", optional: true},
 
-      # For NX interchange testing
-      if(otp_release() >= 24, do: {:nx, "~> 0.2", optional: true}),
+      # For NX interchange testing and
+      # Bumblebee for image classification
+      if(otp_release() >= 24,
+        do: [
+          {:nx, "~> 0.4.1", optional: true},
+          {:bumblebee, "~> 0.1.0", optional: true},
+          {:exla, "~> 0.4.1", optional: true}
+        ]
+      ),
 
       # For testing and benchmarking
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
@@ -78,11 +85,12 @@ defmodule Image.MixProject do
       # For testing HTTP streaming
       {:ex_aws_s3, "~> 2.3", optional: true, only: [:dev, :test]},
       {:hackney, "~> 1.18", optional: true, only: [:dev, :test]},
-      {:jason, "~> 1.0", optional: true, only: [:dev, :test]}
+      {:jason, "~> 1.4", optional: true}
 
       # Only used for benchmarking
       # {:mogrify, "~> 0.9.1", only: :dev, optional: true}
     ]
+    |> List.flatten()
     |> Enum.reject(&is_nil/1)
   end
 

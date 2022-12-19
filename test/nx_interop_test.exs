@@ -28,10 +28,11 @@ if Code.ensure_loaded?(Nx) do
                  ]
                ],
                type: {:u, 8},
-               names: names
+               names: names,
+               backend: Nx.BinaryBackend
              ) ==
                binary
-               |> Nx.from_binary(type)
+               |> Nx.from_binary(type, backend: Nx.BinaryBackend)
                |> Nx.reshape(shape, names: names)
     end
 

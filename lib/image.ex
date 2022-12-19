@@ -4296,6 +4296,21 @@ defmodule Image do
 
     * `image` is any `t:Vimage.t/0`
 
+    * `options` is a keyword list of options
+
+    ### Options
+
+    * `:shape` determines how the tensor is shaped. The valid
+      values are:
+
+      * `:whb` or `:whc` which leaves the tensor unchanged with
+        the underlying data in `width, height, bands` shape.
+        This is the default action.
+
+      * `:hwc` or `:hwb` which reshapes the tensor to
+        `height, width, channels` which is commonly use
+        for machine learning models.
+
     ### Returns
 
     * An `t:Nx.Tensor.t/0` tensor suitable for use in
@@ -4304,9 +4319,10 @@ defmodule Image do
     ### Example
 
         iex> {:ok, image} = Vix.Vips.Operation.black(3, 3)
-        iex> Image.to_nx(image)
+        iex> Image.to_nx(image, backend: Nx.BinaryBackend)
         {:ok,
-          Nx.tensor([[[0], [0], [0]], [[0], [0], [0]], [[0], [0], [0]]], type: {:u, 8}, names: [:width, :height, :bands])}
+          Nx.tensor([[[0], [0], [0]], [[0], [0], [0]], [[0], [0], [0]]],
+            type: {:u, 8}, names: [:width, :height, :bands], backend: Nx.BinaryBackend)}
 
     """
     @dialyzer {:nowarn_function, {:to_nx, 1}}
@@ -4314,18 +4330,42 @@ defmodule Image do
 
     @doc since: "0.5.0"
 
-    @spec to_nx(image :: Vimage.t(), options: Keyword.t()) ::
+    @spec to_nx(image :: Vimage.t(), options :: Keyword.t()) ::
             {:ok, Nx.Tensor.t()} | {:error, error_message()}
 
     def to_nx(%Vimage{} = image, options \\ []) do
-      with {:ok, tensor} <- Vix.Vips.Image.write_to_tensor(image) do
-        %Vix.Tensor{data: binary, names: names, shape: shape, type: type} = tensor
+      {to_shape, options} = Keyword.pop(options, :shape)
+
+      with {:ok, tensor} <- Vix.Vips.Image.write_to_tensor(image),
+           {:ok, shape, names} <- maybe_reshape_tensor(tensor, to_shape) do
+        %Vix.Tensor{data: binary, type: type} = tensor
 
         binary
         |> Nx.from_binary(type, options)
         |> Nx.reshape(shape, names: names)
         |> wrap(:ok)
       end
+    end
+
+    @dialyzer {:nowarn_function, {:maybe_reshape_tensor, 2}}
+
+    defp maybe_reshape_tensor(%Vix.Tensor{shape: shape, names: names}, nil), do: {:ok, shape, names}
+
+    defp maybe_reshape_tensor(%Vix.Tensor{shape: shape, names: names}, :whb),
+      do: {:ok, shape, names}
+
+    defp maybe_reshape_tensor(%Vix.Tensor{shape: shape, names: names}, :whc),
+      do: {:ok, shape, names}
+
+    defp maybe_reshape_tensor(%Vix.Tensor{} = tensor, :hwb), do: maybe_reshape_tensor(tensor, :hwc)
+
+    defp maybe_reshape_tensor(%Vix.Tensor{shape: {width, height, bands}}, :hwc) do
+      {:ok, {height, width, bands}, [:height, :width, :channels]}
+    end
+
+    defp maybe_reshape_tensor(_tensor, shape) do
+      {:error,
+       "Invalid shape. Allowable shapes are :whb, :whc, :hwc and :hwb. Found #{inspect(shape)}"}
     end
 
     @doc """
@@ -4397,6 +4437,11 @@ defmodule Image do
 
       * `image` is any `t:Vimage.t/0`
 
+      * `convert_to_bgr` is a boolean indicating if the
+        color order should be converted from `RGB` to `BGR`
+        which is the normal channel layout for OpenCV. The
+        default is `true`.
+
       ### Returns
 
       * `{:ok, evision_image}`
@@ -4416,12 +4461,13 @@ defmodule Image do
 
       @doc since: "0.9.0"
 
-      def to_evision(%Vimage{} = image) do
+      def to_evision(%Vimage{} = image, convert_to_bgr \\ true) do
         with {:ok, tensor} <- to_nx(image),
              {width, height, bands} <- validate_transferable_image(image),
              %Evision.Mat{} = mat <- Evision.Mat.from_nx(tensor, {height, width, bands}),
-             %Evision.Mat{} = mat <- Evision.Mat.last_dim_as_channel(mat),
-             %Evision.Mat{} = mat <- Evision.cvtColor(mat, Evision.cv_COLOR_RGB2BGR()) do
+             %Evision.Mat{} = mat <- Evision.Mat.last_dim_as_channel(mat) do
+          mat = if convert_to_bgr, do: Evision.cvtColor(mat, Evision.cv_COLOR_RGB2BGR()), else: mat
+
           {:ok, mat}
         end
       end
@@ -5115,5 +5161,15 @@ defmodule Image do
          "Only images with three bands can be transferred to eVision. " <>
            "Found an image of shape #{inspect(other)}"}
     end
+  end
+
+  @doc false
+  def bumblebee_configured? do
+    Enum.reduce_while([Nx, EXLA, Bumblebee], true, fn mod, flag ->
+      case Code.ensure_compiled(mod) do
+        {:module, _module} -> {:cont, flag}
+        _other -> {:halt, false}
+      end
+    end)
   end
 end

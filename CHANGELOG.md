@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.18.0
+
+This is the changelog for Image version 0.18.0 released on ______, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancements
+
+* Adds `Image.Classification.classify/2` and `Image.Classification.labels/2` to execute image classification models over an image using [Bumblebee](https://hex.pm/packages/bumblebee).
+
 ## Image 0.17.0
 
 This is the changelog for Image version 0.17.0 released on December 19, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
