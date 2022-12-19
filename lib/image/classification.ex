@@ -1,4 +1,4 @@
-if Image.ml_configured?() do
+if Image.bumblebee_configured?() do
   defmodule Image.Classification do
     alias Vix.Vips.Image, as: Vimage
 
@@ -34,21 +34,25 @@ if Image.ml_configured?() do
 
     ### Examples
 
-        iex> {:ok, image} = Image.open ("./test/support/images/San-Francisco-2018-04-2549.jpg")
-        iex> Image.Classification.classify(image)
-        %{predictions: [%{label: "suspension bridge", score: 0.9412655830383301}]}
+      iex> puppy = Image.open!("./test/support/images/puppy.webp")
+      iex> Image.Classification.classify(puppy)
+      %{predictions: [%{label: "Blenheim spaniel", score: 0.9701485633850098}]}
 
     """
 
     # Based upon: https://github.com/cocoa-xu/evision/issues/80
 
+    @dialyzer {:nowarn_function, {:classify, 1}}
+    @dialyzer {:nowarn_function, {:classify, 2}}
+
+    @doc since: "0.18.0"
+
     @spec classify(image :: Vimage.t(), backend :: Nx.Backend.t()) ::
             %{predictions: [%{label: String.t(), score: float()}]} | {:error, Image.error_message()}
 
     def classify(%Vimage{} = image, backend \\ Nx.default_backend()) do
-      with {:ok, mat} <- Image.to_evision(image, false) do
-        binary = Evision.Mat.to_nx(mat, backend)
-        Nx.Serving.batched_run(Image.Serving, binary)
+      with {:ok, tensor} <- Image.to_nx(image, shape: :hwc, backend: backend) do
+        Nx.Serving.batched_run(Image.Serving, tensor)
       end
     end
 
@@ -86,6 +90,11 @@ if Image.ml_configured?() do
         ["sports car", "sport car"]
 
     """
+    @dialyzer {:nowarn_function, {:labels, 1}}
+    @dialyzer {:nowarn_function, {:labels, 2}}
+
+    @doc since: "0.18.0"
+
     @spec labels(image :: Vimage.t(), options :: Keyword.t()) ::
             [String.t()] | {:error, Image.error_message()}
 
