@@ -4457,7 +4457,7 @@ defmodule Image do
         also reorders the data appropriately.
 
       """
-      @dialyzer {:nowarn_function, {:to_evision, 1}}
+      @dialyzer {:nowarn_function, {:to_evision, 2}}
 
       @doc since: "0.9.0"
 
