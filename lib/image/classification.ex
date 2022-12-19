@@ -1,5 +1,30 @@
 if Image.bumblebee_configured?() do
   defmodule Image.Classification do
+    @moduledoc """
+    Implements image classification functions using [Axon](https://hex.pm/packages/axon)
+    machine learning models managed by [Bumblebee](https://hex.pm/packages/bumblebee).
+
+    Image classification refers to the task of extracting information from an image.
+    In this module, the information extracted is one or more labels desribing the
+    image. Typically something like "sports car" or "Blenheim spaniel". The labels
+    returns depend on the machine learning model used.
+
+    ### Configuration
+
+    The machine learning model to be used is configured as follows:
+
+    ```elixir
+    config :image,
+      classification_model: model
+      classification_featurizer: featurizer
+    ```
+
+    where `model` and `featurizer` are models that are represented in a manner
+    acceptable to Bumblebee.  The default for both `model` and `featurizer` is
+    `{:hf, "microsoft/resnet-50"}`.
+
+    """
+
     alias Vix.Vips.Image, as: Vimage
 
     @min_score 0.5
@@ -24,7 +49,7 @@ if Image.bumblebee_configured?() do
 
     * `image` is any `t:Vix.Vips.Image.t/0`.
 
-    * `backend` is any valid Nx backend. The default is
+    * `backend` is any valid `Nx` backend. The default is
       `Nx.default_backend/0`.
 
     ### Returns
@@ -39,8 +64,6 @@ if Image.bumblebee_configured?() do
       %{predictions: [%{label: "Blenheim spaniel", score: 0.9701485633850098}]}
 
     """
-
-    # Based upon: https://github.com/cocoa-xu/evision/issues/80
 
     @dialyzer {:nowarn_function, {:classify, 1}}
     @dialyzer {:nowarn_function, {:classify, 2}}
@@ -69,7 +92,7 @@ if Image.bumblebee_configured?() do
 
     ### Options
 
-    * `:backend` is any valid Nx backend. The default is
+    * `:backend` is any valid `Nx` backend. The default is
       `Nx.default_backend/0`.
 
     * `:min_score` is the minimum score, a float between `0`

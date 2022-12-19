@@ -117,17 +117,16 @@ mix deps.get
 
 ### Installing Bumblebee
 
-[Bumblebee](https://hex.pm/packages/bumblebee) provides pre-trained and transformer Neural Network models in Axon that can be used for a variety of image classification, segmentation and detection operations. When `Bumblebee` and `Nx` are configured, the functions in `Image.Classification` become available.
+[Bumblebee](https://hex.pm/packages/bumblebee) provides pre-trained and transformer Neural Network models in Axon that can be used for a variety of image classification, segmentation and detection operations. When `Bumblebee` is configured, the functions in `Image.Classification` become available.
 
-1. Add `Bumblebee`, `Nx` and `exla` to your `mix.exs`.
-`Nx` is required for image data interoperability and model execution.  `exla` is required in order to provide CPU or GPU acceleration for the models in order to deliver acceptable performance.
+1. Add `Bumblebee` and `exla` to your `mix.exs`.
+`exla` is required in order to provide CPU or GPU acceleration for the models so as to deliver acceptable performance. `Nx` will be installed as a transitory dependency.
 ```elixir
 def deps do
   [
     ...
-    {:nx, "~> 0.4"},
+    {:bumblebee, "~> 0.1"},
     {:exla, "~> 0.4"},
-    {:bumblebee, "~> 0.1"}
     ...
   ]
 end
@@ -151,12 +150,11 @@ mix deps.get
 
 As of [Image version 0.9.0](https://hex,pm/packages/image/0.9.0), experimental support for [eVision (OpenCV)](https://github.com/cocoa-xu/evision) is provided. There is extensive documentation on how to install `eVision` and the required [OpenCV](https://opencv.org). However to most cases the following should be enough:
 
-1. Add `eVision`, `Nx` to your `mix.exs`. [exla](https://hex.pm/packages/exla) may be optionally configured too, see the `Nx` installation section above.
+1. Add `eVision` to your `mix.exs`. [exla](https://hex.pm/packages/exla) may be optionally configured too, see the `Nx` installation section above. 
 ```elixir
 def deps do
   [
     ...
-    {:nx, "~> 0.4"},
     {:evision, "~> 0.1"},
     ...
   ]
