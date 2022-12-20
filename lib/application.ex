@@ -15,33 +15,34 @@ defmodule Image.Application do
   def start(_type, _args) do
     Image.SetSafeLoader.set(@untrusted_env_var)
 
-    children =
-      if Code.ensure_loaded?(Bumblebee) do
-        Application.ensure_all_started(:exla)
-
-        model = Application.get_env(:image, :classification_model, @default_classification_model)
-
-        featurizer =
-          Application.get_env(
-            :image,
-            :classification_featurizer,
-            @default_classification_featurizer
-          )
-
-        [
-          {Nx.Serving,
-           serving: Image.Classification.serving(model, featurizer),
-           name: Image.Serving,
-           batch_timeout: 100}
-        ]
-      else
-        []
-      end
+    children = children(Code.ensure_loaded?(Bumblebee))
 
     Supervisor.start_link(
       children,
       strategy: :one_for_one
     )
+  end
+
+  # When Bumblebee is available
+  def children(true) do
+    Application.ensure_all_started(:exla)
+
+    model = Application.get_env(:image, :classification_model, @default_classification_model)
+
+    featurizer =
+      Application.get_env(:image, :classification_featurizer, @default_classification_featurizer)
+
+    [
+      {Nx.Serving,
+       serving: Image.Classification.serving(model, featurizer),
+       name: Image.Classification.Serving,
+       batch_timeout: 100}
+    ]
+  end
+
+  # When bumblebee is not available
+  def children(false) do
+    []
   end
 end
 

@@ -25,7 +25,7 @@ defmodule Image.Kino do
 
   * `:max_height` determines the maximum height for the
     rendered image. The aspect ratio of the rendered
-    image is unchanged.  THe default is `#{inspect @default_max_height}`.
+    image is unchanged.  THe default is `#{inspect(@default_max_height)}`.
 
   ### Returns
 

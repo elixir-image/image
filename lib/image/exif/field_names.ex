@@ -1,6 +1,6 @@
 defmodule Image.Exif.FieldNames do
   @moduledoc false
-  
+
   # Defines the field names with mapping to the relevant
   # EXIF IFD.
   #

@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.18.1
+
+This is the changelog for Image version 0.18.1 released on December 21st, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Fix `Image.Application.start/2`. Previously it would return `nil` if Bumblebee was not configured and `nil` is not a valid return from an application start function. Thanks to @haste for the report and PR.  Closes #34.
+
 ## Image 0.18.0
 
 This is the changelog for Image version 0.18.0 released on December 20th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

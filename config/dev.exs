@@ -17,4 +17,3 @@ config :nx,
 
 config :logger,
   level: :debug
-
