@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.19.0
+
+This is the changelog for Image version 0.19.0 released on December 22nd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancements
+
+* Adds `Image.Generation.text_to_image/2` the uses [Stable Diffusion](https://en.wikipedia.org/wiki/Stable_Diffusion) support in [Bumblebee](https://hex.pm/packages/bumblebee) to generate an image from a text description of scene.
+
 ## Image 0.18.1
 
 This is the changelog for Image version 0.18.1 released on December 21st, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

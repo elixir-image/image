@@ -19,7 +19,7 @@ config :logger,
   level: :debug
 
 config :image, :classifier,
-  enabled: true
+  autostart: true
 
 config :image, :generator,
-  enabled: false
+  autostart: false

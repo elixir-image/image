@@ -75,7 +75,7 @@ if Image.bumblebee_configured?() do
 
     def classify(%Vimage{} = image, backend \\ Nx.default_backend()) do
       with {:ok, tensor} <- Image.to_nx(image, shape: :hwc, backend: backend) do
-        Nx.Serving.batched_run(Image.Classification.Serving, tensor)
+        Nx.Serving.batched_run(Image.Classification.Server, tensor)
       end
     end
 
