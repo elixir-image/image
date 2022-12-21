@@ -17,3 +17,9 @@ config :nx,
 
 config :logger,
   level: :debug
+
+config :image, :classifier,
+  enabled: true
+
+config :image, :generator,
+  enabled: false
