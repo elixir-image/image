@@ -21,131 +21,32 @@ defmodule Image.Application do
   end
 
   # When Bumblebee is available
-  defp children(true) do
-    classifer_start? = autostart?(:classifier)
-    generator_start? = autostart?(:generator)
+  if Code.ensure_loaded?(Bumblebee) do
+    @services [
+      {{Image.Classification, :classifier, []}, true},
+      {{Image.Generation, :generator, []}, false}
+    ]
 
-    children = if classifer_start?, do: [image_classifier()], else: []
-    if generator_start?, do: [image_generator() | children], else: children
+    defp children(true) do
+      Enum.reduce(@services, [], fn {{module, function, args}, start?}, acc ->
+        if autostart?(function, start?) do
+          [apply(module, function, args) | acc]
+        else
+          acc
+        end
+      end)
+    end
   end
 
   # When bumblebee is not available
-  defp children(false) do
+  defp children(_) do
     []
   end
 
-  defp autostart?(service) do
+  defp autostart?(service, start?) do
     :image
-    |> Application.get_env(service, [autostart: true])
+    |> Application.get_env(service, autostart: start?)
     |> Keyword.get(:autostart)
-  end
-
-  @default_classifier [
-    model: {:hf, "microsoft/resnet-50"},
-    featurizer: {:hf, "microsoft/resnet-50"},
-    autostart: true
-  ]
-
-  def image_classifier(classifier \\ Application.get_env(:image, :classifier, [])) do
-    Application.ensure_all_started(:exla)
-    classifier = Keyword.merge(@default_classifier, classifier)
-
-    {Nx.Serving,
-     serving: Image.Classification.serving(classifier[:model], classifier[:featurizer]),
-     name: Image.Classification.Server,
-     batch_timeout: 100}
-  end
-
-  @default_generator [
-    repository_id: "CompVis/stable-diffusion-v1-4",
-    scheduler: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "scheduler"},
-    featurizer: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "feature_extractor"},
-    safety_checker: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "safety_checker"},
-    autostart: false
-  ]
-
-  @doc """
-  Returns a child spec for service that generates images from text
-  using Stable Diffusion implemented in Bumblebee.
-
-  ### Arguments
-
-  * `generator` is a keyword list of configuration
-    options for an image generator or `:default`.
-
-  * `options` is a keyword list of options
-
-  ### Options
-
-  * `:num_steps` determines the number of steps
-    to execute in the generation model. The default
-    is `20`. Changing this to `40` may increase image
-    quality.
-
-  * `:num_images_per_prompt` determines how many image
-    alternatives are returned. The default is `1`.
-
-  * `:name` is the name given to the child process. THe
-    default is `Image.Generation.Server`.
-
-  ### Default configuration
-
-  If `generator` is set to `:default` the following configuration
-  is used:
-
-  ```elixir
-  [
-    repository_id: "CompVis/stable-diffusion-v1-4",
-    scheduler: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "scheduler"},
-    featurizer: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "feature_extractor"},
-    safety_checker: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "safety_checker"},
-    autostart: false
-  ]
-  ```
-
-  If no generator is specified (or it is set to `:default`
-  then the configuration is derived from `runtime.exs` which
-  is then merged into the default configuration. In
-  `runtime.exs` the configuration would be specified as follows:
-
-  ```elixir
-  config :image, :generator,
-    repository_id: "CompVis/stable-diffusion-v1-4",
-    scheduler: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "scheduler"},
-    featurizer: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "feature_extractor"},
-    safety_checker: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "safety_checker"},
-    autostart: false
-  ```
-
-  ### Automatically starting the service
-
-  The `:autostart` configuration option determines if the
-  image generation service is started when the `:image` application
-  is started.  The default is `false`. To cause the service to
-  be started at application start, add the following to your
-  `runtime.exs`:
-
-  ```elixir
-  config :image, :generator,
-    autostart: true
-  ```
-
-  """
-  def image_generator(generator \\ Application.get_env(:image, :generator, []), options \\ [])
-
-  def image_generator(:default, options) do
-    image_generator(Application.get_env(:image, :generator, []), options)
-  end
-
-  def image_generator(generator, options) do
-    Application.ensure_all_started(:exla)
-    generator = Keyword.merge(@default_generator, generator)
-    {name, options} = Keyword.pop(options, :name, Image.Generation.Server)
-
-    {Nx.Serving,
-     serving: Image.Generation.serving(generator, options),
-     name: name,
-     batch_timeout: 100}
   end
 end
 

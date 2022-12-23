@@ -11,23 +11,112 @@ if Image.bumblebee_configured?() do
 
     ### Configuration
 
-    The machine learning model to be used is configured as follows:
+    The machine learning model to be used is configurable.
+    The `:model` and `:featurizer` may be any model supported by Bumblebee. The
+    `:name` is the name given to the classification service process.
+
+    The default configuration is:
 
     ```elixir
-    config :image,
-      classification_model: model
-      classification_featurizer: featurizer
+    # runtime.exs
+    config :image, :classifier,
+      model: {:hf, "microsoft/resnet-50"},
+      featurizer:  {:hf, "microsoft/resnet-50"},
+      name: Image.Classification.Server,
+      autostart: true
     ```
 
-    where `model` and `featurizer` are models that are represented in a manner
-    acceptable to Bumblebee.  The default for both `model` and `featurizer` is
-    `{:hf, "microsoft/resnet-50"}`.
+    ### Autostart
+
+    If `autostart: true` is configured (the default) then a process
+    is started under a supervisor to execute the classification
+    requests.  If running the process under an application
+    supervision tree is desired, set `autostart: false`. In that
+    case the function `Image.Classification.classifer/1` can be
+    used to return a `t:Supervisor.child_spec/0`.
+
+    ### Adding a classification server to an application supervision tree
+
+    To add image classification to an application supervision tree,
+    use `Image.Classification.classifier/1` to return a child spec:
+    For example:
+
+    ```elixir
+    # Application.ex
+    def start(_type, _args) do
+      children = [
+        # default classifier configuration
+        Image.Classification.classifier()
+
+        # custom classifier configuration
+        Image.Classification.classifier(model: {:hf, "google/vit-base-patch16-224"},
+          featurizer: {:hf, "google/vit-base-patch16-224"})
+      ]
+
+      Supervisor.start_link(
+        children,
+        strategy: :one_for_one
+      )
+    end
+    ```
 
     """
 
     alias Vix.Vips.Image, as: Vimage
 
     @min_score 0.5
+
+    @default_classifier [
+      model: {:hf, "microsoft/resnet-50"},
+      featurizer: {:hf, "microsoft/resnet-50"},
+      name: Image.Classification.Server,
+      autostart: true
+    ]
+
+    @default_classifier_name @default_classifier[:name]
+
+    @doc """
+    Returns a child spec suitable for starting an image classification
+    process as part of a supervision tree.
+
+    ### Arguments
+
+    * `configuration` is a keyword list.The default is
+      `Application.get_env(:image, :classifier, [])`.
+
+    ### Configuration keys
+
+    * `:model` is any supported machine learning model for image
+      classification supported by Bumblebee.
+
+    * `:featurizer` is any supported machine learning model for image
+      featurization supported by Bumblebee.
+
+    * `:name` is the name given to the classification process when
+      it is started.
+
+    ### Default configuration
+
+    The default configuration is:
+    ```elixir
+    [
+      model: {:hf, "microsoft/resnet-50"},
+      featurizer: {:hf, "microsoft/resnet-50"},
+      name: Image.Classification.Server
+    ]
+    ```
+
+    """
+    @spec classifier(configuration :: Keyword.t()) :: {Nx.Serving, Keyword.t()}
+    def classifier(classifier \\ Application.get_env(:image, :classifier, [])) do
+      Application.ensure_all_started(:exla)
+      classifier = Keyword.merge(@default_classifier, classifier)
+
+      {Nx.Serving,
+       serving: Image.Classification.serving(classifier[:model], classifier[:featurizer]),
+       name: classifier[:name],
+       batch_timeout: 100}
+    end
 
     @doc false
     def serving(model, featurizer) do
@@ -49,15 +138,22 @@ if Image.bumblebee_configured?() do
 
     * `image` is any `t:Vix.Vips.Image.t/0`.
 
-    * `backend` is any valid `Nx` backend. The default is
+    * `options` is a keyword list of options
+
+    ### Options
+
+    * `:backend` is any valid `Nx` backend. The default is
       `Nx.default_backend/0`.
+
+    * `:server` is the name of the process performing the
+      classification service. The default is `#{@default_classifier_name}`.
 
     ### Returns
 
     * A map containing the estimations of the image
       classification.
 
-    ### Examples
+    ### Example
 
       iex> puppy = Image.open!("./test/support/images/puppy.webp")
       iex> Image.Classification.classify(puppy)
@@ -70,12 +166,15 @@ if Image.bumblebee_configured?() do
 
     @doc since: "0.18.0"
 
-    @spec classify(image :: Vimage.t(), backend :: Nx.Backend.t()) ::
+    @spec classify(image :: Vimage.t(), Keyword.t()) ::
             %{predictions: [%{label: String.t(), score: float()}]} | {:error, Image.error_message()}
 
-    def classify(%Vimage{} = image, backend \\ Nx.default_backend()) do
+    def classify(%Vimage{} = image, options \\ []) do
+      backend = Keyword.get(options, :backend, Nx.default_backend())
+      server = Keyword.get(options, :server, @default_classifier_name)
+
       with {:ok, tensor} <- Image.to_nx(image, shape: :hwc, backend: backend) do
-        Nx.Serving.batched_run(Image.Classification.Server, tensor)
+        Nx.Serving.batched_run(server, tensor)
       end
     end
 
@@ -106,7 +205,7 @@ if Image.bumblebee_configured?() do
 
     * `{:error, reason}`
 
-    ### Examples
+    ### Example
 
         iex> {:ok, image} = Image.open ("./test/support/images/lamborghini-forsennato-concept.jpg")
         iex> Image.Classification.labels(image)
@@ -122,10 +221,9 @@ if Image.bumblebee_configured?() do
             [String.t()] | {:error, Image.error_message()}
 
     def labels(%Vimage{} = image, options \\ []) do
-      backend = Keyword.get(options, :backend, Nx.default_backend())
-      min_score = Keyword.get(options, :min_score, @min_score)
+      {min_score, options} = Keyword.pop(options, :min_score, @min_score)
 
-      with %{predictions: predictions} <- classify(image, backend) do
+      with %{predictions: predictions} <- classify(image, options) do
         predictions
         |> Enum.filter(fn %{score: score} -> score >= min_score end)
         |> Enum.flat_map(fn %{label: label} -> String.split(label, ", ") end)

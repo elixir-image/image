@@ -18,8 +18,6 @@ config :nx,
 config :logger,
   level: :debug
 
-config :image, :classifier,
-  autostart: true
+config :image, :classifier, autostart: true
 
-config :image, :generator,
-  autostart: false
+config :image, :generator, autostart: false
