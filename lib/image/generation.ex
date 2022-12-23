@@ -1,5 +1,63 @@
 if Image.bumblebee_configured?() do
   defmodule Image.Generation do
+    @moduledoc """
+    Implements image generation functions using [Axon](https://hex.pm/packages/axon)
+    machine learning models managed by [Bumblebee](https://hex.pm/packages/bumblebee).
+
+    ### Configuration
+
+    The machine learning model to be used is configurable however
+    only Stable Diffusion is currently supported.
+
+    The default configuration is:
+
+    ```elixir
+    # runtime.exs
+    config :image, :generator,
+      repository_id: "CompVis/stable-diffusion-v1-4",
+      scheduler: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "scheduler"},
+      featurizer: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "feature_extractor"},
+      safety_checker: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "safety_checker"},
+      autostart: false
+    ```
+
+    ### Autostart
+
+    If `autostart: true` is configured (the default is `false`) then
+    a process is started under a supervisor to execute the generation
+    requests.  If running the process under an application
+    supervision tree is desired, set `autostart: false`. In that
+    case the function `Image.Generation.generator/2` can be
+    used to return a `t:Supervisor.child_spec/0`.
+
+    ### Adding a image generation server to an application supervision tree
+
+    To add image generation to an application supervision tree,
+    use `Image.Generation.generator/2` to return a child spec:
+    For example:
+
+        # Application.ex
+        def start(_type, _args) do
+          children = [
+            # default classifier configuration
+            Image.Generation.generator()
+          ]
+
+          Supervisor.start_link(
+            children,
+            strategy: :one_for_one
+          )
+        end
+
+    ### Starting a supervised image generation process
+
+    If a dynamically started image generation process is
+    required one can be started under a supervisor with:
+
+        iex> Supervisor.start_link([Image.Generation.generator()], strategy: :one_for_one)
+
+    """
+
     alias Vix.Vips.Image, as: Vimage
 
     @default_options [
@@ -24,7 +82,7 @@ if Image.bumblebee_configured?() do
     * `generator` is a keyword list of configuration
       options for an image generator or `:default`.
 
-    * `options` is a keyword list of options
+    * `options` is a keyword list of options.
 
     ### Options
 
@@ -149,6 +207,11 @@ if Image.bumblebee_configured?() do
       don't want to see in the generated images. When specified, it guides
       the generation process not to include things in the image according
       to a given text.
+
+    ### Example
+
+        iex> Image.Generation.text_to_image "impressionist purple numbat in the style of monet"
+        [%Vix.Vips.Image{ref: #Reference<0.1281915998.296878104.76045>}]
 
     """
     @spec text_to_image(prompt :: String.t(), options :: Keyword.t()) :: [Vimage.t()]

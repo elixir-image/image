@@ -17,14 +17,12 @@ if Image.bumblebee_configured?() do
 
     The default configuration is:
 
-    ```elixir
-    # runtime.exs
-    config :image, :classifier,
-      model: {:hf, "microsoft/resnet-50"},
-      featurizer:  {:hf, "microsoft/resnet-50"},
-      name: Image.Classification.Server,
-      autostart: true
-    ```
+        # runtime.exs
+        config :image, :classifier,
+          model: {:hf, "microsoft/resnet-50"},
+          featurizer:  {:hf, "microsoft/resnet-50"},
+          name: Image.Classification.Server,
+          autostart: true
 
     ### Autostart
 
@@ -32,7 +30,7 @@ if Image.bumblebee_configured?() do
     is started under a supervisor to execute the classification
     requests.  If running the process under an application
     supervision tree is desired, set `autostart: false`. In that
-    case the function `Image.Classification.classifer/1` can be
+    case the function `classifer/1` can be
     used to return a `t:Supervisor.child_spec/0`.
 
     ### Adding a classification server to an application supervision tree
@@ -41,24 +39,22 @@ if Image.bumblebee_configured?() do
     use `Image.Classification.classifier/1` to return a child spec:
     For example:
 
-    ```elixir
-    # Application.ex
-    def start(_type, _args) do
-      children = [
-        # default classifier configuration
-        Image.Classification.classifier()
+        # Application.ex
+        def start(_type, _args) do
+          children = [
+            # default classifier configuration
+            Image.Classification.classifier()
 
-        # custom classifier configuration
-        Image.Classification.classifier(model: {:hf, "google/vit-base-patch16-224"},
-          featurizer: {:hf, "google/vit-base-patch16-224"})
-      ]
+            # custom classifier configuration
+            Image.Classification.classifier(model: {:hf, "google/vit-base-patch16-224"},
+              featurizer: {:hf, "google/vit-base-patch16-224"})
+          ]
 
-      Supervisor.start_link(
-        children,
-        strategy: :one_for_one
-      )
-    end
-    ```
+          Supervisor.start_link(
+            children,
+            strategy: :one_for_one
+          )
+        end
 
     """
 
@@ -150,7 +146,7 @@ if Image.bumblebee_configured?() do
 
     ### Returns
 
-    * A map containing the estimations of the image
+    * A map containing the predictions of the image
       classification.
 
     ### Example
