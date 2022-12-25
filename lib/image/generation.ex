@@ -11,15 +11,13 @@ if Image.bumblebee_configured?() do
 
     The default configuration is:
 
-    ```elixir
-    # runtime.exs
-    config :image, :generator,
-      repository_id: "CompVis/stable-diffusion-v1-4",
-      scheduler: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "scheduler"},
-      featurizer: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "feature_extractor"},
-      safety_checker: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "safety_checker"},
-      autostart: false
-    ```
+        # runtime.exs
+        config :image, :generator,
+          repository_id: "CompVis/stable-diffusion-v1-4",
+          scheduler: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "scheduler"},
+          featurizer: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "feature_extractor"},
+          safety_checker: {:hf, "CompVis/stable-diffusion-v1-4", subdir: "safety_checker"},
+          autostart: false
 
     ### Autostart
 

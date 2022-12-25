@@ -4642,110 +4642,114 @@ defmodule Image do
     for(<<bit::1 <- binary>>, do: bit) |> Enum.sum()
   end
 
-  @doc """
-  Returns the fast fourier transform (fft) of
-  the given image.
+  # Prebuilt binaries may not have this function because
+  # libvips may not have the dependencies required
+  if Code.ensure_loaded?(Vix.Vips.Operation) && function_exported?(Vix.Vips.Operation, :fwfft!, 1) do
+    @doc """
+    Returns the fast fourier transform (fft) of
+    the given image.
 
-  ### Arguments
+    ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`
 
-  ### Returns
+    ### Returns
 
-  * `{:ok, fft_image}` or
+    * `{:ok, fft_image}` or
 
-  * `{:error, reason}`
+    * `{:error, reason}`
 
-  ### Example
+    ### Example
 
-      Image.fft(image)
+        Image.fft(image)
 
-  """
-  @spec fft(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def fft(%Vimage{} = image) do
-    image
-    |> to_colorspace!(:bw)
-    |> Operation.fwfft!()
-    |> Operation.wrap!()
-    |> Operation.abs()
-  end
-
-  @doc """
-  Returns the fast fourier transform (fft) of
-  the given image returning an image or
-  raising an exception.
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`
-
-  ### Returns
-
-  * `fft_image` or
-
-  * raises an exception
-
-  ### Example
-
-      Image.fft!(image)
-
-  """
-  @spec fft!(Vimage.t()) :: Vimage.t() | no_return()
-  def fft!(%Vimage{} = image) do
-    case fft(image) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  @doc """
-  Attempts top determine the distance
-  from the perpendicular for a given image.
-
-  The principle is that rotating the image
-  by the skew angle should return an image
-  in the upright position.
-
-  The results are very image sensitive and
-  perfect results are not guaranteed.
-
-  The algorithm is an implementation of
-  [this stackoverflow post](https://stackoverflow.com/questions/52474645/improve-a-picture-to-detect-the-characters-within-an-area/52502597#52502597).
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`
-
-  ### Returns
-
-  * `skew_angle` which is a float number
-    of degrees the image is tilted from the
-    upright.
-
-  #### Example
-
-      skew_angle = skew_angle(image)
-      Image.rotate(image, skew_angle)
-
-  """
-  @dialyzer {:nowarn_function, {:skew_angle, 1}}
-
-  @spec skew_angle(Vimage.t()) :: float()
-
-  def skew_angle(%Vimage{} = image) do
-    {_columns, rows, []} =
+    """
+    @spec fft(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+    def fft(%Vimage{} = image) do
       image
-      |> fft!()
-      |> to_rectangular_coordinates!()
-      |> Operation.project!()
+      |> to_colorspace!(:bw)
+      |> Operation.fwfft!()
+      |> Operation.wrap!()
+      |> Operation.abs()
+    end
 
-    {_v, _x, y} =
-      rows
-      |> Operation.gaussblur!(10.0)
-      |> Image.Math.maxpos()
+    @doc """
+    Returns the fast fourier transform (fft) of
+    the given image returning an image or
+    raising an exception.
 
-    # and turn to an angle in degrees we should counter-rotate by
-    270 - 360 * y / height(rows)
+    ### Arguments
+
+    * `image` is any `t:Vix.Vips.Image.t/0`
+
+    ### Returns
+
+    * `fft_image` or
+
+    * raises an exception
+
+    ### Example
+
+        Image.fft!(image)
+
+    """
+    @spec fft!(Vimage.t()) :: Vimage.t() | no_return()
+    def fft!(%Vimage{} = image) do
+      case fft(image) do
+        {:ok, image} -> image
+        {:error, reason} -> raise Image.Error, reason
+      end
+    end
+
+    @doc """
+    Attempts top determine the distance
+    from the perpendicular for a given image.
+
+    The principle is that rotating the image
+    by the skew angle should return an image
+    in the upright position.
+
+    The results are very image sensitive and
+    perfect results are not guaranteed.
+
+    The algorithm is an implementation of
+    [this stackoverflow post](https://stackoverflow.com/questions/52474645/improve-a-picture-to-detect-the-characters-within-an-area/52502597#52502597).
+
+    ### Arguments
+
+    * `image` is any `t:Vix.Vips.Image.t/0`
+
+    ### Returns
+
+    * `skew_angle` which is a float number
+      of degrees the image is tilted from the
+      upright.
+
+    #### Example
+
+        skew_angle = skew_angle(image)
+        Image.rotate(image, skew_angle)
+
+    """
+    @dialyzer {:nowarn_function, {:skew_angle, 1}}
+
+    @spec skew_angle(Vimage.t()) :: float()
+
+    def skew_angle(%Vimage{} = image) do
+      {_columns, rows, []} =
+        image
+        |> fft!()
+        |> to_rectangular_coordinates!()
+        |> Operation.project!()
+
+      {_v, _x, y} =
+        rows
+        |> Operation.gaussblur!(10.0)
+        |> Image.Math.maxpos()
+
+      # and turn to an angle in degrees we should counter-rotate by
+      270 - 360 * y / height(rows)
+    end
   end
 
   @doc """
