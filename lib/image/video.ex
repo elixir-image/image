@@ -199,6 +199,13 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     * `{:error, reason}`
 
+    ### Warning
+
+    This frame extraction is NOT atomic. First the read head is
+    set to the frame of interest, then the frame is extracted and
+    decoded.  It is possible for another process to interleave
+    its own seek operation resulting in undefined results.
+
     ### Example
 
         iex> {:ok, video} = Image.Video.open "./test/support/video/video_sample.mp4"
@@ -248,6 +255,13 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     * raises an exception
 
+    ### Warning
+
+    This frame extraction is NOT atomic. First the read head is
+    set to the frame of interest, then the frame is extracted and
+    decoded.  It is possible for another process to interleave
+    its own seek operation resulting in undefined results.
+
     """
     @spec image_from_frame!(Evision.VideoCapture.t(), non_neg_integer()) :: Vimage.t() | no_return()
     def image_from_frame!(%Evision.VideoCapture{} = video, frame) do
@@ -273,6 +287,13 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     * `{:ok, image}` or
 
     * `{:error, reason}`
+
+    ### Warning
+
+    This frame extraction is NOT atomic. First the read head is
+    set to the frame of interest, then the frame is extracted and
+    decoded.  It is possible for another process to interleave
+    its own seek operation resulting in undefined results.
 
     ### Example
 
@@ -329,6 +350,13 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     * `image` or
 
     * raises an exception.
+
+    ### Warning
+
+    This frame extraction is NOT atomic. First the read head is
+    set to the frame of interest, then the frame is extracted and
+    decoded.  It is possible for another process to interleave
+    its own seek operation resulting in undefined results.
 
     """
     @spec image_at_millisecond!(Evision.VideoCapture.t(), non_neg_integer()) ::
