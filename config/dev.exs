@@ -1,5 +1,8 @@
 import Config
 
+config :evision,
+  display_inline_image_iterm2: true
+
 config :ex_aws,
   region: "local"
 

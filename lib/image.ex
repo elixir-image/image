@@ -4498,14 +4498,16 @@ defmodule Image do
 
       @doc since: "0.9.0"
 
-      def from_evision(evision_image) do
+      def from_evision(%Evision.Mat{} = evision_image) do
         with %Evision.Mat{} = mat <- Evision.cvtColor(evision_image, Evision.cv_COLOR_BGR2RGB()) do
           tensor = Evision.Mat.to_nx(mat)
 
           case Nx.shape(tensor) do
             {_, _, bands} when bands in 1..5 ->
+              {height, width, bands} = Nx.shape(tensor)
+
               tensor
-              |> Nx.reshape(Nx.shape(tensor), names: [:height, :width, :bands])
+              |> Nx.reshape({width, height, bands}, names: [:height, :width, :bands])
               |> from_nx()
 
             shape ->

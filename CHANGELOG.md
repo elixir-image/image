@@ -1,5 +1,19 @@
 # Changelog
 
+## Image 0.20.0
+
+This is the changelog for Image version 0.20.0 released on January 8th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Fix `Image.from_evision/1` to correctly orient the dimensions as `{width, height, bands}`
+
+### Enhancements
+
+* Add support for extracting frames from video as images using `eVision`.  See `Image.Video`.
+
+* Supports `vix` upcoming prebuilt libvips.  The prebuilt libvips may not include the FFT dependency so `Image.skew_angle/1` and `Image.fft/1` are only included if `Vix.Vips.Operation.fft!/1` is available.
+
 ## Image 0.19.0
 
 This is the changelog for Image version 0.19.0 released on December 24th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
