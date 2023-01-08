@@ -4,9 +4,8 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     Implements functions to extract frames froma video file
     as images using [eVision](https://hex.pm/packages/evision).
 
-    Images can be extracted by frame number of number of milliseconds with:
-    * `Image.Video.image_from_frame/2` or
-    * `Image.Video.image_at_millisecond/2`.
+    Images can be extracted by frame number of number of milliseconds with
+    `Image.Video.image_from_video/2`.
 
     In order to extract images the video file must first be
     opened with `Image.Video.open/1`. At the end of processing the video
@@ -20,9 +19,16 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     alias Vix.Vips.Image, as: Vimage
 
+    @typedoc "The valid options for Image.Video.seek/2, Image.Video.image_from_video/2"
+    @type seek_options :: [frame: non_neg_integer()] | [millisecond: non_neg_integer()]
+
+    @typedoc "The representation of a video stream"
+    @type stream_id :: non_neg_integer() | :default_camera
+
     @doc "Guards that a frame offset is valid for a video"
     defguard is_frame(frame, frame_count)
-             when is_integer(frame) and frame in 0..(trunc(frame_count) - 1)
+             when (is_integer(frame) and frame in 0..(trunc(frame_count) - 1)) or
+            (is_integer(frame) and frame_count == 0.0)
 
     @doc "Guards that a millisecond count is valid for a video"
     defguard is_valid_millis(millis, frames, fps)
@@ -45,7 +51,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     ### Example
 
         iex> Image.Video.with_video "./test/support/video/video_sample.mp4", fn video ->
-        ...>  Image.Video.image_from_frame(video, 1)
+        ...>  Image.Video.image_from_video(video, 1)
         ...> end
 
     """
@@ -69,11 +75,15 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     end
 
     @doc """
-    Opens a video file for frame extraction.
+    Opens a video file or video stream for
+    frame extraction.
 
     ### Arguments
 
-    * `filename` is the filename of a video file
+    * `filename_or_stream` is the filename of a video file
+      or the OpenCV representation of a video stream as
+      an integer.  It may also be `:default_camera` to open
+      the default camera if there is one.
 
     ### Returns
 
@@ -84,9 +94,11 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     ### Example
 
         iex> Image.Video.open "./test/support/video/video_sample.mp4"
+        iex> {:ok, camera_video} = Image.Video.open(:default_camera)
+        iex> Image.Video.close(camera_video)
 
     """
-    @spec open(Path.t()) :: {:ok, Evision.VideoCapture.t()} | {:error, Image.error_message()}
+    @spec open(filename_or_stream :: Path.t() | stream_id()) :: {:ok, Evision.VideoCapture.t()} | {:error, Image.error_message()}
     def open(filename) when is_binary(filename) do
       case Evision.VideoCapture.videoCapture(filename) do
         %Evision.VideoCapture{} = video ->
@@ -94,6 +106,22 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
         error ->
           {:error, "Could not open video #{inspect(filename)}. Error #{inspect(error)}"}
+      end
+    end
+
+    @default_camera_id 0
+
+    def open(:default_camera) do
+      open(@default_camera_id)
+    end
+
+    def open(camera) when is_integer(camera) and camera >= 0 do
+      case Evision.VideoCapture.videoCapture(camera) do
+        %Evision.VideoCapture{} = video ->
+          {:ok, video}
+
+        error ->
+          {:error, "Could not open the camera. Error #{inspect(error)}"}
       end
     end
 
@@ -116,9 +144,9 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
         iex> Image.Video.open! "./test/support/video/video_sample.mp4"
 
     """
-    @spec open!(Path.t()) :: Evision.VideoCapture.t() | no_return()
-    def open!(filename) when is_binary(filename) do
-      case open(filename) do
+    @spec open!(filename_or_stream :: Path.t() | stream_id()) :: Evision.VideoCapture.t() | no_return()
+    def open!(filename_or_stream) do
+      case open(filename_or_stream) do
         {:ok, video} -> video
         {:error, reason} -> raise Image.Error, reason
       end
@@ -175,8 +203,127 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     """
     @spec close!(Evision.VideoCapture.t()) :: Evision.VideoCapture.t() | no_return()
-    def close!(filename) do
-      case close(filename) do
+    def close!(video) do
+      case close(video) do
+        {:ok, video} -> video
+        {:error, reason} -> raise Image.Error, reason
+      end
+    end
+
+    @doc """
+    Seeks the video head to a specified frame offset
+    or millisecond offset.
+
+    Note that seeking a video format is supported,
+    seeking a live video stream (such as from a
+    webcam) is not supported and will return an
+    error.
+
+    ### Arguments
+
+    * `video` is any `t:Evision.VideoCapture.t/0`
+
+    * `options` is a keyword list of options
+
+    ### Options
+
+    * `unit` is either `:frame` or `:millisecond` with a
+      non-negative integer offset. For example `frame: 3`.
+
+    ### Returns
+
+    * `{:ok, video}` or
+
+    * `{:error, reason}`
+
+    ### Notes
+
+    Seeking cannot be performed on image streams such as
+    webcams.  Therefore no options may be provided when
+    extracting images from an image stream.
+
+    ### Examples
+
+        iex> {:ok, video} = Image.Video.open "./test/support/video/video_sample.mp4"
+        iex> {:ok, _image} = Image.Video.seek(video, frame: 0)
+        iex> {:ok, _image} = Image.Video.seek(video, millisecond: 1_000)
+        iex> {:error, "Offset for :frame must be a positive integer. Found -1"} =
+        ...>   Image.Video.seek(video, frame: -1)
+
+    """
+    @spec seek(Evision.VideoCapture.t(), seek_options()) ::
+      {:ok, Evision.VideoCapture.t()} | {:error, Image.error_message()}
+
+    def seek(%Evision.VideoCapture{isOpened: true, frame_count: frame_count} = video, [{:frame, frame}])
+        when is_frame(frame, frame_count) do
+      case Evision.VideoCapture.set(video, Evision.cv_CAP_PROP_POS_FRAMES(), frame) do
+        true -> {:ok, video}
+        false -> {:error, "Could not seek to the frame offset #{inspect(frame)}."}
+      end
+    end
+
+    def seek(%Evision.VideoCapture{isOpened: true, fps: fps, frame_count: frame_count} = video, [{:millisecond, millis}])
+        when is_valid_millis(millis, frame_count, fps) do
+      case Evision.VideoCapture.set(video, Evision.cv_CAP_PROP_POS_MSEC(), millis) do
+        true -> {:ok, video}
+        false -> {:error, "Could not seek to the millisecond offset #{inspect(millis)}."}
+      end
+    end
+
+    def seek(%Evision.VideoCapture{isOpened: true}, [{unit, offset}]) when unit in [:frame, :millisecond] and offset < 0 do
+      {:error, "Offset for #{inspect unit} must be a positive integer. Found #{inspect offset}"}
+    end
+
+    def seek(%Evision.VideoCapture{isOpened: true}, [{unit, offset}]) when unit in [:frame, :millisecond] and is_integer(offset) do
+      {:error, "Offset for #{inspect unit} is too large"}
+    end
+
+    def seek(%Evision.VideoCapture{isOpened: true}, options) do
+      {:error, "Options must be either `frame: frame_offet` or `milliseconds: millisecond_offset`. Found #{inspect options}"}
+    end
+
+    def seek(%Evision.VideoCapture{isOpened: false}, _options) do
+      {:error, "Video is not open"}
+    end
+
+    @doc """
+    Seeks the video head to a specified frame offset
+    or millisecond offset.
+
+    Note that seeking a video format is supported,
+    seeking a live video stream (such as from a
+    webcam) is not supported and will return an
+    error.
+
+    ### Arguments
+
+    * `video` is any `t:Evision.VideoCapture.t/0`
+
+    * `options` is a keyword list of options
+
+    ### Options
+
+    * `unit` is either `:frame` or `:millisecond` with a
+      non-negative integer offset. For example `frame: 3`.
+
+    ### Returns
+
+    * `{:ok, video}` or
+
+    * `{:error, reason}`
+
+    ### Notes
+
+    Seeking cannot be performed on image streams such as
+    webcams.  Therefore no options may be provided when
+    extracting images from an image stream.
+
+    """
+    @spec seek!(Evision.VideoCapture.t(), seek_options()) ::
+      Evision.VideoCapture.t() | no_return()
+
+    def seek!(video, options \\ []) do
+      case seek(video, options) do
         {:ok, video} -> video
         {:error, reason} -> raise Image.Error, reason
       end
@@ -190,14 +337,27 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     * `video` is any `t:Evision.VideoCapture.t/0`
 
-    * `frame` is an integer frame offset into the video.
-      The first frame of a video is frame `0`.
+    * `options` is a keyword list of options. The defalt
+
+    ### Options
+
+    * `unit` is either `:frame` or `:millisecond` with a
+      non-negative integer offset. For example `frame: 3`.
+      The default is `[]` which means that no seek is performed
+      and the extracted image is taken from the current
+      position in the file or video stream.
 
     ### Returns
 
     * `{:ok, image}` or
 
     * `{:error, reason}`
+
+    ### Notes
+
+    Seeking cannot be performed on image streams such as
+    webcams.  Therefore no options may be provided when
+    extracting images from an image stream.
 
     ### Warning
 
@@ -206,35 +366,36 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     decoded.  It is possible for another process to interleave
     its own seek operation resulting in undefined results.
 
-    ### Example
+    ### Examples
 
         iex> {:ok, video} = Image.Video.open "./test/support/video/video_sample.mp4"
-        iex> {:ok, _image} = Image.Video.image_from_frame(video, 0)
-        iex> {:error, "Frame number must be in the range 0..172. Found -1"} = Image.Video.image_from_frame(video, -1)
-        iex> {:error, "Frame number must be in the range 0..172. Found 500"} = Image.Video.image_from_frame(video, 500)
+        iex> {:ok, _image} = Image.Video.image_from_video(video)
+        iex> {:ok, _image} = Image.Video.image_from_video(video, frame: 0)
+        iex> {:ok, _image} = Image.Video.image_from_video(video, millisecond: 1_000)
+        iex> {:error, "Offset for :frame must be a positive integer. Found -1"} = Image.Video.image_from_video(video, frame: -1)
+        iex> {:error, "Offset for :frame is too large"} = Image.Video.image_from_video(video, frame: 500)
 
     """
-    @spec image_from_frame(Evision.VideoCapture.t(), non_neg_integer()) ::
+    @spec image_from_video(Evision.VideoCapture.t(), seek_options()) ::
             {:ok, Vimage.t()} | {:error, Image.error_message()}
-    def image_from_frame(
-          %Evision.VideoCapture{isOpened: true, frame_count: frame_count} = video,
-          frame
-        )
-        when is_frame(frame, frame_count) do
-      with true <- Evision.VideoCapture.set(video, Evision.cv_CAP_PROP_POS_FRAMES(), frame),
-           %Evision.Mat{} = cv_image <- Evision.VideoCapture.read(video) do
+
+    def image_from_video(video, options \\ [])
+
+    def image_from_video(%Evision.VideoCapture{isOpened: true} = video, []) do
+      with %Evision.Mat{} = cv_image <- Evision.VideoCapture.read(video) do
         Image.from_evision(cv_image)
       else
-        _error -> {:error, "Could not extract the frame number #{inspect(frame)}."}
+        error -> {:error, "Could not extract the frame. Error #{inspect error}."}
       end
     end
 
-    def image_from_frame(%Evision.VideoCapture{isOpened: true, frame_count: max_frame}, frame) do
-      {:error,
-       "Frame number must be in the range 0..#{trunc(max_frame) - 1}. Found #{inspect(frame)}"}
+    def image_from_video(%Evision.VideoCapture{isOpened: true} = video, options) do
+      with {:ok, video} <- seek(video, options) do
+        image_from_video(video)
+      end
     end
 
-    def image_from_frame(%Evision.VideoCapture{isOpened: false}, _frame) do
+    def image_from_video(%Evision.VideoCapture{isOpened: false}, _options) do
       {:error, "The video is not open."}
     end
 
@@ -246,8 +407,15 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     * `video` is any `t:Evision.VideoCapture.t/0`
 
-    * `frame` is an integer frame offset into the video.
-      The first frame of a video is frame `0`.
+    * `options` is a keyword list of options
+
+    ### Options
+
+    * `unit` is either `:frame` or `:millisecond` with a
+      non-negative integer offset. For example `frame: 3`.
+      The default is `[]` which means that no seek is performed
+      and the extracted image is taken from the current
+      position in the file or video stream.
 
     ### Returns
 
@@ -255,101 +423,11 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     * raises an exception
 
-    ### Warning
+    ### Notes
 
-    This frame extraction is NOT atomic. First the read head is
-    set to the frame of interest, then the frame is extracted and
-    decoded.  It is possible for another process to interleave
-    its own seek operation resulting in undefined results.
-
-    """
-    @spec image_from_frame!(Evision.VideoCapture.t(), non_neg_integer()) :: Vimage.t() | no_return()
-    def image_from_frame!(%Evision.VideoCapture{} = video, frame) do
-      case image_from_frame(video, frame) do
-        {:ok, image} -> image
-        {:error, reason} -> raise Image.Error, reason
-      end
-    end
-
-    @doc """
-    Extracts a frame at a given millisecond offset of the a video
-    and returns an image.
-
-    ### Arguments
-
-    * `video` is any `t:Evision.VideoCapture.t/0`
-
-    * `millis` is an integer millisecond offset into the video.
-      The first millisecond of a video is frame `0`.
-
-    ### Returns
-
-    * `{:ok, image}` or
-
-    * `{:error, reason}`
-
-    ### Warning
-
-    This frame extraction is NOT atomic. First the read head is
-    set to the frame of interest, then the frame is extracted and
-    decoded.  It is possible for another process to interleave
-    its own seek operation resulting in undefined results.
-
-    ### Example
-
-        iex> {:ok, video} = Image.Video.open "./test/support/video/video_sample.mp4"
-        iex> {:ok, _image} = Image.Video.image_at_millisecond(video, 0)
-        iex> {:error, "Milliseconds number must be in the range 0..5189999. Found -1"} =
-        ...>   Image.Video.image_at_millisecond(video, -1)
-        iex> {:error, "Milliseconds number must be in the range 0..5189999. Found 10000000"} =
-        ...>   Image.Video.image_at_millisecond(video, 10_000_000)
-
-    """
-    @spec image_at_millisecond(Evision.VideoCapture.t(), non_neg_integer()) ::
-            {:ok, Vimage.t()} | {:error, Image.error_message()}
-    def image_at_millisecond(
-          %Evision.VideoCapture{isOpened: true, frame_count: frame_count, fps: fps} = video,
-          millis
-        )
-        when is_valid_millis(millis, frame_count, fps) do
-      with true <- Evision.VideoCapture.set(video, Evision.cv_CAP_PROP_POS_MSEC(), millis),
-           %Evision.Mat{} = cv_image <- Evision.VideoCapture.read(video) do
-        Image.from_evision(cv_image)
-      else
-        _error -> {:error, "Could not extract the frame at #{inspect(millis)}."}
-      end
-    end
-
-    def image_at_millisecond(
-          %Evision.VideoCapture{isOpened: true, frame_count: frame_count, fps: fps},
-          millis
-        ) do
-      max_millis = trunc(fps * frame_count * 1000) - 1
-
-      {:error,
-       "Milliseconds number must be in the range 0..#{max_millis}. Found #{inspect(millis)}"}
-    end
-
-    def image_at_millisecond(%Evision.VideoCapture{isOpened: false}, _millis) do
-      {:error, "The video is not open."}
-    end
-
-    @doc """
-    Extracts a frame at a given millisecond offset of the a video
-    and returns an image or raises an exception.
-
-    ### Arguments
-
-    * `video` is any `t:Evision.VideoCapture.t/0`
-
-    * `millis` is an integer millisecond offset into the video.
-      The first millisecond of a video is frame `0`.
-
-    ### Returns
-
-    * `image` or
-
-    * raises an exception.
+    Seeking cannot be performed on image streams such as
+    webcams.  Therefore no options may be provided when
+    extracting images from an image stream.
 
     ### Warning
 
@@ -359,10 +437,9 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     its own seek operation resulting in undefined results.
 
     """
-    @spec image_at_millisecond!(Evision.VideoCapture.t(), non_neg_integer()) ::
-            Vimage.t() | no_return()
-    def image_at_millisecond!(%Evision.VideoCapture{} = video, millis) do
-      case image_at_millisecond(video, millis) do
+    @spec image_from_video!(Evision.VideoCapture.t(), seek_options()) :: Vimage.t() | no_return()
+    def image_from_video!(%Evision.VideoCapture{} = video, options \\ []) do
+      case image_from_video(video, options) do
         {:ok, image} -> image
         {:error, reason} -> raise Image.Error, reason
       end

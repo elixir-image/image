@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.20.0"
+  @version "0.21.0"
   @app_name "image"
 
   def project do
@@ -31,7 +31,7 @@ defmodule Image.MixProject do
 
   defp description do
     """
-    An approachable image processing library based upon Vix and libvips that
+    An approachable image processing library primarily based upon Vix and libvips that
     is NIF-based, fast, multi-threaded, pipelined and has a low memory
     footprint.
     """

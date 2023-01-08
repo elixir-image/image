@@ -1,5 +1,21 @@
 # Changelog
 
+## Image 0.21.0
+
+This is the changelog for Image version 0.21.0 released on January 8th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Breaking change
+
+* `Image.Video.image_at_millisecond/2` and `Image.Video.image_from_frame/2` are removed and replaced by `Image.Video.image_from_video/2`.
+
+### Enhancements
+
+* Adds `Image.Video.image_from_video/2` with support for `:frame` and `:millisecond` seek options. Seek options are only supported for video files, not video streams.
+
+* Adds `Image.Video.seek/2` to see the extraction point to the requested frame or millisecond. Seeking is supported for video files only, not video streams.
+
+* Adds support for capturing images from video streams (not only video files). For example, `Image.Video.open(:default_camera)`. See the updated documentation for `Image.Video.open/1`.  An image stream does not support seeking.
+
 ## Image 0.20.0
 
 This is the changelog for Image version 0.20.0 released on January 8th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
@@ -12,7 +28,7 @@ This is the changelog for Image version 0.20.0 released on January 8th, 2023.  F
 
 * Add support for extracting frames from video as images using `eVision`.  See `Image.Video`.
 
-* Supports `vix` upcoming prebuilt libvips.  The prebuilt libvips may not include the FFT dependency so `Image.skew_angle/1` and `Image.fft/1` are only included if `Vix.Vips.Operation.fft!/1` is available.
+* Supports `vix` upcoming prebuilt `libvips`.  The prebuilt `libvips` may not include the FFT dependency so `Image.skew_angle/1` and `Image.fft/1` are only included if `Vix.Vips.Operation.fft!/1` is available.
 
 ## Image 0.19.0
 

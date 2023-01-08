@@ -19,7 +19,7 @@ The documentation can be found at [https://hexdocs.pm/image](https://hexdocs.pm/
 ```elixir
 def deps do
   [
-    {:image, "~> 0.18.0"}
+    {:image, "~> 0.21.0"}
   ]
 end
 ```

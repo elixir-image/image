@@ -8,7 +8,7 @@ defmodule Image.VideoTest do
     validate_path = validate_path("video/video_sample_frame_0.png")
 
     {:ok, video} = Image.Video.open("./test/support/video/video_sample.mp4")
-    {:ok, image} = Image.Video.image_at_millisecond(video, 0)
+    {:ok, image} = Image.Video.image_from_video(video, millisecond: 0)
 
     assert_images_equal(image, validate_path)
   end

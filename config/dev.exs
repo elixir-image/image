@@ -1,7 +1,8 @@
 import Config
 
 config :evision,
-  display_inline_image_iterm2: true
+  display_inline_image_iterm2: true,
+  display_inline_image_max_size: {8192, 8192}
 
 config :ex_aws,
   region: "local"
