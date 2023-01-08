@@ -333,6 +333,11 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     Extracts a frame from a video and returns
     an image.
 
+    After the image is extracted the play head
+    in the video file is advanced one frame. That is,
+    successive calls to `Image.Video.image_from_video/2`
+    will return successive frames - not the same frame.
+
     ### Arguments
 
     * `video` is any `t:Evision.VideoCapture.t/0`
@@ -402,6 +407,11 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     @doc """
     Extracts a frame from a video and returns
     an image or raises an exception.
+
+    After the image is extracted the play head
+    in the video file is advanced one frame. That is,
+    successive calls to `Image.Video.image_from_video/2`
+    will return successive frames - not the same frame.
 
     ### Arguments
 

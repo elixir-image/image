@@ -12,7 +12,7 @@ This is the changelog for Image version 0.21.0 released on January 8th, 2023.  F
 
 * Adds `Image.Video.image_from_video/2` with support for `:frame` and `:millisecond` seek options. Seek options are only supported for video files, not video streams.
 
-* Adds `Image.Video.seek/2` to see the extraction point to the requested frame or millisecond. Seeking is supported for video files only, not video streams.
+* Adds `Image.Video.seek/2` to seek the extraction point to the requested frame or millisecond. Seeking is supported for video files only, not video streams.
 
 * Adds support for capturing images from video streams (not only video files). For example, `Image.Video.open(:default_camera)`. See the updated documentation for `Image.Video.open/1`.  An image stream does not support seeking.
 
