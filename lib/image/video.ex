@@ -18,6 +18,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     """
 
     alias Vix.Vips.Image, as: Vimage
+    alias Image.Options
 
     @typedoc "The valid options for Image.Video.seek/2, Image.Video.image_from_video/2"
     @type seek_options :: [frame: non_neg_integer()] | [millisecond: non_neg_integer()]
@@ -28,11 +29,15 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     @doc "Guards that a frame offset is valid for a video"
     defguard is_frame(frame, frame_count)
              when (is_integer(frame) and frame in 0..(trunc(frame_count) - 1)) or
-            (is_integer(frame) and frame_count == 0.0)
+                    (is_integer(frame) and frame_count == 0.0)
 
     @doc "Guards that a millisecond count is valid for a video"
     defguard is_valid_millis(millis, frames, fps)
              when is_integer(millis) and millis in 0..(trunc(fps * frames * 1000) - 1)
+
+    @doc "Guards that a stream id is valid for a video stream"
+    defguard is_stream(stream_id)
+             when (is_integer(stream_id) and stream_id >= 0) or stream_id == :default_camera
 
     @doc """
     Opens a video file, calls the given function with the video
@@ -98,7 +103,8 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
         iex> Image.Video.close(camera_video)
 
     """
-    @spec open(filename_or_stream :: Path.t() | stream_id()) :: {:ok, Evision.VideoCapture.t()} | {:error, Image.error_message()}
+    @spec open(filename_or_stream :: Path.t() | stream_id()) ::
+            {:ok, Evision.VideoCapture.t()} | {:error, Image.error_message()}
     def open(filename) when is_binary(filename) do
       case Evision.VideoCapture.videoCapture(filename) do
         %Evision.VideoCapture{} = video ->
@@ -144,7 +150,8 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
         iex> Image.Video.open! "./test/support/video/video_sample.mp4"
 
     """
-    @spec open!(filename_or_stream :: Path.t() | stream_id()) :: Evision.VideoCapture.t() | no_return()
+    @spec open!(filename_or_stream :: Path.t() | stream_id()) ::
+            Evision.VideoCapture.t() | no_return()
     def open!(filename_or_stream) do
       case open(filename_or_stream) do
         {:ok, video} -> video
@@ -211,6 +218,134 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     end
 
     @doc """
+    Returns video file or live video as a `t:Stream.t/0`
+    stream.
+
+    This allows a video file or live video to be streamed
+    for processing like any other enumerable.
+
+    ### Arguments
+
+    * `filename_or_stream` is either a pathname on the
+      current system, a non-negative integer representing a
+      video stream or `:default_camera` representing the
+      stream for the default system camera. It can also
+      be a `t:Evision.VideoCapture.t/0` representing a
+      video file or stream that is already opened (this is the
+      preferred approach).
+
+    * `options` is a keyword list of options.`
+
+    ### Options
+
+    Only one of the following options can be provided. No
+    options means the entire video will be streamed frame
+    by frame..
+
+    * `:frame` is a `t:Range.t/0` representing the range
+      of frames to be extracted. `:frames` can only be specified
+      for video files, not for video streams. For example,
+      `frames: 10..100/2` will produce a stream of images that
+      are every second image between the frame offsets `10` and `100`.
+
+    * `:millisecond` is a `t:Range.t/0` representing the range
+      of milliseconds to be extracted. `:milliseconds` can only
+      be specified for video files, not for video streams. For example,
+      `milliseconds: 1000..100000/2` will produce a stream of images
+      that are every second image between the millisecond offsets of `1_000`
+      and `100_000`.
+
+    ### Returns
+
+    * A `t:Enumerable.t/0` that can be used with functions in
+      the `Stream` and `Enum` modules to lazily enumerate images
+      extracted from a video stream.
+
+    ### Note
+
+    If the range step is greater than 1 (the default) then
+    `seek/2` is called on each iteration to seek forward the
+    `step` number of frames. This has a materail performance
+    impact. A future update may implement an alternative
+    strategy.
+
+    ### Example
+
+        # Extract every second frame starting at the
+        # first frame and ending at the last frame.
+        iex> "./test/support/video/video_sample.mp4"
+        ...> |> Image.Video.stream!(frame: 0..-1//2)
+        ...> |> Enum.to_list()
+        ...> |> Enum.count()
+        86
+
+    """
+    @spec stream!(
+            filename_or_stream :: Path.t() | stream_id() | Evision.VideoCapture.t(),
+            options :: Keyword.t()
+          ) :: Enumerable.t()
+    def stream!(video, options \\ [])
+
+    def stream!(filename_or_stream, options)
+        when is_binary(filename_or_stream) or is_stream(filename_or_stream) do
+      filename_or_stream
+      |> open!()
+      |> stream!(options)
+    end
+
+    def stream!(%Evision.VideoCapture{} = video, options) do
+      options = Options.Video.validate_stream_options!(video, options)
+
+      Stream.resource(
+        fn ->
+          seek_to_video_first(video, options)
+        end,
+        fn
+          {video, _unit, first, last, _step} = stream when first <= last ->
+            case Image.Video.image_from_video(video) do
+              {:ok, image} ->
+                {[image], increment_stream(stream)}
+
+              _other ->
+                {:halt, video}
+            end
+
+          {video, _unit, _first, _last, _step} ->
+            {:halt, video}
+        end,
+        fn video -> Image.Video.close(video) end
+      )
+    end
+
+    defp seek_to_video_first(video, {nil = unit, first, last, step}) do
+      {video, unit, first, last, step}
+    end
+
+    defp seek_to_video_first(video, {unit, 0 = first, last, step}) do
+      {video, unit, first, last, step}
+    end
+
+    defp seek_to_video_first(video, {unit, first, last, step}) do
+      {:ok, video} = seek(video, [{unit, first}])
+      {video, unit, first, last, step}
+    end
+
+    defp increment_stream({video, nil = unit, first, last, step}) do
+      {video, unit, first, last, step}
+    end
+
+    defp increment_stream({video, unit, first, last, 1 = step}) do
+      next = first + step
+      {video, unit, next, last, step}
+    end
+
+    defp increment_stream({video, unit, first, last, step}) do
+      next = first + step
+      {:ok, video} = seek(video, [{unit, next}])
+      {video, unit, next, last, step}
+    end
+
+    @doc """
     Seeks the video head to a specified frame offset
     or millisecond offset.
 
@@ -252,9 +387,11 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     """
     @spec seek(Evision.VideoCapture.t(), seek_options()) ::
-      {:ok, Evision.VideoCapture.t()} | {:error, Image.error_message()}
+            {:ok, Evision.VideoCapture.t()} | {:error, Image.error_message()}
 
-    def seek(%Evision.VideoCapture{isOpened: true, frame_count: frame_count} = video, [{:frame, frame}])
+    def seek(%Evision.VideoCapture{isOpened: true, frame_count: frame_count} = video, [
+          {:frame, frame}
+        ])
         when is_frame(frame, frame_count) do
       case Evision.VideoCapture.set(video, Evision.cv_CAP_PROP_POS_FRAMES(), frame) do
         true -> {:ok, video}
@@ -262,7 +399,9 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       end
     end
 
-    def seek(%Evision.VideoCapture{isOpened: true, fps: fps, frame_count: frame_count} = video, [{:millisecond, millis}])
+    def seek(%Evision.VideoCapture{isOpened: true, fps: fps, frame_count: frame_count} = video, [
+          {:millisecond, millis}
+        ])
         when is_valid_millis(millis, frame_count, fps) do
       case Evision.VideoCapture.set(video, Evision.cv_CAP_PROP_POS_MSEC(), millis) do
         true -> {:ok, video}
@@ -270,16 +409,19 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       end
     end
 
-    def seek(%Evision.VideoCapture{isOpened: true}, [{unit, offset}]) when unit in [:frame, :millisecond] and offset < 0 do
-      {:error, "Offset for #{inspect unit} must be a positive integer. Found #{inspect offset}"}
+    def seek(%Evision.VideoCapture{isOpened: true}, [{unit, offset}])
+        when unit in [:frame, :millisecond] and offset < 0 do
+      {:error, "Offset for #{inspect(unit)} must be a positive integer. Found #{inspect(offset)}"}
     end
 
-    def seek(%Evision.VideoCapture{isOpened: true}, [{unit, offset}]) when unit in [:frame, :millisecond] and is_integer(offset) do
-      {:error, "Offset for #{inspect unit} is too large"}
+    def seek(%Evision.VideoCapture{isOpened: true}, [{unit, offset}])
+        when unit in [:frame, :millisecond] and is_integer(offset) do
+      {:error, "Offset for #{inspect(unit)} is too large"}
     end
 
     def seek(%Evision.VideoCapture{isOpened: true}, options) do
-      {:error, "Options must be either `frame: frame_offet` or `milliseconds: millisecond_offset`. Found #{inspect options}"}
+      {:error,
+       "Options must be either `frame: frame_offet` or `milliseconds: millisecond_offset`. Found #{inspect(options)}"}
     end
 
     def seek(%Evision.VideoCapture{isOpened: false}, _options) do
@@ -320,7 +462,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     """
     @spec seek!(Evision.VideoCapture.t(), seek_options()) ::
-      Evision.VideoCapture.t() | no_return()
+            Evision.VideoCapture.t() | no_return()
 
     def seek!(video, options \\ []) do
       case seek(video, options) do
@@ -390,7 +532,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       with %Evision.Mat{} = cv_image <- Evision.VideoCapture.read(video) do
         Image.from_evision(cv_image)
       else
-        error -> {:error, "Could not extract the frame. Error #{inspect error}."}
+        error -> {:error, "Could not extract the frame. Error #{inspect(error)}."}
       end
     end
 

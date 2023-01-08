@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.22.0
+
+This is the changelog for Image version 0.22.0 released on January ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancements
+
+* Adds `Image.Video.stream!/2` that returns an enumerable stream of frames as images.
+
 ## Image 0.21.0
 
 This is the changelog for Image version 0.21.0 released on January 8th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
