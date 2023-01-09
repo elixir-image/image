@@ -333,7 +333,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     defp advance_stream({video, unit, first, last, step}) do
       next = first + step
-      Enum.each(1..step - 1, fn _x -> Evision.VideoCapture.grab(video) end)
+      Enum.each(1..(step - 1), fn _x -> Evision.VideoCapture.grab(video) end)
       {video, unit, next, last, step}
     end
 
@@ -368,6 +368,10 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     Seeking cannot be performed on image streams such as
     webcams.  Therefore no options may be provided when
     extracting images from an image stream.
+
+    ### Warning
+
+    Seeking is not [frame accurate](https://github.com/opencv/opencv/issues/9053)!
 
     ### Examples
 
@@ -417,7 +421,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     end
 
     def seek(%Evision.VideoCapture{isOpened: false}, _options) do
-      {:error, "Video is not open"}
+      {:error, video_closed_error()}
     end
 
     @doc """
@@ -464,6 +468,57 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     end
 
     @doc """
+    Scrubs a video forward by a number of frames.
+
+    In OpenCV (the underlying video library used by
+    `Image.Video`), seeking to a specified frame is not
+    frame accurate.  This function moves the video
+    play head forward frame by frame and is therefore
+    a frame accurate way of moving the the video head
+    forward.
+
+    ### Arguements
+
+    * `video` is any `t:Evision.VideoCapture.t/0`
+
+    * `frames` is a positive integer number of frames
+      to scrub forward.
+
+    ### Returns
+
+    * `{:ok, frames_scrubbed}`. `frames_scrubbed` may
+      be less than the number of requested frames. This may
+      happen of the end of the video stream is reached.
+
+    * {:error, reason}`
+
+    ### Examples
+
+        iex> {:ok, video} = Image.Video.open "./test/support/video/video_sample.mp4"
+        iex> {:ok, 10} = Image.Video.scrub(video, 10)
+        iex>  Image.Video.scrub(video, 100_000_000)
+        {:ok, 161}
+
+    """
+    @spec scrub(Evision.VideoCapture.t(), frames :: pos_integer) ::
+            {:ok, pos_integer()} | {:error, Image.error_message()}
+
+    def scrub(%Evision.VideoCapture{isOpened: true} = video, frames)
+        when is_integer(frames) and frames > 0 do
+      Enum.reduce_while(1..frames, {:ok, 0}, fn _frame, {:ok, count} ->
+        case Evision.VideoCapture.grab(video) do
+          true -> {:cont, {:ok, count + 1}}
+          false -> {:halt, {:ok, count}}
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+      end)
+    end
+
+    def scrub(%Evision.VideoCapture{isOpened: false}, _frames) do
+      {:error, video_closed_error()}
+    end
+
+    @doc """
     Extracts a frame from a video and returns
     an image.
 
@@ -484,7 +539,13 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       non-negative integer offset. For example `frame: 3`.
       The default is `[]` which means that no seek is performed
       and the extracted image is taken from the current
-      position in the file or video stream.
+      position in the file or video stream. Note that seeking
+      is not guaranteed to be accurate. If frame accuracy is
+      required the recommended process is:
+
+      * Open the video file with `Image.Video.open/1`
+      * Scrub forward to the required freame with `Image.Video.scrub/2`
+      * Then capture the frame with `Image.Video.image_from_video/1`
 
     ### Returns
 
@@ -497,13 +558,6 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     Seeking cannot be performed on image streams such as
     webcams.  Therefore no options may be provided when
     extracting images from an image stream.
-
-    ### Warning
-
-    This frame extraction is NOT atomic. First the read head is
-    set to the frame of interest, then the frame is extracted and
-    decoded.  It is possible for another process to interleave
-    its own seek operation resulting in undefined results.
 
     ### Examples
 
@@ -559,7 +613,13 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       non-negative integer offset. For example `frame: 3`.
       The default is `[]` which means that no seek is performed
       and the extracted image is taken from the current
-      position in the file or video stream.
+      position in the file or video stream. Note that seeking
+      is not guaranteed to be accurate. If frame accuracy is
+      required the recommended process is:
+
+      * Open the video file with `Image.Video.open/1`
+      * Scrub forward to the required freame with `Image.Video.scrub/2`
+      * Then capture the frame with `Image.Video.image_from_video/1`
 
     ### Returns
 
@@ -573,20 +633,18 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     webcams.  Therefore no options may be provided when
     extracting images from an image stream.
 
-    ### Warning
-
-    This frame extraction is NOT atomic. First the read head is
-    set to the frame of interest, then the frame is extracted and
-    decoded.  It is possible for another process to interleave
-    its own seek operation resulting in undefined results.
-
     """
+
     @spec image_from_video!(Evision.VideoCapture.t(), seek_options()) :: Vimage.t() | no_return()
     def image_from_video!(%Evision.VideoCapture{} = video, options \\ []) do
       case image_from_video(video, options) do
         {:ok, image} -> image
         {:error, reason} -> raise Image.Error, reason
       end
+    end
+
+    defp video_closed_error do
+      "Video is not open"
     end
   end
 end
