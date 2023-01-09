@@ -96,6 +96,14 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     * `{:error, reason}`
 
+    ### Note
+
+    * The video `t:Evision.VideoCapture.t/0` struct that is returned
+      includes metadata fields for frame rate (:fps), frame width
+      (:frame_width), frame height (:frame_height) and frame count
+      (:frame_count). *Note that frame count is an approximation due to
+      issues in the underlying OpenCV*.
+
     ### Example
 
         iex> Image.Video.open "./test/support/video/video_sample.mp4"

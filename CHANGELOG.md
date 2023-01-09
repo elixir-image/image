@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.22.1
+
+This is the changelog for Image version 0.22.1 released on January 9th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Don't compile `Image.Options.Video` unless Evision is configured and compiled.
+
 ## Image 0.22.0
 
 This is the changelog for Image version 0.22.0 released on January 9th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
