@@ -261,14 +261,6 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       the `Stream` and `Enum` modules to lazily enumerate images
       extracted from a video stream.
 
-    ### Note
-
-    If the range step is greater than 1 (the default) then
-    `seek/2` is called on each iteration to seek forward the
-    `step` number of frames. This has a materail performance
-    impact. A future update may implement an alternative
-    strategy.
-
     ### Example
 
         # Extract every second frame starting at the
@@ -304,7 +296,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
           {video, _unit, first, last, _step} = stream when first <= last ->
             case Image.Video.image_from_video(video) do
               {:ok, image} ->
-                {[image], increment_stream(stream)}
+                {[image], advance_stream(stream)}
 
               _other ->
                 {:halt, video}
@@ -330,18 +322,18 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       {video, unit, first, last, step}
     end
 
-    defp increment_stream({video, nil = unit, first, last, step}) do
+    defp advance_stream({video, nil = unit, first, last, step}) do
       {video, unit, first, last, step}
     end
 
-    defp increment_stream({video, unit, first, last, 1 = step}) do
+    defp advance_stream({video, unit, first, last, 1 = step}) do
       next = first + step
       {video, unit, next, last, step}
     end
 
-    defp increment_stream({video, unit, first, last, step}) do
+    defp advance_stream({video, unit, first, last, step}) do
       next = first + step
-      {:ok, video} = seek(video, [{unit, next}])
+      Enum.each(1..step - 1, fn _x -> Evision.VideoCapture.grab(video) end)
       {video, unit, next, last, step}
     end
 
