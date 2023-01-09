@@ -218,7 +218,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     end
 
     @doc """
-    Returns video file or live video as a `t:Stream.t/0`
+    Returns video file or live video as a `t:Enumerable.t/0`
     stream.
 
     This allows a video file or live video to be streamed
@@ -234,13 +234,13 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       video file or stream that is already opened (this is the
       preferred approach).
 
-    * `options` is a keyword list of options.`
+    * `options` is a keyword list of options.
 
     ### Options
 
     Only one of the following options can be provided. No
     options means the entire video will be streamed frame
-    by frame..
+    by frame.
 
     * `:frame` is a `t:Range.t/0` representing the range
       of frames to be extracted. `:frames` can only be specified
@@ -490,7 +490,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       be less than the number of requested frames. This may
       happen of the end of the video stream is reached.
 
-    * {:error, reason}`
+    * `{:error, reason}`
 
     ### Examples
 
@@ -589,7 +589,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     end
 
     def image_from_video(%Evision.VideoCapture{isOpened: false}, _options) do
-      {:error, "The video is not open."}
+      {:error, video_closed_error()}
     end
 
     @doc """
