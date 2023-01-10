@@ -18,6 +18,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     """
 
     alias Vix.Vips.Image, as: Vimage
+    alias Evision.VideoCapture
     alias Image.Options
 
     @typedoc "The valid options for Image.Video.seek/2, Image.Video.image_from_video/2"
@@ -60,8 +61,8 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
         ...> end
 
     """
-    @spec with_video(filename :: Path.t(), (Evision.VideoCapture.t() -> any())) ::
-            {:ok, Evision.VideoCapture.t()} | {:error, Image.error_message()}
+    @spec with_video(filename :: Path.t(), (VideoCapture.t() -> any())) ::
+            {:ok, VideoCapture.t()} | {:error, Image.error_message()}
 
     def with_video(filename, fun) when is_binary(filename) and is_function(fun, 1) do
       filename
@@ -90,15 +91,26 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       an integer.  It may also be `:default_camera` to open
       the default camera if there is one.
 
+    * `options` is a keyword list of options. The default
+      is `[]`.
+
+    ### Options
+
+    * `:backend` specifies the backend video processing
+      system to be used. The default is `:any` which means
+      that the first available backend in the current OpenCV
+      configuration will be used.  The available backends
+      can be returned by `Image.Video.available_backends/0`.
+
     ### Returns
 
     * `{:ok, video}` or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Note
 
-    * The video `t:Evision.VideoCapture.t/0` struct that is returned
+    * The video `t:VideoCapture.t/0` struct that is returned
       includes metadata fields for frame rate (:fps), frame width
       (:frame_width), frame height (:frame_height) and frame count
       (:frame_count). *Note that frame count is an approximation due to
@@ -111,32 +123,39 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
         iex> Image.Video.close(camera_video)
 
     """
-    @spec open(filename_or_stream :: Path.t() | stream_id()) ::
-            {:ok, Evision.VideoCapture.t()} | {:error, Image.error_message()}
-    def open(filename) when is_binary(filename) do
-      case Evision.VideoCapture.videoCapture(filename) do
-        %Evision.VideoCapture{} = video ->
-          {:ok, video}
+    @spec open(filename_or_stream :: Path.t() | stream_id(), Options.Video.open_options()) ::
+            {:ok, VideoCapture.t()} | {:error, Image.error_message()}
 
-        error ->
-          {:error, "Could not open video #{inspect(filename)}. Error #{inspect(error)}"}
+    def open(filename, options \\ [])
+
+    def open(filename, options) when is_binary(filename) and is_list(options) do
+      with {:ok, backend} <- Options.Video.validate_open_options(options) do
+        case VideoCapture.videoCapture(filename, apiPreference: backend) do
+          %VideoCapture{} = video ->
+            {:ok, video}
+
+          error ->
+            {:error, "Could not open video #{inspect(filename)}. Error #{inspect(error)}"}
+        end
+      end
+    end
+
+    def open(camera, options) when is_integer(camera) and camera >= 0 do
+      with {:ok, backend} <- Options.Video.validate_open_options(options) do
+        case VideoCapture.videoCapture(camera, apiPreference: backend) do
+          %VideoCapture{} = video ->
+            {:ok, video}
+
+          error ->
+            {:error, "Could not open the camera. Error #{inspect(error)}"}
+        end
       end
     end
 
     @default_camera_id 0
 
-    def open(:default_camera) do
-      open(@default_camera_id)
-    end
-
-    def open(camera) when is_integer(camera) and camera >= 0 do
-      case Evision.VideoCapture.videoCapture(camera) do
-        %Evision.VideoCapture{} = video ->
-          {:ok, video}
-
-        error ->
-          {:error, "Could not open the camera. Error #{inspect(error)}"}
-      end
+    def open(:default_camera, options) do
+      open(@default_camera_id, options)
     end
 
     @doc """
@@ -145,13 +164,24 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     ### Arguments
 
-    * `filename` is the filename of a video file
+    * `filename` is the filename of a video file.
+
+    * `options` is a keyword list of options. The default
+      is `[]`.
+
+    ### Options
+
+    * `:backend` specifies the backend video processing
+      system to be used. The default is `:any` which means
+      that the first available backend in the current OpenCV
+      configuration will be used.  The available backends
+      can be returned by `Image.Video.available_backends/0`.
 
     ### Returns
 
     * `video` or
 
-    * raises an exception
+    * raises an exception.
 
     ### Example
 
@@ -159,7 +189,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     """
     @spec open!(filename_or_stream :: Path.t() | stream_id()) ::
-            Evision.VideoCapture.t() | no_return()
+            VideoCapture.t() | no_return()
     def open!(filename_or_stream) do
       case open(filename_or_stream) do
         {:ok, video} -> video
@@ -172,13 +202,13 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     ### Arguments
 
-    * `video` is any `t:Evision.VideoCapture.t/0`
+    * `video` is any `t:VideoCapture.t/0`.
 
     ### Returns
 
     * `{:ok, closed_video}` or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Example
 
@@ -186,11 +216,11 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
         iex> Image.Video.close(video)
 
     """
-    @spec close(Evision.VideoCapture.t()) ::
-            {:ok, Evision.VideoCapture.t()} | {:error, Image.error_message()}
-    def close(%Evision.VideoCapture{} = video) do
-      case Evision.VideoCapture.release(video) do
-        %Evision.VideoCapture{} = video ->
+    @spec close(VideoCapture.t()) ::
+            {:ok, VideoCapture.t()} | {:error, Image.error_message()}
+    def close(%VideoCapture{} = video) do
+      case VideoCapture.release(video) do
+        %VideoCapture{} = video ->
           {:ok, video}
 
         error ->
@@ -203,7 +233,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     ### Arguments
 
-    * `video` is any `t:Evision.VideoCapture.t/0`
+    * `video` is any `t:VideoCapture.t/0`.
 
     ### Returns
 
@@ -217,7 +247,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
         iex> Image.Video.close!(video)
 
     """
-    @spec close!(Evision.VideoCapture.t()) :: Evision.VideoCapture.t() | no_return()
+    @spec close!(VideoCapture.t()) :: VideoCapture.t() | no_return()
     def close!(video) do
       case close(video) do
         {:ok, video} -> video
@@ -238,7 +268,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       current system, a non-negative integer representing a
       video stream or `:default_camera` representing the
       stream for the default system camera. It can also
-      be a `t:Evision.VideoCapture.t/0` representing a
+      be a `t:VideoCapture.t/0` representing a
       video file or stream that is already opened (this is the
       preferred approach).
 
@@ -281,7 +311,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     """
     @spec stream!(
-            filename_or_stream :: Path.t() | stream_id() | Evision.VideoCapture.t(),
+            filename_or_stream :: Path.t() | stream_id() | VideoCapture.t(),
             options :: Keyword.t()
           ) :: Enumerable.t()
     def stream!(video, options \\ [])
@@ -293,7 +323,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       |> stream!(options)
     end
 
-    def stream!(%Evision.VideoCapture{} = video, options) do
+    def stream!(%VideoCapture{} = video, options) do
       options = Options.Video.validate_stream_options!(video, options)
 
       Stream.resource(
@@ -341,7 +371,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     defp advance_stream({video, unit, first, last, step}) do
       next = first + step
-      Enum.each(1..(step - 1), fn _x -> Evision.VideoCapture.grab(video) end)
+      Enum.each(1..(step - 1), fn _x -> VideoCapture.grab(video) end)
       {video, unit, next, last, step}
     end
 
@@ -356,9 +386,9 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     ### Arguments
 
-    * `video` is any `t:Evision.VideoCapture.t/0`
+    * `video` is any `t:VideoCapture.t/0`.
 
-    * `options` is a keyword list of options
+    * `options` is a keyword list of options.
 
     ### Options
 
@@ -386,49 +416,47 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
         iex> {:ok, video} = Image.Video.open "./test/support/video/video_sample.mp4"
         iex> {:ok, _image} = Image.Video.seek(video, frame: 0)
         iex> {:ok, _image} = Image.Video.seek(video, millisecond: 1_000)
-        iex> {:error, "Offset for :frame must be a positive integer. Found -1"} =
-        ...>   Image.Video.seek(video, frame: -1)
+        iex> Image.Video.seek(video, frame: -1)
+        {:error, "Offset for :frame must be a non-negative integer. Found -1"}
 
     """
-    @spec seek(Evision.VideoCapture.t(), seek_options()) ::
-            {:ok, Evision.VideoCapture.t()} | {:error, Image.error_message()}
+    @spec seek(VideoCapture.t(), seek_options()) ::
+            {:ok, VideoCapture.t()} | {:error, Image.error_message()}
 
-    def seek(%Evision.VideoCapture{isOpened: true, frame_count: frame_count} = video, [
-          {:frame, frame}
-        ])
+    def seek(%VideoCapture{isOpened: true, frame_count: frame_count} = video, [{:frame, frame}])
         when is_frame(frame, frame_count) do
-      case Evision.VideoCapture.set(video, Evision.cv_CAP_PROP_POS_FRAMES(), frame) do
+      case VideoCapture.set(video, Evision.cv_CAP_PROP_POS_FRAMES(), frame) do
         true -> {:ok, video}
         false -> {:error, "Could not seek to the frame offset #{inspect(frame)}."}
       end
     end
 
-    def seek(%Evision.VideoCapture{isOpened: true, fps: fps, frame_count: frame_count} = video, [
+    def seek(%VideoCapture{isOpened: true, fps: fps, frame_count: frame_count} = video, [
           {:millisecond, millis}
         ])
         when is_valid_millis(millis, frame_count, fps) do
-      case Evision.VideoCapture.set(video, Evision.cv_CAP_PROP_POS_MSEC(), millis) do
+      case VideoCapture.set(video, Evision.cv_CAP_PROP_POS_MSEC(), millis) do
         true -> {:ok, video}
         false -> {:error, "Could not seek to the millisecond offset #{inspect(millis)}."}
       end
     end
 
-    def seek(%Evision.VideoCapture{isOpened: true}, [{unit, offset}])
+    def seek(%VideoCapture{isOpened: true}, [{unit, offset}])
         when unit in [:frame, :millisecond] and offset < 0 do
-      {:error, "Offset for #{inspect(unit)} must be a positive integer. Found #{inspect(offset)}"}
+      {:error, "Offset for #{inspect(unit)} must be a non-negative integer. Found #{inspect(offset)}"}
     end
 
-    def seek(%Evision.VideoCapture{isOpened: true}, [{unit, offset}])
+    def seek(%VideoCapture{isOpened: true}, [{unit, offset}])
         when unit in [:frame, :millisecond] and is_integer(offset) do
       {:error, "Offset for #{inspect(unit)} is too large"}
     end
 
-    def seek(%Evision.VideoCapture{isOpened: true}, options) do
+    def seek(%VideoCapture{isOpened: true}, options) do
       {:error,
        "Options must be either `frame: frame_offet` or `milliseconds: millisecond_offset`. Found #{inspect(options)}"}
     end
 
-    def seek(%Evision.VideoCapture{isOpened: false}, _options) do
+    def seek(%VideoCapture{isOpened: false}, _options) do
       {:error, video_closed_error()}
     end
 
@@ -443,9 +471,9 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     ### Arguments
 
-    * `video` is any `t:Evision.VideoCapture.t/0`
+    * `video` is any `t:VideoCapture.t/0`.
 
-    * `options` is a keyword list of options
+    * `options` is a keyword list of options.
 
     ### Options
 
@@ -456,7 +484,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     * `{:ok, video}` or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Notes
 
@@ -465,8 +493,8 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     extracting images from an image stream.
 
     """
-    @spec seek!(Evision.VideoCapture.t(), seek_options()) ::
-            Evision.VideoCapture.t() | no_return()
+    @spec seek!(VideoCapture.t(), seek_options()) ::
+            VideoCapture.t() | no_return()
 
     def seek!(video, options \\ []) do
       case seek(video, options) do
@@ -487,7 +515,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     ### Arguements
 
-    * `video` is any `t:Evision.VideoCapture.t/0`
+    * `video` is any `t:VideoCapture.t/0`.
 
     * `frames` is a positive integer number of frames
       to scrub forward.
@@ -496,9 +524,9 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     * `{:ok, frames_scrubbed}`. `frames_scrubbed` may
       be less than the number of requested frames. This may
-      happen of the end of the video stream is reached.
+      happen of the end of the video stream is reached, or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Examples
 
@@ -508,13 +536,13 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
         {:ok, 161}
 
     """
-    @spec scrub(Evision.VideoCapture.t(), frames :: pos_integer) ::
+    @spec scrub(VideoCapture.t(), frames :: pos_integer) ::
             {:ok, pos_integer()} | {:error, Image.error_message()}
 
-    def scrub(%Evision.VideoCapture{isOpened: true} = video, frames)
+    def scrub(%VideoCapture{isOpened: true} = video, frames)
         when is_integer(frames) and frames > 0 do
       Enum.reduce_while(1..frames, {:ok, 0}, fn _frame, {:ok, count} ->
-        case Evision.VideoCapture.grab(video) do
+        case VideoCapture.grab(video) do
           true -> {:cont, {:ok, count + 1}}
           false -> {:halt, {:ok, count}}
           {:error, reason} -> {:halt, {:error, reason}}
@@ -522,7 +550,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
       end)
     end
 
-    def scrub(%Evision.VideoCapture{isOpened: false}, _frames) do
+    def scrub(%VideoCapture{isOpened: false}, _frames) do
       {:error, video_closed_error()}
     end
 
@@ -537,7 +565,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     ### Arguments
 
-    * `video` is any `t:Evision.VideoCapture.t/0`
+    * `video` is any `t:VideoCapture.t/0`
 
     * `options` is a keyword list of options. The defalt
 
@@ -559,7 +587,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     * `{:ok, image}` or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Notes
 
@@ -573,30 +601,32 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
         iex> {:ok, _image} = Image.Video.image_from_video(video)
         iex> {:ok, _image} = Image.Video.image_from_video(video, frame: 0)
         iex> {:ok, _image} = Image.Video.image_from_video(video, millisecond: 1_000)
-        iex> {:error, "Offset for :frame must be a positive integer. Found -1"} = Image.Video.image_from_video(video, frame: -1)
-        iex> {:error, "Offset for :frame is too large"} = Image.Video.image_from_video(video, frame: 500)
+        iex> Image.Video.image_from_video(video, frame: -1)
+        {:error, "Offset for :frame must be a non-negative integer. Found -1"}
+        iex> Image.Video.image_from_video(video, frame: 500)
+        {:error, "Offset for :frame is too large"}
 
     """
-    @spec image_from_video(Evision.VideoCapture.t(), seek_options()) ::
+    @spec image_from_video(VideoCapture.t(), seek_options()) ::
             {:ok, Vimage.t()} | {:error, Image.error_message()}
 
     def image_from_video(video, options \\ [])
 
-    def image_from_video(%Evision.VideoCapture{isOpened: true} = video, []) do
-      with %Evision.Mat{} = cv_image <- Evision.VideoCapture.read(video) do
+    def image_from_video(%VideoCapture{isOpened: true} = video, []) do
+      with %Evision.Mat{} = cv_image <- VideoCapture.read(video) do
         Image.from_evision(cv_image)
       else
         error -> {:error, "Could not extract the frame. Error #{inspect(error)}."}
       end
     end
 
-    def image_from_video(%Evision.VideoCapture{isOpened: true} = video, options) do
+    def image_from_video(%VideoCapture{isOpened: true} = video, options) do
       with {:ok, video} <- seek(video, options) do
         image_from_video(video)
       end
     end
 
-    def image_from_video(%Evision.VideoCapture{isOpened: false}, _options) do
+    def image_from_video(%VideoCapture{isOpened: false}, _options) do
       {:error, video_closed_error()}
     end
 
@@ -611,9 +641,9 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     ### Arguments
 
-    * `video` is any `t:Evision.VideoCapture.t/0`
+    * `video` is any `t:VideoCapture.t/0`.
 
-    * `options` is a keyword list of options
+    * `options` is a keyword list of options.
 
     ### Options
 
@@ -633,7 +663,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     * `image` or
 
-    * raises an exception
+    * raises an exception.
 
     ### Notes
 
@@ -642,14 +672,96 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     extracting images from an image stream.
 
     """
+    @spec image_from_video!(VideoCapture.t(), seek_options()) :: Vimage.t() | no_return()
 
-    @spec image_from_video!(Evision.VideoCapture.t(), seek_options()) :: Vimage.t() | no_return()
-    def image_from_video!(%Evision.VideoCapture{} = video, options \\ []) do
+    def image_from_video!(%VideoCapture{} = video, options \\ []) do
       case image_from_video(video, options) do
         {:ok, image} -> image
         {:error, reason} -> raise Image.Error, reason
       end
     end
+
+    @doc """
+    Returns a list of known (valid but not necessarily
+    available for use in the current OpenCV configuration)
+    backend video processors.
+
+    See the [OpenCV documentation](https://docs.opencv.org/4.x/d4/d15/group__videoio__flags__base.html#ga023786be1ee68a9105bf2e48c700294d)
+    for more information on video processor backends.
+
+    ### Example
+
+        iex> Image.Video.known_backends() |> Enum.sort()
+        [:android, :any, :aravis, :avfoundation, :cmu1394, :dc1394, :dshow, :ffmpeg,
+         :fireware, :firewire, :giganetix, :gphoto2, :gstreamer, :ieee1394, :images,
+         :intel_mfx, :intelperc, :msmf, :obsensor, :opencv_mjpeg, :openni, :openni2,
+         :openni2_astra, :openni2_asus, :openni_asus, :pvapi, :qt, :realsense, :ueye,
+         :unicap, :v4l, :v4l2, :vfw, :winrt, :xiapi, :xine]
+
+    """
+    @spec known_backends :: list(Options.Video.backend())
+    def known_backends do
+      Map.keys(Options.Video.known_backends())
+    end
+
+    @doc false
+    def known_backend_values do
+      Map.keys(Options.Video.inverted_known_backends())
+    end
+
+    @doc """
+    Returns a boolean indicating if the specified
+    backend is known (valid but not necessarily
+    available for use in the current OpenCV configuration).
+
+    ### Examples
+
+        iex> Image.Video.known_backend?(:avfoundation)
+        true
+        iex> Image.Video.known_backend?(:invalid)
+        false
+        iex> Image.Video.known_backend?(1200)
+        true
+        iex> Image.Video.known_backend?(-1)
+        false
+
+    """
+    @spec known_backend?(Options.Video.backend()) :: boolean()
+    def known_backend?(backend) when is_atom(backend) do
+      backend in known_backends()
+    end
+
+    def known_backend?(backend) when is_integer(backend) do
+      backend in known_backend_values()
+    end
+
+    @doc """
+    Returns a list of available (configured and
+    available for use) backend video processors.
+
+    See the [OpenCV documentation](https://docs.opencv.org/4.x/d4/d15/group__videoio__flags__base.html#ga023786be1ee68a9105bf2e48c700294d)
+    for more information on video processor backends.
+
+    """
+    @spec available_backends :: list(Options.Video.backend())
+    def available_backends do
+      Options.Video.known_backends()
+      |> Enum.filter(fn {_backend, value} -> Evision.VideoIORegistry.hasBackend(value) end)
+      |> Map.keys()
+    end
+
+    @doc """
+    Returns a boolean indicating if the specified
+    backend is available (configured and
+    available for use).
+
+    """
+    @spec available_backend?(any) :: boolean()
+    def available_backend?(backend) do
+      backend in available_backends()
+    end
+
+    ### Helpers
 
     defp video_closed_error do
       "Video is not open"

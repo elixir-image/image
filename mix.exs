@@ -46,24 +46,28 @@ defmodule Image.MixProject do
 
   defp deps do
     [
+      # libvips bindins
       {:vix, "~> 0.15"},
       # {:vix, github: "akash-akya/vix", branch: "dev"},
       # {:vix, github: "akash-akya/vix"},
-      # {:vix, github: "kipcole9/vix", branch: "binwrite"},
       # {:vix, path: "../vix"},
+
+      # eVision OpenCV bindings
+      {:evision, ">= 0.1.14", optional: true},
+
+      # For XMP metadata parsing
+      {:sweet_xml, "~> 0.7"},
+
+      # For SVG text generation (HTML safety)
+      {:phoenix_html, "~> 3.2 or ~> 2.14"},
+
+      # For streaming writes
+      {:plug, "~> 1.13", optional: true},
 
       # Kino for rendering in Livebook
       if(Version.compare(System.version(), "1.13.0") in [:gt, :eq],
         do: {:kino, "~> 0.7", optional: true}
       ),
-
-      # eVision OpenCV bindings
-      {:evision, ">= 0.1.14", optional: true},
-      {:sweet_xml, "~> 0.7"},
-      {:phoenix_html, "~> 3.2 or ~> 2.14"},
-
-      # For streaming writes
-      {:plug, "~> 1.13", optional: true},
 
       # For NX interchange testing and
       # Bumblebee for image classification

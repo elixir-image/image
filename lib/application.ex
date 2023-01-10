@@ -43,7 +43,8 @@ defmodule Image.Application do
     []
   end
 
-  defp autostart?(service, start?) do
+  @doc false
+  def autostart?(service, start?) do
     :image
     |> Application.get_env(service, autostart: start?)
     |> Keyword.get(:autostart)
