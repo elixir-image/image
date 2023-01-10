@@ -5178,4 +5178,8 @@ defmodule Image do
       end
     end)
   end
+
+  def evision_configured? do
+    match?({:module, _module}, Code.ensure_compiled(Evision))
+  end
 end

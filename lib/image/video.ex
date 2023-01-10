@@ -1,8 +1,10 @@
-if match?({:module, _module}, Code.ensure_compiled(Evision)) do
+if Image.evision_configured? do
   defmodule Image.Video do
     @moduledoc """
     Implements functions to extract frames froma video file
-    as images using [eVision](https://hex.pm/packages/evision).
+    as images using [eVision](https://hex.pm/packages/evision). The
+    implementation is based upon
+    [OpenCV Video Cpature](https://docs.opencv.org/3.4/d0/da7/videoio_overview.html).
 
     Images can be extracted by frame number of number of milliseconds with
     `Image.Video.image_from_video/2`.
@@ -747,7 +749,7 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
     def available_backends do
       Options.Video.known_backends()
       |> Enum.filter(fn {_backend, value} -> Evision.VideoIORegistry.hasBackend(value) end)
-      |> Map.keys()
+      |> Keyword.keys()
     end
 
     @doc """
