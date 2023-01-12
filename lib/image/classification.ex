@@ -108,22 +108,26 @@ if Image.bumblebee_configured?() do
       Application.ensure_all_started(:exla)
       classifier = Keyword.merge(@default_classifier, classifier)
 
-      {Nx.Serving,
-       serving: Image.Classification.serving(classifier[:model], classifier[:featurizer]),
-       name: classifier[:name],
-       batch_timeout: 100}
+      case Image.Classification.serving(classifier[:model], classifier[:featurizer]) do
+        {:error, error} ->
+          {:error, error}
+
+        serving ->
+          {Nx.Serving, serving: serving, name: classifier[:name], batch_timeout: 100}
+      end
     end
 
     @doc false
     def serving(model, featurizer) do
-      {:ok, model_info} = Bumblebee.load_model(model)
-      {:ok, featurizer} = Bumblebee.load_featurizer(featurizer)
+      with {:ok, model_info} <- Bumblebee.load_model(model),
+           {:ok, featurizer} = Bumblebee.load_featurizer(featurizer) do
 
-      Bumblebee.Vision.image_classification(model_info, featurizer,
-        top_k: 1,
-        compile: [batch_size: 10],
-        defn_options: [compiler: EXLA]
-      )
+        Bumblebee.Vision.image_classification(model_info, featurizer,
+          top_k: 1,
+          compile: [batch_size: 10],
+          defn_options: [compiler: EXLA]
+        )
+      end
     end
 
     @doc """

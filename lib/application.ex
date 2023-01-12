@@ -8,6 +8,7 @@ defmodule Image.Application do
   @untrusted_env_var "VIPS_BLOCK_UNTRUSTED"
 
   use Application
+  require Logger
 
   @doc false
   def start(_type, _args) do
@@ -30,7 +31,14 @@ defmodule Image.Application do
     defp children(true) do
       Enum.reduce(@services, [], fn {{module, function, args}, start?}, acc ->
         if autostart?(function, start?) do
-          [apply(module, function, args) | acc]
+          case apply(module, function, args) do
+            {:error, reason} ->
+              Logger.warning("Cannot autostart #{inspect function}. Error: #{inspect reason}")
+              acc
+
+            server ->
+              [server | acc]
+          end
         else
           acc
         end
