@@ -121,7 +121,6 @@ if Image.bumblebee_configured?() do
     def serving(model, featurizer) do
       with {:ok, model_info} <- Bumblebee.load_model(model),
            {:ok, featurizer} = Bumblebee.load_featurizer(featurizer) do
-
         Bumblebee.Vision.image_classification(model_info, featurizer,
           top_k: 1,
           compile: [batch_size: 10],

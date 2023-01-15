@@ -838,7 +838,7 @@ defmodule Image do
   * `:quality` which influences image compression and
     is a integer in the range `1..100`. The default for
     most image formats is `75`. For PNG files it is the
-    quantization quality with a default of `100`. For
+    compression amount with a defualt  of `60`. For
     HEIF files the default is `50`.
 
   ### Streaming images and :memory images
@@ -856,6 +856,11 @@ defmodule Image do
     to be preferred but validation of this assumption for
     specific use cases is required.
 
+  * `:maximum_compression` is a boolean indicating whether
+    to apply a number of techniques to minimise the file
+    size of the jpeg file at the cose of additional time to
+    save the image.
+
   #### PNG images
 
    * `:color_depth` is an integer describing the number
@@ -867,9 +872,6 @@ defmodule Image do
 
    * `:progressive` which has the same meaning and values
       as for JPEG images.
-
-   * `:compression` is the image compression factor as an
-      image between `0..9`. The default is `6`.
 
   #### TIFF images
 
@@ -909,7 +911,7 @@ defmodule Image do
   def write(image, image_path, options \\ [])
 
   def write(%Vimage{} = image, image_path, options) when is_binary(image_path) do
-    with {:ok, options} <- Options.Write.validate_options(options) do
+    with {:ok, options} <- Options.Write.validate_options(image_path, options) do
       image_path
       |> String.split("[", parts: 2)
       |> write_path(image, options)

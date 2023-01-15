@@ -1,4 +1,4 @@
-if Image.evision_configured? do
+if Image.evision_configured?() do
   defmodule Image.Video do
     @moduledoc """
     Implements functions to extract frames froma video file
@@ -445,7 +445,8 @@ if Image.evision_configured? do
 
     def seek(%VideoCapture{isOpened: true}, [{unit, offset}])
         when unit in [:frame, :millisecond] and offset < 0 do
-      {:error, "Offset for #{inspect(unit)} must be a non-negative integer. Found #{inspect(offset)}"}
+      {:error,
+       "Offset for #{inspect(unit)} must be a non-negative integer. Found #{inspect(offset)}"}
     end
 
     def seek(%VideoCapture{isOpened: true}, [{unit, offset}])

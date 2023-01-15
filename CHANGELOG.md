@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.23.0
+
+This is the changelog for Image version 0.23.0 released on January ____, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancements
+
+* `Image.Options.Write.validate_options/2` now validates options appropriate to each image type in order to make validation more robust.
+
 ## Image 0.22.1
 
 This is the changelog for Image version 0.22.1 released on January 9th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

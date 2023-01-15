@@ -33,7 +33,7 @@ defmodule Image.Application do
         if autostart?(function, start?) do
           case apply(module, function, args) do
             {:error, reason} ->
-              Logger.warning("Cannot autostart #{inspect function}. Error: #{inspect reason}")
+              Logger.warning("Cannot autostart #{inspect(function)}. Error: #{inspect(reason)}")
               acc
 
             server ->

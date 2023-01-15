@@ -1,4 +1,4 @@
-if Image.evision_configured? do
+if Image.evision_configured?() do
   defmodule Image.Options.Video do
     @moduledoc """
     Options and option validation for `Image.Video.stream!/2`.
