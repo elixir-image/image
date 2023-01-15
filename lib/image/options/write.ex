@@ -25,7 +25,7 @@ defmodule Image.Options.Write do
           | {:strip_metadata, boolean()}
           | {:icc_profile, Path.t()}
           | {:background, Image.pixel()}
-          | {:maximise_compression, boolean()}
+          | {:minimize_file_size, boolean()}
         ]
 
   @typedoc "Options for writing a png file with `Image.write/2`."
@@ -34,7 +34,7 @@ defmodule Image.Options.Write do
           | {:strip_metadata, boolean()}
           | {:icc_profile, Path.t()}
           | {:background, Image.pixel()}
-          | {:palette, boolean()}
+          | {:minimize_file_size, boolean()}
         ]
 
   @typedoc "Options for writing a tiff file with `Image.write/2`."
@@ -130,10 +130,7 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
-  # Quantize a png image
-  defp validate_option({:palette, palette?}, options, ".png") when is_boolean(palette?) do
-    {:cont, options}
-  end
+
 
   defp validate_option({:progressive, progressive?}, options, _image_type)
        when is_boolean(progressive?) do
@@ -149,17 +146,35 @@ defmodule Image.Options.Write do
   # Applies only to jpeg save
   # For maximum compression with mozjpeg, a useful set of options is
   # strip, optimize-coding, interlace, optimize-scans, trellis-quant, quant_table=3.
-  defp validate_option({:maximize_compression, maximize?}, options, image_type)
-       when is_boolean(maximize?) and is_jpg(image_type) do
+  defp validate_option({:minimize_file_size, true}, options, image_type) when is_jpg(image_type) do
     options =
       options
-      |> Keyword.delete(:maximize_compression)
+      |> Keyword.delete(:minimize_file_size)
       |> Keyword.put(:strip, true)
       |> Keyword.put(:"optimize-coding", true)
       |> Keyword.put(:interlace, true)
       |> Keyword.put(:"optimize-scans", true)
       |> Keyword.put(:"trellis-quant", true)
       |> Keyword.put(:quant_table, 3)
+
+    {:cont, options}
+  end
+
+  # Quantize a png image
+  defp validate_option({:minimize_file_size, true}, options, image_type) when is_png(image_type) do
+    options =
+      options
+      |> Keyword.delete(:minimize_file_size)
+      |> Keyword.put(:strip, true)
+      |> Keyword.put(:palette, true)
+
+    {:cont, options}
+  end
+
+  defp validate_option({:minimize_file_size, false}, options, image_type) when is_png(image_type) or is_jpg(image_type) do
+    options =
+      options
+      |> Keyword.delete(:minimize_file_size)
 
     {:cont, options}
   end

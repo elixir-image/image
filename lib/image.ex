@@ -856,10 +856,10 @@ defmodule Image do
     to be preferred but validation of this assumption for
     specific use cases is required.
 
-  * `:maximum_compression` is a boolean indicating whether
+  * `:minimize_file_size` is a boolean indicating whether
     to apply a number of techniques to minimise the file
-    size of the jpeg file at the cose of additional time to
-    save the image.
+    size of the jpeg file at the cost of additional time to
+    save the image. All metadata will also be removed.
 
   #### PNG images
 
@@ -873,10 +873,10 @@ defmodule Image do
   * `:progressive` which has the same meaning and values
       as for JPEG images.
 
-  * `:palette` is a boolean which, if true, will create an
-    indexed image with the bit-depth defined byt eh `:color_depth`
-    parameter. This may result is smaller images at the
-    expense of overall image quality.
+  * `:minimize_file_size` is a boolean indicating whether
+    to apply a number of techniques to minimise the file
+    size of the `png` file at the cost of additional time to
+    save the image. All metadata will also be removed.
 
   #### TIFF images
 
