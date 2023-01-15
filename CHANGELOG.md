@@ -8,6 +8,10 @@ This is the changelog for Image version 0.23.0 released on January ____, 2023.  
 
 * `Image.Options.Write.validate_options/2` now validates options appropriate to each image type in order to make validation more robust.
 
+* Adds `:palette` option to `Image.write/2` for PNG images which if `true` will create an indexed image. This may result in a smaller image at the expensive of image quality.
+
+* Adds `:maximise_compression` option to `Image.write/2` for JPEG files which if `true` will apply a range of techniques to minimize the size of the jpeg file at the expense of time to save the image and potentially image quality.
+
 ## Image 0.22.1
 
 This is the changelog for Image version 0.22.1 released on January 9th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

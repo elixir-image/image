@@ -863,15 +863,20 @@ defmodule Image do
 
   #### PNG images
 
-   * `:color_depth` is an integer describing the number
+  * `:color_depth` is an integer describing the number
      of bits for each color. The value can be `1`, `2`,
      `4`, `8` or `16`.  The default is to use the current
      color depth of the image.  For web applications, `8`
      bits would be reasonable for photographic images with
      lower bit depths for monochromatic images or diagrams.
 
-   * `:progressive` which has the same meaning and values
+  * `:progressive` which has the same meaning and values
       as for JPEG images.
+
+  * `:palette` is a boolean which, if true, will create an
+    indexed image with the bit-depth defined byt eh `:color_depth`
+    parameter. This may result is smaller images at the
+    expense of overall image quality.
 
   #### TIFF images
 
