@@ -21,6 +21,7 @@ if Image.evision_configured?() do
 
     alias Vix.Vips.Image, as: Vimage
     alias Evision.VideoCapture
+    alias Evision.Constant
     alias Image.Options
 
     @typedoc "The valid options for Image.Video.seek/2, Image.Video.image_from_video/2"
@@ -427,7 +428,7 @@ if Image.evision_configured?() do
 
     def seek(%VideoCapture{isOpened: true, frame_count: frame_count} = video, [{:frame, frame}])
         when is_frame(frame, frame_count) do
-      case VideoCapture.set(video, Evision.cv_CAP_PROP_POS_FRAMES(), frame) do
+      case VideoCapture.set(video, Constant.cv_CAP_PROP_POS_FRAMES(), frame) do
         true -> {:ok, video}
         false -> {:error, "Could not seek to the frame offset #{inspect(frame)}."}
       end
@@ -437,7 +438,7 @@ if Image.evision_configured?() do
           {:millisecond, millis}
         ])
         when is_valid_millis(millis, frame_count, fps) do
-      case VideoCapture.set(video, Evision.cv_CAP_PROP_POS_MSEC(), millis) do
+      case VideoCapture.set(video, Constant.cv_CAP_PROP_POS_MSEC(), millis) do
         true -> {:ok, video}
         false -> {:error, "Could not seek to the millisecond offset #{inspect(millis)}."}
       end

@@ -19,10 +19,11 @@ defmodule Image do
   alias Vix.Vips.Image, as: Vimage
 
   alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode}
-  alias Image.Options.{Resize, Thumbnail, Compose, Open}
-  alias Image.Options.ChromaKey
+  alias Image.Options.{Resize, Thumbnail, Compose, Open, ChromaKey}
   alias Image.Math
   alias Image.Draw
+
+  alias Evision.Constant
 
   import Image.Color, only: :macros
 
@@ -4473,7 +4474,7 @@ defmodule Image do
              {width, height, bands} <- validate_transferable_image(image),
              %Evision.Mat{} = mat <- Evision.Mat.from_nx(tensor, {height, width, bands}),
              %Evision.Mat{} = mat <- Evision.Mat.last_dim_as_channel(mat) do
-          mat = if convert_to_bgr, do: Evision.cvtColor(mat, Evision.cv_COLOR_RGB2BGR()), else: mat
+          mat = if convert_to_bgr, do: Evision.cvtColor(mat, Constant.cv_COLOR_RGB2BGR()), else: mat
 
           {:ok, mat}
         end
@@ -4506,7 +4507,7 @@ defmodule Image do
       @doc since: "0.9.0"
 
       def from_evision(%Evision.Mat{} = evision_image) do
-        with %Evision.Mat{} = mat <- Evision.cvtColor(evision_image, Evision.cv_COLOR_BGR2RGB()) do
+        with %Evision.Mat{} = mat <- Evision.cvtColor(evision_image, Constant.cv_COLOR_BGR2RGB()) do
           tensor = Evision.Mat.to_nx(mat)
 
           case Nx.shape(tensor) do
