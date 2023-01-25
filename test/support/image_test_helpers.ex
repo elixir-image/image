@@ -1,11 +1,10 @@
 defmodule Image.TestSupport do
   import ExUnit.Assertions
   alias Vix.Vips.Image, as: Vimage
-  alias Vix.Vips.Operation
 
   @images_path Path.join(__DIR__, "images")
   @validate_path Path.join(__DIR__, "validate")
-  @acceptible_similarity 0.97
+  @acceptible_similarity 0.5
 
   def assert_files_equal(expected, result) do
     assert File.read!(expected) == File.read!(result)
@@ -36,8 +35,11 @@ defmodule Image.TestSupport do
     Path.join(@validate_path, name)
   end
 
-  defp compare_images(calculated_image, validate_image) do
-    use Image.Math
+  # From: https://github.com/libvips/libvips/discussions/2232
+  # Calculate a single number for the match between two images, calculate the sum
+  # of squares of differences,
+  def compare_images(calculated_image, validate_image) do
+    alias Image.Math
 
     {calculated_image, validate_image} =
       if Vimage.format(calculated_image) == Vimage.format(validate_image) do
@@ -49,20 +51,13 @@ defmodule Image.TestSupport do
         }
       end
 
-    # creates an Image (via Image.Math.==) that is white when pixels match, black when pixels don't
-    comparison_image = calculated_image == validate_image
+    similarity =
+      calculated_image
+      |> Math.subtract!(validate_image)
+      |> Math.pow!(2)
+      |> Vix.Vips.Operation.avg!()
 
-    # from 0 (black) to 255 (white), what is the average pixel of that comparison_image?
-    average_comparison_pixel = Operation.avg!(comparison_image)
-
-    # what is the percentage similarity?
-    similarity_percentage = average_comparison_pixel / 255
-
-    # is the percentage similarity above our defined threshold?
-    # NOTE: threshold is defined as "highest value for which all tests pass, at time of writing".
-    images_acceptably_similar = similarity_percentage >= @acceptible_similarity
-
-    if images_acceptably_similar do
+    if similarity < @acceptible_similarity do
       assert true
     else
       path =
@@ -70,14 +65,14 @@ defmodule Image.TestSupport do
         |> Image.filename()
         |> String.replace("validate", "did_not_match")
 
+      comparison_image = Vix.Vips.Operation.relational!(calculated_image, validate_image, :VIPS_OPERATION_RELATIONAL_EQUAL)
       Image.write!(comparison_image, path)
 
       flunk(
         "Calculated image did not match pre-existing validation image. " <>
-          "They are #{(similarity_percentage * 100) |> trunc()}% similar. " <>
-          "This is below our threshold of #{@acceptible_similarity * 100}% " <>
-          "See the image at #{path} for the image diff."
-      )
+        "Similarity score was #{inspect similarity}. " <>
+        "See the image at #{path} for the image diff."
+        )
     end
   end
 end

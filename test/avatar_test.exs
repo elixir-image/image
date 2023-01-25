@@ -10,7 +10,6 @@ defmodule Image.Avatar.Test do
     {:ok, %{dir: dir}}
   end
 
-  @tag :full
   test "Create avatar", %{dir: dir} do
     image = image_path("Kip_small.jpg")
     {:ok, kip} = Vimage.new_from_file(image)

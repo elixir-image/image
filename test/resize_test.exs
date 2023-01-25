@@ -2,8 +2,6 @@ defmodule Image.Resize.Test do
   use ExUnit.Case, async: true
   import Image.TestSupport
 
-  @moduletag :full
-
   setup do
     image = image_path("Kamchatka-2019-8754.jpg")
     {:ok, image} = Image.open(image, access: :random)
@@ -51,6 +49,7 @@ defmodule Image.Resize.Test do
     assert_images_equal(resized, validate_path)
   end
 
+  @tag :full
   test "Resize to fill with none crop", %{image: image} do
     validate_path = validate_path("resize/kamchatka_fill_none.png")
 

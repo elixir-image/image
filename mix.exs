@@ -53,7 +53,7 @@ defmodule Image.MixProject do
       # {:vix, path: "../vix"},
 
       # eVision OpenCV bindings
-      {:evision, "~> 0.1.26 or ~> 0.1.26-rc3", optional: true},
+      {:evision, "~> 0.1.26", optional: true},
 
       # For XMP metadata parsing
       {:sweet_xml, "~> 0.7"},
