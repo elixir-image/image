@@ -162,7 +162,8 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
-  defp validate_option({:minimize_file_size, false}, options, image_type) when is_png(image_type) or is_jpg(image_type) do
+  defp validate_option({:minimize_file_size, false}, options, image_type)
+       when is_png(image_type) or is_jpg(image_type) do
     options =
       options
       |> Keyword.delete(:minimize_file_size)

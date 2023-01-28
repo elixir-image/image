@@ -8,6 +8,8 @@ This is the changelog for Image version 0.23.0 released on January 28, 2023.  Fo
 
 * Fix specs for `Image.Options.Write`. Thanks to @jarrodmoldrich. Closes #36.
 
+* Fix spec for `Image.exif/1`. Thanks to @ntodd for the PR. Closes #35.
+
 ### Enhancements
 
 * `Image.Options.Write.validate_options/2` now validates options appropriate to each image type in order to make validation more robust.

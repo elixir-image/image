@@ -65,14 +65,20 @@ defmodule Image.TestSupport do
         |> Image.filename()
         |> String.replace("validate", "did_not_match")
 
-      comparison_image = Vix.Vips.Operation.relational!(calculated_image, validate_image, :VIPS_OPERATION_RELATIONAL_EQUAL)
+      comparison_image =
+        Vix.Vips.Operation.relational!(
+          calculated_image,
+          validate_image,
+          :VIPS_OPERATION_RELATIONAL_EQUAL
+        )
+
       Image.write!(comparison_image, path)
 
       flunk(
         "Calculated image did not match pre-existing validation image. " <>
-        "Similarity score was #{inspect similarity}. " <>
-        "See the image at #{path} for the image diff."
-        )
+          "Similarity score was #{inspect(similarity)}. " <>
+          "See the image at #{path} for the image diff."
+      )
     end
   end
 end
