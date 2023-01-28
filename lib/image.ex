@@ -3215,7 +3215,7 @@ defmodule Image do
       threshold = options.threshold
 
       case Vix.Vips.Operation.find_trim(image, background: background, threshold: threshold) do
-        {:ok, {_left, _top, 0, 0}} ->
+        {:ok, {_left, _top, 0, 0, _other}} ->
           {:error, :uncropped}
 
         {:ok, {left, top, width, height, _other}} ->
