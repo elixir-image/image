@@ -21,9 +21,7 @@ defmodule Image.Options.ChromaKey do
           | map()
 
   @doc """
-  Validate the options for `Image.blur/2`.
-
-  See `t:Image.Options.Resize.resize_options/0`.
+  Validate the options for `Image.chroma_key/2`.
 
   """
   def validate_options(options) when is_list(options) do

@@ -12,6 +12,14 @@ This is the changelog for Image version 0.23.0 released on January 28, 2023.  Fo
 
 ### Enhancements
 
+* Adds `Image.erode/2` which erodes pixels from the edge of an image mask. This can be useful to remove a small amount of colour fringing around the edge of an image.
+
+* Adds `Image.dilate/2` which dilates pixels from the edge of an image mask.
+
+* Adds `Image.trim/2` which trims an image to the bounding box of the non-background area.
+
+* Adds `Image.flatten/1` which flattens an alpha layer out of an image
+
 * `Image.Options.Write.validate_options/2` now validates options appropriate to each image type in order to make validation more robust.
 
 * Adds `:minimize_file_size` option to `Image.write/2` for JPEG and PNG files which if `true` will apply a range of techniques to minimize the size of the image file at the expense of time to save the image and potentially image quality.

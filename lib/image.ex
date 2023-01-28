@@ -1199,10 +1199,10 @@ defmodule Image do
   Automatically determine the chroma key
   color of an image.
 
-  The top left 10x10 pixels are averaged
-  to produce a color sample that can
-  then be used my `Image.chroma_mask/2`
-  and `Image.chroma_key/2`.
+  The top left 10x10 pixels of the flattened
+  image are averaged to produce a color sample
+  that can then be used by `Image.chroma_mask/2`,
+  `Image.chroma_key/2` and `Image.trim/2`.
 
   ### Argument
 
@@ -1223,10 +1223,19 @@ defmodule Image do
 
   @spec chroma_color(image :: Vimage.t()) :: Color.t()
   def chroma_color(%Vimage{} = image) do
-    with {:ok, cropped} <- Image.crop(image, 0, 0, 10, 10) do
+    with {:ok, flattened} <- maybe_flatten(image),
+         {:ok, cropped} <- Image.crop(flattened, 0, 0, 10, 10) do
       for i <- band_range(cropped) do
         Operation.avg!(image[i]) |> round()
       end
+    end
+  end
+
+  defp maybe_flatten(image) do
+    if has_alpha?(image) do
+      flatten(image)
+    else
+      {:ok, image}
     end
   end
 
@@ -3148,6 +3157,353 @@ defmodule Image do
   def crop!(%Vimage{} = image, left, top, width, height) do
     case crop(image, left, top, width, height) do
       {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Trims an image to the bounding box of the non-background
+  area.
+
+  Any alpha is flattened out, then the image is median-filtered,
+  all the row and column sums of the absolute difference from
+  background are calculated in a single pass.
+
+  Then the first row or column in each of the four directions
+  where the sum is greater than threshold gives the bounding
+  box that is used to define the crop area.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:background` is the color to be considered
+    the background color. The default is automatically
+    detected by averaging the pixels at the top
+    left of the image.
+
+  * `:threshold` is the integer threshold (or color
+    similarity) that is applied when determining the
+    bounds of the non-background area. The default is
+    `10`. The default value means only a small color
+    background color range is considered.  Increasing
+    the threshold value maybe required.
+
+  ### Returns
+
+  * {:ok, `cropped_image`} which is the image
+    cropped to the bounding box of the non-background
+    area.
+
+  * `{:error, reason}`.  Reason may be
+    `:uncropped` which means the image was
+    considered to be only the background color.
+
+  """
+  @doc since: "0.23.0"
+
+  @spec trim(image :: Vimage.t(), options :: Options.Trim.trim_options()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def trim(%Vimage{} = image, options \\ []) do
+    with {:ok, options} <- Options.Trim.validate_options(options) do
+      background = maybe_calculate_color(image, options.background)
+      threshold = options.threshold
+
+      case Vix.Vips.Operation.find_trim(image, background: background, threshold: threshold) do
+        {:ok, {_left, _top, 0, 0}} ->
+          {:error, :uncropped}
+
+        {:ok, {left, top, width, height, _other}} ->
+          Image.crop(image, left, top, width, height)
+
+        error ->
+          error
+      end
+    end
+  end
+
+  @doc """
+  Trims an image to the bounding box of the non-background
+  area.
+
+  Any alpha is flattened out, then the image is median-filtered,
+  all the row and column sums of the absolute difference from
+  background are calculated in a single pass.
+
+  Then the first row or column in each of the four directions
+  where the sum is greater than threshold gives the bounding
+  box that is used to define the crop area.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:background` is the color to be considered
+    the background color. The default is automatically
+    detected by averaging the pixels at the top
+    left of the image.
+
+  * `:threshold` is the integer threshold (or color
+    similarity) that is applied when determining the
+    bounds of the non-background area. The default is
+    `10`. The default value means only a small color
+    background color range is considered.  Increasing
+    the threshold value maybe required.
+
+  ### Returns
+
+  * `cropped_image` which is the image
+    cropped to the bounding box of the non-background
+    area or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.23.0"
+
+  @spec trim!(image :: Vimage.t(), options :: Options.Trim.trim_options()) ::
+          Vimage.t() | no_return()
+
+  def trim!(%Vimage{} = image, options \\ []) do
+    case trim(image, options) do
+      {:ok, trimmed} -> trimmed
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Flatten an alpha layer out of an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, flattened_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.23.0"
+
+  @spec flatten(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def flatten(%Vimage{} = image) do
+    Vix.Vips.Operation.flatten(image)
+  end
+
+  @doc """
+  Dilate an image mask, adding a pixels to the
+  edge of the mask.
+
+  Mask is used in the sense of an image
+  on a transparent background. The results on
+  other image types is undefined.
+
+  The added pixels are the same color as the edge
+  pixels in the mask.
+
+  ### Note
+
+  Dilate works for any non-complex image type, with any
+  number of bands. The input is expanded by copying
+  edge pixels before performing the operation so that
+  the output image has the same size as the input.
+
+  Edge pixels in the output image are therefore only
+  approximate.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `pixels` is a positive integer number of
+    pixels to dilate. The default is `1`.
+
+  ### Returns
+
+  * `{:ok, dilated_mask}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.23.0"
+
+  @spec dilate(image :: Vimage.t(), pixels :: pos_integer) ::
+          {:ok, Vimage.t()} | {:error, error_message}
+  def dilate(image, pixels \\ 1) when is_integer(pixels) and pixels > 0 do
+    Enum.reduce_while(1..pixels, {:ok, image}, fn
+      _pixel, {:ok, image} ->
+        {:cont, Vix.Vips.Operation.rank(image, 3, 3, 8)}
+
+      _pixel, {:error, reason} ->
+        {:halt, {:error, reason}}
+    end)
+  end
+
+  @doc """
+  Dilate an image mask, adding a pixels to the
+  edge of the mask or raising an exception.
+
+  Mask is used in the sense of an image
+  on a transparent background. The results on
+  other image types is undefined.
+
+  The added pixels are the same color as the edge
+  pixels in the mask.
+
+  ### Note
+
+  Dilate works for any non-complex image type, with any
+  number of bands. The input is expanded by copying
+  edge pixels before performing the operation so that
+  the output image has the same size as the input.
+
+  Edge pixels in the output image are therefore only
+  approximate.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `pixels` is a positive integer number of
+    pixels to dilate. The default is `1`.
+
+  ### Returns
+
+  * `dilated_mask` or
+
+  * raises an exception
+
+  """
+  @doc since: "0.23.0"
+
+  @spec dilate!(image :: Vimage.t(), pixels :: pos_integer) :: Vimage.t() | no_return()
+  def dilate!(%Vimage{} = image, pixels \\ 1) when is_integer(pixels) and pixels > 0 do
+    case dilate(image, pixels) do
+      {:ok, dilated} -> dilated
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Erode an image mask, removing pixels from the
+  edge of the mask.
+
+  Mask is used in the sense of an image
+  on a transparent background. The results on
+  other image types is undefined.
+
+  ### Note
+
+  Erode works for any non-complex image type, with any
+  number of bands. The input is expanded by copying
+  edge pixels before performing the operation so that
+  the output image has the same size as the input.
+
+  Edge pixels in the output image are therefore only
+  approximate.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `pixels` is a positive integer number of
+    pixels to dilate. The default is `1`.
+
+  ### Returns
+
+  * `{:ok, eroded_mask}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.23.0"
+
+  @spec erode(image :: Vimage.t(), pixels :: pos_integer) ::
+          {:ok, Vimage.t()} | {:error, error_message}
+  def erode(image, pixels \\ 1) when is_integer(pixels) and pixels > 0 do
+    Enum.reduce_while(1..pixels, {:ok, image}, fn
+      _pixel, {:ok, image} ->
+        {:cont, Vix.Vips.Operation.rank(image, 3, 3, 0)}
+
+      _pixel, {:error, reason} ->
+        {:halt, {:error, reason}}
+    end)
+  end
+
+  @doc """
+  Erode an image mask, removing pixels from the
+  edge of the mask or raising an exception.
+
+  Mask is used in the sense of an image
+  on a transparent background. The results on
+  other image types is undefined.
+
+  ### Note
+
+  Erode works for any non-complex image type, with any
+  number of bands. The input is expanded by copying
+  edge pixels before performing the operation so that
+  the output image has the same size as the input.
+
+  Edge pixels in the output image are therefore only
+  approximate.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `pixels` is a positive integer number of
+    pixels to dilate. The default is `1`.
+
+  ### Returns
+
+  * `eroded_mask` or
+
+  * raises an exception
+
+  """
+  @doc since: "0.23.0"
+
+  @spec erode!(image :: Vimage.t(), pixels :: pos_integer) :: Vimage.t() | no_return()
+  def erode!(%Vimage{} = image, pixels \\ 1) when is_integer(pixels) and pixels > 0 do
+    case erode(image, pixels) do
+      {:ok, eroded} -> eroded
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Flatten an alpha layer out of an image or
+  raise an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, flattened_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.23.0"
+
+  @spec flatten!(image :: Vimage.t()) :: Vimage.t() | no_return()
+  def flatten!(%Vimage{} = image) do
+    case flatten(image) do
+      {:ok, flattened} -> flattened
       {:error, reason} -> raise Image.Error, reason
     end
   end
