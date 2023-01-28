@@ -3162,6 +3162,85 @@ defmodule Image do
   end
 
   @doc """
+  Normalize an image by expanding the luninance
+  of an image to cover the full dynamic range.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, normalized_image}` or
+
+  * `{:error, reason}`.
+
+  """
+  @doc since: "0.23.0"
+
+  @min_luminance 1.0
+  @max_luminance 99.0
+
+  @spec normalize(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def normalize(%Vimage{} = image) do
+    with {:ok, lab_image} <- to_colorspace(image, :lab) do
+      luminance = lab_image[0]
+      min = Operation.percent!(luminance, @min_luminance)
+      max = Operation.percent!(luminance, @max_luminance)
+
+      image
+      |> normalize_if_possible(lab_image, luminance, min, max)
+      |> wrap(:ok)
+    end
+  end
+
+  defp normalize_if_possible(image, lab_image, luminance, min, max) when abs(max - min) > 1 do
+    original_interpretation = interpretation(image)
+    chroma = Operation.extract_band!(lab_image, 1, n: 2)
+    f = 100.0 / (max - min)
+    a = -(min * f)
+
+    luminance
+    |> Operation.linear!([f], [a])
+    |> bandjoin!(chroma)
+    |> to_colorspace!(original_interpretation)
+    |> add_back_alpha(image, has_alpha?(image))
+  end
+
+  defp normalize_if_possible(image, _lab_image, _luminance, _min, _max) do
+    image
+  end
+
+  defp add_back_alpha(normalized, image, true), do: bandjoin!(normalized, image[-1])
+  defp add_back_alpha(normalized, _image, false), do: normalized
+
+  @doc """
+  Normalize an image by expanding the luninance
+  of an image to cover the full dynamic range.
+  Raises an exception on error.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `normalized_image` or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.23.0"
+
+  @spec normalize!(image :: Vimage.t()) :: Vimage.t() | no_return()
+  def normalize!(%Vimage{} = image) do
+    case normalize(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Trims an image to the bounding box of the non-background
   area.
 
