@@ -3302,6 +3302,31 @@ defmodule Image do
   end
 
   @doc """
+  Flatten an alpha layer out of an image
+  or raises an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `flattened_image` or
+
+  * raises an exception
+
+  """
+  @doc since: "0.23.0"
+
+  @spec flatten!(image :: Vimage.t()) :: Vimage.t() | no_return()
+  def flatten!(%Vimage{} = image) do
+    case flatten(image) do
+      {:ok, flattened} -> flattened
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Dilate an image mask, adding a pixels to the
   edge of the mask.
 
@@ -3479,31 +3504,6 @@ defmodule Image do
   def erode!(%Vimage{} = image, pixels \\ 1) when is_integer(pixels) and pixels > 0 do
     case erode(image, pixels) do
       {:ok, eroded} -> eroded
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  @doc """
-  Flatten an alpha layer out of an image or
-  raise an exception.
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`.
-
-  ### Returns
-
-  * `{:ok, flattened_image}` or
-
-  * `{:error, reason}`
-
-  """
-  @doc since: "0.23.0"
-
-  @spec flatten!(image :: Vimage.t()) :: Vimage.t() | no_return()
-  def flatten!(%Vimage{} = image) do
-    case flatten(image) do
-      {:ok, flattened} -> flattened
       {:error, reason} -> raise Image.Error, reason
     end
   end
