@@ -2367,8 +2367,10 @@ defmodule Image do
   * `{:ok, exif_map}` where `exif_map` is a map
     of selected EXIF data.
 
+  * `{:error, reason}`
+
   """
-  @spec exif(Vimage.t()) :: {:ok, map()}
+  @spec exif(Vimage.t()) :: {:ok, map()} | {:error, error_message()}
   def exif(%Vimage{} = image) do
     with {:ok, exif_blob} <- Vimage.header_value(image, "exif-data"),
          <<"Exif"::binary, 0::16, exif::binary>> <- exif_blob do
