@@ -12,52 +12,45 @@ defmodule Image.Options.Write do
 
   @typedoc "Options for writing an image to a file with `Image.write/2`."
   @type image_write_options :: [
-          {:suffix, String.t()}
-          | jpeg_write_options()
-          | png_write_options()
-          | tiff_write_options()
-          | webp_write_options()
+          {:quality, 1..100}
+          | {:background, Image.pixel()}
+          | stream_write_option()
+          | jpeg_write_option()
+          | png_write_option()
+          | tiff_write_option()
+          | webp_write_option()
+          | heif_write_option()
         ]
+
+  @typedoc "Options for writing an image stream"
+  @type stream_write_option ::
+          {:buffer_size, pos_integer() | :unbuffered}
+          | {:suffix, String.t()}
 
   @typedoc "Options for writing a jpeg file with `Image.write/2`."
-  @type jpeg_write_options :: [
-          {:quality, 1..100}
-          | {:strip_metadata, boolean()}
+  @type jpeg_write_option ::
+          {:strip_metadata, boolean()}
           | {:icc_profile, Path.t()}
-          | {:background, Image.pixel()}
           | {:minimize_file_size, boolean()}
-        ]
 
   @typedoc "Options for writing a png file with `Image.write/2`."
-  @type png_write_options :: [
-          {:quality, 1..100}
-          | {:strip_metadata, boolean()}
+  @type png_write_option ::
+          {:strip_metadata, boolean()}
           | {:icc_profile, Path.t()}
-          | {:background, Image.pixel()}
           | {:minimize_file_size, boolean()}
-        ]
 
   @typedoc "Options for writing a tiff file with `Image.write/2`."
-  @type tiff_write_options :: [
-          {:quality, 1..100}
-          | {:icc_profile, Path.t()}
-          | {:background, Image.pixel()}
-        ]
+  @type tiff_write_option ::
+          {:icc_profile, Path.t()}
 
   @typedoc "Options for writing a heif file with `Image.write/2`."
-  @type heif_write_options :: [
-          {:quality, 1..100}
-          | {:background, Image.pixel()}
-          | {:compression, heif_compression()}
-        ]
+  @type heif_write_option ::
+          {:compression, heif_compression()}
 
   @typedoc "Options for writing a webp file with `Image.write/2`."
-  @type webp_write_options :: [
-          {:quality, 1..100}
-          | {:icc_profile, Path.t()}
-          | {:background, Image.pixel()}
+  @type webp_write_option ::
+          {:icc_profile, Path.t()}
           | {:strip_metadata, boolean()}
-        ]
 
   @typedoc "Allowable compression types for heif images."
   @type heif_compression :: :hevc | :avc | :jpeg | :av1
@@ -129,8 +122,6 @@ defmodule Image.Options.Write do
 
     {:cont, options}
   end
-
-
 
   defp validate_option({:progressive, progressive?}, options, _image_type)
        when is_boolean(progressive?) do
