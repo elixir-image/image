@@ -57,6 +57,10 @@ defmodule Image do
   # to be square
   @square_when_ratio_less_than 0.0
 
+  # The percent from absolute black and
+  # absolute white in autolevel/1
+  @level_trim_percent 0.3
+
   @typedoc """
   The valid sources of image data when opening an
   image.
@@ -3284,6 +3288,107 @@ defmodule Image do
   end
 
   @doc """
+  Scales each band of an image to fit the full
+  dynamic range. Unlike `Image.normalize/1`, each
+  band is scaled separately.
+
+  The function finds the image histogram, searches for
+  thresholds which will select #{inspect @level_trim_percent}% and
+  #{inspect 1 - @level_trim_percent}% of pixels
+  in each image band, then rescales the image so that those pixel
+  values become `0` and `255`.
+
+  The scaling is performed in the `:srgb` color space
+  but the image is converted back to its original
+  color space after levelling.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, auto_levelled_image}` or
+
+  * `{:error, reason}`.
+
+  """
+  # Implemented based upon https://stackoverflow.com/questions/59666277/remove-color-cast-using-libvips
+
+  @doc subject: "Operation", since: "0.23.0"
+
+  @spec autolevel(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def autolevel(%Vimage{} = image) do
+    use Image.Math
+
+    with_colorspace(image, :srgb, fn image ->
+      bands =
+        image
+        |> Operation.hist_find!()
+        |> split_bands()
+
+      low = Enum.map(bands, &level_percent(&1, @level_trim_percent))
+      high = Enum.map(bands, &level_percent(&1, 100 - @level_trim_percent))
+      scale = for {h, l} <- Enum.zip(high, low), do: 255.0 / (h - l)
+      scaled = (image - low) * scale
+
+      image = Operation.cast!(scaled, :VIPS_FORMAT_UCHAR)
+      {:ok, image}
+    end)
+  end
+
+  @doc """
+  Scales each band of an image to fit the full
+  dynamic range. Unlike `Image.normalize/1`, each
+  band is scaled separately. Raises an exception
+  on error.
+
+  The function finds the image histogram, searches for
+  thresholds which will select #{inspect @level_trim_percent}% and
+  #{inspect 1 - @level_trim_percent}% of pixels
+  in each image band, then rescales the image so that those pixel
+  values become `0` and `255`.
+
+  The scaling is performed in the `:srgb` color space
+  but the image is converted back to its original
+  color space after levelling.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `auto_levelled_image` or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Operation", since: "0.23.0"
+
+  @spec autolevel!(Vimage.t()) :: Vimage.t() | no_return()
+  def autolevel!(%Vimage{} = image) do
+    case autolevel(image) do
+      {:ok, leveled} -> leveled
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  defp level_percent(hist, percentage) do
+    use Image.Math
+
+    norm =
+      hist
+      |> Operation.hist_cum!()
+      |> Operation.hist_norm!()
+
+    {:ok, {_c, r, _other}} =
+      Operation.profile(norm > width(norm) * percentage / 100)
+
+    Operation.avg!(r)
+  end
+
+  @doc """
   Trims an image to the bounding box of the non-background
   area.
 
@@ -5455,6 +5560,17 @@ defmodule Image do
     case fun.(without_alpha) do
       {:ok, image} -> {:ok, bandjoin!(image, alpha)}
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def with_colorspace(image, colorspace, fun) do
+    original_colorspace = interpretation(image)
+
+    with {:ok, converted} <- to_colorspace(image, colorspace) do
+      case fun.(converted) do
+        {:ok, image} -> to_colorspace(image, original_colorspace)
+        other -> other
+      end
     end
   end
 

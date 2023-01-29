@@ -11,7 +11,7 @@ defmodule Image.Normalize.Test do
     image = Image.open!(image_path, access: :random)
     {:ok, normalized} = Image.normalize(image)
 
-    {:ok, _image} = Image.write(normalized, validate_path)
+    # {:ok, _image} = Image.write(normalized, validate_path)
     assert_images_equal(normalized, validate_path)
   end
 end

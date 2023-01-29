@@ -4,27 +4,29 @@ defmodule Image.TestSupport do
 
   @images_path Path.join(__DIR__, "images")
   @validate_path Path.join(__DIR__, "validate")
-  @acceptible_similarity 1.1
+  @acceptable_similarity 1.1
 
   def assert_files_equal(expected, result) do
     assert File.read!(expected) == File.read!(result)
   end
 
-  def assert_images_equal(%Vimage{} = calculated_image, validate) when is_binary(validate) do
+  def assert_images_equal(calculated_image, validate, similarity \\ @acceptable_similarity)
+
+  def assert_images_equal(%Vimage{} = calculated_image, validate, similarity) when is_binary(validate) do
     validate_image = Image.open!(validate, access: :random)
-    compare_images(calculated_image, validate_image)
+    compare_images(calculated_image, validate_image, similarity)
   end
 
-  def assert_images_equal(calculated, validate)
+  def assert_images_equal(calculated, validate, similarity)
       when is_binary(calculated) and is_binary(validate) do
     validate_image = Image.open!(validate, access: :random)
     calculated_image = Image.open!(calculated, access: :random)
 
-    compare_images(calculated_image, validate_image)
+    compare_images(calculated_image, validate_image, similarity)
   end
 
-  def assert_images_equal(%Vimage{} = calculated, %Vimage{} = validate) do
-    compare_images(calculated, validate)
+  def assert_images_equal(%Vimage{} = calculated, %Vimage{} = validate, similarity) do
+    compare_images(calculated, validate, similarity)
   end
 
   def image_path(name) do
@@ -38,8 +40,9 @@ defmodule Image.TestSupport do
   # From: https://github.com/libvips/libvips/discussions/2232
   # Calculate a single number for the match between two images, calculate the sum
   # of squares of differences,
-  def compare_images(calculated_image, validate_image) do
+  def compare_images(calculated_image, validate_image, acceptable_similarity) do
     alias Image.Math
+    validate_path = Image.filename(validate_image)
 
     {calculated_image, validate_image} =
       if Vimage.format(calculated_image) == Vimage.format(validate_image) do
@@ -57,13 +60,10 @@ defmodule Image.TestSupport do
       |> Math.pow!(2)
       |> Vix.Vips.Operation.avg!()
 
-    if similarity < @acceptible_similarity do
+    if similarity < acceptable_similarity do
       assert true
     else
-      path =
-        validate_image
-        |> Image.filename()
-        |> String.replace("validate", "did_not_match")
+      path = String.replace(validate_path, "validate", "did_not_match")
 
       comparison_image =
         Vix.Vips.Operation.relational!(
