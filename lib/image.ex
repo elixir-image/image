@@ -5447,7 +5447,7 @@ defmodule Image do
 
   """
   @spec without_alpha_band(Vimage.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})) ::
-    {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error_message}
 
   def without_alpha_band(%Vimage{} = image, fun) when is_function(fun, 1) do
     {without_alpha, alpha} = split_alpha(image)

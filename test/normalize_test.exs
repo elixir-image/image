@@ -14,5 +14,4 @@ defmodule Image.Normalize.Test do
     {:ok, _image} = Image.write(normalized, validate_path)
     assert_images_equal(normalized, validate_path)
   end
-
 end
