@@ -14,7 +14,7 @@ This is the changelog for Image version 0.23.0 released on January 29th, 2023.  
 
 * Adds `Image.normalize/1` which normalizes an image by expanding the luminance of an image to cover the full dynamic range.
 
-* Adds `Image.autolevel/1` which cales each band of an image to fit the full dynamic range. Unlike `Image.normalize/1`, each band is scaled separately.
+* Adds `Image.autolevel/1` which scales each band of an image to fit the full dynamic range. Unlike `Image.normalize/1`, each band is scaled separately.
 
 * Adds `Image.erode/2` which erodes pixels from the edge of an image mask. This can be useful to remove a small amount of colour fringing around the edge of an image.
 
