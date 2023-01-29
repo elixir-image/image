@@ -1,4 +1,10 @@
 defmodule Image.Xmp do
+  @moduledoc """
+  Functions to extract and interpret image XMP
+  data.
+
+  """
+
   import SweetXml
 
   def extract_xmp(xmp) do

@@ -140,6 +140,7 @@ defmodule Image.MixProject do
       ],
       formatters: ["html"],
       groups_for_modules: groups_for_modules(),
+      groups_for_docs: groups_for_docs(),
       skip_undefined_reference_warnings_on: ["changelog", "CHANGELOG.md"]
     ]
   end
@@ -159,6 +160,25 @@ defmodule Image.MixProject do
       Kino: [Image.Kino],
       Options: ~r/Image.Options.*/,
       Enums: @enum_modules
+    ]
+  end
+
+  defp groups_for_docs do
+    [
+      "Files and streams": & &1[:subject] == "Load and save",
+      "Operations": & &1[:subject] == "Operation",
+      "Resize": & &1[:subject] == "Resize",
+      "Transforms": & &1[:subject] == "Generator",
+      "Split & Join": & &1[:subject] == "Split and join",
+      "Color": & &1[:subject] == "Color",
+      "Information": & &1[:subject] == "Image info",
+      "Masks": & &1[:subject] == "Mask",
+      "Metadata": & &1[:subject] == "Metadata",
+      "Nx & Evision": & &1[:subject] == "Matrix",
+      "Preview": & &1[:subject] == "Display",
+      "Kino": & &1[:subject] == "Kino",
+      "Guards": & &1[:subject] == "Guard",
+      "libvips Configuration": & &1[:subject] == "Configuration"
     ]
   end
 

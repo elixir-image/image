@@ -12,7 +12,7 @@ This is the changelog for Image version 0.23.0 released on January 28, 2023.  Fo
 
 ### Enhancements
 
-* Addsa `Image.normalize/1` which normalizes an image by expanding the luminance of an image to cover the full dynamic range.
+* Adds `Image.normalize/1` which normalizes an image by expanding the luminance of an image to cover the full dynamic range.
 
 * Adds `Image.erode/2` which erodes pixels from the edge of an image mask. This can be useful to remove a small amount of colour fringing around the edge of an image.
 

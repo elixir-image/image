@@ -1,4 +1,10 @@
 defmodule Image.CombineMode do
+  @moduledoc """
+  Functions to define and validate the combine
+  modes that can be applied when composing images.
+
+  """
+
   @type t :: :VIPS_COMBINE_MODE_SET | :VIPS_COMBINE_MODE_ADD | :VIPS_COMBINE_MODE_LAST
 
   def validate(mode)

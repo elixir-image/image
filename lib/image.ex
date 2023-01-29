@@ -229,6 +229,7 @@ defmodule Image do
   of the image.
 
   """
+  @doc subject: "Guard"
   defguard is_box(left, top, width, height)
            when is_integer(left) and is_integer(top) and is_integer(width) and is_integer(height) and
                   width > 0 and height > 0
@@ -238,6 +239,7 @@ defmodule Image do
   as a size (as in size of a crop or mask)
 
   """
+  @doc subject: "Guard"
   defguard is_size(size) when is_integer(size) and size > 0
 
   @doc """
@@ -245,18 +247,21 @@ defmodule Image do
   as an image pixel.
 
   """
+  @doc subject: "Guard"
   defguard is_pixel(value) when is_number(value) or is_list(value)
 
   @doc """
   Guards whether a value is a percentage as representeed
   by a float between `-1.0` and `1.0`.
   """
+  @doc subject: "Guard"
   defguard is_percent(value) when is_float(value) and value >= -1.0 and value <= 1.0
 
   @doc """
   Guards whether a value is a positive percentage as representeed
   by a float greater than `0.0` and less than or equal to `1.0`.
   """
+  @doc subject: "Guard"
   defguard is_positive_percent(value) when is_float(value) and value > 0.0 and value <= 1.0
 
   @doc """
@@ -318,6 +323,7 @@ defmodule Image do
         iex> {:ok, _image} = Image.new(100, 100, color: [0, 255, 0, 1], bands: 4)
 
   """
+  @doc subject: "Load and save"
 
   @spec new(width :: pos_integer(), height :: pos_integer()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -336,6 +342,8 @@ defmodule Image do
 
     new(width, height, options)
   end
+
+  @doc subject: "Load and save"
 
   @spec new(width :: pos_integer(), height :: pos_integer(), options :: Options.New.t()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -418,7 +426,7 @@ defmodule Image do
         iex> {:ok, _image} = Image.new(100, 100, color: [0, 255, 0, 1], bands: 4)
 
   """
-
+  @doc subject: "Load and save"
   @spec new!(width :: pos_integer(), height :: pos_integer()) ::
           Vimage.t() | no_return()
 
@@ -439,6 +447,8 @@ defmodule Image do
       {:error, reason} -> raise Image.Error, reason
     end
   end
+
+  @doc subject: "Load and save"
 
   @spec new!(width :: pos_integer(), height :: pos_integer(), options :: Options.New.t()) ::
           Vimage.t() | no_return()
@@ -494,7 +504,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc since: "0.1.13"
+  @doc subject: "Load and save", since: "0.1.13"
 
   @spec new(image :: %Vimage{}) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -546,7 +556,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc since: "0.1.13"
+  @doc subject: "Load and save", since: "0.1.13"
 
   def new!(%Vimage{} = image) do
     case new(image, []) do
@@ -640,6 +650,7 @@ defmodule Image do
   * `{:error, message}`
 
   """
+  @doc subject: "Load and save"
 
   @spec open(path_or_stream_or_binary :: image_data(), options :: Open.image_open_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -759,7 +770,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc since: "0.7.0"
+  @doc subject: "Load and save", since: "0.7.0"
 
   @spec from_binary(binary :: binary(), options :: Open.image_open_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -790,6 +801,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @doc subject: "Load and save"
+
   @spec open!(image_path :: Path.t(), options :: Options.Open.image_open_options()) ::
           Vimage.t() | no_return()
 
@@ -914,6 +927,7 @@ defmodule Image do
             {:ok, Vimage.t()} | {:ok, binary()} | {:error, error_message()}
   end
 
+  @doc subject: "Load and save"
   def write(image, image_path, options \\ [])
 
   def write(%Vimage{} = image, image_path, options) when is_binary(image_path) do
@@ -1024,6 +1038,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @doc subject: "Load and save"
+
   @spec write!(
           image :: Vimage.t(),
           image_path_or_stream :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t(),
@@ -1081,6 +1097,8 @@ defmodule Image do
   `Image.stream!/2`.
 
   """
+  @doc subject: "Load and save"
+
   @spec stream!(Vimage.t(), options :: Options.Write.image_write_options()) :: Enumerable.t()
   def stream!(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
@@ -1166,7 +1184,7 @@ defmodule Image do
       (condition_image / 255) * if_image + (1 - condition_image / 255) *`else_image`
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Operation", since: "0.13.0"
 
   @spec if_then_else(
           condition_image :: Vimage.t(),
@@ -1219,7 +1237,7 @@ defmodule Image do
   #   this will be an RGB triple eg. [10, 10, 240]
   #   key_colour = [i.avg() for i in foreground.crop(0, 0, 10, 10).bandsplit()]
 
-  @doc since: "0.13.0"
+  @doc subject: "Operation", since: "0.13.0"
 
   @spec chroma_color(image :: Vimage.t()) :: Color.t()
   def chroma_color(%Vimage{} = image) do
@@ -1304,7 +1322,7 @@ defmodule Image do
   #    threshold = 20
   #    mask = ((foreground - key_colour) ** 2).bandmean() > (3 * threshold ** 2)
 
-  @doc since: "0.13.0"
+  @doc subject: "Operation", since: "0.13.0"
 
   @spec chroma_mask(image :: Vimage.t(), options :: ChromaKey.chroma_key_options() | map()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -1393,7 +1411,7 @@ defmodule Image do
      representing a CSS color name.
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Operation", since: "0.13.0"
 
   @spec chroma_mask!(image :: Vimage.t(), options :: ChromaKey.chroma_key_options()) ::
           Vimage.t() | no_return()
@@ -1457,7 +1475,7 @@ defmodule Image do
      representing a CSS color name.
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Operation", since: "0.13.0"
 
   @spec chroma_key(image :: Vimage.t(), options :: ChromaKey.chroma_key_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -1523,7 +1541,7 @@ defmodule Image do
      representing a CSS color name.
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Operation", since: "0.13.0"
 
   @spec chroma_key!(image :: Vimage.t(), options :: ChromaKey.chroma_key_options()) ::
           Vimage.t() | no_return()
@@ -1564,7 +1582,7 @@ defmodule Image do
   * `{:error reason}`
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Operation", since: "0.13.0"
 
   @spec blur(image :: Vimage.t(), options :: Options.Blur.blur_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -1604,7 +1622,7 @@ defmodule Image do
   * raises an exception.
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Operation", since: "0.13.0"
 
   @spec blur!(image :: Vimage.t(), options :: Options.Blur.blur_options()) ::
           Vimage.t() | no_return()
@@ -1652,7 +1670,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Operation", since: "0.13.0"
 
   @spec feather(image :: Vimage.t(), options :: Options.Blur.blur_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -1716,7 +1734,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Operation", since: "0.13.0"
 
   @spec feather!(image :: Vimage.t(), options :: Options.Blur.blur_options()) ::
           Vimage.t() | no_return()
@@ -1744,7 +1762,7 @@ defmodule Image do
     alpha band detected.
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Operation", since: "0.13.0"
 
   @spec split_alpha(image :: Vimage.t()) :: {bands :: Vimage.t(), alpha :: Vimage.t() | nil}
   def split_alpha(%Vimage{} = image) do
@@ -1872,6 +1890,8 @@ defmodule Image do
       ..> ])
 
   """
+  @doc subject: "Operation"
+
   @spec compose(base_image :: Vimage.t(), overlay_image :: Vimage.t(), options :: Keyword.t()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
@@ -2059,6 +2079,8 @@ defmodule Image do
       ..> ])
 
   """
+  @doc subject: "Operation"
+
   @spec compose!(base_image :: Vimage.t(), overlay_image :: Vimage.t(), options :: Keyword.t()) ::
           Vimage.t() | no_return()
 
@@ -2146,7 +2168,7 @@ defmodule Image do
     image.
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Generator", since: "0.13.0"
 
   @spec meme(image :: Vimage.t(), headline :: String.t(), options :: Options.Meme.meme_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -2235,7 +2257,7 @@ defmodule Image do
     image.
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Generator", since: "0.13.0"
 
   @spec meme!(image :: Vimage.t(), headline :: String.t(), options :: Options.Meme.meme_options()) ::
           Vimage.t() | no_return()
@@ -2314,9 +2336,8 @@ defmodule Image do
   defp transform(text, :upcase), do: String.upcase(text)
   defp transform(text, :downcase), do: String.downcase(text)
 
-  defp bandjoin!(a, b) do
-    Operation.bandjoin!([a, b])
-  end
+  defp bandjoin!(a, nil), do: a
+  defp bandjoin!(a, b), do: Operation.bandjoin!([a, b])
 
   @headline_distance_from_top 0.03
   @text_distance_from_bottom 0.03
@@ -2348,6 +2369,8 @@ defmodule Image do
     created from a memory buffer.
 
   """
+  @doc subject: "Image info"
+
   @spec filename(image :: Vimage.t()) :: Path.t() | nil
   def filename(%Vimage{} = image) do
     Vix.Vips.Image.filename(image)
@@ -2379,6 +2402,8 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @doc subject: "Metadata"
+
   @spec exif(Vimage.t()) :: {:ok, map()} | {:error, error_message()}
   def exif(%Vimage{} = image) do
     with {:ok, exif_blob} <- Vimage.header_value(image, "exif-data"),
@@ -2408,6 +2433,8 @@ defmodule Image do
     of selected XMP data.
 
   """
+  @doc subject: "Metadata"
+
   @spec xmp(Vimage.t()) :: {:ok, map()}
   def xmp(%Vimage{} = image) do
     with {:ok, xmp_blob} <- Vimage.header_value_as_string(image, "xmp-data"),
@@ -2431,6 +2458,8 @@ defmodule Image do
   * The image width as an integer.
 
   """
+  @doc subject: "Image info"
+
   @spec width(image :: Vimage.t()) :: pos_integer()
   def width(%Vimage{} = image) do
     Vimage.width(image)
@@ -2448,6 +2477,8 @@ defmodule Image do
   * The image height as an integer.
 
   """
+  @doc subject: "Image info"
+
   @spec height(image :: Vimage.t()) :: pos_integer()
   def height(%Vimage{} = image) do
     Vimage.height(image)
@@ -2472,6 +2503,8 @@ defmodule Image do
   * An integer number of bands in the image.
 
   """
+  @doc subject: "Image info"
+
   @spec bands(image :: Vimage.t()) :: pos_integer()
   def bands(%Vimage{} = image) do
     Vimage.bands(image)
@@ -2490,7 +2523,7 @@ defmodule Image do
     `{width, height, bands}`
 
   """
-  @doc since: "0.9.0"
+  @doc subject: "Image info", since: "0.9.0"
 
   @spec shape(image :: Vimage.t()) ::
           {width :: pos_integer(), height :: pos_integer(), bands :: pos_integer()}
@@ -2522,7 +2555,7 @@ defmodule Image do
   * See also `Image.Interpretation.known_interpretations/0`
 
   """
-  @doc since: "0.9.0"
+  @doc subject: "Image info", since: "0.9.0"
 
   @spec interpretation(image :: Vimage.t()) :: Image.Interpretation.t()
   def interpretation(%Vimage{} = image) do
@@ -2547,7 +2580,7 @@ defmodule Image do
   """
   @dialyzer {:nowarn_function, {:type, 1}}
 
-  @doc since: "0.9.0"
+  @doc subject: "Image info", since: "0.9.0"
 
   @spec type(image :: Vimage.t()) :: Image.BandFormat.t()
   def type(%Vimage{} = image) do
@@ -2571,6 +2604,8 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @doc subject: "Operation"
+
   @spec flip(image :: Vimage.t(), direction :: :vertical | :horizontal) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
@@ -2605,6 +2640,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @doc subject: "Operation"
+
   @spec flip!(image :: Vimage.t(), direction :: :vertical | :horizontal) ::
           Vimage.t() | no_return()
 
@@ -2648,7 +2685,7 @@ defmodule Image do
 
   """
 
-  @doc since: "0.13.0"
+  @doc subject: "Resize", since: "0.13.0"
 
   @spec resize(Vimage.t(), scale :: number(), options :: Resize.resize_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -2692,7 +2729,7 @@ defmodule Image do
 
   """
 
-  @doc since: "0.14.0"
+  @doc subject: "Resize", since: "0.14.0"
 
   @spec resize!(Vimage.t(), scale :: number(), options :: Resize.resize_options()) ::
           Vimage.t() | no_return()
@@ -2726,7 +2763,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc since: "0.14.0"
+  @doc subject: "Operation", since: "0.14.0"
 
   @spec pixelate(image :: Vimage.t(), scale :: number()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -2759,7 +2796,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc since: "0.14.0"
+  @doc subject: "Operation", since: "0.14.0"
 
   @spec pixelate!(image :: Vimage.t(), scale :: number()) ::
           Vimage.t() | no_return()
@@ -2864,6 +2901,8 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @doc subject: "Resize"
+
   @spec thumbnail(Vimage.t(), length :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
@@ -2924,6 +2963,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @doc subject: "Resize"
+
   @spec thumbnail!(Vimage.t(), length :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
           Vimage.t() | no_return()
 
@@ -2970,6 +3011,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @doc subject: "Generator"
 
   @spec avatar(Vimage.t(), size :: pos_integer(), options :: Options.Avatar.avatar_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -3023,6 +3065,7 @@ defmodule Image do
   * raises an exception.
 
   """
+  @doc subject: "Generator"
 
   @spec avatar!(Vimage.t(), size :: pos_integer(), options :: Options.Avatar.avatar_options()) ::
           Vimage.t() | no_return()
@@ -3084,6 +3127,8 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @doc subject: "Resize"
+
   @spec crop(Vimage.t(), integer(), integer(), pos_integer(), pos_integer()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
@@ -3151,6 +3196,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @doc subject: "Resize"
+
   @spec crop!(Vimage.t(), integer(), integer(), pos_integer(), pos_integer()) ::
           Vimage.t() | no_return
 
@@ -3176,7 +3223,7 @@ defmodule Image do
   * `{:error, reason}`.
 
   """
-  @doc since: "0.23.0"
+  @doc subject: "Operation", since: "0.23.0"
 
   @min_luminance 1.0
   @max_luminance 99.0
@@ -3188,31 +3235,27 @@ defmodule Image do
       min = Operation.percent!(luminance, @min_luminance)
       max = Operation.percent!(luminance, @max_luminance)
 
-      image
-      |> normalize_if_possible(lab_image, luminance, min, max)
-      |> wrap(:ok)
+      normalize_if_possible(image, lab_image, luminance, min, max)
     end
   end
 
   defp normalize_if_possible(image, lab_image, luminance, min, max) when abs(max - min) > 1 do
-    original_interpretation = interpretation(image)
-    chroma = Operation.extract_band!(lab_image, 1, n: 2)
-    f = 100.0 / (max - min)
-    a = -(min * f)
+    without_alpha_band(image, fn image ->
+      original_interpretation = interpretation(image)
+      chroma = Operation.extract_band!(lab_image, 1, n: 2)
+      f = 100.0 / (max - min)
+      a = -(min * f)
 
-    luminance
-    |> Operation.linear!([f], [a])
-    |> bandjoin!(chroma)
-    |> to_colorspace!(original_interpretation)
-    |> add_back_alpha(image, has_alpha?(image))
+      luminance
+      |> Operation.linear!([f], [a])
+      |> bandjoin!(chroma)
+      |> to_colorspace(original_interpretation)
+    end)
   end
 
   defp normalize_if_possible(image, _lab_image, _luminance, _min, _max) do
     image
   end
-
-  defp add_back_alpha(normalized, image, true), do: bandjoin!(normalized, image[-1])
-  defp add_back_alpha(normalized, _image, false), do: normalized
 
   @doc """
   Normalize an image by expanding the luninance
@@ -3230,7 +3273,7 @@ defmodule Image do
   * raises an exception.
 
   """
-  @doc since: "0.23.0"
+  @doc subject: "Operation", since: "0.23.0"
 
   @spec normalize!(image :: Vimage.t()) :: Vimage.t() | no_return()
   def normalize!(%Vimage{} = image) do
@@ -3274,7 +3317,7 @@ defmodule Image do
 
   ### Returns
 
-  * {:ok, `cropped_image`} which is the image
+  * `{:ok, cropped_image}` which is the image
     cropped to the bounding box of the non-background
     area.
 
@@ -3283,7 +3326,7 @@ defmodule Image do
     considered to be only the background color.
 
   """
-  @doc since: "0.23.0"
+  @doc subject: "Resize", since: "0.23.0"
 
   @spec trim(image :: Vimage.t(), options :: Options.Trim.trim_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -3347,7 +3390,7 @@ defmodule Image do
   * raises an exception.
 
   """
-  @doc since: "0.23.0"
+  @doc subject: "Resize", since: "0.23.0"
 
   @spec trim!(image :: Vimage.t(), options :: Options.Trim.trim_options()) ::
           Vimage.t() | no_return()
@@ -3373,7 +3416,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc since: "0.23.0"
+  @doc subject: "Operation", since: "0.23.0"
 
   @spec flatten(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def flatten(%Vimage{} = image) do
@@ -3395,7 +3438,7 @@ defmodule Image do
   * raises an exception
 
   """
-  @doc since: "0.23.0"
+  @doc subject: "Operation", since: "0.23.0"
 
   @spec flatten!(image :: Vimage.t()) :: Vimage.t() | no_return()
   def flatten!(%Vimage{} = image) do
@@ -3440,7 +3483,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc since: "0.23.0"
+  @doc subject: "Operation", since: "0.23.0"
 
   @spec dilate(image :: Vimage.t(), pixels :: pos_integer) ::
           {:ok, Vimage.t()} | {:error, error_message}
@@ -3489,7 +3532,7 @@ defmodule Image do
   * raises an exception
 
   """
-  @doc since: "0.23.0"
+  @doc subject: "Operation", since: "0.23.0"
 
   @spec dilate!(image :: Vimage.t(), pixels :: pos_integer) :: Vimage.t() | no_return()
   def dilate!(%Vimage{} = image, pixels \\ 1) when is_integer(pixels) and pixels > 0 do
@@ -3531,7 +3574,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc since: "0.23.0"
+  @doc subject: "Operation", since: "0.23.0"
 
   @spec erode(image :: Vimage.t(), pixels :: pos_integer) ::
           {:ok, Vimage.t()} | {:error, error_message}
@@ -3577,7 +3620,7 @@ defmodule Image do
   * raises an exception
 
   """
-  @doc since: "0.23.0"
+  @doc subject: "Operation", since: "0.23.0"
 
   @spec erode!(image :: Vimage.t(), pixels :: pos_integer) :: Vimage.t() | no_return()
   def erode!(%Vimage{} = image, pixels \\ 1) when is_integer(pixels) and pixels > 0 do
@@ -3636,6 +3679,8 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @doc subject: "Operation"
+
   @spec rotate(image :: Vimage.t(), angle :: float(), options :: Options.Rotate.rotation_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
@@ -3676,6 +3721,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @doc subject: "Operation"
+
   @spec rotate!(image :: Vimage.t(), angle :: float(), options :: Options.Rotate.rotation_options()) ::
           Vimage.t() | no_return()
 
@@ -3713,6 +3760,8 @@ defmodule Image do
     `270` representing the degrees of rotation.
 
   """
+  @doc subject: "Operation"
+
   @spec autorotate(image :: Vimage.t()) ::
           {:ok, {Vimage.t(), Keyword.t()}} | {:error, error_message()}
 
@@ -3757,6 +3806,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @doc subject: "Operation"
+
   @spec autorotate!(image :: Vimage.t()) ::
           Vimage.t() | no_return()
 
@@ -3782,6 +3833,7 @@ defmodule Image do
 
   """
   @dialyzer {:nowarn_function, {:ripple, 1}}
+  @doc subject: "Operation"
 
   @spec ripple(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def ripple(%Vimage{} = image) do
@@ -3831,6 +3883,7 @@ defmodule Image do
 
   """
   @dialyzer {:nowarn_function, {:ripple!, 1}}
+  @doc subject: "Operation"
 
   @spec ripple!(Vimage.t()) :: Vimage.t() | no_return()
   def ripple!(%Vimage{} = image) do
@@ -3864,6 +3917,8 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @doc subject: "Mask"
+
   @spec circle(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def circle(%Vimage{} = image, _options \\ []) do
     width = width(image)
@@ -3900,6 +3955,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @doc subject: "Mask"
+
   @spec circle!(Vimage.t(), Keyword.t()) :: Vimage.t() | no_return()
   def circle!(%Vimage{} = image, options \\ []) do
     case circle(image, options) do
@@ -3929,6 +3986,8 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @doc subject: "Generator"
+
   @spec rounded(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def rounded(%Vimage{} = image, options \\ []) do
     options = Keyword.put_new(options, :radius, @default_round_corner_radius)
@@ -3961,6 +4020,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @doc subject: "Mask"
+
   @spec rounded!(Vimage.t(), Keyword.t()) :: Vimage.t() | no_return()
   def rounded!(%Vimage{} = image, options \\ []) do
     case rounded(image, options) do
@@ -4037,6 +4098,8 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @doc subject: "Metadata"
+
   @spec minimize_metadata(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def minimize_metadata(%Vimage{} = image) do
     with {:ok, exif} <- exif(image),
@@ -4065,6 +4128,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @doc subject: "Metadata"
+
   @spec minimize_metadata!(image :: Vimage.t()) :: Vimage.t() | no_return()
   def minimize_metadata!(%Vimage{} = image) do
     case minimize_metadata(image) do
@@ -4123,6 +4188,8 @@ defmodule Image do
     * `{:error, reason}`
 
   """
+  @doc subject: "Metadata"
+
   @spec remove_metadata(Vimage.t(), list(binary() | atom())) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
@@ -4185,6 +4252,8 @@ defmodule Image do
     * raises an exception.
 
   """
+  @doc subject: "Metadata"
+
   @spec remove_metadata!(Vimage.t(), list(binary() | atom())) :: Vimage.t() | no_return()
   def remove_metadata!(image, fields \\ []) do
     case remove_metadata(image, fields) do
@@ -4247,6 +4316,8 @@ defmodule Image do
 
   @start_color [0, 0, 0, 0]
   @finish_color [0, 0, 0, 255]
+
+  @doc subject: "Generator"
 
   @spec linear_gradient(Vimage.t(), start :: Color.rgb_color(), finish :: Color.rgb_color()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -4311,6 +4382,8 @@ defmodule Image do
   @dialyzer {:nowarn_function, {:linear_gradient!, 2}}
   @dialyzer {:nowarn_function, {:linear_gradient!, 3}}
 
+  @doc subject: "Generator"
+
   @spec linear_gradient!(Vimage.t(), start :: Color.rgb_color(), finish :: Color.rgb_color()) ::
           Vimage.t() | no_return()
 
@@ -4363,7 +4436,7 @@ defmodule Image do
   @dialyzer {:nowarn_function, {:radial_gradient, 2}}
   @dialyzer {:nowarn_function, {:radial_gradient, 3}}
 
-  @doc since: "0.6.0"
+  @doc subject: "Generator", since: "0.6.0"
 
   @spec radial_gradient(width :: pos_integer(), height :: pos_integer(), options :: Keyword.t()) ::
           {:ok, %Vimage{}} | {:error, error_message()}
@@ -4419,7 +4492,7 @@ defmodule Image do
   """
   @max_band_value 256
 
-  @doc since: "0.3.0"
+  @doc subject: "Image info", since: "0.3.0"
 
   @spec dominant_color(Vimage.t(), Keyword.t()) :: Color.rgb_color()
   def dominant_color(%Vimage{} = image, options \\ []) do
@@ -4443,7 +4516,8 @@ defmodule Image do
   Returns the histogram for an image.
 
   The histogram is returned as a `t:Vimage.t/0`
-  that is a 255 by 255 image with three bands.
+  that is a 255 by 255 image the same numbers of
+  bands as the source image.
 
   ### Argument
 
@@ -4467,7 +4541,7 @@ defmodule Image do
   in that 1/256th part of the image.
 
   """
-  @doc since: "0.3.0"
+  @doc subject: "Operation", since: "0.3.0"
 
   @spec histogram(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def histogram(%Vimage{} = image) do
@@ -4502,7 +4576,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc since: "0.3.0"
+  @doc subject: "Operation", since: "0.3.0"
 
   @spec get_pixel(Vimage.t(), non_neg_integer(), non_neg_integer()) ::
           {:ok, Color.rgb_color()} | {:error, error_message()}
@@ -4519,7 +4593,7 @@ defmodule Image do
   around `Vix.Vips.Image.mutate/2`.
 
   """
-  @doc since: "0.7.0"
+  @doc subject: "Operation", since: "0.7.0"
 
   @spec mutate(Vimage.t(), (Vix.Vips.MutableImage.t() -> any())) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -4553,6 +4627,8 @@ defmodule Image do
       Image.to_colorspace(image, :bw)
 
   """
+  @doc subject: "Color"
+
   @spec to_colorspace(Vimage.t(), Interpretation.t()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
@@ -4588,6 +4664,8 @@ defmodule Image do
       Image.to_colorspace!(image, :bw)
 
   """
+  @doc subject: "Color"
+
   @spec to_colorspace!(Vimage.t(), Interpretation.t()) ::
           Vimage.t() | no_return()
 
@@ -4613,6 +4691,7 @@ defmodule Image do
 
   """
   @dialyzer {:nowarn_function, {:to_polar_coordinates, 1}}
+  @doc subject: "Operation"
 
   @spec to_polar_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def to_polar_coordinates(%Vimage{} = image) do
@@ -4649,6 +4728,7 @@ defmodule Image do
 
   """
   @dialyzer {:nowarn_function, {:to_polar_coordinates!, 1}}
+  @doc subject: "Operation"
 
   @spec to_polar_coordinates!(Vimage.t()) :: Vimage.t() | no_return()
   def to_polar_coordinates!(%Vimage{} = image) do
@@ -4680,6 +4760,7 @@ defmodule Image do
 
   """
   @dialyzer {:nowarn_function, {:to_rectangular_coordinates, 1}}
+  @doc subject: "Operation"
 
   @spec to_rectangular_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def to_rectangular_coordinates(%Vimage{} = image) do
@@ -4723,6 +4804,7 @@ defmodule Image do
 
   """
   @dialyzer {:nowarn_function, {:to_rectangular_coordinates!, 1}}
+  @doc subject: "Operation"
 
   @spec to_rectangular_coordinates!(Vimage.t()) :: Vimage.t() | no_return()
   def to_rectangular_coordinates!(%Vimage{} = image) do
@@ -4773,7 +4855,7 @@ defmodule Image do
     @dialyzer {:nowarn_function, {:to_nx, 1}}
     @dialyzer {:nowarn_function, {:to_nx, 2}}
 
-    @doc since: "0.5.0"
+    @doc subject: "Matrix", since: "0.5.0"
 
     @spec to_nx(image :: Vimage.t(), options :: Keyword.t()) ::
             {:ok, Nx.Tensor.t()} | {:error, error_message()}
@@ -4851,7 +4933,7 @@ defmodule Image do
         iex> {:ok, _image_2} = Image.from_nx(tensor)
 
     """
-    @doc since: "0.5.0"
+    @doc subject: "Matrix", since: "0.5.0"
 
     @spec from_nx(tensor :: Nx.Tensor.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
     def from_nx(tensor) when is_struct(tensor, Nx.Tensor) do
@@ -4904,7 +4986,7 @@ defmodule Image do
       """
       @dialyzer {:nowarn_function, {:to_evision, 2}}
 
-      @doc since: "0.9.0"
+      @doc subject: "Matrix", since: "0.9.0"
 
       def to_evision(%Vimage{} = image, convert_to_bgr \\ true) do
         with {:ok, tensor} <- to_nx(image),
@@ -4941,7 +5023,7 @@ defmodule Image do
       """
       @dialyzer {:nowarn_function, {:from_evision, 1}}
 
-      @doc since: "0.9.0"
+      @doc subject: "Matrix", since: "0.9.0"
 
       def from_evision(%Evision.Mat{} = evision_image) do
         with %Evision.Mat{} = mat <- Evision.cvtColor(evision_image, Constant.cv_COLOR_BGR2RGB()) do
@@ -4997,7 +5079,7 @@ defmodule Image do
   @dialyzer {:nowarn_function, {:dhash, 1}}
   @dialyzer {:nowarn_function, {:dhash, 2}}
 
-  @doc since: "0.6.0"
+  @doc subject: "Metadata", since: "0.6.0"
 
   @spec dhash(image :: Vimage.t()) :: image_hash()
   def dhash(%Vimage{} = image, hash_size \\ 8) when is_integer(hash_size) and hash_size > 0 do
@@ -5063,7 +5145,7 @@ defmodule Image do
   * `{:error, reason}`.
 
   """
-  @doc since: "0.6.0"
+  @doc subject: "Operation", since: "0.6.0"
 
   @spec hamming_distance(image_1 :: Vimage.t(), image_2 :: Vimage.t()) ::
           {:ok, non_neg_integer()} | {:error, error_message()}
@@ -5111,6 +5193,8 @@ defmodule Image do
         Image.fft(image)
 
     """
+    @doc subject: "Operation"
+
     @spec fft(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
     def fft(%Vimage{} = image) do
       image
@@ -5140,6 +5224,8 @@ defmodule Image do
         Image.fft!(image)
 
     """
+    @doc subject: "Operation"
+
     @spec fft!(Vimage.t()) :: Vimage.t() | no_return()
     def fft!(%Vimage{} = image) do
       case fft(image) do
@@ -5179,6 +5265,7 @@ defmodule Image do
 
     """
     @dialyzer {:nowarn_function, {:skew_angle, 1}}
+    @doc subject: "Operation"
 
     @spec skew_angle(Vimage.t()) :: float()
 
@@ -5217,6 +5304,8 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @doc subject: "Mask"
+
   @spec convert_to_mask(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def convert_to_mask(%Vimage{} = image) do
     if alpha_band = alpha_band(image) do
@@ -5225,27 +5314,6 @@ defmodule Image do
     else
       {:error, "Image has no alpha band"}
     end
-  end
-
-  @doc """
-  Split the image into a list of its component
-  bands.
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`
-
-  ### Returns
-
-  * a list of single band images extracted
-    from `image`.
-
-  """
-  @doc since: "0.13.0"
-
-  @spec split_bands(Vimage.t()) :: [Vimage.t()]
-  def split_bands(%Vimage{} = image) do
-    for i <- 0..max_band_index(image), do: image[i]
   end
 
   @doc """
@@ -5267,12 +5335,35 @@ defmodule Image do
   * raises an exception
 
   """
+  @doc subject: "Mask"
+
   @spec convert_to_mask!(Vimage.t()) :: Vimage.t() | no_return()
   def convert_to_mask!(%Vimage{} = image) do
     case convert_to_mask(image) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
+  end
+
+  @doc """
+  Split the image into a list of its component
+  bands.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`
+
+  ### Returns
+
+  * a list of single band images extracted
+    from `image`.
+
+  """
+  @doc subject: "Split and join", since: "0.13.0"
+
+  @spec split_bands(Vimage.t()) :: [Vimage.t()]
+  def split_bands(%Vimage{} = image) do
+    for i <- 0..max_band_index(image), do: image[i]
   end
 
   @doc """
@@ -5291,6 +5382,8 @@ defmodule Image do
   * `true` or `false`
 
   """
+  @doc subject: "Image info"
+
   @spec has_alpha?(Vimage.t()) :: boolean()
   def has_alpha?(%Vimage{} = image) do
     Vimage.has_alpha?(image)
@@ -5316,15 +5409,52 @@ defmodule Image do
 
   * An integer in the range `1..4` depending
     on the image interpretation. Returns `nil`
-    if there is no alpha band.
+    if there is no alpha band. The integer
+    is a 0-based offset and can therefore be
+    directly used to access the band. For example
+    `image[alpha_band(image)]`.
 
   """
+  @doc subject: "Split and join"
+
   @spec alpha_band(Vimage.t()) :: 1..4 | nil
   def alpha_band(%Vimage{} = image) do
     if has_alpha?(image) do
       Vimage.bands(image) - 1
     else
       nil
+    end
+  end
+
+  @doc """
+  Execute a function over the image without
+  its alpha band (if any) ensuring the alpha
+  band is replaced when the function returns.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `fun` is any 1-arity function that is
+    required to return `{:ok, image}` or
+    `{:error, reason}`.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`
+
+  """
+  @spec without_alpha_band(Vimage.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})) ::
+    {:ok, Vimage.t()} | {:error, error_message}
+
+  def without_alpha_band(%Vimage{} = image, fun) when is_function(fun, 1) do
+    {without_alpha, alpha} = split_alpha(image)
+
+    case fun.(without_alpha) do
+      {:ok, image} -> {:ok, bandjoin!(image, alpha)}
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -5367,7 +5497,7 @@ defmodule Image do
       import_if_available(Image, only: [preview: 1])
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Display", since: "0.13.0"
 
   @spec preview(Vimage.t()) :: Vimage.t() | {:error, error_message()}
   def preview(%Vimage{} = image) do
@@ -5415,7 +5545,7 @@ defmodule Image do
       import_if_available(Image, only: [p: 1])
 
   """
-  @doc since: "0.13.0"
+  @doc subject: "Display", since: "0.13.0"
 
   @spec p(Vimage.t()) :: Vimage.t() | {:error, error_message()}
   def p(image) do
@@ -5467,6 +5597,8 @@ defmodule Image do
   See `Image.put_concurrency/1`.
 
   """
+  @doc subject: "Configuration"
+
   @spec get_concurrency :: pos_integer()
   def get_concurrency do
     Vix.Vips.concurrency_get()
@@ -5491,6 +5623,8 @@ defmodule Image do
   * `{:ok, updated_concurrency}`
 
   """
+  @doc subject: "Configuration"
+
   @spec put_concurrency(pos_integer()) :: pos_integer()
   def put_concurrency(concurrency) when is_integer(concurrency) and concurrency > 0 do
     :ok = Vix.Vips.concurrency_set(concurrency)
@@ -5527,6 +5661,8 @@ defmodule Image do
       :landscape
 
   """
+  @doc subject: "Image info"
+
   @spec aspect(Vimage.t()) :: aspect()
   def aspect(%Vimage{} = image, options \\ []) do
     square_ratio = Keyword.get(options, :square_ratio, @square_when_ratio_less_than)
@@ -5546,6 +5682,8 @@ defmodule Image do
   operation.
 
   """
+  @doc subject: "Configuration"
+
   @spec vips_version :: {:ok, Version.t()}
   def vips_version do
     Vix.Vips.version()
@@ -5624,6 +5762,7 @@ defmodule Image do
     end)
   end
 
+  @doc false
   def evision_configured? do
     match?({:module, _module}, Code.ensure_compiled(Evision))
   end

@@ -4,7 +4,7 @@ if Image.evision_configured?() do
     Implements functions to extract frames froma video file
     as images using [eVision](https://hex.pm/packages/evision). The
     implementation is based upon
-    [OpenCV Video Cpature](https://docs.opencv.org/3.4/d0/da7/videoio_overview.html).
+    [OpenCV Video Capture](https://docs.opencv.org/3.4/d0/da7/videoio_overview.html).
 
     Images can be extracted by frame number of number of milliseconds with
     `Image.Video.image_from_video/2`.
@@ -30,16 +30,19 @@ if Image.evision_configured?() do
     @typedoc "The representation of a video stream"
     @type stream_id :: non_neg_integer() | :default_camera
 
+    @doc subject: "Guard"
     @doc "Guards that a frame offset is valid for a video"
     defguard is_frame(frame, frame_count)
              when (is_integer(frame) and frame in 0..(trunc(frame_count) - 1)) or
                     (is_integer(frame) and frame_count == 0.0)
 
+    @doc subject: "Guard"
     @doc "Guards that a millisecond count is valid for a video"
     defguard is_valid_millis(millis, frames, fps)
              when is_integer(millis) and millis in 0..(trunc(fps * frames * 1000) - 1)
 
     @doc "Guards that a stream id is valid for a video stream"
+    @doc subject: "Guard"
     defguard is_stream(stream_id)
              when (is_integer(stream_id) and stream_id >= 0) or stream_id == :default_camera
 

@@ -1,7 +1,9 @@
 defmodule Image.Shape do
   @moduledoc """
-  Functions to render a shape as an image. The supported shapes match
-  those defined in [Scalable Vector Graphics](https://developer.mozilla.org/en-US/docs/Web/SVG)
+  Functions to render a shape as an image.
+
+  The supported shapes match those defined in
+  [Scalable Vector Graphics](https://developer.mozilla.org/en-US/docs/Web/SVG)
   including:
 
   * Polygon

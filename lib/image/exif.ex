@@ -1,4 +1,9 @@
 defmodule Image.Exif do
+  @moduledoc """
+  Functions to extract and interpret image EXIF
+  data.
+
+  """
   alias Image.Exif.{Decode, Tag}
   alias Image.Exif.{Gps, Thumbnail}
 
