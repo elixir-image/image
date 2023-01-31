@@ -29,7 +29,7 @@ defmodule Image.Kino do
 
   ### Returns
 
-  * ``maybe_resized_image` of type `t:Vix.Vips.Image.t/0`.
+  * `maybe_resized_image` of type `t:Vix.Vips.Image.t/0`.
 
   """
   @doc since: "0.18.0"
