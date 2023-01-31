@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.23.1
+
+This is the changelog for Image version 0.23.1 released on January 30th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* `Kino.show/2` returns the image instead of `:ok` so that it works correctly in a grid. Thanks to @RyoWakabayashi for the [suggestion](https://github.com/elixir-image/image/discussions/1#discussioncomment-4826961).
+
 ## Image 0.23.0
 
 This is the changelog for Image version 0.23.0 released on January 29th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

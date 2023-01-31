@@ -29,12 +29,12 @@ defmodule Image.Kino do
 
   ### Returns
 
-  * `:ok`
+  * ``maybe_resized_image` of type `t:Vix.Vips.Image.t/0`.
 
   """
   @doc since: "0.18.0"
 
-  @spec show(image :: Vimage.t(), options :: Keyword.t()) :: :ok
+  @spec show(image :: Vimage.t(), options :: Keyword.t()) :: Vimage.t()
 
   def show(%Vimage{} = image, opts \\ []) do
     image = maybe_resize_image(image, opts)
@@ -42,8 +42,6 @@ defmodule Image.Kino do
     {:ok, image_bin} = Vimage.write_to_buffer(image, ".png")
     kino_image = apply(Kino.Image, :new, [image_bin, "image/png"])
     apply(Kino, :render, [kino_image])
-
-    :ok
   end
 
   # scale down if image height is larger than max_height
