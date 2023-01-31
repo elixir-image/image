@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.23.2
+
+This is the changelog for Image version 0.23.2 released on January 31st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* `Image.Kino.show/2` returns the type `t:Kino.Image.t/0` which as a side effect does not show a duplicate image and plays nicely with `Kino.Layout.grid/2`.  Thanks to @RyoWakabayashi. Closes #37.
+
 ## Image 0.23.1
 
 This is the changelog for Image version 0.23.1 released on January 30th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
