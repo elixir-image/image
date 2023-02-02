@@ -293,9 +293,9 @@ if Image.evision_configured?() do
       are every second image between the frame offsets `10` and `100`.
 
     * `:millisecond` is a `t:Range.t/0` representing the range
-      of milliseconds to be extracted. `:milliseconds` can only
+      of milliseconds to be extracted. `:millisecond` can only
       be specified for video files, not for video streams. For example,
-      `milliseconds: 1000..100000/2` will produce a stream of images
+      `millisecond: 1000..100000/2` will produce a stream of images
       that are every second image between the millisecond offsets of `1_000`
       and `100_000`.
 
@@ -460,7 +460,7 @@ if Image.evision_configured?() do
 
     def seek(%VideoCapture{isOpened: true}, options) do
       {:error,
-       "Options must be either `frame: frame_offet` or `milliseconds: millisecond_offset`. Found #{inspect(options)}"}
+       "Options must be either `frame: frame_offet` or `millisecond: millisecond_offset`. Found #{inspect(options)}"}
     end
 
     def seek(%VideoCapture{isOpened: false}, _options) do
