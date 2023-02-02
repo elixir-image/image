@@ -64,7 +64,7 @@ defmodule Image.Shape do
   * `:width` is the width of the canvas onto which the
     polygon is drawn. The default is `500` pixels.
 
-  * `:height` is the width of the canvas onto which the
+  * `:height` is the height of the canvas onto which the
     polygon is drawn. The default is `500` pixels.
 
   * `:fill_color` is the color used to fill in the

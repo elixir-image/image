@@ -711,7 +711,7 @@ defmodule Image.Draw do
 
   @doc """
   Flood-fill image with color, starting at position
-  `top`, `left` .
+  `top`, `left`.
 
   The filled area is bounded by pixels that are equal to
   the `:colour`. That is, it searches for pixels enclosed
@@ -755,9 +755,12 @@ defmodule Image.Draw do
 
   ### Returns
 
-  * `{:ok, image}` where `image` is the same
-    type as that passed as an argument to the
-    function.
+  * `{:ok, {image, height, width, top, left}` where `image`
+    is the same type as that passed as an argument to the
+    function. `height` and `width` represent the dimensions
+    of the flood fill in pixels. `top` and `left` are the
+    0-based offsets from the top and left location respectively
+    of the flood area.
 
   * or `{:error, reason}`
 
@@ -795,6 +798,71 @@ defmodule Image.Draw do
       MutableOperation.draw_flood(image, color, x, y, equal: options.equal)
     end
     |> maybe_wrap()
+  end
+
+  @doc """
+  Flood-fill image with color, starting at position
+  `top`, `left` or raise an exception.
+
+  The filled area is bounded by pixels that are equal to
+  the `:colour`. That is, it searches for pixels enclosed
+  by an edge of `:color`.
+
+  If `:equal` is `true`, it instead searches for pixels
+  which are equal to the start point and fills them with
+  `:color`.
+
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0` or a
+    `t:MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:MutableImage.t/0`
+    it will be mutated directly. If `image` is a
+    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    and then mutated.
+
+  * `left` is the 0-based offset from the
+    left edge of the image where the flood
+    will be drawn.
+
+  * `top` is the 0-based offset from the
+    top edge of the image where the flood will
+    drawn.
+
+  * `options` is a keyword list of options.
+    The default is `color: :black`.
+
+  ### Options
+
+  * `:color` defines the color of the point. This
+    can be specified as a single integer which will
+    be applied to all bands, or a list of
+    integers representing the color for each
+    band. The color can also be supplied as a CSS color
+    name as a string or atom. For example: `:misty_rose`.
+    Lastly, it can also be supplied as a hex string of
+    the form `#rrggbb`. See `Image.Color.color_map/0` and
+    `Image.Color.rgb_color/1`.
+
+  ### Returns
+
+  * `image` where `image` is the same
+    type as that passed as an argument to the
+    function or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.24.0"
+
+  @spec flood!(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.flood()) ::
+          Vimage.t() | no_return()
+
+  def flood!(%Vimage{} = image, left, top, options \\ []) do
+    case flood(image, left, top, options) do
+      {:ok, {image, _location}} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
   end
 
   @doc """
