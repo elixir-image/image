@@ -8,6 +8,8 @@ This is the changelog for Image version 0.24.0 released on ______, 2023.  For ol
 
 * Adds `Image.Draw.flood!/4` to aligns with `Image.Draw.flood/4`.
 
+* Adds `Image.add_alpha/2` and `Image.add_alpha!/2`.
+
 ## Image 0.23.2
 
 This is the changelog for Image version 0.23.2 released on January 31st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

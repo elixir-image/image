@@ -102,6 +102,34 @@ defmodule Image.Color do
     @color_map
   end
 
+  @doc """
+  Validates a color returning an
+  `[r, g, b]` triplet or error.
+
+  ### Arguments
+
+  `color` which can be specified as a single integer
+  which or a list of integers representing the color.
+  The color can also be supplied as a CSS color name as a
+  string or atom. For example: `:misty_rose`. See
+  `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  ### Returns
+
+  * `{:ok, [r, g, b]}` or
+
+  * `{:error, reason}`
+
+  """
+  def validate_color(color) do
+    case rgb_color(color) do
+      {:ok, [hex: _hex, rgb: rgb]} -> {:ok, rgb}
+      {:ok, color} when is_list(color) -> {:ok, color}
+      {:ok, color} when is_integer(color) -> {:ok, [color, color, color]}
+      :error -> {:error, "Invalid color #{inspect color}"}
+    end
+  end
+
   def rgb_color(color) when is_binary(color) or is_atom(color) do
     case color do
       <<"#", r::bytes-2, g::bytes-2, b::bytes-2>> ->

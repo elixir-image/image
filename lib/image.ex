@@ -1751,6 +1751,117 @@ defmodule Image do
   end
 
   @doc """
+  Add an alpha band to an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `alpha_image` is any single-band image
+    that will be added as an alpha image to
+    `image`
+
+  OR
+
+  * `:color` which defines the color of the alpha
+    image. This can be specified as a single integer
+    which will be applied to all bands, or a list of
+    integers representing the color for each
+    band. The default is `0`, meaning black. The color
+    can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  ### Note
+
+  If `color` is provided then the alpha layer determines
+  the level of transparency of `image`. White (RGB color
+  255) means that `imaage` will be opaque.  Black (the
+  default, RGB 0) means that `image` will be transparent.
+  Other colors will determine the level of transparency
+  between the two.
+
+  ### Returns
+
+  * `{:ok, image_with_added_alpha_band}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc subject: "Operation", since: "0.13.0"
+
+  @spec add_alpha(image :: Vimage.t(), alpha_image :: Vimage.t() | Image.Color.t()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def add_alpha(%Vimage{} = image, %Vimage{} = alpha_image) do
+    cond do
+      has_alpha?(image) ->
+        {:error, "Image already has an alpha band"}
+      bands(alpha_image) > 1 ->
+        {:error, "Alpha image has more than one band"}
+      true
+        Vix.Vips.Operation.bandjoin([image, alpha_image])
+    end
+  end
+
+  def add_alpha(%Vimage{} = image, color) when Color.is_color(color) do
+    with {:ok, color} <- Color.validate_color(color),
+         {:ok, alpha_image} <- Image.new(image, bands: 1, color: color) do
+      add_alpha(image, alpha_image)
+    end
+  end
+
+  @doc """
+  Add an alpha band to an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `alpha_image` is any single-band image
+    that will be added as an alpha image to
+    `image`
+
+  OR
+
+  * `:color` which defines the color of the alpha
+    image. This can be specified as a single integer
+    which will be applied to all bands, or a list of
+    integers representing the color for each
+    band. The default is `0`, meaning black. The color
+    can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  ### Note
+
+  If `color` is provided then the alpha layer determines
+  the level of transparency of `image`. White (RGB color
+  255) means that `imaage` will be opaque.  Black (the
+  default, RGB 0) means that `image` will be transparent.
+  Other colors will determine the level of transparency
+  between the two.
+
+  ### Returns
+
+  * `image_with_added_alpha_band` or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Operation", since: "0.13.0"
+
+  @spec add_alpha!(image :: Vimage.t(), alpha_image :: Vimage.t() | Image.Color.t()) ::
+    Vimage.t() | no_return()
+
+  def add_alpha!(%Vimage{} = image, alpha_image) do
+    case add_alpha(image, alpha_image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Split an image to separate the alpha band
   from the other image bands.
 
