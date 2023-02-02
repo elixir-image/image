@@ -346,7 +346,7 @@ defmodule Image.Shape do
     radius. The default is `#{@default_star_inner_radius}`.
 
   * `:outer_radius` is the size of the outer
-    radius. The default is `#{@default_star_inner_radius}`.
+    radius. The default is `#{@default_star_outer_radius}`.
 
   * `:rotation` is the angle in degrees of rotation
     applied to the points. The default is `#{@default_star_rotation}`.
