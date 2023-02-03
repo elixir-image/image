@@ -126,7 +126,7 @@ defmodule Image.Color do
       {:ok, [hex: _hex, rgb: rgb]} -> {:ok, rgb}
       {:ok, color} when is_list(color) -> {:ok, color}
       {:ok, color} when is_integer(color) -> {:ok, [color, color, color]}
-      :error -> {:error, "Invalid color #{inspect(color)}"}
+      other -> other
     end
   end
 

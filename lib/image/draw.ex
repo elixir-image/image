@@ -244,6 +244,7 @@ defmodule Image.Draw do
   # If the stroke width is 1 then use the underlying Vips call.
   # If the stroke width is > 1 then form the rectangle by drawing
   # one filled rectangle for each of the four sides.
+  @dialyzer {:nowarn_function, {:rect, 8}}
 
   defp rect(%Vimage{} = image, left, top, width, height, color, 1 = _stroke_width, fill) do
     Vimage.mutate(image, fn mut_img ->
