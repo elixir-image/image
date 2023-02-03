@@ -10,6 +10,8 @@ This is the changelog for Image version 0.24.0 released on ______, 2023.  For ol
 
 * Adds `Image.add_alpha/2` and `Image.add_alpha!/2`.
 
+* Adds `:stroke_width` to `Image.Draw.rect/6`. Thanks to @RyoWakabayashi for the suggestion and code.
+
 ## Image 0.23.2
 
 This is the changelog for Image version 0.23.2 released on January 31st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

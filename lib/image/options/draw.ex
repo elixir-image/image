@@ -1,6 +1,7 @@
 defmodule Image.Options.Draw do
   @moduledoc """
-  Options for the draw functions.
+  Options and options validation for the
+  drawing functionss.
 
   """
 
@@ -15,6 +16,7 @@ defmodule Image.Options.Draw do
   @type rect :: [
           {:fill, boolean()}
           | {:color, Color.t()}
+          | {:stroke_width, pos_integer()}
         ]
 
   @type point :: [
@@ -40,6 +42,7 @@ defmodule Image.Options.Draw do
           {:mode, CombineMode.t()}
         ]
 
+  @doc false
   def default_options(:circle) do
     [
       color: :black,
@@ -47,31 +50,37 @@ defmodule Image.Options.Draw do
     ]
   end
 
+  @doc false
   def default_options(:rect) do
     [
       color: :black,
-      fill: true
+      fill: true,
+      stroke_width: 1
     ]
   end
 
+  @doc false
   def default_options(:line) do
     [
       color: :black
     ]
   end
 
+  @doc false
   def default_options(:point) do
     [
       color: :black
     ]
   end
 
+  @doc false
   def default_options(:mask) do
     [
       color: :black
     ]
   end
 
+  @doc false
   def default_options(:flood) do
     [
       color: :black,
@@ -79,12 +88,14 @@ defmodule Image.Options.Draw do
     ]
   end
 
+  @doc false
   def default_options(:image) do
     [
       mode: :VIPS_COMBINE_MODE_SET
     ]
   end
 
+  @doc false
   def default_options(:smudge) do
     []
   end
@@ -152,6 +163,11 @@ defmodule Image.Options.Draw do
       {:error, reason} ->
         {:halt, {:error, reason}}
     end
+  end
+
+  defp validate_option(:rect, {:stroke_width, stroke_width}, options)
+       when is_integer(stroke_width) and stroke_width > 0 do
+    {:cont, options}
   end
 
   defp validate_option(type, {option, value}, _options) do

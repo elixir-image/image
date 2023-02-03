@@ -1791,15 +1791,16 @@ defmodule Image do
   @doc subject: "Operation", since: "0.13.0"
 
   @spec add_alpha(image :: Vimage.t(), alpha_image :: Vimage.t() | Image.Color.t()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def add_alpha(%Vimage{} = image, %Vimage{} = alpha_image) do
     cond do
       has_alpha?(image) ->
         {:error, "Image already has an alpha band"}
+
       bands(alpha_image) > 1 ->
         {:error, "Alpha image has more than one band"}
-      true
+        true
         Vix.Vips.Operation.bandjoin([image, alpha_image])
     end
   end
@@ -1852,7 +1853,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.13.0"
 
   @spec add_alpha!(image :: Vimage.t(), alpha_image :: Vimage.t() | Image.Color.t()) ::
-    Vimage.t() | no_return()
+          Vimage.t() | no_return()
 
   def add_alpha!(%Vimage{} = image, alpha_image) do
     case add_alpha(image, alpha_image) do
@@ -3404,8 +3405,8 @@ defmodule Image do
   band is scaled separately.
 
   The function finds the image histogram, searches for
-  thresholds which will select #{inspect @level_trim_percent}% and
-  #{inspect 1 - @level_trim_percent}% of pixels
+  thresholds which will select #{inspect(@level_trim_percent)}% and
+  #{inspect(1 - @level_trim_percent)}% of pixels
   in each image band, then rescales the image so that those pixel
   values become `0` and `255`.
 
@@ -3424,6 +3425,7 @@ defmodule Image do
   * `{:error, reason}`.
 
   """
+
   # Implemented based upon https://stackoverflow.com/questions/59666277/remove-color-cast-using-libvips
 
   @doc subject: "Operation", since: "0.23.0"
@@ -3455,8 +3457,8 @@ defmodule Image do
   on error.
 
   The function finds the image histogram, searches for
-  thresholds which will select #{inspect @level_trim_percent}% and
-  #{inspect 1 - @level_trim_percent}% of pixels
+  thresholds which will select #{inspect(@level_trim_percent)}% and
+  #{inspect(1 - @level_trim_percent)}% of pixels
   in each image band, then rescales the image so that those pixel
   values become `0` and `255`.
 
@@ -3493,8 +3495,7 @@ defmodule Image do
       |> Operation.hist_cum!()
       |> Operation.hist_norm!()
 
-    {:ok, {_c, r, _other}} =
-      Operation.profile(norm > width(norm) * percentage / 100)
+    {:ok, {_c, r, _other}} = Operation.profile(norm > width(norm) * percentage / 100)
 
     Operation.avg!(r)
   end

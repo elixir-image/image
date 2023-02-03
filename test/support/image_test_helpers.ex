@@ -12,7 +12,8 @@ defmodule Image.TestSupport do
 
   def assert_images_equal(calculated_image, validate, similarity \\ @acceptable_similarity)
 
-  def assert_images_equal(%Vimage{} = calculated_image, validate, similarity) when is_binary(validate) do
+  def assert_images_equal(%Vimage{} = calculated_image, validate, similarity)
+      when is_binary(validate) do
     validate_image = Image.open!(validate, access: :random)
     compare_images(calculated_image, validate_image, similarity)
   end

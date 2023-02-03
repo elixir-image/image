@@ -178,13 +178,21 @@ defmodule Image.Draw do
     rectangle is to be filled with `:color`. The
     default is `true`.
 
+  * `:stroke_width` indicates the width in pixels
+    of the stroke that forms the rectangle. The
+    default is `1`. Values greater than `1` will
+    have a negative performance impact since the
+    rectangle will be draw as 4 filled rectangles
+    forming each of the four sides. If `fill: true`
+    is set then this options is ignored.
+
   ### Returns
 
   * `{:ok, image}` where `image` is the same
     type as that passed as an argument to the
-    function.
+    function or
 
-  * or `{:error, reason}`
+  * `{:error, reason}`.
 
   """
   @doc since: "0.7.0"
@@ -205,11 +213,9 @@ defmodule Image.Draw do
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0
       when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
     with {:ok, options} <- Options.Draw.validate_options(:rect, options) do
+      %{stroke_width: stroke_width, fill: fill} = options
       color = maybe_add_alpha(image, options.color)
-
-      Vimage.mutate(image, fn mut_img ->
-        MutableOperation.draw_rect(mut_img, color, left, top, width, height, fill: options.fill)
-      end)
+      rect(image, left, top, width, height, color, stroke_width, fill)
     end
     |> maybe_wrap()
   end
@@ -228,10 +234,53 @@ defmodule Image.Draw do
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0
       when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
     with {:ok, options} <- Options.Draw.validate_options(:rect, options) do
+      %{stroke_width: stroke_width, fill: fill} = options
       color = maybe_add_alpha(image, options.color)
-      MutableOperation.draw_rect(image, color, left, top, width, height, fill: options.fill)
+      rect(image, left, top, width, height, color, stroke_width, fill)
     end
     |> maybe_wrap()
+  end
+
+  # If the stroke width is 1 then use the underlying Vips call.
+  # If the stroke width is > 1 then form the rectangle by drawing
+  # one filled rectangle for each of the four sides.
+
+  defp rect(%Vimage{} = image, left, top, width, height, color, 1 = _stroke_width, fill) do
+    Vimage.mutate(image, fn mut_img ->
+      MutableOperation.draw_rect(mut_img, color, left, top, width, height, fill: fill)
+    end)
+  end
+
+  defp rect(%Vimage{} = image, left, top, width, height, color, stroke_width, fill)
+       when fill == true or stroke_width == 1 do
+    Vimage.mutate(image, fn image ->
+      with {:ok, image} <- rect(image, left, top, stroke_width, height, color: color, fill: true),
+           {:ok, image} <- rect(image, left, top, width, stroke_width, color: color, fill: true),
+           {:ok, image} <-
+             rect(image, left + width - stroke_width, top, stroke_width, height,
+               color: color,
+               fill: true
+             ) do
+        rect(image, left, top + height - stroke_width, width, stroke_width, color: color, fill: true)
+      end
+    end)
+  end
+
+  defp rect(%MutableImage{} = image, left, top, width, height, color, stroke_width, fill)
+       when fill == true or stroke_width == 1 do
+    MutableOperation.draw_rect(image, color, left, top, width, height, fill: fill)
+  end
+
+  defp rect(%MutableImage{} = image, left, top, width, height, color, stroke_width, false = _fill) do
+    with {:ok, image} <- rect(image, left, top, stroke_width, height, color: color, fill: true),
+         {:ok, image} <- rect(image, left, top, width, stroke_width, color: color, fill: true),
+         {:ok, image} <-
+           rect(image, left + width - stroke_width, top, stroke_width, height,
+             color: color,
+             fill: true
+           ) do
+      rect(image, left, top + height - stroke_width, width, stroke_width, color: color, fill: true)
+    end
   end
 
   @doc """
@@ -279,11 +328,19 @@ defmodule Image.Draw do
     rectangle is to be filled with `:color`. The
     default is `true`.
 
+  * `:stroke_width` indicates the width in pixels
+    of the stroke that forms the rectangle. The
+    default is `1`. Values greater than `1` will
+    have a negative performance impact since the
+    rectangle will be draw as 4 filled rectangles
+    forming each of the four sides. If `fill: true`
+    is set then this options is ignored.
+
   ### Returns
 
   * `image` where `image` is the same
     type as that passed as an argument to the
-    function.
+    function or
 
   * raises an exception.
 
