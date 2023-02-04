@@ -46,7 +46,8 @@ defmodule Image.Options.Draw do
   def default_options(:circle) do
     [
       color: :black,
-      fill: true
+      fill: true,
+      stroke_width: 1
     ]
   end
 
@@ -165,7 +166,8 @@ defmodule Image.Options.Draw do
     end
   end
 
-  defp validate_option(:rect, {:stroke_width, stroke_width}, options)
+  defp validate_option(type, {:stroke_width, stroke_width}, options)
+       when type in [:rect, :circle]
        when is_integer(stroke_width) and stroke_width > 0 do
     {:cont, options}
   end

@@ -73,9 +73,9 @@ defmodule Image.MixProject do
       # Bumblebee for image classification
       if(otp_release() >= 24,
         do: [
-          {:nx, "~> 0.4.1", optional: true},
-          {:bumblebee, "~> 0.1.0", optional: true},
-          {:exla, "~> 0.4.1", optional: true}
+          {:nx, "~> 0.4", optional: true},
+          {:bumblebee, "~> 0.1", optional: true},
+          {:exla, "~> 0.4", optional: true}
         ]
       ),
 

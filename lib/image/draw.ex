@@ -9,6 +9,16 @@ defmodule Image.Draw do
   alias Image.Color
   alias Image.Options
 
+  import Image, only: :macros
+
+  @doc "Validates acceptable circle dimensions"
+  defguard is_circle(cx, cy, radius)
+           when is_integer(cx) and is_integer(cy) and cx >= 0 and cy >= 0 and is_integer(radius) and
+                  radius > 0
+
+  @doc "Validate a point localtion on an image"
+  defguard is_point(left, top) when is_integer(left) and is_integer(top) and left >= 0 and top >= 0
+
   @doc """
   Draw a point on a mutable image.
 
@@ -74,8 +84,7 @@ defmodule Image.Draw do
   @spec point(MutableImage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.point()) ::
           {:ok, MutableImage.t()} | {:error, Image.error_message()}
 
-  def point(%MutableImage{} = image, left, top, options)
-      when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 do
+  def point(%MutableImage{} = image, left, top, options) when is_point(left, top) do
     with {:ok, options} <- Options.Draw.validate_options(:point, options) do
       color = maybe_add_alpha(image, options.color)
       MutableOperation.draw_rect(image, color, left, top, 1, 1)
@@ -407,6 +416,14 @@ defmodule Image.Draw do
     rectangle is to be filled with `:color`. The
     default is `true`.
 
+  * `:stroke_width` indicates the width in pixels
+    of the stroke that forms the rectangle. The
+    default is `1`. Values greater than `1` will
+    have a negative performance impact since the
+    rectangle will be draw as 4 filled rectangles
+    forming each of the four sides. If `fill: true`
+    is set then this options is ignored.
+
   ### Returns
 
   * `{:ok, image}` where `image` is the same
@@ -419,7 +436,7 @@ defmodule Image.Draw do
   @doc since: "0.7.0"
 
   @spec circle(
-          Vimage.t(),
+          Vimage.t() | MutableImage.t(),
           non_neg_integer(),
           non_neg_integer(),
           non_neg_integer(),
@@ -427,38 +444,47 @@ defmodule Image.Draw do
         ) ::
           {:ok, Vimage.t()} | {:error, Image.error_message()}
 
-  def circle(image, cx, cy, radius, options \\ [])
-
-  def circle(%Vimage{} = image, cx, cy, radius, options)
-      when is_integer(cx) and is_integer(cy) and cx >= 0 and cy >= 0 and is_integer(radius) and
-             radius > 0 do
+  def circle(%image_type{} = image, cx, cy, radius, options \\ [])
+      when is_image(image_type) and is_circle(cx, cy, radius) do
     with {:ok, options} <- Options.Draw.validate_options(:circle, options) do
-      color = maybe_add_alpha(image, options.color)
-
-      Vimage.mutate(image, fn mut_img ->
-        MutableOperation.draw_circle(mut_img, color, cx, cy, radius, fill: options.fill)
-      end)
+      %{stroke_width: stroke_width, fill: fill, color: color} = options
+      color = maybe_add_alpha(image, color)
+      circle(image, cx, cy, radius, color, stroke_width, fill)
     end
     |> maybe_wrap()
   end
 
-  @spec circle(
-          MutableImage.t(),
-          non_neg_integer(),
-          non_neg_integer(),
-          non_neg_integer(),
-          Options.Draw.circle()
-        ) ::
-          :ok | {:error, Image.error_message()}
+  # When drawing a circle with a stroke_wiodth of > 1 then
+  # we draw two circles and flood fill between then to simulate
+  # wider stroke width.
 
-  def circle(%MutableImage{} = image, cx, cy, radius, options)
-      when is_integer(cx) and is_integer(cy) and cx >= 0 and cy >= 0 and is_integer(radius) and
-             radius > 0 do
-    with {:ok, options} <- Options.Draw.validate_options(:circle, options) do
-      color = maybe_add_alpha(image, options.color)
-      MutableOperation.draw_circle(image, color, cx, cy, radius, fill: options.fill)
+  defp circle(%Vimage{} = image, cx, cy, radius, color, stroke_width, fill) do
+    Vimage.mutate(image, fn image ->
+      do_circle(image, cx, cy, radius, color, stroke_width, fill)
+    end)
+  end
+
+  defp circle(%MutableImage{} = image, cx, cy, radius, color, stroke_width, fill) do
+    do_circle(image, cx, cy, radius, color, stroke_width, fill)
+  end
+
+  defp do_circle(%MutableImage{} = image, cx, cy, radius, color, stroke_width, fill)
+       when stroke_width == 1 or fill == true do
+    MutableOperation.draw_circle(image, color, cx, cy, radius, fill: fill)
+  end
+
+  defp do_circle(%MutableImage{} = image, cx, cy, radius, color, 2 = stroke_width, _fill) do
+    with :ok <- do_circle(image, cx, cy, radius, color, 1, false) do
+      do_circle(image, cx, cy, radius - stroke_width + 1, color, 1, false)
     end
-    |> maybe_wrap()
+  end
+
+  defp do_circle(%MutableImage{} = image, cx, cy, radius, color, stroke_width, _fill) do
+    with :ok <- do_circle(image, cx, cy, radius, color, 1, false),
+         :ok <- do_circle(image, cx, cy, radius - stroke_width, color, 1, false),
+         {:ok, {_image, _meta}} <- flood(image, cx - radius + 1, cy, color, false) do
+      :ok
+    end
   end
 
   @doc """
@@ -825,37 +851,30 @@ defmodule Image.Draw do
   """
   @doc since: "0.7.0"
 
-  @spec flood(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.flood()) ::
+  @spec flood(Vimage.t() | MutableImage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.flood()) ::
           {:ok,
            {Vimage.t(), [height: integer(), width: integer(), top: integer(), left: integer()]}}
           | {:error, Image.error_message()}
 
-  def flood(image, x, y, options \\ [])
-
-  def flood(%Vimage{} = image, left, top, options)
-      when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 do
+  def flood(%image_type{} = image, left, top, options \\ []) when is_image(image_type) and is_point(left, top) do
     with {:ok, options} <- Options.Draw.validate_options(:flood, options) do
       color = maybe_add_alpha(image, options.color)
-
-      Vimage.mutate(image, fn mut_img ->
-        MutableOperation.draw_flood(mut_img, color, left, top, equal: options.equal)
-      end)
+      flood(image, left, top, color, options.equal)
     end
     |> maybe_wrap()
   end
 
-  @spec flood(MutableImage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.flood()) ::
-          {:ok,
-           {Vimage.t(), [height: integer(), width: integer(), top: integer(), left: integer()]}}
-          | {:error, Image.error_message()}
-
-  def flood(%MutableImage{} = image, x, y, options)
-      when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
-    with {:ok, options} <- Options.Draw.validate_options(:flood, options) do
-      color = maybe_add_alpha(image, options.color)
-      MutableOperation.draw_flood(image, color, x, y, equal: options.equal)
+  defp flood(%Vimage{} = image, left, top, color, equal) do
+    Vimage.mutate image, fn image ->
+      flood(image, left, top, color, equal)
     end
-    |> maybe_wrap()
+  end
+
+  defp flood(%MutableImage{} = image, left, top, color, equal) do
+    case MutableOperation.draw_flood(image, color, left, top, equal: equal) do
+      {:ok, {box}} when is_list(box) -> {:ok, {image, box}}
+      other -> other
+    end
   end
 
   @doc """

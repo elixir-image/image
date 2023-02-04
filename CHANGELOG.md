@@ -10,7 +10,11 @@ This is the changelog for Image version 0.24.0 released on ______, 2023.  For ol
 
 * Adds `Image.add_alpha/2` and `Image.add_alpha!/2`.
 
-* Adds `:stroke_width` to `Image.Draw.rect/6`. Thanks to @RyoWakabayashi for the suggestion and code.
+* Adds `:stroke_width` to `Image.Draw.rect/6` and `Image.Draw.circle/5`. Thanks to @RyoWakabayashi for the suggestion and sample code.
+
+### Bug Fixes
+
+* `Image.width/1`, `Image.height/1`, `Image.bands/1` and `Image.shape/1` now all accept either a `t:Vix.Vips.Image.t/0` or `t:Vix.Vips.MutableImage.t/0` as a parameter.
 
 ## Image 0.23.2
 

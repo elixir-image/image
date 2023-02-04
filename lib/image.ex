@@ -224,6 +224,11 @@ defmodule Image do
   @type format :: {:u | :s | :f | :c | :bf, 8 | 16 | 32 | 64 | 128}
 
   @doc """
+  Guards whether the given struct is an image type
+  either `Vix.Vips.Image` or `Vix.Vips.MutableImage`.
+  """
+  defguard is_image(image_type) when image_type in [Vimage, MutableImage]
+  @doc """
   Guards whether the coordinates can be reasonably
   interpreted as a bounding box.
 
@@ -2576,9 +2581,9 @@ defmodule Image do
   """
   @doc subject: "Image info"
 
-  @spec width(image :: Vimage.t()) :: pos_integer()
-  def width(%Vimage{} = image) do
-    Vimage.width(image)
+  @spec width(image :: Vimage.t() | MutableImage.t()) :: pos_integer()
+  def width(%image_type{} = image) when is_image(image_type) do
+    image_type.width(image)
   end
 
   @doc """
@@ -2595,9 +2600,9 @@ defmodule Image do
   """
   @doc subject: "Image info"
 
-  @spec height(image :: Vimage.t()) :: pos_integer()
-  def height(%Vimage{} = image) do
-    Vimage.height(image)
+  @spec height(image :: Vimage.t() | MutableImage.t()) :: pos_integer()
+  def height(%image_type{} = image) when is_image(image_type) do
+    image_type.height(image)
   end
 
   @doc """
@@ -2621,9 +2626,9 @@ defmodule Image do
   """
   @doc subject: "Image info"
 
-  @spec bands(image :: Vimage.t()) :: pos_integer()
-  def bands(%Vimage{} = image) do
-    Vimage.bands(image)
+  @spec bands(image :: Vimage.t() | MutableImage.t()) :: pos_integer()
+  def bands(%image_type{} = image) when is_image(image_type) do
+    image_type.bands(image)
   end
 
   @doc """
@@ -2641,10 +2646,10 @@ defmodule Image do
   """
   @doc subject: "Image info", since: "0.9.0"
 
-  @spec shape(image :: Vimage.t()) ::
+  @spec shape(image :: Vimage.t() | MutableImage.t()) ::
           {width :: pos_integer(), height :: pos_integer(), bands :: pos_integer()}
 
-  def shape(%Vimage{} = image) do
+  def shape(%image_type{} = image) when is_image(image_type) do
     {width(image), height(image), bands(image)}
   end
 
@@ -5389,7 +5394,8 @@ defmodule Image do
   end
 
   # Prebuilt binaries may not have this function because
-  # libvips may not have the dependencies required
+  # libvips may not have the dependencies required.
+
   if Code.ensure_loaded?(Vix.Vips.Operation) && function_exported?(Vix.Vips.Operation, :fwfft!, 1) do
     @doc """
     Returns the fast fourier transform (fft) of
