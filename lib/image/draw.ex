@@ -207,7 +207,7 @@ defmodule Image.Draw do
   @doc since: "0.7.0"
 
   @spec rect(
-          Vimage.t(),
+          Vimage.t() | MutableImage.t(),
           non_neg_integer(),
           non_neg_integer(),
           pos_integer(),
@@ -218,30 +218,8 @@ defmodule Image.Draw do
 
   def rect(image, left, top, width, height, options \\ [])
 
-  def rect(%Vimage{} = image, left, top, width, height, options)
-      when is_integer(left) and is_integer(top) and left >= 0 and top >= 0
-      when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
-    with {:ok, options} <- Options.Draw.validate_options(:rect, options) do
-      %{stroke_width: stroke_width, fill: fill} = options
-      color = maybe_add_alpha(image, options.color)
-      rect(image, left, top, width, height, color, stroke_width, fill)
-    end
-    |> maybe_wrap()
-  end
-
-  @spec rect(
-          MutableImage.t(),
-          non_neg_integer(),
-          non_neg_integer(),
-          pos_integer(),
-          pos_integer(),
-          Options.Draw.rect()
-        ) ::
-          {:ok, MutableImage.t()} | {:error, Image.error_message()}
-
-  def rect(%MutableImage{} = image, left, top, width, height, options)
-      when is_integer(left) and is_integer(top) and left >= 0 and top >= 0
-      when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
+  def rect(%image_type{} = image, left, top, width, height, options)
+      when is_image(image_type) and is_box(left, top, width, height) do
     with {:ok, options} <- Options.Draw.validate_options(:rect, options) do
       %{stroke_width: stroke_width, fill: fill} = options
       color = maybe_add_alpha(image, options.color)
@@ -253,43 +231,28 @@ defmodule Image.Draw do
   # If the stroke width is 1 then use the underlying Vips call.
   # If the stroke width is > 1 then form the rectangle by drawing
   # one filled rectangle for each of the four sides.
-  @dialyzer {:nowarn_function, {:rect, 8}}
 
-  defp rect(%Vimage{} = image, left, top, width, height, color, 1 = _stroke_width, fill) do
-    Vimage.mutate(image, fn mut_img ->
-      MutableOperation.draw_rect(mut_img, color, left, top, width, height, fill: fill)
-    end)
-  end
-
-  defp rect(%Vimage{} = image, left, top, width, height, color, stroke_width, fill)
-       when fill == true or stroke_width == 1 do
+  defp rect(%Vimage{} = image, left, top, width, height, color, stroke_width, fill) do
     Vimage.mutate(image, fn image ->
-      with {:ok, image} <- rect(image, left, top, stroke_width, height, color: color, fill: true),
-           {:ok, image} <- rect(image, left, top, width, stroke_width, color: color, fill: true),
-           {:ok, image} <-
-             rect(image, left + width - stroke_width, top, stroke_width, height,
-               color: color,
-               fill: true
-             ) do
-        rect(image, left, top + height - stroke_width, width, stroke_width, color: color, fill: true)
-      end
+      do_rect(image, left, top, width, height, color, stroke_width, fill)
     end)
   end
 
-  defp rect(%MutableImage{} = image, left, top, width, height, color, stroke_width, fill)
+  defp rect(%MutableImage{} = image, left, top, width, height, color, stroke_width, fill) do
+    do_rect(image, left, top, width, height, color, stroke_width, fill)
+  end
+
+  defp do_rect(%MutableImage{} = image, left, top, width, height, color, stroke_width, fill)
        when fill == true or stroke_width == 1 do
     MutableOperation.draw_rect(image, color, left, top, width, height, fill: fill)
   end
 
-  defp rect(%MutableImage{} = image, left, top, width, height, color, stroke_width, false = _fill) do
-    with {:ok, image} <- rect(image, left, top, stroke_width, height, color: color, fill: true),
-         {:ok, image} <- rect(image, left, top, width, stroke_width, color: color, fill: true),
-         {:ok, image} <-
-           rect(image, left + width - stroke_width, top, stroke_width, height,
-             color: color,
-             fill: true
-           ) do
-      rect(image, left, top + height - stroke_width, width, stroke_width, color: color, fill: true)
+  defp do_rect(%MutableImage{} = image, left, top, width, height, color, stroke_width, _fill) do
+    with :ok <- do_rect(image, left, top, stroke_width, height, color, 1, true),
+         :ok <- do_rect(image, left, top, width, stroke_width, color, 1, true),
+         :ok <-
+           do_rect(image, left + width - stroke_width, top, stroke_width, height, color, 1, true) do
+      do_rect(image, left, top + height - stroke_width, width, stroke_width, color, 1, true)
     end
   end
 
@@ -851,12 +814,18 @@ defmodule Image.Draw do
   """
   @doc since: "0.7.0"
 
-  @spec flood(Vimage.t() | MutableImage.t(), non_neg_integer(), non_neg_integer(), Options.Draw.flood()) ::
+  @spec flood(
+          Vimage.t() | MutableImage.t(),
+          non_neg_integer(),
+          non_neg_integer(),
+          Options.Draw.flood()
+        ) ::
           {:ok,
            {Vimage.t(), [height: integer(), width: integer(), top: integer(), left: integer()]}}
           | {:error, Image.error_message()}
 
-  def flood(%image_type{} = image, left, top, options \\ []) when is_image(image_type) and is_point(left, top) do
+  def flood(%image_type{} = image, left, top, options \\ [])
+      when is_image(image_type) and is_point(left, top) do
     with {:ok, options} <- Options.Draw.validate_options(:flood, options) do
       color = maybe_add_alpha(image, options.color)
       flood(image, left, top, color, options.equal)
@@ -865,9 +834,9 @@ defmodule Image.Draw do
   end
 
   defp flood(%Vimage{} = image, left, top, color, equal) do
-    Vimage.mutate image, fn image ->
+    Vimage.mutate(image, fn image ->
       flood(image, left, top, color, equal)
-    end
+    end)
   end
 
   defp flood(%MutableImage{} = image, left, top, color, equal) do

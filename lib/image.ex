@@ -228,6 +228,7 @@ defmodule Image do
   either `Vix.Vips.Image` or `Vix.Vips.MutableImage`.
   """
   defguard is_image(image_type) when image_type in [Vimage, MutableImage]
+
   @doc """
   Guards whether the coordinates can be reasonably
   interpreted as a bounding box.
