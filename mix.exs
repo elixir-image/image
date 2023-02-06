@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.24.0-dev"
+  @version "0.24.0"
   @app_name "image"
 
   def project do
@@ -46,7 +46,7 @@ defmodule Image.MixProject do
 
   defp deps do
     [
-      # libvips bindins
+      # libvips bindings
       {:vix, "~> 0.15"},
       # {:vix, github: "akash-akya/vix", branch: "dev"},
       # {:vix, github: "akash-akya/vix"},

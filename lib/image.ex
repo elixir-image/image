@@ -2573,7 +2573,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
@@ -2582,9 +2582,9 @@ defmodule Image do
   """
   @doc subject: "Image info"
 
-  @spec width(image :: Vimage.t() | MutableImage.t()) :: pos_integer()
-  def width(%image_type{} = image) when is_image(image_type) do
-    image_type.width(image)
+  @spec width(image :: Vimage.t()) :: pos_integer()
+  def width(%Vimage{} = image) do
+    Vimage.width(image)
   end
 
   @doc """
@@ -2592,7 +2592,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
@@ -2601,9 +2601,9 @@ defmodule Image do
   """
   @doc subject: "Image info"
 
-  @spec height(image :: Vimage.t() | MutableImage.t()) :: pos_integer()
-  def height(%image_type{} = image) when is_image(image_type) do
-    image_type.height(image)
+  @spec height(image :: Vimage.t()) :: pos_integer()
+  def height(%Vimage{} = image) do
+    Vimage.height(image)
   end
 
   @doc """
@@ -2627,9 +2627,9 @@ defmodule Image do
   """
   @doc subject: "Image info"
 
-  @spec bands(image :: Vimage.t() | MutableImage.t()) :: pos_integer()
-  def bands(%image_type{} = image) when is_image(image_type) do
-    image_type.bands(image)
+  @spec bands(image :: Vimage.t()) :: pos_integer()
+  def bands(%Vimage{} = image) do
+    Vimage.bands(image)
   end
 
   @doc """
@@ -2637,12 +2637,12 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
   * The image shape as a tuple of
-    `{width, height, bands}`
+    `{width, height, bands}`.
 
   """
   @doc subject: "Image info", since: "0.9.0"
@@ -5611,10 +5611,6 @@ defmodule Image do
   @spec has_alpha?(Vimage.t()) :: boolean()
   def has_alpha?(%Vimage{} = image) do
     Vimage.has_alpha?(image)
-  end
-
-  def has_alpha?(%MutableImage{} = image) do
-    MutableImage.has_alpha?(image)
   end
 
   @doc """
