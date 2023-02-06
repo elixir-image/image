@@ -12,10 +12,6 @@ This is the changelog for Image version 0.24.0 released on February 6th, 2023.  
 
 * Adds `:stroke_width` to `Image.Draw.rect/6` and `Image.Draw.circle/5`. Thanks to @RyoWakabayashi for the suggestion and sample code.
 
-### Bug Fixes
-
-* `Image.width/1`, `Image.height/1`, `Image.bands/1` and `Image.shape/1` now all accept either a `t:Vix.Vips.Image.t/0` or `t:Vix.Vips.MutableImage.t/0` as a parameter.
-
 ## Image 0.23.2
 
 This is the changelog for Image version 0.23.2 released on January 31st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
