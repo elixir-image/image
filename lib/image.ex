@@ -2984,7 +2984,7 @@ defmodule Image do
       (if `:crop` is not already set) and `resize: :both`.
 
   * `:autorotate` is a boolean indicating if the image should
-    be autorated based upon the image metadata. The default
+    be autorotated based upon the image metadata. The default
     is `true`.
 
   * `:intent` indicates the rendering intent. The default
@@ -3012,7 +3012,7 @@ defmodule Image do
     cannot be used in linear space.
 
   * `:resize` determines if an image may be only upsized, only
-    downsized, both or a foced aspect ratio is applied. The value
+    downsized, both or a forced aspect ratio is applied. The value
     may be one of `:up`, `:down`, `:both` or `:force`. The default
     is `:both`.
 
