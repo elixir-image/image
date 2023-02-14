@@ -7,7 +7,7 @@ defmodule Image.Options.Meme do
   alias Image.Color
 
   @typedoc "Valid font weights"
-  @type font_weight :: :light | :normal | :bold | :ultrabold | :heavy
+  @type font_weight :: :ultralight | :light | :normal | :bold | :ultrabold | :heavy
 
   @typedoc "Valid type transforms"
   @type text_transform :: :capitalize | :upcase | :downcase | :none
@@ -97,7 +97,7 @@ defmodule Image.Options.Meme do
   end
 
   defp validate_option({:weight, weight}, options)
-       when weight in [:light, :normal, :bold, :ultrabold, :heavy] do
+       when weight in [:ultralight, :light, :normal, :bold, :ultrabold, :heavy] do
     {:cont, options}
   end
 
