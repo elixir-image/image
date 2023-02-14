@@ -907,6 +907,13 @@ defmodule Image do
   * `:color_depth` which has the same meaning as for
     PNG images.
 
+  #### WEBP images
+
+  * `:minimize_file_size` is a boolean indicating whether
+    to apply a number of techniques to minimise the file
+    size of the `webp` file at the cost of additional time to
+    save the image. All metadata will also be removed.
+
   #### Heif images
 
   * `:compression` is the compression strategy to
