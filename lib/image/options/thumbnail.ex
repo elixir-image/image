@@ -96,7 +96,7 @@ defmodule Image.Options.Thumbnail do
 
   defp validate_option({:intent, intent}, options) when intent in @intent do
     intent = Map.fetch!(@intent_map, intent)
-    {:cont, Map.put(options, :intent, intent)}
+    {:cont, Keyword.put(options, :intent, intent)}
   end
 
   defp validate_option({:import_icc_profile, profile}, options)
