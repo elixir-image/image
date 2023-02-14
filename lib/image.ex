@@ -2266,9 +2266,9 @@ defmodule Image do
     font file. If `:font_file` is set to a path then the `:font` option
     should also be set to the correct font name.
 
-  * `:font_file` is the path to a font file that will be loaded.
-    The default is "Impact" which will resolve to the included
-    `unicode.impact.ttf` font file.
+  * `:weight` is the font weight to be rendered. The options
+    are `:ultralight`, `:light`, `:normal`, `:bold`, `:ultrabold`,
+    and `:heavy`. The default `:bold`.
 
   * `:transform` determines how the text is presented. The
     options are `:upcase`, `:downcase`, `:capitalize` and `:none`.
@@ -2350,9 +2350,9 @@ defmodule Image do
     font file. If `:font_file` is set to a path then the `:font` option
     should also be set to the correct font name.
 
-  * `:weight` is the font weight. The options are `:ultralight`,
-    `:light`, `:normal`, `:bold`, `:ultrabold` or `:heavy`. The
-    default is `:bold`.
+  * `:weight` is the font weight to be rendered. The options
+    are `:ultralight`, `:light`, `:normal`, `:bold`, `:ultrabold`,
+    and `:heavy`. The default `:bold`.
 
   * `:justify` is a boolean indicating if the headline and text
     are to be justified. If `true` then space is added between

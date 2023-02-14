@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.24.1
+
+This is the changelog for Image version 0.24.1 released on February 14th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Fixes `:weight` option handling in `Image.meme/3` to include `:ultralight`. Thanks to @quentin-bettoum. Closes #42.
+
+* Fixes `:intent` option handling in `Image.thumbnail/3`. Thanks to @quentin-bettoum. Closes #43.
+
 ## Image 0.24.0
 
 This is the changelog for Image version 0.24.0 released on February 6th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
