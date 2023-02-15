@@ -851,7 +851,7 @@ defmodule Image do
   * `:profile` is the name of any
     [ICC color profile](https://en.wikipedia.org/wiki/ICC_profile).
 
-  * `:strip` is a boolean indicating if all metadata
+  * `:strip_metadata` is a boolean indicating if all metadata
     is to be stripped from the image. The default is `false`.
 
   * `:background` is the background value to be used
