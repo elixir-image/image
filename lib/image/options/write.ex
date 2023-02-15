@@ -53,6 +53,7 @@ defmodule Image.Options.Write do
   @type webp_write_option ::
           {:icc_profile, Path.t()}
           | {:strip_metadata, boolean()}
+          | {:minimize_file_size, boolean()}
           | {:effort, 0..6}
 
   @typedoc "Allowable compression types for heif images."
@@ -63,6 +64,9 @@ defmodule Image.Options.Write do
 
   @doc false
   defguard is_png(image_type) when image_type == ".png"
+
+  @doc false
+  defguard is_webp(image_type) when image_type == ".webp"
 
   @doc false
   defguard is_tiff(image_type) when image_type == ".tiff"
@@ -168,8 +172,20 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
+  # For webp, apply min-size, strip, and mixed (allow mixed encoding which might reduce file size)
+  defp validate_option({:minimize_file_size, true}, options, image_type) when is_webp(image_type) do
+    options =
+      options
+      |> Keyword.delete(:minimize_file_size)
+      |> Keyword.put(:min_size, true)
+      |> Keyword.put(:strip, true)
+      |> Keyword.put(:mixed, true)
+
+    {:cont, options}
+  end
+
   defp validate_option({:minimize_file_size, false}, options, image_type)
-       when is_png(image_type) or is_jpg(image_type) do
+       when is_png(image_type) or is_jpg(image_type) or is_webp(image_type) do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
