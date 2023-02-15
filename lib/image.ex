@@ -902,16 +902,30 @@ defmodule Image do
     size of the `png` file at the cost of additional time to
     save the image. All metadata will also be removed.
 
+  * `:effort` is an integer to adjust the level of CPU
+    effort to reduce the file size.
+    The value can be between `1` and `10`, the default is at `7`
+
   #### TIFF images
 
   * `:color_depth` which has the same meaning as for
     PNG images.
+
+  #### WEBP images
+
+  * `:effort` is an integer to adjust the level of CPU
+    effort to reduce the file size.
+    The value can be between `0` and `6`, the default is at `4`
 
   #### Heif images
 
   * `:compression` is the compression strategy to
     be applied. The allowable values are `:hevc`,
     `:avc`, `:jpeg` and `:av1`. The default is `:hevc`.
+
+  * `:effort` is an integer to adjust the level of CPU
+    effort to reduce the file size.
+    The value can be between `0` and `9`, the default is at `4`
 
   ### Returns
 
