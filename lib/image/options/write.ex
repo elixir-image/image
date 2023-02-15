@@ -38,6 +38,7 @@ defmodule Image.Options.Write do
           {:strip_metadata, boolean()}
           | {:icc_profile, Path.t()}
           | {:minimize_file_size, boolean()}
+          | {:effort, 1..10}
 
   @typedoc "Options for writing a tiff file with `Image.write/2`."
   @type tiff_write_option ::
@@ -46,12 +47,14 @@ defmodule Image.Options.Write do
   @typedoc "Options for writing a heif file with `Image.write/2`."
   @type heif_write_option ::
           {:compression, heif_compression()}
+          | {:effort, 0..9}
 
   @typedoc "Options for writing a webp file with `Image.write/2`."
   @type webp_write_option ::
           {:icc_profile, Path.t()}
           | {:strip_metadata, boolean()}
           | {:minimize_file_size, boolean()}
+          | {:effort, 0..6}
 
   @typedoc "Allowable compression types for heif images."
   @type heif_compression :: :hevc | :avc | :jpeg | :av1
@@ -64,6 +67,9 @@ defmodule Image.Options.Write do
 
   @doc false
   defguard is_webp(image_type) when image_type == ".webp"
+
+  @doc false
+  defguard is_tiff(image_type) when image_type == ".tiff"
 
   def validate_options(options, :require_suffix) when is_list(options) do
     case Keyword.fetch(options, :suffix) do
@@ -202,6 +208,11 @@ defmodule Image.Options.Write do
   end
 
   defp validate_option({:background, background}, options, _image_type) when is_color(background) do
+    {:cont, options}
+  end
+
+  defp validate_option({:effort, _effort}, options, image_type)
+    when not is_jpg(image_type) and not is_tiff(image_type) do
     {:cont, options}
   end
 
