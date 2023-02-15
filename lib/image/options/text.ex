@@ -95,6 +95,14 @@ defmodule Image.Options.Text do
     {:cont, options}
   end
 
+  defp validate_option({:x, x}, options) when x in [:left, :center, :right] do
+    {:cont, options}
+  end
+
+  defp validate_option({:y, y}, options) when y in [:top, :middle, :bottom] do
+    {:cont, options}
+  end
+
   defp validate_option({:width, width}, options) when is_integer(width) and width >= 0 do
     {:cont, options}
   end
@@ -108,14 +116,6 @@ defmodule Image.Options.Text do
   end
 
   defp validate_option({:height, nil}, options) do
-    {:cont, options}
-  end
-
-  defp validate_option({:x, x}, options) when x in [:left, :center, :right] do
-    {:cont, options}
-  end
-
-  defp validate_option({:y, y}, options) when y in [:top, :middle, :bottom] do
     {:cont, options}
   end
 

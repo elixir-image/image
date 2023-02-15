@@ -47,14 +47,14 @@ defmodule Image.Options.Write do
   @typedoc "Options for writing a heif file with `Image.write/2`."
   @type heif_write_option ::
           {:compression, heif_compression()}
-          | {:effort, 0..9}
+          | {:effort, 1..10}
 
   @typedoc "Options for writing a webp file with `Image.write/2`."
   @type webp_write_option ::
           {:icc_profile, Path.t()}
           | {:strip_metadata, boolean()}
           | {:minimize_file_size, boolean()}
-          | {:effort, 0..6}
+          | {:effort, 1..10}
 
   @typedoc "Allowable compression types for heif images."
   @type heif_compression :: :hevc | :avc | :jpeg | :av1
@@ -211,8 +211,9 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
-  defp validate_option({:effort, _effort}, options, image_type)
-    when not is_jpg(image_type) and not is_tiff(image_type) do
+  defp validate_option({:effort, effort}, options, image_type)
+      when is_integer(effort) and effort in 1..10 and not is_jpg(image_type) and not is_tiff(image_type) do
+    options = Keyword.put(options, :effort, conform_effort(effort, image_type))
     {:cont, options}
   end
 
@@ -223,6 +224,15 @@ defmodule Image.Options.Write do
   defp invalid_option(option, image_type) do
     "Invalid option or option value: #{inspect(option)} for image type #{inspect(image_type)}"
   end
+
+  # Range 1..10
+  defp conform_effort(effort, ".png"), do: effort
+
+  # Range 0..9
+  defp conform_effort(effort, ".heif"), do: effort - 1
+
+  # Range 0..6
+  defp conform_effort(effort, ".webp"), do: round(effort / 10 * 6)
 
   defp image_type_from("", "") do
     {:error, "Cannot determine image type"}

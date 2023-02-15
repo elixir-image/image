@@ -903,8 +903,8 @@ defmodule Image do
     save the image. All metadata will also be removed.
 
   * `:effort` is an integer to adjust the level of CPU
-    effort to reduce the file size.
-    The value can be between `1` and `10`, the default is at `7`
+    effort to reduce the file size. The value must be in the
+    range `1..10`, the default is `7`.
 
   #### TIFF images
 
@@ -920,7 +920,8 @@ defmodule Image do
 
   * `:effort` is an integer to adjust the level of CPU
     effort to reduce the file size.
-    The value can be between `0` and `6`, the default is at `4`
+    The value must be in the range `1..10``, the default
+    is `7`.
 
   #### Heif images
 
@@ -930,7 +931,8 @@ defmodule Image do
 
   * `:effort` is an integer to adjust the level of CPU
     effort to reduce the file size.
-    The value can be between `0` and `9`, the default is at `4`
+    The value can be in the range `1..10`, the default is
+    `5`.
 
   ### Returns
 

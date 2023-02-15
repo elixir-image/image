@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.25.0
+
+This is the changelog for Image version 0.25.0 released on February ____, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancements
+
+* Adds an option `:effort` to `Image.write/3` for `:png`, `:heif` and `:webp` images that determines the amount of CPU effort permitted when compressing the image data.  Thaks to @quentin-bettoum for the PR. Closes #45.
+
 ## Image 0.24.1
 
 This is the changelog for Image version 0.24.1 released on February 14th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
@@ -16,7 +24,7 @@ This is the changelog for Image version 0.24.0 released on February 6th, 2023.  
 
 ### Enhancements
 
-* Adds `Image.Draw.flood!/4` to aligns with `Image.Draw.flood/4`.
+* Adds `Image.Draw.flood!/4` to align with `Image.Draw.flood/4`.
 
 * Adds `Image.add_alpha/2` and `Image.add_alpha!/2`.
 
