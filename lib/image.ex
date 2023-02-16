@@ -913,10 +913,12 @@ defmodule Image do
 
   #### WEBP images
 
-  * `:minimize_file_size` is a boolean indicating whether
-    to apply a number of techniques to minimise the file
-    size of the `webp` file at the cost of additional time to
-    save the image. All metadata will also be removed.
+  * `:minimize_file_size` is a boolean which is most useful
+    on animated `WebP`. It enables mixed encoding and optimise
+    the file for minimum size at the cost of additional time
+    to save the image. All metadata will also be removed.
+    Using this parameter on a non-animated `WebP` file will
+    only remove the metadata as `:strip_metadata` would do.
 
   * `:effort` is an integer to adjust the level of CPU
     effort to reduce the file size.
