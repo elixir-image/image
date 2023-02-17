@@ -3011,14 +3011,14 @@ defmodule Image do
   * `:intent` indicates the rendering intent. The default
     is `:relative`. See also `t:Image.render_intent/0`.
 
-  * `:export_icc_profile` -Indicates the icc profile to be attached
+  * `:export_icc_profile` indicates the icc profile to be attached
     to the resized image. The value may be an inbuilt profile (`:srgb`,
     `:p3` or `:cmyk`), the name of an icc profile in the systems
     profile directory or a full path to an icc profile file. The
     default is to export the icc profile of the resized image if
     there is one.
 
-  * `:import_icc_profile` -Indicates the icc profile to be attached
+  * `:import_icc_profile` indicates the icc profile to be attached
     to the input image. The value may be an inbuilt profile (`:srgb`,
     `:p3` or `:cmyk`), the name of an icc profile in the systems
     profile directory or a full path to an icc profile file. The
