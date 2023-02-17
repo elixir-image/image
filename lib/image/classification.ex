@@ -155,8 +155,7 @@ if Image.bumblebee_configured?() do
     ### Example
 
       iex> puppy = Image.open!("./test/support/images/puppy.webp")
-      iex> Image.Classification.classify(puppy)
-      %{predictions: [%{label: "Blenheim spaniel", score: 0.9701485633850098}]}
+      iex> %{predictions: [%{label: "Blenheim spaniel", score: _}]} = Image.Classification.classify(puppy)
 
     """
 

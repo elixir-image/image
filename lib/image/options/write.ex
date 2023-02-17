@@ -212,7 +212,8 @@ defmodule Image.Options.Write do
   end
 
   defp validate_option({:effort, effort}, options, image_type)
-      when is_integer(effort) and effort in 1..10 and not is_jpg(image_type) and not is_tiff(image_type) do
+       when is_integer(effort) and effort in 1..10 and not is_jpg(image_type) and
+              not is_tiff(image_type) do
     options = Keyword.put(options, :effort, conform_effort(effort, image_type))
     {:cont, options}
   end
