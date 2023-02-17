@@ -913,10 +913,12 @@ defmodule Image do
 
   #### WEBP images
 
-  * `:minimize_file_size` is a boolean indicating whether
-    to apply a number of techniques to minimise the file
-    size of the `webp` file at the cost of additional time to
-    save the image. All metadata will also be removed.
+  * `:minimize_file_size` is a boolean which is most useful
+    on animated `WebP`. It enables mixed encoding and optimise
+    the file for minimum size at the cost of additional time
+    to save the image. All metadata will also be removed.
+    Using this parameter on a non-animated `WebP` file will
+    only remove the metadata as `:strip_metadata` would do.
 
   * `:effort` is an integer to adjust the level of CPU
     effort to reduce the file size.
@@ -3062,8 +3064,10 @@ defmodule Image do
 
   def thumbnail(image_path, length, options) when is_binary(image_path) and is_size(length) do
     with {:ok, options} <- Thumbnail.validate_options(options),
-         {:ok, _file} = file_exists?(image_path) do
+         {:ok, _path} <- file_exists?(image_path) do
       Operation.thumbnail(image_path, length, options)
+    else
+      {:error, _reason} = error -> error
     end
   end
 
@@ -3111,8 +3115,26 @@ defmodule Image do
   @spec thumbnail!(Vimage.t(), length :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
           Vimage.t() | no_return()
 
+  def thumbnail!(image_or_path, length, options \\ [])
+
+  def thumbnail!(%Vimage{} = image, length_or_dimensions, options) do
+    case thumbnail(image, length_or_dimensions, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
   @spec thumbnail!(Path.t(), length :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
           Vimage.t() | no_return()
+
+  def thumbnail!(image_path, length, options) when is_binary(image_path) and is_size(length) do
+    with {:ok, options} <- Thumbnail.validate_options(options),
+         {:ok, _path} <- file_exists?(image_path) do
+      Operation.thumbnail!(image_path, length, options)
+    else
+      {:error, :enoent} -> raise Image.Error, {:enoent, image_path}
+    end
+  end
 
   @spec thumbnail!(
           Vimage.t() | Path.t(),
@@ -3121,10 +3143,9 @@ defmodule Image do
         ) ::
           Vimage.t() | no_return()
 
-  def thumbnail!(%Vimage{} = image, length_or_dimensions, options \\ []) do
-    case thumbnail(image, length_or_dimensions, options) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
+  def thumbnail!(image_or_path, dimensions, options) when is_binary(dimensions) do
+    with {:ok, length, options} <- Thumbnail.validate_dimensions(dimensions, options) do
+      thumbnail!(image_or_path, length, options)
     end
   end
 
