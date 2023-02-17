@@ -3062,8 +3062,10 @@ defmodule Image do
 
   def thumbnail(image_path, length, options) when is_binary(image_path) and is_size(length) do
     with {:ok, options} <- Thumbnail.validate_options(options),
-         {:ok, _file} = file_exists?(image_path) do
+         {:ok, _file} <- file_exists?(image_path) do
       Operation.thumbnail(image_path, length, options)
+    else
+      {:error, _reason} = error -> error
     end
   end
 
@@ -3125,8 +3127,10 @@ defmodule Image do
 
   def thumbnail!(image_path, length, options) when is_binary(image_path) and is_size(length) do
     with {:ok, options} <- Thumbnail.validate_options(options),
-         {:ok, _file} = file_exists?(image_path) do
+         {:ok, _file} <- file_exists?(image_path) do
       Operation.thumbnail!(image_path, length, options)
+    else
+      {:error, :enoent} -> raise Image.Error, {:enoent, image_path}
     end
   end
 
