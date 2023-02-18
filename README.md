@@ -19,24 +19,29 @@ The documentation can be found at [https://hexdocs.pm/image](https://hexdocs.pm/
 ```elixir
 def deps do
   [
-    {:image, "~> 0.21.0"}
+    {:image, "~> 0.24.0"}
   ]
 end
 ```
 
 ### Installing Libvips
 
-Installing `Vix` requires `libvips` with development headers. Installation is platform dependent however the common platform installations are:
+Starting from v0.16.0 [Vix](https;//hex.pm/packages/vix) which underpins `Image` can use either pre-built binaries or platform provided binaries.
 
-* macOS: Install using [homebrew](https://brew.sh) with `brew install libvips`
-* Linux: Install with `apt install libvips-dev`
+By default `Vix` provides pre-built NIF and `libvips` and uses them for operation. This makes deployment and release of your application a breeze. With this you don't have to install any compiler tools or `libvips` to use `Vix`. This is especially useful when using `Image` with [Livebook](https://livebook.dev).
 
-For more details see https://www.libvips.org/install.html
+However the pre-built NIF or libvips does not include dependencies support all image formats and operations. If you require those formats or operations then you can bring your own `libvips` by installing it manually and configure `Vix` to use that instead. `Vix` makes sure to generate relevant functions and documentation based on the dependencies you bring. For example, if you install libvips with `tiff` support, vix will generate `tiff` related bindings for you.
 
-In addition the following will be required (and would normally be installed by the steps above):
+You can choose this using `VIX_COMPILATION_MODE` environment variable. This variable must be set both during compilation and runtime. Possible values are:
 
-* [pkg-config](https://en.wikipedia.org/wiki/Pkg-config)
-* A `C` compiler
+* `PRECOMPILED_NIF_AND_LIBVIPS` (Default): Uses vix provided NIF and libvips. No need to install any additional dependencies. Big thanks to sharp library maintainers, pre-compiled libvips is based on: https://github.com/lovell/sharp-libvips/.
+
+* `PLATFORM_PROVIDED_LIBVIPS`: Uses platform provided libvips and NIF will be compiled during compilation phase. The following build tools are required generate the `Vix` NIF:
+  * Install a platform specific `libvips`. This can be compiled from source (see https://www.libvips.org/install.html) or via a platform package manager. For example:
+    * macOS: brew brew install libvips
+    * Linux: apt install libvips-dev For more details see
+  * Install `pkg-config`
+  * Ensure a supported C compiler is installed
 
 ### Configuring Libvips
 
@@ -88,7 +93,7 @@ The default number of threads is equal to the number of cores detected on the ru
 
 ### Installing Nx
 
-[Nx](https://hex.pm/packages/nx) provides multi-dimensional arrays (tensors) and numerical definitions for Elixir. These tensors can also be used as an interchange format for binary image data. When `Nx` is installed and `Image` is compiled, the functions `Image.to_nx/2` and `Image.from_nx/1` are defined. 
+[Nx](https://hex.pm/packages/nx) provides multi-dimensional arrays (tensors) and numerical definitions for Elixir. These tensors can also be used as an interchange format for binary image data. When `Nx` is installed and `Image` is compiled, the functions `Image.to_nx/2` and `Image.from_nx/1` are defined.
 
 `Nx` is required in order to support the functions in `Image.Classification`. It is also required to support [eVision](https://hex.pm/packages/evision) and [Bumblebee](https://hex.pm/packages/bumblebee) integrations.
 
@@ -150,7 +155,7 @@ mix deps.get
 
 As of [Image version 0.9.0](https://hex,pm/packages/image/0.9.0), experimental support for [eVision (OpenCV)](https://github.com/cocoa-xu/evision) is provided. There is extensive documentation on how to install `eVision` and the required [OpenCV](https://opencv.org). However to most cases the following should be enough:
 
-1. Add `eVision` to your `mix.exs`. [exla](https://hex.pm/packages/exla) may be optionally configured too, see the `Nx` installation section above. 
+1. Add `eVision` to your `mix.exs`. [exla](https://hex.pm/packages/exla) may be optionally configured too, see the `Nx` installation section above.
 ```elixir
 def deps do
   [

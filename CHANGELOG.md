@@ -6,7 +6,9 @@ This is the changelog for Image version 0.25.0 released on February ____, 2023. 
 
 ### Enhancements
 
-* Adds an option `:effort` to `Image.write/3` for `:png`, `:heif` and `:webp` images that determines the amount of CPU effort permitted when compressing the image data.  Thaks to @quentin-bettoum for the PR. Closes #45.
+* Update `README.md` to include updated documentation for installing `libvips` with `Vix`.
+
+* Adds an option `:effort` to `Image.write/3` for `:png`, `:heif`, `:heic`, `:avif` and `:webp` images that determines the amount of CPU effort permitted when compressing the image data.  Thanks to @quentin-bettoum for the PR. Closes #45.
 
 ## Image 0.24.1
 
