@@ -176,7 +176,7 @@ defmodule Image.Options.Text do
   end
 
   defp validate_option({:padding = option, padding}, options)
-       when is_integer(padding) and padding > 0 do
+       when is_integer(padding) and padding >= 0 do
     {:cont, Keyword.put(options, option, [padding, padding])}
   end
 

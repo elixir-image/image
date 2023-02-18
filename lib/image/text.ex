@@ -103,6 +103,14 @@ defmodule Image.Text do
     string. It is a float between `0.0` and `1.0` where `0.0` means
     transparent and `1.0` means opaque. The default is `0.7`.
 
+  * `:x` is the horizontal location of the text on its background.
+    The value is either a non-negative integer or one of `:left`,
+    `:right` or `:center`. The default is `:center`.
+
+  * `:y` is the vertical location of the text on its background.
+    The value is either a non-negative integer or one of `:top`,
+    `:middle` or `:bottom`. The default is `:middle`.
+
   ### Returns
 
   * `{:ok, image}` or
@@ -228,6 +236,14 @@ defmodule Image.Text do
     string. It is a float between `0.0` and `1.0` where `0.0` means
     transparent and `1.0` means opaque. The default is `0.7`.
 
+  * `:x` is the horizontal location of the text on its background.
+    The value is either a non-negative integer or one of `:left`,
+    `:right` or `:center`. The default is `:center`.
+
+  * `:y` is the vertical location of the text on its background.
+    The value is either a non-negative integer or one of `:top`,
+    `:middle` or `:bottom`. The default is `:middle`.
+
   ### Returns
 
   * `image` or
@@ -277,8 +293,8 @@ defmodule Image.Text do
   whether `:autofit` is set to `true` or `false`.
 
   When `false` (the default), the text is rendered using
-  svg and therefore separate text stroke color, text
-  fill colour, text stroke width cand font weight an be
+  `svg` and therefore separate text stroke color, text
+  fill colour, text stroke width and font weight can be
   specified.  However the size of the text box will be
   determined by the combination of the font size and
   text length - there is no line wrapping.
@@ -327,7 +343,7 @@ defmodule Image.Text do
   #### Options applicable in all cases
 
   * `:font` is any font recognised on the host system.
-    The default is"Helvetica".
+    The default is "Helvetica".
 
   * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
     The alternatives are `:normal`, `:bold`, `:lighter`, `:bolder`,
@@ -646,11 +662,6 @@ defmodule Image.Text do
     end
   end
 
-  #
-  # def add_background_padding(%Vimage{} = image, %{background_fill_color: :none} = _options) do
-  #   {:ok, image}
-  # end
-
   def add_background_padding(%Vimage{} = image, %{} = options) do
     [padding_left, padding_top] = options.padding
 
@@ -873,7 +884,7 @@ defmodule Image.Text do
 
   @points_to_pixels 1.333
 
-  defp render_text(text, %{autofit: true} = options) do
+  defp render_text(text, %{autofit: true, width: width, height: height} = options) do
     font_size =
       if options.font_size > 0, do: " #{round(options.font_size / @points_to_pixels)}", else: ""
 
@@ -891,13 +902,49 @@ defmodule Image.Text do
 
     with {:ok, {text_mask, _}} <- Operation.text(text, text_options),
          {:ok, color_layer} <- Image.new(text_mask, color: options.text_fill_color),
-         {:ok, joined} <- Operation.bandjoin([color_layer, text_mask]) do
+         {:ok, joined} <- Operation.bandjoin([color_layer, text_mask]),
+         {:ok, {x, y}} <- location_from_options(joined, options.x, options.y, width, height) do
       # The text image isn't guaranteed to be the exact dimensions
-      # provided so we embed in an image of the exact size
-      x = div(options.width - Image.width(joined), 2)
-      y = div(options.height - Image.height(joined), 2)
+      # provided so we embed in an image of the exact size.
+      Operation.embed(joined, x, y, width, height)
+    end
+  end
 
-      Operation.embed(joined, x, y, options.width, options.height)
+  defp location_from_options(image, :left, y, width, height) do
+    location_from_options(image, 0, y, width, height)
+  end
+
+  defp location_from_options(image, :center, y, width, height) do
+    x = div(width - Image.width(image), 2)
+    location_from_options(image, x, y, width, height)
+  end
+
+  defp location_from_options(image, :right, y, width, height) do
+    x = width - Image.width(image)
+    location_from_options(image, x, y, width, height)
+  end
+
+  defp location_from_options(image, x, :top, width, height) do
+    location_from_options(image, x, 0, width, height)
+  end
+
+  defp location_from_options(image, x, :middle, width, height) do
+    y = div(height - Image.height(image), 2)
+    location_from_options(image, x, y, width, height)
+  end
+
+  defp location_from_options(image, x, :bottom, width, height) do
+    y = height - Image.height(image)
+    location_from_options(image, x, y, width, height)
+  end
+
+  defp location_from_options(image, x, y, width, height) do
+    if Image.width(image) + x <= width && Image.height(image) + y <= height do
+      {:ok, {x, y}}
+    else
+      {:error,
+        "Location [#{inspect x}, #{inspect y}] would place the text " <>
+        "outside the image bounds specified"}
     end
   end
 

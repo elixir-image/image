@@ -16,6 +16,8 @@ This is the changelog for Image version 0.25.0 released on February ____, 2023. 
 
 * Update `README.md` to include updated documentation for installing `libvips` with `Vix`.
 
+* Adds `:x` and `:y` options to `Image.Text.text/2` which allows placing the text on its background in the specified location.  `:x` can be specified as a non-negative integer or one of `:left`, `:right` or `:center` with the default being `:center`. `:y` can be specified as a non-negative integer of one of `:top`, `:bottom` or `:middle` with the default being `:middle`. Thanks to @severian1778 for the issue and collaboration. Closes #44.
+
 * Adds an option `:effort` to `Image.write/3` for `:png`, `:heif`, `:heic`, `:avif` and `:webp` images that determines the amount of CPU effort permitted when compressing the image data.  Thanks to @quentin-bettoum for the PR. Closes #45.
 
 ## Image 0.24.1

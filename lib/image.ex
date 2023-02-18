@@ -5750,7 +5750,14 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0` or
+    a tuple of the form `{:ok, image}`.
+
+  ### Returns
+
+  * The `image` parameter as provided with the
+    side effect of emitting an image preview on
+    an iTerm terminal.
 
   ### Notes
 
@@ -5764,7 +5771,7 @@ defmodule Image do
     resized to the maximum width for the preview.
 
   * Intended to be used as shortcut in `iex`.
-    It can be included in `.iex.exs` file:
+    It can be included in an `.iex.exs` file:
 
       # .iex.exs
       import_if_available(Image, only: [preview: 1])
@@ -5772,7 +5779,9 @@ defmodule Image do
   """
   @doc subject: "Display", since: "0.13.0"
 
-  @spec preview(Vimage.t()) :: Vimage.t() | {:error, error_message()}
+  @spec preview(Vimage.t() | {:ok, Vimage.t()}) ::
+    Vimage.t() | {:ok, Vimage.t()} | {:error, error_message()}
+
   def preview(%Vimage{} = image) do
     with {:ok, "iTerm2"} <- supported_terminal(System.get_env("LC_TERMINAL")) do
       {prelude, epilog} = get_prelude_epilog_for_term(System.get_env("TERM"))
@@ -5786,6 +5795,10 @@ defmodule Image do
         image
       end
     end
+  end
+
+  def preview({:ok, %Vimage{} = image}) do
+    {:ok, preview(image)}
   end
 
   @doc """
