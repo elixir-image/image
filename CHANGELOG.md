@@ -4,6 +4,10 @@
 
 This is the changelog for Image version 0.25.0 released on February ____, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
 
+### Bug Fixes
+
+* Adds `:heic` and `:avif` suffixes to the list of valid suffixes for `heif` file formats.  Thanks to @quentin-bettoum for the PR. Closes #50.
+
 ### Enhancements
 
 * Update `README.md` to include updated documentation for installing `libvips` with `Vix`.
