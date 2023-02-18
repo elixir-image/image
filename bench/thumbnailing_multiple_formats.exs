@@ -3,7 +3,7 @@ dims = "500x200"
 
 Benchee.run(
   %{
-    "Image.Open |> Image.thumbnail" => fn ->
+    "Image.open |> Image.thumbnail" => fn ->
       image =
         image_path
         |> Image.open!(access: :random)
@@ -15,6 +15,7 @@ Benchee.run(
       Image.write!(image, :memory, suffix: ".heic")
       Image.write!(image, :memory, suffix: ".webp")
     end,
+
     "Image.thumbnail(path)" => fn ->
       Image.thumbnail!(image_path, dims) |> Image.write!(:memory, suffix: ".jpg")
       Image.thumbnail!(image_path, dims) |> Image.write!(:memory, suffix: ".png")

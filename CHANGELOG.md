@@ -4,6 +4,10 @@
 
 This is the changelog for Image version 0.25.0 released on February ____, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
 
+### Behavior Change
+
+* The default access mode for `Image.open/2` is now `access: :random` in line with `libvips` native default. Although `access: :sequential` optimizes for many cases (especially with regard to memory) it resulted in poor developer experience since the error messages when trying to re-use a sequentially access image are difficult to understand and very difficult to re-state in Image.
+
 ### Bug Fixes
 
 * Adds `:heic` and `:avif` suffixes to the list of valid suffixes for `heif` file formats.  Thanks to @quentin-bettoum for the PR. Closes #50.

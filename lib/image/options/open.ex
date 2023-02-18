@@ -80,7 +80,7 @@ defmodule Image.Options.Open do
   }
 
   @failure_modes Map.keys(@fail_on_open)
-  @default_access :sequential
+  @default_access :random
 
   @access [:sequential, :random]
 
