@@ -230,7 +230,7 @@ defmodule Image.Options.Write do
   defp conform_effort(effort, ".png"), do: effort
 
   # Range 0..9
-  defp conform_effort(effort, ".heif"), do: effort - 1
+  defp conform_effort(effort, image_type) when image_type in [".heif", ".heic", ".avif"], do: effort - 1
 
   # Range 0..6
   defp conform_effort(effort, ".webp"), do: round(effort / 10 * 6)
