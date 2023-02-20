@@ -8,7 +8,7 @@ As of version 0.18.0, `Image` provides optional integration with [Bumblebee](htt
 
 `Image` is also intended to be an idiomatic API layer over [eVision (OpenCV)](https://github.com/cocoa-xu/evision). As of `Image verison 0.9.0`, the `Image.QRcode.decode/1` function is provided to decode QRcodes with the functionality to do so provided by `eVision`. The `eVision` integration is optional and currently considered experimental.
 
-In a very simple image resizing [benchmark](https://github.com/kipcole9/image/blob/main/bench/image_resize.exs), `Image` is approximately 2 to 3 times faster than `Mogrify` and uses about 5 times less memory.
+In a very simple image resizing [benchmark](https://github.com/elixir-image/image/blob/main/bench/vips_v_mogrify.exs), `Image` is approximately 2 to 3 times faster than `Mogrify` and uses about 5 times less memory.
 
 The documentation can be found at [https://hexdocs.pm/image](https://hexdocs.pm/image).
 
