@@ -622,7 +622,7 @@ defmodule Image do
     data stored in the image metadata. The default is
     `false`.
 
-  #### Webp options
+  #### WebP options
 
   * `:scale` will scale the image on load. The value is
     `0..1024` with a default of `1` and can either be a
@@ -936,7 +936,14 @@ defmodule Image do
   * `:color_depth` which has the same meaning as for
     PNG images.
 
-  #### WEBP images
+  #### WebP images
+
+  * `:scale` will scale the image on load. The value is
+    `0..1024` with a default of `1` and can either be a
+    `float` or an `integer`.
+    This option allows to shrink-on-load like the `shrink`
+    option for `jpeg` images. For exemple, setting a `scale`
+    of `0.5` will shrink the image by `2`.
 
   * `:minimize_file_size` is a boolean which is most useful
     on animated `WebP`. It enables mixed encoding and optimise
