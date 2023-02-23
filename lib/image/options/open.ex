@@ -81,6 +81,7 @@ defmodule Image.Options.Open do
 
   @failure_modes Map.keys(@fail_on_open)
   @default_access :random
+  @default_pages -1
 
   @access [:sequential, :random]
 
@@ -90,8 +91,10 @@ defmodule Image.Options.Open do
         {:error, value}
 
       options ->
-        options = Keyword.put_new(options, :access, @default_access)
-        {:ok, options}
+        {:ok,
+         options
+         |> Keyword.put_new(:access, @default_access)
+         |> Keyword.put_new(:n, @default_pages)}
     end
   end
 
