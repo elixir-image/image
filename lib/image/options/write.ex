@@ -20,6 +20,7 @@ defmodule Image.Options.Write do
           | tiff_write_option()
           | webp_write_option()
           | heif_write_option()
+          | gif_write_option()
         ]
 
   @typedoc "Options for writing an image stream"
