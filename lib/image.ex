@@ -943,7 +943,7 @@ defmodule Image do
 
   * `:effort` is an integer to adjust the level of CPU
     effort to reduce the file size.
-    The value must be in the range `1..10``, the default
+    The value must be in the range `1..10`, the default
     is `7`.
 
   #### GIF options
@@ -957,7 +957,7 @@ defmodule Image do
 
   * `:effort` is an integer to adjust the level of CPU
     effort to reduce the file size.
-    The value must be in the range `1..10``, the default
+    The value must be in the range `1..10`, the default
     is `7`.
 
   #### Heif images
