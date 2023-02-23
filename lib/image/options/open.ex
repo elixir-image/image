@@ -45,7 +45,7 @@ defmodule Image.Options.Open do
           | {:fail_on, fail_on()}
           | {:pages, number()}
           | {:page, 0..100_000}
-          | {:scale, 1..1024}
+          | {:scale, number()}
         ]
 
   @type other_open_options :: [
@@ -114,7 +114,7 @@ defmodule Image.Options.Open do
     {:cont, options}
   end
 
-  def validate_option({:scale, scale}, options) when is_integer(scale) and scale in 1..1024 do
+  def validate_option({:scale, scale}, options) when is_number(scale) and scale >= 0 and scale <= 1024 do
     {:cont, options}
   end
 

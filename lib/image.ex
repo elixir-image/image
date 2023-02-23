@@ -610,12 +610,12 @@ defmodule Image do
 
   #### JPEG image options
 
-  * `:shrink` is an integer factor in the range `1..16` by
-    which the image is reduced upon loading. This is an
-    optimization that can result in improved performance and
-    reduced memory usage if the image is being loaded
-    with the intent to resize it to smaller dimensions. The
-    default value is `1` meaning no shrink-on-load.
+  * `:shrink` is an integer factor that should be either
+    `1`, `2`, `4`, `8` or `16` by which the image is reduced
+    upon loading. This is an optimization that can result in
+    improved performance and reduced memory usage if the image
+    is being loaded with the intent to resize it to smaller dimensions.
+    The default value is `1` meaning no shrink-on-load.
 
   * `:autorotate` is a boolean value indicating if
     the image should be rotated according to the orientation
@@ -625,7 +625,11 @@ defmodule Image do
   #### Webp options
 
   * `:scale` will scale the image on load. The value is
-    `1..1024` with a default of `1`.
+    `0..1024` with a default of `1` and can either be a
+    `float` or an `integer`.
+    This option allows to shrink-on-load like the `shrink`
+    option for `jpeg` images. For exemple, setting a `scale`
+    of `0.5` will shrink the image by `2`.
 
   * `:page` indicates the first page to be loaded. The
     value is in the range `0..100_000` with a default
