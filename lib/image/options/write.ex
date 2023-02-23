@@ -65,22 +65,22 @@ defmodule Image.Options.Write do
   @type heif_compression :: :hevc | :avc | :jpeg | :av1
 
   @doc false
-  defguard is_jpg(image_type) when image_type in ["jpg", "jpeg"]
+  defguard is_jpg(image_type) when image_type in [".jpg", ".jpeg"]
 
   @doc false
-  defguard is_png(image_type) when image_type == "png"
+  defguard is_png(image_type) when image_type == ".png"
 
   @doc false
-  defguard is_webp(image_type) when image_type == "webp"
+  defguard is_webp(image_type) when image_type == ".webp"
 
   @doc false
-  defguard is_tiff(image_type) when image_type in ["tiff", "tif"]
+  defguard is_tiff(image_type) when image_type in [".tiff", ".tif"]
 
   @doc false
-  defguard is_heif(image_type) when image_type in ["heif", "heic", "avif"]
+  defguard is_heif(image_type) when image_type in [".heif", ".heic", ".avif"]
 
   @doc false
-  defguard is_gif(image_type) when image_type == "gif"
+  defguard is_gif(image_type) when image_type == ".gif"
 
   def validate_options(options, :require_suffix) when is_list(options) do
     case Keyword.fetch(options, :suffix) do
@@ -93,7 +93,7 @@ defmodule Image.Options.Write do
   end
 
   def validate_options(path, options) when is_binary(path) and is_list(options) do
-    with {:ok, image_type} <- image_type_from(path, options[:suffix]) do
+    with {:ok, image_type} <- path |> Path.extname() |> image_type_from(options[:suffix]) do
       case Enum.reduce_while(options, options, &validate_option(&1, &2, image_type)) do
         {:error, value} ->
           {:error, value}
@@ -256,10 +256,10 @@ defmodule Image.Options.Write do
   end
 
   defp image_type_from("", suffix) do
-    {:ok, String.trim_leading(suffix, ".")}
+    {:ok, suffix}
   end
 
-  defp image_type_from(path, _suffix) do
-    {:ok, path |> String.split(".") |> List.last() |> String.downcase()}
+  defp image_type_from(extname, _suffix) do
+    {:ok, String.downcase(extname)}
   end
 end

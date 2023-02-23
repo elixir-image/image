@@ -889,7 +889,7 @@ defmodule Image do
   ### Streaming images and :memory images
 
   * `:suffix` must be specified so that the image is written
-    in the correct format. For example: `suffix: "jpg"`.
+    in the correct format. For example: `suffix: ".jpg"`.
 
   #### JPEG images
 
@@ -1156,7 +1156,7 @@ defmodule Image do
       "some/image.jpg"
       |> Image.open!()
       |> Image.resize!(200)
-      |> Image.stream!(suffix: "jpg", buffer_size: 5_242_880)
+      |> Image.stream!(suffix: ".jpg", buffer_size: 5_242_880)
       |> ExAws.S3.upload("images", "some_object_name.jpg")
       |> ExAws.request()
 
