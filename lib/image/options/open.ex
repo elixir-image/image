@@ -35,7 +35,7 @@ defmodule Image.Options.Open do
           {:autorotate, boolean()}
           | {:access, file_access()}
           | {:fail_on, fail_on()}
-          | {:pages, pos_integer()}
+          | {:pages, number()}
           | {:page, 1..100_000}
         ]
 
@@ -43,8 +43,8 @@ defmodule Image.Options.Open do
           {:autorotate, boolean()}
           | {:access, file_access()}
           | {:fail_on, fail_on()}
-          | {:pages, pos_integer()}
-          | {:page, 1..100_000}
+          | {:pages, number()}
+          | {:page, 0..100_000}
           | {:scale, 1..1024}
         ]
 
@@ -115,7 +115,7 @@ defmodule Image.Options.Open do
     {:cont, options}
   end
 
-  def validate_option({:pages, n}, options) when is_integer(n) and n in 1..100_000 do
+  def validate_option({:pages, n}, options) when is_number(n) and n >= -1 and n <= 100_000 do
     options =
       options
       |> Keyword.delete(:pages)
