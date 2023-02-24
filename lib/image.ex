@@ -627,12 +627,16 @@ defmodule Image do
   * `:scale` will scale the image on load. The value is
     `1..1024` with a default of `1`.
 
-  * `:page` indicates the image page to be loaded. The
+  * `:page` indicates the first page to be loaded. The
     value is in the range `0..100_000` with a default
-    value of `0`.
+    value of `0`. This parameter is useful on animated images.
 
-  * `:pages` indicates how many pages to load. The value is
-    in the range `1..100_000` with a default value of `1`.
+  * `:pages` indicates the number of pages to load.
+    The value must be between `-1` and `100_000`.
+    The default value is `1`.
+    A value of `-1` would load all the available pages
+    which is useful if you want to keep the animation of
+    the input image.
 
   #### TIFF options
 
@@ -641,17 +645,34 @@ defmodule Image do
     data stored in the image metadata. The default is
     `false`.
 
-  * `:page` indicates the image page to be loaded. The
+  * `:page` indicates the first page to be loaded. The
     value is in the range `0..100_000` with a default
-    value of `0`.
+    value of `0`. This parameter is useful on animated images.
 
-  * `:pages` indicates how many pages to load. The value is
-    in the range `1..100_000` with a default value of `1`.
+  * `:pages` indicates the number of pages to load.
+    The value must be between `-1` and `100_000`.
+    The default value is `1`.
+    A value of `-1` would load all the available pages
+    which is useful if you want to keep the animation of
+    the input image.
 
   #### PNG options
 
   * There are no PNG-specific image loading
     options.
+
+  #### GIF options
+
+  * `:page` indicates the first page to be loaded. The
+    value is in the range `0..100_000` with a default
+    value of `0`. This parameter is useful on animated images.
+
+  * `:pages` indicates the number of pages to load.
+    The value must be between `-1` and `100_000`.
+    The default value is `1`.
+    A value of `-1` would load all the available pages
+    which is useful if you want to keep the animation of
+    the input image.
 
   ### Returns
 
@@ -922,7 +943,21 @@ defmodule Image do
 
   * `:effort` is an integer to adjust the level of CPU
     effort to reduce the file size.
-    The value must be in the range `1..10``, the default
+    The value must be in the range `1..10`, the default
+    is `7`.
+
+  #### GIF options
+
+  * `:interframe_maxerror` Maximum inter-frame error for transparency.
+    The value must be in the range `0..32`.
+    The default is `0`.
+    By increasing this value, the encoder will try to take advantage
+    from temporal redundancy between neighboring frames by enabling
+    higher compression rates.
+
+  * `:effort` is an integer to adjust the level of CPU
+    effort to reduce the file size.
+    The value must be in the range `1..10`, the default
     is `7`.
 
   #### Heif images

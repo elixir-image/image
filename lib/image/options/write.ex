@@ -20,6 +20,7 @@ defmodule Image.Options.Write do
           | tiff_write_option()
           | webp_write_option()
           | heif_write_option()
+          | gif_write_option()
         ]
 
   @typedoc "Options for writing an image stream"
@@ -49,6 +50,10 @@ defmodule Image.Options.Write do
           {:compression, heif_compression()}
           | {:effort, 1..10}
 
+  @type gif_write_option ::
+          {:interframe_maxerror, 0..32}
+          | {:effort, 1..10}
+
   @typedoc "Options for writing a webp file with `Image.write/2`."
   @type webp_write_option ::
           {:icc_profile, Path.t()}
@@ -69,7 +74,13 @@ defmodule Image.Options.Write do
   defguard is_webp(image_type) when image_type == ".webp"
 
   @doc false
-  defguard is_tiff(image_type) when image_type == ".tiff"
+  defguard is_tiff(image_type) when image_type in [".tiff", ".tif"]
+
+  @doc false
+  defguard is_heif(image_type) when image_type in [".heif", ".heic", ".avif"]
+
+  @doc false
+  defguard is_gif(image_type) when image_type == ".gif"
 
   def validate_options(options, :require_suffix) when is_list(options) do
     case Keyword.fetch(options, :suffix) do
@@ -82,7 +93,7 @@ defmodule Image.Options.Write do
   end
 
   def validate_options(path, options) when is_binary(path) and is_list(options) do
-    with {:ok, image_type} <- image_type_from(Path.extname(path), options[:suffix]) do
+    with {:ok, image_type} <- path |> Path.extname() |> image_type_from(options[:suffix]) do
       case Enum.reduce_while(options, options, &validate_option(&1, &2, image_type)) do
         {:error, value} ->
           {:error, value}
@@ -218,6 +229,11 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
+  defp validate_option({:interframe_maxerror, int_max_error}, options, image_type)
+  when is_gif(image_type) and  int_max_error in 0..32 do
+    {:cont, options}
+  end
+
   defp validate_option(option, _options, image_type) do
     {:halt, {:error, invalid_option(option, image_type)}}
   end
@@ -230,7 +246,7 @@ defmodule Image.Options.Write do
   defp conform_effort(effort, ".png"), do: effort
 
   # Range 0..9
-  defp conform_effort(effort, image_type) when image_type in [".heif", ".heic", ".avif"], do: effort - 1
+  defp conform_effort(effort, image_type) when is_heif(image_type), do: effort - 1
 
   # Range 0..6
   defp conform_effort(effort, ".webp"), do: round(effort / 10 * 6)
@@ -244,6 +260,6 @@ defmodule Image.Options.Write do
   end
 
   defp image_type_from(extname, _suffix) do
-    {:ok, extname}
+    {:ok, String.downcase(extname)}
   end
 end
