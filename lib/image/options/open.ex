@@ -20,7 +20,7 @@ defmodule Image.Options.Open do
           | other_open_options()
 
   @type jpeg_open_options :: [
-          {:shrink, 1..16}
+          {:shrink, 1 | 2 | 4 | 8 | 16}
           | {:autorotate, boolean()}
           | {:access, file_access()}
           | {:fail_on, fail_on()}
