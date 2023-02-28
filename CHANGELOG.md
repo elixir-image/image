@@ -2,7 +2,7 @@
 
 ## Image 0.25.0
 
-This is the changelog for Image version 0.25.0 released on February ____, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.25.0 released on February February 27th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
 
 ### Behavior Change
 

@@ -883,7 +883,7 @@ defmodule Image do
   * `:quality` which influences image compression and
     is a integer in the range `1..100`. The default for
     most image formats is `75`. For PNG files it is the
-    compression amount with a defualt  of `60`. For
+    compression amount with a default  of `60`. For
     HEIF files the default is `50`.
 
   ### Streaming images and :memory images
