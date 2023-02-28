@@ -781,7 +781,7 @@ defmodule Image do
   end
 
   @doc """
-  Returns a image created from an in-memory binary representation
+  Returns an image created from an in-memory binary representation
   of an image.
 
   The binary must be a complete formatted image such as that
@@ -814,7 +814,7 @@ defmodule Image do
   end
 
   @doc """
-  Returns a image created from an in-memory binary representation
+  Returns an image created from an in-memory binary representation
   of an image or raises an exception.
 
   The binary must be a complete formatted image such as that
