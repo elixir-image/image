@@ -230,7 +230,7 @@ defmodule Image.Options.Write do
   end
 
   defp validate_option({:interframe_maxerror, int_max_error}, options, image_type)
-  when is_gif(image_type) and  int_max_error in 0..32 do
+       when is_gif(image_type) and int_max_error in 0..32 do
     {:cont, options}
   end
 

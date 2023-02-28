@@ -814,6 +814,39 @@ defmodule Image do
   end
 
   @doc """
+  Returns a image created from an in-memory binary representation
+  of an image or raises an exception.
+
+  The binary must be a complete formatted image such as that
+  returned from `File.read!/1`.
+
+  ### Arguments
+
+  * `binary` is a binary representation of a formatted image
+
+  * `options` is a keyword list of options. See `Image.open/2`
+    for the list of applicable options.
+
+  ### Returns
+
+  * `image` or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Load and save", since: "0.25.0"
+
+  @spec from_binary!(binary :: binary(), options :: Open.image_open_options()) ::
+          Vimage.t() | no_return()
+
+  def from_binary!(binary, options \\ []) when is_binary(binary) do
+    case from_binary(binary, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Opens an image file for image processing
   returning an image or raising an exception.
 
@@ -5815,7 +5848,7 @@ defmodule Image do
   @doc subject: "Display", since: "0.13.0"
 
   @spec preview(Vimage.t() | {:ok, Vimage.t()}) ::
-    Vimage.t() | {:ok, Vimage.t()} | {:error, error_message()}
+          Vimage.t() | {:ok, Vimage.t()} | {:error, error_message()}
 
   def preview(%Vimage{} = image) do
     with {:ok, "iTerm2"} <- supported_terminal(System.get_env("LC_TERMINAL")) do

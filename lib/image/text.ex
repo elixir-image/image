@@ -943,8 +943,8 @@ defmodule Image.Text do
       {:ok, {x, y}}
     else
       {:error,
-        "Location [#{inspect x}, #{inspect y}] would place the text " <>
-        "outside the image bounds specified"}
+       "Location [#{inspect(x)}, #{inspect(y)}] would place the text " <>
+         "outside the image bounds specified"}
     end
   end
 
