@@ -13,9 +13,15 @@ if Image.evision_configured?() do
     opened with `Image.Video.open/1`. At the end of processing the video
     file should be closed with `Image.Video.close/1`.
 
-    This process can be wrrapped by `Image.Video.with_video/2` which will
+    This process can be wrapped by `Image.Video.with_video/2` which will
     open a video file, execute a function (passing it the video reference) and
     closing the video file at the end of the function.
+
+    ### Note
+
+    This module is only available if the optional dependency
+    [eVision](https://hex.pm/packages/evision) is configured in
+    `mix.exs`.
 
     """
 

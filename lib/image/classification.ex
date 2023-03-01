@@ -56,6 +56,12 @@ if Image.bumblebee_configured?() do
           )
         end
 
+    ### Note
+
+    This module is only available if the optional dependency
+    [Bumblebee](https://hex.pm/packages/bumblebee) is configured in
+    `mix.exs`.
+
     """
 
     alias Vix.Vips.Image, as: Vimage

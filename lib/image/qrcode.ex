@@ -1,4 +1,4 @@
-if match?({:module, _module}, Code.ensure_compiled(Evision)) do
+if Image.evision_configured?() do
   defmodule Image.QRcode do
     @moduledoc """
     Detects and decodes QRcodes.
@@ -10,6 +10,12 @@ if match?({:module, _module}, Code.ensure_compiled(Evision)) do
 
     Images that are in different formats must be converted
     first.
+
+    ### Note
+
+    This module is only available if the optional dependency
+    [eVision](https://hex.pm/packages/evision) is configured in
+    `mix.exs`.
 
     """
 
