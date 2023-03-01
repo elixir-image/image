@@ -66,19 +66,19 @@ defmodule Image.Options.Write do
   @type heif_compression :: :hevc | :avc | :jpeg | :av1
 
   @doc false
-  defguard is_jpg(image_type) when image_type in [".jpg", ".jpeg", ".JPG", ".JPEG"]
+  defguard is_jpg(image_type) when image_type in [".jpg", ".jpeg"]
 
   @doc false
-  defguard is_png(image_type) when image_type in [".png", ".PNG"]
+  defguard is_png(image_type) when image_type in [".png"]
 
   @doc false
-  defguard is_webp(image_type) when image_type in [".webp", ".WEBP"]
+  defguard is_webp(image_type) when image_type in [".webp"]
 
   @doc false
-  defguard is_tiff(image_type) when image_type in [".tiff", ".tif", ".TIF", ".TIFF"]
+  defguard is_tiff(image_type) when image_type in [".tiff", ".tif"]
 
   @doc false
-  defguard is_heif(image_type) when image_type in [".heif", ".heic", ".avif", ".HEIF", ".HEIC", ".AVIF"]
+  defguard is_heif(image_type) when image_type in [".heif", ".heic", ".avif"]
 
   @doc false
   defguard is_gif(image_type) when image_type in [".gif", ".GIF"]
@@ -267,7 +267,7 @@ defmodule Image.Options.Write do
   end
 
   defp image_type_from("", suffix) do
-    {:ok, suffix}
+    {:ok, String.downcase(suffix)}
   end
 
   defp image_type_from(extname, _suffix) do

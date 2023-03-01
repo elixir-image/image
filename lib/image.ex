@@ -3264,17 +3264,19 @@ defmodule Image do
   def avatar(image, size \\ @default_avatar_size, options \\ [])
 
   def avatar(%Vimage{} = image, size, options) when is_size(size) do
-    with {:ok, options} <- Options.Avatar.validate_options(options) do
-      {:ok, image} = Operation.thumbnail_image(image, size, options)
-      circular_mask_and_remove_meta(image)
+    with {:ok, options} <- Options.Avatar.validate_options(options),
+         {:ok, image} <- Operation.thumbnail_image(image, size, options),
+         {:ok, flattened} <- flatten(image) do
+      circular_mask_and_remove_meta(flattened)
     end
   end
 
   def avatar(image_path, size, options) when is_binary(image_path) and is_size(size) do
     with {:ok, options} <- Options.Avatar.validate_options(options),
-         {:ok, image_path} = file_exists?(image_path) do
-      {:ok, image} = Operation.thumbnail(image_path, size, options)
-      circular_mask_and_remove_meta(image)
+         {:ok, image_path} = file_exists?(image_path),
+         {:ok, image} = Operation.thumbnail(image_path, size, options),
+         {:ok, flattened} = Operation.flatten(image) do
+      circular_mask_and_remove_meta(flattened)
     end
   end
 
@@ -3766,7 +3768,11 @@ defmodule Image do
 
   @spec flatten(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def flatten(%Vimage{} = image) do
-    Vix.Vips.Operation.flatten(image)
+    if has_alpha?(image) do
+      Vix.Vips.Operation.flatten(image)
+    else
+      {:ok, image}
+    end
   end
 
   @doc """
