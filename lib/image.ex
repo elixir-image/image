@@ -941,13 +941,6 @@ defmodule Image do
 
   #### PNG images
 
-  * `:color_depth` is an integer describing the number
-     of bits for each color. The value can be `1`, `2`,
-     `4`, `8` or `16`.  The default is to use the current
-     color depth of the image.  For web applications, `8`
-     bits would be reasonable for photographic images with
-     lower bit depths for monochromatic images or diagrams.
-
   * `:progressive` which has the same meaning and values
       as for JPEG images.
 
@@ -959,11 +952,18 @@ defmodule Image do
   * `:effort` is an integer to adjust the level of CPU
     effort to reduce the file size. The value must be in the
     range `1..10`, the default is `7`.
+    
+  * `:icc_profile` indicates the icc profile to be attached
+    to the input image. The value may be an inbuilt profile 
+    (`:none`, `:srgb`, `:cmyk`, `:p3`), the name of an icc 
+    profile in the systems profile directory or a full path 
+    to an icc profile file. The default is to use the icc 
+    profile of the input image if there is one.
 
   #### TIFF images
 
-  * `:color_depth` which has the same meaning as for
-    PNG images.
+  *  `:icc_profile` which has the same meaning and values
+       as for PNG images.
 
   #### WEBP images
 
