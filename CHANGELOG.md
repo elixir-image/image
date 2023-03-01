@@ -6,9 +6,11 @@ This is the changelog for Image version 0.25.1 released on February March 1st, 2
 
 ### Bug Fixes
 
-* Fix `is_webp/1` guard and downcase all suffixes before validation. Thanks to @quentin-bettoum. Closes #64.
+* Fix `is_webp/1` guard and downcase all suffixes before validation. Thanks to @quentin-bettoum for the report and fix. Closes #64.
 
-* Fix `Image.flatten` to only flatten if there is an alpha band.
+* Fix `Image.avatar/3` to flatten the source image before compositing with the mask. Thanks to @jarrodmoldrich for the report. Closes #63.
+
+* Fix `Image.flatten/1` to only flatten if there is an alpha band. 
 
 ## Image 0.25.0
 
