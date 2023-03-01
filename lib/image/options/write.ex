@@ -72,7 +72,7 @@ defmodule Image.Options.Write do
   defguard is_png(image_type) when image_type in [".png", ".PNG"]
 
   @doc false
-  defguard is_webp(image_type) when image_type == [".webp", ".WEBP"]
+  defguard is_webp(image_type) when image_type in [".webp", ".WEBP"]
 
   @doc false
   defguard is_tiff(image_type) when image_type in [".tiff", ".tif", ".TIF", ".TIFF"]
