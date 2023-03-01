@@ -953,7 +953,7 @@ defmodule Image do
     effort to reduce the file size. The value must be in the
     range `1..10`, the default is `7`.
     
-  * `:icc_profile` ndicates the icc profile to be attached
+  * `:icc_profile` indicates the icc profile to be attached
     to the input image. The value may be an inbuilt profile 
     (`:none`, `:srgb`, `:cmyk`, `:p3`), the name of an icc 
     profile in the systems profile directory or a full path 
