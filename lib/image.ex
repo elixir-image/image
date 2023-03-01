@@ -902,9 +902,6 @@ defmodule Image do
 
   #### All image types
 
-  * `:profile` is the name of any
-    [ICC color profile](https://en.wikipedia.org/wiki/ICC_profile).
-
   * `:strip_metadata` is a boolean indicating if all metadata
     is to be stripped from the image. The default is `false`.
 
@@ -939,6 +936,13 @@ defmodule Image do
     size of the jpeg file at the cost of additional time to
     save the image. All metadata will also be removed.
 
+  * `:icc_profile` indicates the icc profile to be attached
+    to the output image. The value may be an inbuilt profile
+    (`:none`, `:srgb`, `:cmyk`, `:p3`), the name of an icc
+    profile in the systems profile directory or a full path
+    to an icc profile file. The default is to use the icc
+    profile of the input image if there is one.
+
   #### PNG images
 
   * `:progressive` which has the same meaning and values
@@ -952,18 +956,13 @@ defmodule Image do
   * `:effort` is an integer to adjust the level of CPU
     effort to reduce the file size. The value must be in the
     range `1..10`, the default is `7`.
-    
+
   * `:icc_profile` indicates the icc profile to be attached
-    to the input image. The value may be an inbuilt profile 
-    (`:none`, `:srgb`, `:cmyk`, `:p3`), the name of an icc 
-    profile in the systems profile directory or a full path 
-    to an icc profile file. The default is to use the icc 
+    to the output image. The value may be an inbuilt profile
+    (`:none`, `:srgb`, `:cmyk`, `:p3`), the name of an icc
+    profile in the systems profile directory or a full path
+    to an icc profile file. The default is to use the icc
     profile of the input image if there is one.
-
-  #### TIFF images
-
-  *  `:icc_profile` which has the same meaning and values
-       as for PNG images.
 
   #### WEBP images
 
@@ -971,13 +970,20 @@ defmodule Image do
     on animated `WebP`. It enables mixed encoding and optimise
     the file for minimum size at the cost of additional time
     to save the image. All metadata will also be removed.
-    Using this parameter on a non-animated `WebP` file will
+    Using this parameter on a non-animated `webp` file will
     only remove the metadata as `:strip_metadata` would do.
 
   * `:effort` is an integer to adjust the level of CPU
     effort to reduce the file size.
     The value must be in the range `1..10`, the default
     is `7`.
+
+  * `:icc_profile` indicates the icc profile to be attached
+    to the output image. The value may be an inbuilt profile
+    (`:none`, `:srgb`, `:cmyk`, `:p3`), the name of an icc
+    profile in the systems profile directory or a full path
+    to an icc profile file. The default is to use the icc
+    profile of the input image if there is one.
 
   #### GIF options
 
@@ -993,7 +999,7 @@ defmodule Image do
     The value must be in the range `1..10`, the default
     is `7`.
 
-  #### Heif images
+  #### HEIF images
 
   * `:compression` is the compression strategy to
     be applied. The allowable values are `:hevc`,
@@ -1003,6 +1009,11 @@ defmodule Image do
     effort to reduce the file size.
     The value can be in the range `1..10`, the default is
     `5`.
+
+  * `:minimize_file_size` is a boolean indicating whether
+    to apply a number of techniques to minimise the file
+    size of the `heif` file at the cost of additional time to
+    save the image. All metadata will also be removed.
 
   ### Returns
 

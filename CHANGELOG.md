@@ -14,6 +14,8 @@ This is the changelog for Image version 0.25.0 released on February February 27t
 
 * Allows specifying the option `padding: 0` for `Image.Text.text/2`. Previously this only supported positive integers.
 
+* Fix `Image.write/3` documentation. Thanks to @jeregrine for the PR. Closes #62.
+
 ### Enhancements
 
 * Update `README.md` to include updated documentation for installing `libvips` with `Vix`.

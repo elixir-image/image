@@ -49,6 +49,7 @@ defmodule Image.Options.Write do
   @type heif_write_option ::
           {:compression, heif_compression()}
           | {:effort, 1..10}
+          | {:minimize_file_size, boolean()}
 
   @type gif_write_option ::
           {:interframe_maxerror, 0..32}
@@ -65,22 +66,22 @@ defmodule Image.Options.Write do
   @type heif_compression :: :hevc | :avc | :jpeg | :av1
 
   @doc false
-  defguard is_jpg(image_type) when image_type in [".jpg", ".jpeg"]
+  defguard is_jpg(image_type) when image_type in [".jpg", ".jpeg", ".JPG", ".JPEG"]
 
   @doc false
-  defguard is_png(image_type) when image_type == ".png"
+  defguard is_png(image_type) when image_type in [".png", ".PNG"]
 
   @doc false
-  defguard is_webp(image_type) when image_type == ".webp"
+  defguard is_webp(image_type) when image_type == [".webp", ".WEBP"]
 
   @doc false
-  defguard is_tiff(image_type) when image_type in [".tiff", ".tif"]
+  defguard is_tiff(image_type) when image_type in [".tiff", ".tif", ".TIF", ".TIFF"]
 
   @doc false
-  defguard is_heif(image_type) when image_type in [".heif", ".heic", ".avif"]
+  defguard is_heif(image_type) when image_type in [".heif", ".heic", ".avif", ".HEIF", ".HEIC", ".AVIF"]
 
   @doc false
-  defguard is_gif(image_type) when image_type == ".gif"
+  defguard is_gif(image_type) when image_type in [".gif", ".GIF"]
 
   def validate_options(options, :require_suffix) when is_list(options) do
     case Keyword.fetch(options, :suffix) do
@@ -191,6 +192,16 @@ defmodule Image.Options.Write do
       |> Keyword.put(:min_size, true)
       |> Keyword.put(:strip, true)
       |> Keyword.put(:mixed, true)
+
+    {:cont, options}
+  end
+
+  # For webp, apply min-size, strip, and mixed (allow mixed encoding which might reduce file size)
+  defp validate_option({:minimize_file_size, true}, options, image_type) when is_heif(image_type) do
+    options =
+      options
+      |> Keyword.delete(:minimize_file_size)
+      |> Keyword.put(:strip, true)
 
     {:cont, options}
   end
