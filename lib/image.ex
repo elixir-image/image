@@ -595,7 +595,7 @@ defmodule Image do
   #### All image types
 
   * `:access` is the file access mode, either `:random`
-    or `:sequential`. The default is `:sequential`.
+    or `:sequential`. The default is `:random`.
     When `:sequential`, `Image` (via `Vix`) is able
     to support streaming transformations and optimise
     memory usage more effectively. However `:sequential`
@@ -622,20 +622,23 @@ defmodule Image do
     data stored in the image metadata. The default is
     `false`.
 
-  #### Webp options
+  #### WEBP options
 
   * `:scale` will scale the image on load. The value is
-    `1..1024` with a default of `1`.
+    a number greater than `0` and less than or equal
+    to `1024` with a default of `1` meaning no scaling
+    on load. Numbers less than `1.0` scale the image down
+    so that a scale of `0.5` will halve the image size on
+    load.
 
   * `:page` indicates the first page to be loaded. The
     value is in the range `0..100_000` with a default
     value of `0`. This parameter is useful on animated images.
 
   * `:pages` indicates the number of pages to load.
-    The value must be between `-1` and `100_000`.
-    The default value is `1`.
-    A value of `-1` would load all the available pages
-    which is useful if you want to keep the animation of
+    The value must be between `-1` and `100_000`. The default
+    value is `1`.  A value of `-1` would load all the available
+    pages which is useful if you want to keep the animation of
     the input image.
 
   #### TIFF options
@@ -878,7 +881,7 @@ defmodule Image do
   end
 
   @doc """
-  Write an image to a file, a stream, and enumerable or
+  Write an image to a file, a stream, an enumerable or
   to memory.
 
   ### Arguments
@@ -1126,9 +1129,8 @@ defmodule Image do
   end
 
   @doc """
-  Write an image to a file, a stream or
-  to memory returning the image
-  or raising an exception.
+  Write an image to a file, a stream, an enumerable or
+  to memory returning the image or raising an exception.
 
   ### Arguments
 

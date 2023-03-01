@@ -45,7 +45,7 @@ defmodule Image.Options.Open do
           | {:fail_on, fail_on()}
           | {:pages, number()}
           | {:page, 0..100_000}
-          | {:scale, 1..1024}
+          | {:scale, non_neg_integer() | float()}
         ]
 
   @type other_open_options :: [
@@ -80,9 +80,9 @@ defmodule Image.Options.Open do
   }
 
   @failure_modes Map.keys(@fail_on_open)
-  @default_access :random
 
   @access [:sequential, :random]
+  @default_access :random
 
   def validate_options(options) do
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
@@ -94,6 +94,10 @@ defmodule Image.Options.Open do
     end
   end
 
+  def validate_option({:access, access}, options) when access in @access do
+    {:cont, options}
+  end
+
   def validate_option({:autorotate, rotate}, options) when rotate in [true, false] do
     {:cont, options}
   end
@@ -102,7 +106,12 @@ defmodule Image.Options.Open do
     {:cont, options}
   end
 
-  def validate_option({:access, access}, options) when access in @access do
+  def validate_option({:pages, n}, options) when is_number(n) and n >= -1 and n <= 100_000 do
+    options =
+      options
+      |> Keyword.delete(:pages)
+      |> Keyword.put(:n, n)
+
     {:cont, options}
   end
 
@@ -114,12 +123,7 @@ defmodule Image.Options.Open do
     {:cont, options}
   end
 
-  def validate_option({:pages, n}, options) when is_number(n) and n >= -1 and n <= 100_000 do
-    options =
-      options
-      |> Keyword.delete(:pages)
-      |> Keyword.put(:n, n)
-
+  def validate_option({:scale, scale}, options) when is_float(scale) and scale > 0.0 and scale <= 1024.0 do
     {:cont, options}
   end
 
