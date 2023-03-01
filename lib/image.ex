@@ -958,7 +958,7 @@ defmodule Image do
     (`:none`, `:srgb`, `:cmyk`, `:p3`), the name of an icc 
     profile in the systems profile directory or a full path 
     to an icc profile file. The default is to use the icc 
-    profile of the input image ifthere is one.
+    profile of the input image if there is one.
 
   #### TIFF images
 
