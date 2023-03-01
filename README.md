@@ -26,7 +26,7 @@ end
 
 ### Installing Libvips
 
-Starting from v0.16.0 [Vix](https;//hex.pm/packages/vix) which underpins `Image` can use either pre-built binaries or platform provided binaries.
+Starting from v0.16.0 [Vix](https://hex.pm/packages/vix) which underpins `Image` can use either pre-built binaries or platform provided binaries.
 
 By default `Vix` provides pre-built NIF and `libvips` and uses them for operation. This makes deployment and release of your application a breeze. With this you don't have to install any compiler tools or `libvips` to use `Vix`. This is especially useful when using `Image` with [Livebook](https://livebook.dev).
 
