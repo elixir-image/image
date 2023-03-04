@@ -1,8 +1,16 @@
 # Changelog
 
+## Image 0.25.2
+
+This is the changelog for Image version 0.25.2 released on ____, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Fix `Image.open/2` for SVG binaries and add note to show that SVG images can be opened.
+
 ## Image 0.25.1
 
-This is the changelog for Image version 0.25.1 released on February March 1st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.25.1 released on March 1st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
 
 ### Bug Fixes
 

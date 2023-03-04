@@ -582,10 +582,10 @@ defmodule Image do
 
   * `image_path_or_stream_or_binary` is the file system path to an image
     file or a `t:File.Stream.t/0` or any `t:Enumerable.t/0`. It
-    can also be any binary `.jpg`, `.png` or `.webp` image.
+    can also be any binary `.jpg`, `.png`, `.webp` or `.svg` image.
 
   * `options` is a keyword list of options. The default is
-    `[access: :sequential]` for all images except images
+    `[access: :random]` for all images except images
     derived from binary image data.
 
   ### Options
@@ -731,6 +731,16 @@ defmodule Image do
     from_binary(image, options)
   end
 
+  # SVG starting with either svg or xml tag
+  def open(<<"<svg ", _::binary>> = image, options) do
+    from_binary(image, options)
+  end
+
+  def open(<<"<?xml ", _::binary>> = image, options) do
+    from_binary(image, options)
+  end
+
+  # A file path
   def open(image_path, options) when is_binary(image_path) do
     with {:ok, options} <- Options.Open.validate_options(options) do
       image_path
@@ -739,6 +749,7 @@ defmodule Image do
     end
   end
 
+  # A File stream
   def open(%File.Stream{line_or_bytes: bytes} = image_stream, options) when is_integer(bytes) do
     with {:ok, options} <- Options.Open.validate_options(options) do
       options = loader_options(options)
@@ -746,6 +757,7 @@ defmodule Image do
     end
   end
 
+  # Any other stream
   def open(%Stream{} = image_stream, options) do
     with {:ok, options} <- Options.Open.validate_options(options) do
       options = loader_options(options)
@@ -784,6 +796,39 @@ defmodule Image do
   end
 
   @doc """
+  Opens an image file for image processing
+  returning an image or raising an exception.
+
+  ### Arguments
+
+  * `image_path_or_stream_or_binary` is the file system path to an image
+    file or a `t:File.Stream.t/0` or any `t:Enumerable.t/0`. It
+    can also be any binary `.jpg`, `.png`, `.webp` or `.svg` image.
+
+  * `options` is a keyword list of options. The default is
+    `[access: :random]` for all images except images
+    derived from binary image data.
+
+  ### Returns
+
+  * `image` or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Load and save"
+
+  @spec open!(image_path :: Path.t(), options :: Options.Open.image_open_options()) ::
+          Vimage.t() | no_return()
+
+  def open!(image_path, options \\ []) do
+    case open(image_path, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, {reason, image_path}
+    end
+  end
+
+  @doc """
   Returns an image created from an in-memory binary representation
   of an image.
 
@@ -793,6 +838,7 @@ defmodule Image do
   ### Arguments
 
   * `binary` is a binary representation of a formatted image
+    including `.jpg`, `.png`, `.webp` and `.svg` binary data.
 
   * `options` is a keyword list of options. See `Image.open/2`
     for the list of applicable options.
@@ -820,8 +866,8 @@ defmodule Image do
   Returns an image created from an in-memory binary representation
   of an image or raises an exception.
 
-  The binary must be a complete formatted image such as that
-  returned from `File.read!/1`.
+  * `binary` is a binary representation of a formatted image
+    including `.jpg`, `.png`, `.webp` and `.svg` binary data.
 
   ### Arguments
 
@@ -846,37 +892,6 @@ defmodule Image do
     case from_binary(binary, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  @doc """
-  Opens an image file for image processing
-  returning an image or raising an exception.
-
-  ### Arguments
-
-  * `image_path` is the file system path to an image
-    file.
-
-  * `options` is a keyword list of options.
-    See `Image.open/2`.
-
-  ### Returns
-
-  * `image` or
-
-  * raises an exception.
-
-  """
-  @doc subject: "Load and save"
-
-  @spec open!(image_path :: Path.t(), options :: Options.Open.image_open_options()) ::
-          Vimage.t() | no_return()
-
-  def open!(image_path, options \\ []) do
-    case open(image_path, options) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, {reason, image_path}
     end
   end
 
