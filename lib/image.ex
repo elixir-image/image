@@ -3255,7 +3255,7 @@ defmodule Image do
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `options` is a keyword list of options. The
-    default is `[shape: :cirlce, crop: :none]
+    default is `[shape: :cirlce, crop: :none]`.
 
   ### Options
 
@@ -3317,7 +3317,7 @@ defmodule Image do
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `options` is a keyword list of options. The
-    default is `[shape: :cirlce, crop: :none]
+    default is `[shape: :cirlce, crop: :none]`.
 
   ### Options
 

@@ -1,6 +1,6 @@
 defmodule Image.Options.Avatar do
   @moduledoc """
-  Options and option validation for `Image.avatar/3`.
+  Options and option validation for `Image.avatar/2`.
 
   """
   alias Image.Options.Crop
