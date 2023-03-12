@@ -39,10 +39,6 @@ defmodule Image do
   # Default radius of rounded corners
   @default_round_corner_radius 50
 
-  # Standard size of an avatar image, at least for
-  # this library
-  @default_avatar_size 180
-
   # When pixelating an image resize to this scale
   # the scale up by the inverse using nearest_neighbour
   # scaling
@@ -3246,23 +3242,35 @@ defmodule Image do
   end
 
   @doc """
-  Make a circular image intended to be used
+  Make a circular or square image intended to be used
   as an avatar image.
 
-  The image is resized, a circular mask is
-  applied and all metadata is removed from
-  the image.
+  The image is resized and all metadata is removed
+  from the image. Depending on the `:shape` option
+  the image may be center cropped to a square and
+  may have a circular mask applied.
 
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `size` is the diameter of the resulting
-    image after resizing. The default value
-    is `#{@default_avatar_size}`.
+  * `options` is a keyword list of options. The
+    default is `[shape: :cirlce, crop: :none]
 
-  * `options` is a keyword list of options.
-    See `Image.resize/3` for the valid options.
+  ### Options
+
+  * `:size` is the diameter (in the case of `shape: :circle`
+    or width/height in the case of `shape: :square` of the
+    resulting image after resizing. The default value
+    is `#{Image.Options.Avatar.default_avatar_size()}`.
+
+  * `:shape` defines shape of the avator
+    which can be either `:circle` (the default) or
+    `:square`.  In both cases the image is first
+    center cropped to a square shape. Then if the
+    format is `:circle` a circular image mask is applied.
+
+  * For other options see `Image.thumbnail/3`.
 
   ### Returns
 
@@ -3273,52 +3281,58 @@ defmodule Image do
   """
   @doc subject: "Generator"
 
-  @spec avatar(Vimage.t(), size :: pos_integer(), options :: Options.Avatar.avatar_options()) ::
+  @spec avatar(Vimage.t(), options :: Options.Avatar.avatar_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def avatar(image, size \\ @default_avatar_size, options \\ [])
+  def avatar(image, options \\ [])
 
-  def avatar(%Vimage{} = image, size, options) when is_size(size) do
+  def avatar(%Vimage{} = image, options) do
     with {:ok, options} <- Options.Avatar.validate_options(options),
-         {:ok, image} <- Operation.thumbnail_image(image, size, options),
+         {:ok, image} <- thumbnail(image, options[:size], thumbnail_options(options)),
          {:ok, flattened} <- flatten(image) do
-      circular_mask_and_remove_meta(flattened)
+      do_avatar(flattened, options[:shape])
     end
   end
 
-  def avatar(image_path, size, options) when is_binary(image_path) and is_size(size) do
+  def avatar(image_path, options) when is_binary(image_path) do
     with {:ok, options} <- Options.Avatar.validate_options(options),
          {:ok, image_path} = file_exists?(image_path),
-         {:ok, image} = Operation.thumbnail(image_path, size, options),
+         {:ok, image} = thumbnail(image_path, options[:size], thumbnail_options(options)),
          {:ok, flattened} = Operation.flatten(image) do
-      circular_mask_and_remove_meta(flattened)
+      do_avatar(flattened, options[:shape])
     end
-  end
-
-  defp circular_mask_and_remove_meta(image) do
-    {:ok, image} = circle(image)
-    remove_metadata(image)
   end
 
   @doc """
-  Make a circular image intended to be used
-  as an avatar image returning an image or
-  raising an exception.
+  Make a circular or square image intended to be used
+  as an avatar image or raise an exception.
 
-  The image is resized, a circular mask is
-  applied and all metadata is removed from
-  the image.
+  The image is resized and all metadata is removed
+  from the image. Depending on the `:shape` option
+  the image may be center cropped to a square and
+  may have a circular mask applied.
 
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `size` is the diameter of the resulting
-    image after resizing. The default value
-    is `#{@default_avatar_size}`.
+  * `options` is a keyword list of options. The
+    default is `[shape: :cirlce, crop: :none]
 
-  * `options` is a keyword list of options.
-    See `Image.resize/3` for the valid options.
+  ### Options
+
+  * `:size` is the diameter (in the case of `shape: :circle`
+    or width/height in the case of `shape: :square` of the
+    resulting image after resizing. The default value
+    is `#{Image.Options.Avatar.default_avatar_size()}`.
+
+  * `:shape` defines shape of the avator
+    which can be either `:circle` (the default) or
+    `:square`.  In both cases the image is first
+    center cropped  to a square shape. Then if the
+    format is `:circle` a circular image mask is applied.
+
+  * For other options see `Image.thumbnail/3`.
 
   ### Returns
 
@@ -3329,14 +3343,48 @@ defmodule Image do
   """
   @doc subject: "Generator"
 
-  @spec avatar!(Vimage.t(), size :: pos_integer(), options :: Options.Avatar.avatar_options()) ::
+  @spec avatar!(Vimage.t(), options :: Options.Avatar.avatar_options()) ::
           Vimage.t() | no_return()
 
-  def avatar!(%Vimage{} = image, size \\ @default_avatar_size, options \\ []) do
-    case avatar(image, size, options) do
+  def avatar!(%Vimage{} = image, options \\ []) do
+    case avatar(image, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
+  end
+
+  defp do_avatar(image, :square) do
+    square(image)
+  end
+
+  defp do_avatar(image, :circle) do
+    {:ok, squared} = square(image)
+    circular_mask_and_remove_meta(squared)
+  end
+
+  defp square(image) do
+    {width, height, _bands} = Image.shape(image)
+    if width > height do
+      x = round((width - height) / 2)
+      y = 0
+      crop(image, x, y, height, height)
+    else
+      x = 0
+      y = round((height - width) / 2)
+      crop(image, x, y, width, width)
+    end
+  end
+
+  defp circular_mask_and_remove_meta(image) do
+    {:ok, image} = circle(image)
+    remove_metadata(image)
+  end
+
+  defp thumbnail_options(options) do
+    options
+    |> Keyword.delete(:crop)
+    |> Keyword.delete(:shape)
+    |> Keyword.delete(:size)
   end
 
   @doc """
@@ -4294,6 +4342,7 @@ defmodule Image do
 
     {:ok, mask} = mask(:circle, size, size)
     Operation.bandjoin([image, mask])
+
   end
 
   @doc """
@@ -4950,6 +4999,45 @@ defmodule Image do
 
   def get_pixel(%Vimage{} = image, x, y) do
     Operation.getpoint(image, x, y)
+  end
+
+  @doc """
+  Returns the pixel value at the given image location
+  or raises an exception.
+
+  The returned pixel is a list of numbers where
+  the length of the list is equal to the number
+  of bands in the image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `x` is an integer offset from the top
+    left of the image along the `x` (width) axis.
+    The number must be in the range `0..width - 1`.
+
+  * `y` is an integer offset from the top
+    left of the image along the `y` (height) axis.
+    The number must be in the range `0..height - 1`.
+
+  ### Returns
+
+  * `pixel_value` or
+
+  * raises an exception
+
+  """
+  @doc subject: "Operation", since: "0.26.0"
+
+  @spec get_pixel!(Vimage.t(), non_neg_integer(), non_neg_integer()) ::
+          Color.rgb_color() | no_return()
+
+  def get_pixel!(%Vimage{} = image, x, y) do
+    case get_pixel(image, x, y) do
+      {:ok, pixel} -> pixel
+      {:error, reason} -> raise Image.Error, reason
+    end
   end
 
   @doc """

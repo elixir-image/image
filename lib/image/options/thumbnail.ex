@@ -165,7 +165,7 @@ defmodule Image.Options.Thumbnail do
   end
 
   defp invalid_option(option) do
-    "Invalid option or option value: #{inspect(option)}"
+    "Invalid Image.thumbnail option or option value: #{inspect(option)}"
   end
 
   @doc false

@@ -1,12 +1,22 @@
 # Changelog
 
-## Image 0.25.2
+## Image 0.26.0
 
-This is the changelog for Image version 0.25.2 released on ____, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.26.0 released on March 12th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Breaking change
+
+* `Image.avatar/3` is now `Image.avatar/2`. The `size` parameter is now the `:size` option. The default value of 180 pixels remains.
+
+### Enhancements
+
+* `Image.avatar/2` takes a `:shape` option that is either `:circle` (the default) or `:square`. This allows the generation of either circular or square avatars.
 
 ### Bug Fixes
 
 * Fix `Image.open/2` for SVG binaries and add note to show that SVG images can be opened.
+
+* Fix `Image.avatar/2` to square the image after thumbnailing but before applying any mask. This ensures a circular mask is centred on the thumbnailed image.
 
 ## Image 0.25.1
 

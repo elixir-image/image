@@ -20,7 +20,26 @@ defmodule Image.Avatar.Test do
     validate_path = validate_path("Kip_small_avatar.png")
 
     assert {:ok, _image} = Image.write(avatar, out_path, quality: 50)
-
+    # Image.write!(avatar, validate_path)
     assert_images_equal(out_path, validate_path)
+  end
+
+  test "Text-based avatar - circle" do
+    {:ok, avatar} =
+      Image.Text.text!("KC", background_fill_color: :cyan, font_size: 200, padding: 80)
+      |> Image.avatar(shape: :circle)
+
+    validate_path = validate_path("text_avatar.png")
+    assert_images_equal(avatar, validate_path)
+  end
+
+  test "Text-based avatar - square" do
+    {:ok, avatar} =
+      Image.Text.text!("KC", background_fill_color: :cyan, font_size: 200, padding: 80)
+      |> Image.avatar(shape: :square)
+
+    validate_path = validate_path("text_avatar_square.png")
+    # Image.write!(avatar, validate_path)
+    assert_images_equal(avatar, validate_path)
   end
 end

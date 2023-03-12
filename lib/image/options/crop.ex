@@ -70,6 +70,7 @@ defmodule Image.Options.Crop do
   }
 
   @crop Map.keys(@crop_map)
+  @inverse_crop Map.values(@crop_map)
 
   @doc """
   Validates options to `Iamge.crop/5`.
@@ -92,6 +93,10 @@ defmodule Image.Options.Crop do
   @doc false
   def validate_crop(crop, options) when crop in @crop do
     crop = Map.fetch!(@crop_map, crop)
+    {:cont, Keyword.put(options, :crop, crop)}
+  end
+
+  def validate_crop(crop, options) when crop in @inverse_crop do
     {:cont, Keyword.put(options, :crop, crop)}
   end
 
