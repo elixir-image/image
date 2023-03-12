@@ -3298,7 +3298,7 @@ defmodule Image do
     with {:ok, options} <- Options.Avatar.validate_options(options),
          {:ok, image_path} = file_exists?(image_path),
          {:ok, image} = thumbnail(image_path, options[:size], thumbnail_options(options)),
-         {:ok, flattened} = Operation.flatten(image) do
+         {:ok, flattened} = flatten(image) do
       do_avatar(flattened, options[:shape])
     end
   end
@@ -3346,7 +3346,7 @@ defmodule Image do
   @spec avatar!(Vimage.t(), options :: Options.Avatar.avatar_options()) ::
           Vimage.t() | no_return()
 
-  def avatar!(%Vimage{} = image, options \\ []) do
+  def avatar!(image, options \\ []) do
     case avatar(image, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason

@@ -18,6 +18,10 @@ This is the changelog for Image version 0.26.0 released on March 12th, 2023.  Fo
 
 * Fix `Image.avatar/2` to square the image after thumbnailing but before applying any mask. This ensures a circular mask is centred on the thumbnailed image.
 
+* Fix `Image.avatar/2` for image path parameters which no correctly flattens the image.
+
+* Fix `Image.avatar!/2` to accept either an image or an image path.
+
 ## Image 0.25.1
 
 This is the changelog for Image version 0.25.1 released on March 1st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
