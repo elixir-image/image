@@ -26,6 +26,12 @@ defmodule Image do
   import Image.Color, only: :macros
 
   @typedoc """
+  THe structure of an image returned from `Kino.Input.read/1`
+  when the input field is a `Kino.Input.image/1` type.
+  """
+  @type kino_image :: %{data: binary(), width: pos_integer(), height: pos_integer(), format: :rgb}
+
+  @typedoc """
   A 512 bit binary hash of an image.
 
   Useful for comparing the similarity of
@@ -865,7 +871,6 @@ defmodule Image do
   * `image` is a a map returned from `Kino.Input.read(image)`
     via a `Kino.Input.image/1` input field. The data will have
     the following fields:
-
     * `:data` which contains the raw binary of the image
     * `:width` which is the width of the image in pixels
     * `:height` which is the height of the image in pixels
@@ -893,10 +898,7 @@ defmodule Image do
   """
   @doc since: "0.27.0"
 
-  @spec from_kino(
-          %{data: binary(), width: pos_integer(), height: pos_integer(), format: :rgb},
-          options :: Keyword.t()
-        ) ::
+  @spec from_kino(image :: kino_image(), options :: Keyword.t()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def from_kino(%{data: binary, width: width, height: height, format: :rgb}, options \\ []) do
