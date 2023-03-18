@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.27.0
+
+This is the changelog for Image version 0.27.0 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Enhancement
+
+* Add `Image.from_kino/1` to simplify create an image from a [Kino](https://hex.pm/packages/kino) image in [Livebook](https://livebook.dev).
+
 ## Image 0.26.0
 
 This is the changelog for Image version 0.26.0 released on March 12th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

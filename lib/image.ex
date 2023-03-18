@@ -903,8 +903,8 @@ defmodule Image do
 
   def from_kino(%{data: binary, width: width, height: height, format: :rgb}, options \\ []) do
     bands = Keyword.get(options, :bands, 3)
-    tensor_format = :VIPS_FORMAT_UCHAR
-    Vix.Vips.Image.new_from_binary(binary, width, height, bands, tensor_format)
+    image_format = :VIPS_FORMAT_UCHAR
+    Vix.Vips.Image.new_from_binary(binary, width, height, bands, image_format)
   end
 
   @doc """
