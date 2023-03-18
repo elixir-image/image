@@ -23,8 +23,6 @@ defmodule Image do
   alias Image.Math
   alias Image.Draw
 
-  alias Evision.Constant
-
   import Image.Color, only: :macros
 
   @typedoc """
@@ -856,6 +854,55 @@ defmodule Image do
       options = Keyword.delete(options, :access)
       Vimage.new_from_buffer(binary, options)
     end
+  end
+
+  @doc """
+  Returns an image from a [Kino](https://hex.pm/packages/kino) image
+  input.
+
+  ### Arguments
+
+  * `image` is a a map returned from `Kino.Input.read(image)`
+    via a `Kino.Input.image/1` input field. The data will have
+    the following fields:
+
+    * `:data` which contains the raw binary of the image
+    * `:width` which is the width of the image in pixels
+    * `:height` which is the height of the image in pixels
+    * `:format` which is the image band format which must be `:rgb`
+
+  * `options` is a keyword list of options
+
+  ### Options
+
+  * `:bands` indicates the integer number of bands (channels) in
+    the image. The default is `3`.
+
+  ### Notes
+
+  * The image is assumed to contain pixel data that is in
+    unsigned 8-bit format which is common for most web-oriented
+    images.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.27.0"
+
+  @spec from_kino(
+          %{data: binary(), width: pos_integer(), height: pos_integer(), format: :rgb},
+          options :: Keyword.t()
+        ) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def from_kino(%{data: binary, width: width, height: height, format: :rgb}, options \\ []) do
+    bands = Keyword.get(options, :bands, 3)
+    tensor_format = :VIPS_FORMAT_UCHAR
+    Vix.Vips.Image.new_from_binary(binary, width, height, bands, tensor_format)
   end
 
   @doc """
@@ -3364,6 +3411,7 @@ defmodule Image do
 
   defp square(image) do
     {width, height, _bands} = Image.shape(image)
+
     if width > height do
       x = round((width - height) / 2)
       y = 0
@@ -4342,7 +4390,6 @@ defmodule Image do
 
     {:ok, mask} = mask(:circle, size, size)
     Operation.bandjoin([image, mask])
-
   end
 
   @doc """
@@ -5448,7 +5495,10 @@ defmodule Image do
              {width, height, bands} <- validate_transferable_image(image),
              %Evision.Mat{} = mat <- Evision.Mat.from_nx(tensor, {height, width, bands}),
              %Evision.Mat{} = mat <- Evision.Mat.last_dim_as_channel(mat) do
-          mat = if convert_to_bgr, do: Evision.cvtColor(mat, Constant.cv_COLOR_RGB2BGR()), else: mat
+          mat =
+            if convert_to_bgr,
+              do: Evision.cvtColor(mat, Evision.Constant.cv_COLOR_RGB2BGR()),
+              else: mat
 
           {:ok, mat}
         end
@@ -5481,7 +5531,8 @@ defmodule Image do
       @doc subject: "Matrix", since: "0.9.0"
 
       def from_evision(%Evision.Mat{} = evision_image) do
-        with %Evision.Mat{} = mat <- Evision.cvtColor(evision_image, Constant.cv_COLOR_BGR2RGB()) do
+        with %Evision.Mat{} = mat <-
+               Evision.cvtColor(evision_image, Evision.Constant.cv_COLOR_BGR2RGB()) do
           tensor = Evision.Mat.to_nx(mat)
 
           case Nx.shape(tensor) do

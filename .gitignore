@@ -37,3 +37,7 @@ test/perf/*.jpeg
 
 # Local .iex.exs
 .iex.exs
+
+# ML model
+*.pt
+*.onnx

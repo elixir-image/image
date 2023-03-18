@@ -15,6 +15,7 @@ defmodule Image.Options.Avatar do
 
   def validate_options(options) do
     options = Keyword.merge(default_options(), options)
+
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
       {:error, reason} -> {:error, reason}
       options -> {:ok, options}
@@ -22,7 +23,7 @@ defmodule Image.Options.Avatar do
   end
 
   defp validate_option({:size, size}, options) when is_integer(size) and size > 0 do
-   {:cont, options}
+    {:cont, options}
   end
 
   defp validate_option({:shape, shape}, options) when shape in @valid_shapes do

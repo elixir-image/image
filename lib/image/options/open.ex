@@ -123,7 +123,8 @@ defmodule Image.Options.Open do
     {:cont, options}
   end
 
-  def validate_option({:scale, scale}, options) when is_float(scale) and scale > 0.0 and scale <= 1024.0 do
+  def validate_option({:scale, scale}, options)
+      when is_float(scale) and scale > 0.0 and scale <= 1024.0 do
     {:cont, options}
   end
 
