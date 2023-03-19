@@ -908,6 +908,52 @@ defmodule Image do
   end
 
   @doc """
+  Returns an image from a [Kino](https://hex.pm/packages/kino) image
+  input or raises an exception.
+
+  ### Arguments
+
+  * `image` is a a map returned from `Kino.Input.read(image)`
+    via a `Kino.Input.image/1` input field. The data will have
+    the following fields:
+    * `:data` which contains the raw binary of the image
+    * `:width` which is the width of the image in pixels
+    * `:height` which is the height of the image in pixels
+    * `:format` which is the image band format which must be `:rgb`
+
+  * `options` is a keyword list of options
+
+  ### Options
+
+  * `:bands` indicates the integer number of bands (channels) in
+    the image. The default is `3`.
+
+  ### Notes
+
+  * The image is assumed to contain pixel data that is in
+    unsigned 8-bit format which is common for most web-oriented
+    images.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.27.0"
+
+  @spec from_kino!(image :: kino_image(), options :: Keyword.t()) ::
+          Vimage.t() | no_return()
+
+  def from_kino!(%{data: binary, width: width, height: height, format: :rgb}, options \\ []) do
+    case from_kino(%{data: binary, width: width, height: height, format: :rgb}, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Returns an image created from an in-memory binary representation
   of an image or raises an exception.
 
