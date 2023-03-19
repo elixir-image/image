@@ -114,7 +114,7 @@ defmodule Image.Detection do
       predict_fn.(params, batch)[0]
       |> Nx.transpose(axes: [1, 0])
 
-    # Filter the data by certainty,
+    # Filter the data by confidence,
     # zip with the class names, draw
     # bounding boxes and labels and the
     # trim off the extra pixels we added
@@ -194,13 +194,13 @@ defmodule Image.Detection do
         {:ok, text_image} =
           Image.Text.text(class_name, text_fill_color: :red, font_size: 20, padding: 5)
 
+        {x, y} = {round(cx - w / 2), round(cy - h / 2)}
+
         image
-        |> Image.compose!(bounding_box_image,
-          x: round(cx - w / 2),
-          y: round(cy - h / 2))
+        |> Image.compose!(bounding_box_image, x: x, y: y)
         |> Image.compose!(text_image,
-          x: min(max(round(cx - w / 2), 0),  @yolo_model_image_size),
-          y: min(max(round(cy - h / 2), 0),  @yolo_model_image_size)
+          x: min(max(x, 0), @yolo_model_image_size),
+          y: min(max(y, 0), @yolo_model_image_size)
         )
       end)
     end)
