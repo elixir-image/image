@@ -5435,7 +5435,7 @@ defmodule Image do
   `Image.Draw`, module are operations on
   a *copy* of the base image and operations
   are serialized through a genserver in order
-  to maitain thread safety.
+  to maintain thread safety.
 
   In order to perform multiple mutations without
   coopying for each each mutation,`Image.mutate/2` takes
