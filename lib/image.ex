@@ -5438,12 +5438,15 @@ defmodule Image do
   to maitain thread safety.
 
   In order to perform multiple mutations without
-  coopying and serializing for each each mutation,
-  `Image.mutate/2` takes a function argument `fun`
-  that is passed a `t:Vix.Vips.MutableImage.t/0` as
-  a parameter. In that way several mutations can be
-  safely applied withouout copying and serializing
-  for each mutation.
+  coopying for each each mutation,`Image.mutate/2` takes
+  a function argument `fun` that is passed a
+  `t:Vix.Vips.MutableImage.t/0` as a parameter. In that
+  way several mutations can be safely applied withouout
+  copying the image prior to each mutation.
+
+  Although the image is not copied before each mutuation,
+  each mutable operation is still serialized behind
+  a genserver to ensure thread safety.
 
   The functions in `Image.Draw` all support either
   a `t:Vix.Vips.Image.t/0` or a `t:Vix.Vips.MutableImage.t/0`
@@ -5481,8 +5484,8 @@ defmodule Image do
 
         Image.mutate image, fn mutable_image ->
           mutable_image
-          |> Image.Draw.rect!(0, 0, 10, 10)
-          |> Image.Draw.rect!(10, 10, 20, 20)
+          |> Image.Draw.rect!(0, 0, 10, 10, color: :red)
+          |> Image.Draw.rect!(10, 10, 20, 20, color: :green)
         end
 
   """
