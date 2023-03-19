@@ -4,7 +4,7 @@ defmodule Image.Kino do
 
   """
 
-  # Since Kino is not a dependency we
+  # Since Kino is not a required dependency we
   # avoid compiler warnings by using `apply/3`
 
   alias Vix.Vips.Operation
@@ -25,7 +25,7 @@ defmodule Image.Kino do
 
   * `:max_height` determines the maximum height for the
     rendered image. The aspect ratio of the rendered
-    image is unchanged.  THe default is `#{inspect(@default_max_height)}`.
+    image is unchanged.  The default is `#{inspect(@default_max_height)}`.
 
   ### Returns
 

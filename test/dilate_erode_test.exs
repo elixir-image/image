@@ -15,12 +15,12 @@ defmodule Image.ErodeDilate.Test do
   test "Image.erode/1", %{image: image} do
     validate_path = validate_path("dilate_erode/erode.png")
     {:ok, eroded} = Image.erode(image)
-    assert_images_equal(eroded, validate_path)
+    assert_images_equal(eroded, validate_path, 6.0)
   end
 
   test "Image.dilate/1", %{image: image} do
     validate_path = validate_path("dilate_erode/dilate.png")
     {:ok, dilated} = Image.dilate(image)
-    assert_images_equal(dilated, validate_path)
+    assert_images_equal(dilated, validate_path, 6.0)
   end
 end

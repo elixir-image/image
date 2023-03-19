@@ -1415,19 +1415,9 @@ defmodule Image do
 
   @spec chroma_color(image :: Vimage.t()) :: Color.t()
   def chroma_color(%Vimage{} = image) do
-    with {:ok, flattened} <- maybe_flatten(image),
+    with {:ok, flattened} <- flatten(image),
          {:ok, cropped} <- Image.crop(flattened, 0, 0, 10, 10) do
-      for i <- band_range(cropped) do
-        Operation.avg!(image[i]) |> round()
-      end
-    end
-  end
-
-  defp maybe_flatten(image) do
-    if has_alpha?(image) do
-      flatten(image)
-    else
-      {:ok, image}
+      average(cropped)
     end
   end
 
@@ -1917,6 +1907,76 @@ defmodule Image do
     case feather(image, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Returns the average color of an image.
+
+  The average is calculated for each band
+  of an image and then combined.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * A list of average pixel values which can
+    be interpreted as the average color of the
+    image.
+
+  ### Example
+
+        iex> Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+        ...> |> Image.average()
+        [66, 86, 106]
+
+  """
+  @doc since: "0.27.0"
+
+  @spec average(Vimage.t()) :: Color.t() | {:error, error_message}
+  def average(%Vimage{} = image) do
+    with {:ok, flattened} <- flatten(image) do
+      for i <- band_range(flattened) do
+        image[i]
+        |> Operation.avg!()
+        |> round()
+      end
+    end
+  end
+
+  @doc """
+  Returns the average color of an image or
+  raises and exception.
+
+  The average is calculated for each band
+  of an image and then combined.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * A list of average pixel values which can
+    be interpreted as the average color of the
+    image.
+
+  ### Example
+
+        iex> Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+        ...> |> Image.average!()
+        [66, 86, 106]
+
+  """
+  @doc since: "0.27.0"
+
+  @spec average!(Vimage.t()) :: Color.t() | no_return()
+  def average!(%Vimage{} = image) do
+    case average(image) do
+      {:error, reason} -> raise Image.Error, reason
+      color -> color
     end
   end
 
@@ -3450,7 +3510,10 @@ defmodule Image do
     of pixels. If `left` a float is fraction of the width
     of the image. If `left` is positive it is relative to
     the left edge of the image. If it is negative it is
-    relative to the right edge of the image.
+    relative to the right edge of the image. `left` may
+    also be one of `:left`, `:center` and `:right`
+    indicating the crop is relative to the left, center
+    or right of the image.
 
   * `top` is the top edge of crop area as an
     integer or a float in the range `-1.0..1.0`.
@@ -3458,7 +3521,10 @@ defmodule Image do
     pixels. If `top` is a float is fraction of the height
     of the image. If `top` is positive it is relative to
     the top edge of the image. If it is negative it is
-    relative to the bottom edge of the image.
+    relative to the bottom edge of the image. `top` may
+    also be one of `:top`, `:middle` and `:bottom`
+    indicating the crop is relative to the top, middle
+    or bottom of the image.
 
   * `width` is the width of area remaining as a
     positive integer or float in the range `0.0..1.0`.
@@ -3487,7 +3553,7 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc subject: "Resize"
+  @doc subject: "Crop"
 
   @spec crop(Vimage.t(), integer(), integer(), pos_integer(), pos_integer()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -3533,21 +3599,39 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `left` is the top edge of crop area as an
+    integer or a float in the range `-1.0..1.0`.
+    If `left` is an integer it is the absolute number
+    of pixels. If `left` a float is fraction of the width
+    of the image. If `left` is positive it is relative to
+    the left edge of the image. If it is negative it is
+    relative to the right edge of the image. `left` may
+    also be one of `:left`, `:center` and `:right`
+    indicating the crop is relative to the left, center
+    or right of the image.
 
-  * `left` is the left edge of extract area as a
-    positive integer.
+  * `top` is the top edge of crop area as an
+    integer or a float in the range `-1.0..1.0`.
+    If `top` is an integer it is the absolute number of
+    pixels. If `top` is a float is fraction of the height
+    of the image. If `top` is positive it is relative to
+    the top edge of the image. If it is negative it is
+    relative to the bottom edge of the image. `top` may
+    also be one of `:top`, `:middle` and `:bottom`
+    indicating the crop is relative to the top, middle
+    or bottom of the image.
 
-  * `top` is the top edge of extract area as an
-    integer. If `top` is positive it is relative to
-    the top of the image. If it is negative it is
-    relative to the bottom of the image.
+  * `width` is the width of area remaining as a
+    positive integer or float in the range `0.0..1.0`.
+    If `width` is an integer it is the absolute nunber
+    of pixels. If `width` is a float it is the fraction
+    of the original image width.
 
-  * `width` is the width of extract area as a
-    positive integer.
-
-  * `height` is the height of extract area as a
-    positive integer.
+  * `height` is the width of area remaining as a
+    positive integer or float in the range `0.0..1.0`.
+    If `height` is an integer it is the absolute nunber
+    of pixels. If `height` is a float it is the fraction
+    of the original image height.
 
   ### Returns
 
@@ -3556,7 +3640,7 @@ defmodule Image do
   * raises an exception.
 
   """
-  @doc subject: "Resize"
+  @doc subject: "Crop"
 
   @spec crop!(Vimage.t(), integer(), integer(), pos_integer(), pos_integer()) ::
           Vimage.t() | no_return
@@ -3569,7 +3653,214 @@ defmodule Image do
   end
 
   @doc """
-  Normalize an image by expanding the luninance
+  Crops the center from an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `width` is the width of area remaining as a
+    positive integer or float in the range `0.0..1.0`.
+    If `width` is an integer it is the absolute nunber
+    of pixels. If `width` is a float it is the fraction
+    of the original image width.
+
+  * `height` is the width of area remaining as a
+    positive integer or float in the range `0.0..1.0`.
+    If `height` is an integer it is the absolute nunber
+    of pixels. If `height` is a float it is the fraction
+    of the original image height.
+
+  ### Notes
+
+  * An error will be returned if `width` and `height` are
+    not equal to or smaller than the `image` dimensions.
+
+  * This function is a convenience function equivalent to
+    calling `Image.crop(image, :center, :middle, width, height)`.
+
+  ### Returns
+
+  * `{:ok, cropped_image}` or
+
+  * `{:error, reason}`.
+
+  """
+  @doc subject: "Crop", since: "0.27.0"
+
+  @spec center_crop(Vimage.t(), pos_integer(), pos_integer()) ::
+    {:ok, Vimage.t()} | {:error, error_message}
+
+  def center_crop(%Vimage{} = image, width, height) do
+    crop(image, :center, :middle, width, height)
+  end
+
+  @doc """
+  Crops the center from an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `width` is the width of area remaining as a
+    positive integer or float in the range `0.0..1.0`.
+    If `width` is an integer it is the absolute nunber
+    of pixels. If `width` is a float it is the fraction
+    of the original image width.
+
+  * `height` is the width of area remaining as a
+    positive integer or float in the range `0.0..1.0`.
+    If `height` is an integer it is the absolute nunber
+    of pixels. If `height` is a float it is the fraction
+    of the original image height.
+
+  ### Notes
+
+  * An error will be returned if `width` and `height` are
+    not equal to or smaller than the `image` dimensions.
+
+  * This function is a convenience function equivalent to
+    calling `Image.crop!(image, :center, :middle, width, height)`.
+
+  ### Returns
+
+  * `cropped_image` or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Crop", since: "0.27.0"
+
+  @spec center_crop!(Vimage.t(), pos_integer(), pos_integer()) ::
+    Vimage.t() | no_return()
+
+  def center_crop!(%Vimage{} = image, crop_width, crop_height) do
+    case center_crop(image, crop_width, crop_height) do
+      {:ok, cropped} -> cropped
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Embeds an image in a larger image canvas, generating
+  addition border pixels if required.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `width` is the width in pixels of the canvas
+    image.
+
+  * `height` is the height in pixels of the canvas
+    image.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:x` is the x-offset into the canvas image
+    where `image` will be embedded. The value may be
+    a positive integer indicating a 0-based offset from
+    the left of the canvas or a negative integer indicating
+    a 1-based offset from the right side of the image.
+    It may also be `:center` (the default) in which case the
+    image will be centered horizontally within the canvas.
+
+  * `:y` is the y-offset into the canvas image
+    where `image` will be embedded. The value may be
+    a positive integer indicating a 0-based offset from
+    the top of the canvas or a negative integer indicating
+    a 1-based offset from the bottom of the image.
+    It may also be `:center` (the default) in which case the
+    image will be centered vertically within the canvas.
+
+  * `:background` defines the color of the generated background
+    pixels. This can be specified as a single integer which will
+    be applied to all bands, or a list of integers representing
+    the color for each band. The color can also be supplied as a
+    CSS color name as a string or atom. For example: `:misty_rose`.
+    It can also be supplied as a hex string of
+    the form `#rrggbb`. The default is `:black`. `:background` can
+    also be set to `:average` in which case the background will be
+    the average color of the base image. See also `Image.Color.color_map/0`
+    and `Image.Color.rgb_color/1`.
+
+  * `:extend_mode` determines how any additional pixels
+    are generated. The values are:
+
+    * `:black` (the default) meaning the generated pixels are
+      black.
+    * `:white` meaning the generated pixels are white.
+    * `:copy` means the generated pixels take the value of the
+      nearest edge pixel of the base image.
+    * `:repeat` means the generated pixels are tiles from the
+      base image.
+    * `:mirror` means the generated pixels are a reflected tiles of
+      the base image.
+    * `:background` means the generated pixels are the background
+      color set in `options`.
+
+  ### Returns
+
+  * `{:ok, embedded_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc subject: "Resize", since: "0.27.0"
+
+  @spec embed(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Embed.embed_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message}
+
+  def embed(image, width, height, options \\ []) do
+    with {:ok, options} <- Options.Embed.validate_options(image, width, height, options) do
+      embed_options = [background: options.background, extend: options.extend_mode]
+      Operation.embed(image, options.x, options.y, width, height, embed_options)
+    end
+  end
+
+  @doc """
+  Embeds an image in a larger image canvas, generating
+  addition border pixels if required.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `width` is the width in pixels of the canvas
+    image.
+
+  * `height` is the height in pixels of the canvas
+    image.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  See `Image.embed/4`.
+
+  ### Returns
+
+  * `embedded_image` or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Operation", since: "0.27.0"
+
+  @spec embed!(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Embed.embed_options()) ::
+    Vimage.t() | no_return
+
+  def embed!(image, width, height, options \\ []) do
+    case embed(image, width, height, options) do
+      {:ok, embedded} -> embedded
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Normalize an image by expanding the luminance
   of an image to cover the full dynamic range.
 
   ### Arguments
@@ -3618,7 +3909,7 @@ defmodule Image do
   end
 
   @doc """
-  Normalize an image by expanding the luninance
+  Normalize an image by expanding the luminance
   of an image to cover the full dynamic range.
   Raises an exception on error.
 

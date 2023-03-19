@@ -168,6 +168,7 @@ defmodule Image.MixProject do
       "Files and streams": &(&1[:subject] == "Load and save"),
       Operations: &(&1[:subject] == "Operation"),
       Resize: &(&1[:subject] == "Resize"),
+      Crop: &(&1[:subject] == "Crop"),
       Transforms: &(&1[:subject] == "Generator"),
       "Split & Join": &(&1[:subject] == "Split and join"),
       Color: &(&1[:subject] == "Color"),

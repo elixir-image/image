@@ -6,6 +6,7 @@ defmodule Image.Options.Crop do
 
   import Image,
     only: [
+      is_size: 1,
       is_percent: 1,
       is_positive_percent: 1,
       is_box: 4
@@ -121,6 +122,38 @@ defmodule Image.Options.Crop do
     normalize_box(dims, left, top, width, round(height * h))
   end
 
+  def normalize_box({w, h}, :center, top, width, height) when is_size(width) and is_size(height) do
+    mid_x = trunc(w / 2)
+    crop_width = trunc(width / 2)
+    left = (mid_x - crop_width)
+
+    normalize_box({w, h}, left, top, width, height)
+  end
+
+  def normalize_box({w, h}, :left, top, width, height) when is_size(width) and is_size(height) do
+    normalize_box({w, h}, 0, top, width, height)
+  end
+
+  def normalize_box({w, h}, :right, top, width, height) when is_size(width) and is_size(height) do
+    normalize_box({w, h}, w - width, top, width, height)
+  end
+
+  def normalize_box({w, h}, left, :middle, width, height) when is_size(width) and is_size(height) do
+    mid_y = trunc(h / 2)
+    crop_height = trunc(height / 2)
+    top = (mid_y - crop_height)
+
+    normalize_box({w, h}, left, top, width, height)
+  end
+
+  def normalize_box({w, h}, left, :top, width, height) when is_size(width) and is_size(height) do
+    normalize_box({w, h}, left, 0, width, height)
+  end
+
+  def normalize_box({w, h}, left, :bottom, width, height) when is_size(width) and is_size(height) do
+    normalize_box({w, h}, left, h - height, width, height)
+  end
+
   def normalize_box(_dims, left, top, width, height) when is_box(left, top, width, height) do
     {left, top, width, height}
   end
@@ -145,12 +178,35 @@ defmodule Image.Options.Crop do
     {:error, location_error("top", top)}
   end
 
-  defp size_error(dim, size) do
+  @doc false
+  def normalize_dims({w, _h} = dims, width, height) when is_positive_percent(width) do
+    normalize_dims(dims, round(width * w), height)
+  end
+
+  def normalize_dims({_w, h} = dims, width, height) when is_positive_percent(height) do
+    normalize_dims(dims, width, round(height * h))
+  end
+
+  def normalize_dims(_dims, width, height) when is_size(width) and is_size(height) do
+    {width, height}
+  end
+
+  def normalize_dims(_dims, width, _height)
+      when not is_integer(width) and not is_positive_percent(width) do
+    {:error, size_error("width", width)}
+  end
+
+  def normalize_dims(_dims, _width, height)
+      when not is_integer(height) and not is_positive_percent(height) do
+    {:error, size_error("height", height)}
+  end
+
+  defp size_error(dim, size) when is_number(size) do
     "#{dim} must be a percentage expressed as a float greater than 0.0 and " <>
       "less than or equal to 1.0. Found #{inspect(size)}"
   end
 
-  defp location_error(dim, size) do
+  defp location_error(dim, size) when is_number(size) do
     "#{dim} must be a percentage expressed as a float beteen -1.0 and 1.0. " <>
       "Found #{inspect(size)}"
   end

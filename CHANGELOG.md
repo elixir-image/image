@@ -8,6 +8,12 @@ This is the changelog for Image version 0.27.0 released on ______, 2023.  For ol
 
 * Add `Image.from_kino/1` to simplify create an image from a [Kino](https://hex.pm/packages/kino) image in [Livebook](https://livebook.dev).
 
+* Add `Image.average/1` and `Image.average!/1` to calulate the average color of an image.
+
+* Add `Image.center_crop/3` and `Image.center_crop!/3`
+
+* Add `Image.embed/4` and `Image.embed!/4` to embed an image in a larger canvas, generating additional border pixels as required.
+
 ## Image 0.26.0
 
 This is the changelog for Image version 0.26.0 released on March 12th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
@@ -40,7 +46,7 @@ This is the changelog for Image version 0.25.1 released on March 1st, 2023.  For
 
 * Fix `Image.avatar/3` to flatten the source image before compositing with the mask. Thanks to @jarrodmoldrich for the report. Closes #63.
 
-* Fix `Image.flatten/1` to only flatten if there is an alpha band. 
+* Fix `Image.flatten/1` to only flatten if there is an alpha band.
 
 ## Image 0.25.0
 

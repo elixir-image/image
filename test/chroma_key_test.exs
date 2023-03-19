@@ -11,6 +11,7 @@ defmodule Image.ChromaKey.Test do
 
   test "Chroma Key an image", %{dir: dir} do
     image = image_path("chroma_key/greenscreen.jpg")
+    validate_path = validate_path("chroma_key/person.jpg")
 
     {:ok, image} = Vimage.new_from_file(image)
     {:ok, meme} = Image.chroma_key(image)
@@ -18,6 +19,7 @@ defmodule Image.ChromaKey.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(meme, out_path)
 
-    assert_images_equal out_path, validate_path("chroma_key/person.jpg")
+    # Image.write!(meme, validate_path)
+    assert_images_equal out_path, validate_path
   end
 end
