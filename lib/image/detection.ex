@@ -127,6 +127,38 @@ defmodule Image.Detection do
     |> Image.trim()
   end
 
+  @doc """
+  Detect objects in an image or raises and
+  exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0` that might be
+    returned by `Image.open/2`, `Image.from_kino/1` or
+    `Image.from_binary/1`.
+
+  * `model_path` is the path to a Yolo `.onnx` model
+    file. The default is "priv/models/yolov8n.onnx".
+    Note that this model must be user-provided. See the
+    instructions in the `Image.Detection` module docs.
+
+  ### Returns
+
+  * `image_with_bounding_boxes_and_labels` or
+
+  * raises and exception.
+
+  """
+  @spec detect!(image :: Vimage.t(), model_path: Path.t()) ::
+    Vimage.t() | no_return()
+
+  def detect!(%Vimage{} = image, model_path \\ default_model_path()) do
+    case detect(image, model_path) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
   defp default_model_path do
     path =
       :image
