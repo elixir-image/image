@@ -5431,8 +5431,59 @@ defmodule Image do
   Mutate an image with through the given
   function.
 
-  This funcation is a convenience wrapper
+  Mutations, like those functions in the
+  `Image.Draw`, module are operations on
+  a *copy* of the base image and operations
+  are serialized through a genserver in order
+  to maitain thread safety.
+
+  In order to perform multiple mutations without
+  coopying and serializing for each each mutation,
+  `Image.mutate/2` takes a function argument `fun`
+  that is passed a `t:Vix.Vips.MutableImage.t/0` as
+  a parameter. In that way several mutations can be
+  safely applied withouout copying and serializing
+  for each mutation.
+
+  The functions in `Image.Draw` all support either
+  a `t:Vix.Vips.Image.t/0` or a `t:Vix.Vips.MutableImage.t/0`
+  as the image parameter.
+
+  When the parameter `fun` returns, the mutation
+  process is ended and a normal `t:Vix.Vips.Image.t/0`
+  is returned.
+
+  This function is a convenience wrapper
   around `Vix.Vips.Image.mutate/2`.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `fun` is any 1-arity function that receives
+    a `t:Vix.Vips.MutableImage.t/0` parameter.
+
+  ### Returns
+
+  * `{:ok, mutated_image}` or
+
+  * `{:error, reason}`
+
+  ### Example
+
+        # The image is copied and operations
+        # are serialized behind a genserver.
+        # Only one copy is made but all operations
+        # will be serialized behind a genserver.
+        # When the function returns the genserver
+        # is broken down and the underlying
+        # mutated `t:Vix.Vips.Image.t/0` is returned.
+
+        Image.mutate image, fn mutable_image ->
+          mutable_image
+          |> Image.Draw.rect!(0, 0, 10, 10)
+          |> Image.Draw.rect!(10, 10, 20, 20)
+        end
 
   """
   @doc subject: "Operation", since: "0.7.0"
