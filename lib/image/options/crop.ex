@@ -125,7 +125,7 @@ defmodule Image.Options.Crop do
   def normalize_box({w, h}, :center, top, width, height) when is_size(width) and is_size(height) do
     mid_x = trunc(w / 2)
     crop_width = trunc(width / 2)
-    left = (mid_x - crop_width)
+    left = mid_x - crop_width
 
     normalize_box({w, h}, left, top, width, height)
   end
@@ -141,7 +141,7 @@ defmodule Image.Options.Crop do
   def normalize_box({w, h}, left, :middle, width, height) when is_size(width) and is_size(height) do
     mid_y = trunc(h / 2)
     crop_height = trunc(height / 2)
-    top = (mid_y - crop_height)
+    top = mid_y - crop_height
 
     normalize_box({w, h}, left, top, width, height)
   end

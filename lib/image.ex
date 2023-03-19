@@ -3689,7 +3689,7 @@ defmodule Image do
   @doc subject: "Crop", since: "0.27.0"
 
   @spec center_crop(Vimage.t(), pos_integer(), pos_integer()) ::
-    {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error_message}
 
   def center_crop(%Vimage{} = image, width, height) do
     crop(image, :center, :middle, width, height)
@@ -3732,7 +3732,7 @@ defmodule Image do
   @doc subject: "Crop", since: "0.27.0"
 
   @spec center_crop!(Vimage.t(), pos_integer(), pos_integer()) ::
-    Vimage.t() | no_return()
+          Vimage.t() | no_return()
 
   def center_crop!(%Vimage{} = image, crop_width, crop_height) do
     case center_crop(image, crop_width, crop_height) do
@@ -3811,7 +3811,7 @@ defmodule Image do
   @doc subject: "Resize", since: "0.27.0"
 
   @spec embed(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Embed.embed_options()) ::
-    {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error_message}
 
   def embed(image, width, height, options \\ []) do
     with {:ok, options} <- Options.Embed.validate_options(image, width, height, options) do
@@ -3850,7 +3850,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.27.0"
 
   @spec embed!(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Embed.embed_options()) ::
-    Vimage.t() | no_return
+          Vimage.t() | no_return
 
   def embed!(image, width, height, options \\ []) do
     case embed(image, width, height, options) do

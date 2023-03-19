@@ -5,15 +5,14 @@ defmodule Image.ExtendMode do
 
   """
 
- @extend_map %{
+  @extend_map %{
     black: :VIPS_EXTEND_BLACK,
     copy: :VIPS_EXTEND_COPY,
     repeat: :VIPS_EXTEND_REPEAT,
     mirror: :VIPS_EXTEND_MIRROR,
     white: :VIPS_EXTEND_WHITE,
-    background:  :VIPS_EXTEND_BACKGROUND
+    background: :VIPS_EXTEND_BACKGROUND
   }
-
 
   @extend Map.keys(@extend_map)
   @vips_extend Map.values(@extend_map)
@@ -111,5 +110,3 @@ defmodule Image.ExtendMode do
     "Unknown extend mode. Found #{inspect(extend)}"
   end
 end
-
-

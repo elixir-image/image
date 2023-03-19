@@ -22,13 +22,13 @@ defmodule Image.Options.Embed do
 
   """
   @type extend_mode :: [
-    :black
-    | :white
-    | :copy
-    | :repeat
-    | :mirror
-    | :background
-  ]
+          :black
+          | :white
+          | :copy
+          | :repeat
+          | :mirror
+          | :background
+        ]
 
   @doc """
   Validate the options for `Image.embed/4`.
@@ -53,7 +53,7 @@ defmodule Image.Options.Embed do
   defp validate_option({:background, :average}, image, _width, _height, options) do
     case Image.average!(image) do
       {:error, reason} ->
-        {:halt, {:error, "Could not get the image average: #{inspect reason}"}}
+        {:halt, {:error, "Could not get the image average: #{inspect(reason)}"}}
 
       color ->
         options = Keyword.put(options, :background, color)
@@ -138,6 +138,7 @@ defmodule Image.Options.Embed do
   end
 
   defp offset_error(dim, value) do
-    {:error, "#{inspect dim} offset #{inspect value} cannot fit the image inside the embedded image"}
+    {:error,
+     "#{inspect(dim)} offset #{inspect(value)} cannot fit the image inside the embedded image"}
   end
 end
