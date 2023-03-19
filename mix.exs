@@ -77,8 +77,8 @@ defmodule Image.MixProject do
           {:bumblebee, "~> 0.2", optional: true},
           {:exla, "~> 0.5", optional: true},
 
-          {:axon_onnx, path: "../axon_onnx", override: true},
-          {:yolo, path: "../yolov8_elixir", override: true}
+          {:axon_onnx, github: "elixir-image/axon_onnx", override: true},
+          {:yolo, github: "elixir-image/yolov8_elixir", override: true}
 
           # {:axon_onnx, "~> 0.4", optional: true}
         ]
