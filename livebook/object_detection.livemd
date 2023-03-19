@@ -1,10 +1,274 @@
-# Elixir Image Detection
+<!-- livebook:{"persist_outputs":true} -->
+
+# Elixir Image Object Detection
 
 ```elixir
 Mix.install([
   {:image, github: "elixir-image/image", branch: "detect"},
   {:kino, "~> 0.9.0"}
 ])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+* Getting image (https://github.com/elixir-image/image.git - origin/detect)
+remote: Enumerating objects: 3368, done.        
+remote: Counting objects: 100% (256/256), done.        
+remote: Compressing objects: 100% (114/114), done.        
+remote: Total 3368 (delta 152), reused 241 (delta 140), pack-reused 3112        
+* Getting axon_onnx (https://github.com/elixir-image/axon_onnx.git)
+remote: Enumerating objects: 724, done.        
+remote: Counting objects: 100% (718/718), done.        
+remote: Compressing objects: 100% (409/409), done.        
+remote: Total 724 (delta 354), reused 640 (delta 294), pack-reused 6        
+origin/HEAD set to master
+* Getting yolo (https://github.com/elixir-image/yolov8_elixir.git)
+remote: Enumerating objects: 39, done.        
+remote: Counting objects: 100% (39/39), done.        
+remote: Compressing objects: 100% (28/28), done.        
+remote: Total 39 (delta 12), reused 36 (delta 9), pack-reused 0        
+origin/HEAD set to master
+Resolving Hex dependencies...
+Resolution completed in 0.119s
+New:
+  axon 0.5.1
+  bumblebee 0.2.0
+  castore 0.1.22
+  cc_precompiler 0.1.7
+  complex 0.5.0
+  decimal 2.0.0
+  elixir_make 0.7.6
+  exla 0.5.1
+  jason 1.4.0
+  kino 0.9.0
+  nx 0.5.1
+  nx_image 0.1.1
+  nx_signal 0.1.0
+  phoenix_html 3.3.1
+  progress_bar 2.0.1
+  protox 1.6.10
+  rustler_precompiled 0.6.1
+  sweet_xml 0.7.3
+  table 0.1.2
+  table_rex 3.1.1
+  telemetry 1.2.1
+  tokenizers 0.3.0
+  unpickler 0.1.0
+  unzip 0.8.0
+  vix 0.16.2
+  xla 0.4.4
+* Getting kino (Hex package)
+* Getting table (Hex package)
+* Getting vix (Hex package)
+* Getting sweet_xml (Hex package)
+* Getting phoenix_html (Hex package)
+* Getting axon (Hex package)
+* Getting bumblebee (Hex package)
+* Getting exla (Hex package)
+* Getting table_rex (Hex package)
+* Getting elixir_make (Hex package)
+* Getting nx (Hex package)
+* Getting telemetry (Hex package)
+* Getting xla (Hex package)
+* Getting complex (Hex package)
+* Getting castore (Hex package)
+* Getting jason (Hex package)
+* Getting nx_image (Hex package)
+* Getting nx_signal (Hex package)
+* Getting progress_bar (Hex package)
+* Getting tokenizers (Hex package)
+* Getting unpickler (Hex package)
+* Getting unzip (Hex package)
+* Getting rustler_precompiled (Hex package)
+* Getting decimal (Hex package)
+* Getting protox (Hex package)
+* Getting cc_precompiler (Hex package)
+==> unzip
+Compiling 5 files (.ex)
+Generated unzip app
+==> decimal
+Compiling 4 files (.ex)
+Generated decimal app
+==> progress_bar
+Compiling 10 files (.ex)
+Generated progress_bar app
+==> table
+Compiling 5 files (.ex)
+Generated table app
+===> Analyzing applications...
+===> Compiling telemetry
+==> jason
+Compiling 10 files (.ex)
+Generated jason app
+==> protox
+Compiling 53 files (.ex)
+Generated protox app
+==> phoenix_html
+Compiling 9 files (.ex)
+Generated phoenix_html app
+==> unpickler
+Compiling 3 files (.ex)
+Generated unpickler app
+==> complex
+Compiling 2 files (.ex)
+Generated complex app
+==> nx
+Compiling 31 files (.ex)
+Generated nx app
+==> kino
+Compiling 39 files (.ex)
+Generated kino app
+==> nx_image
+Compiling 1 file (.ex)
+Generated nx_image app
+==> nx_signal
+Compiling 3 files (.ex)
+Generated nx_signal app
+==> table_rex
+Compiling 7 files (.ex)
+Generated table_rex app
+==> axon
+Compiling 23 files (.ex)
+Generated axon app
+==> axon_onnx
+Compiling 28 files (.ex)
+warning: Nx.power/2 is deprecated. Use pow/2 instead
+Invalid call found at 4 locations:
+  lib/axon_onnx/shared.ex:44: AxonOnnx.Shared."__defn:sumsquare__"/2
+  lib/axon_onnx/shared.ex:52: AxonOnnx.Shared."__defn:l2_norm__"/2
+  lib/axon_onnx/shared.ex:63: AxonOnnx.Shared."__defn:lrn__"/2
+  lib/axon_onnx/shared.ex:65: AxonOnnx.Shared."__defn:lrn__"/2
+
+warning: Nx.Defn.Kernel.transform/2 is deprecated. Use deftransform/2 or deftransformp/2 from Nx.Defn instead
+Invalid call found at 2 locations:
+  lib/axon_onnx/shared.ex:58: AxonOnnx.Shared."__defn:lrn__"/2
+  lib/axon_onnx/shared.ex:94: AxonOnnx.Shared."__defn:numpy_matmul__"/3
+
+Generated axon_onnx app
+==> castore
+Compiling 1 file (.ex)
+Generated castore app
+==> elixir_make
+Compiling 6 files (.ex)
+Generated elixir_make app
+==> xla
+Compiling 2 files (.ex)
+Generated xla app
+==> exla
+Unpacking /Users/kip/Library/Caches/xla/0.4.4/cache/download/xla_extension-aarch64-darwin-cpu.tar.gz into /Users/kip/Library/Caches/mix/installs/elixir-1.14.2-erts-13.1.3/e32543add834a1363d0f24820fd2fa44/deps/exla/cache
+Using libexla.so from /Users/kip/Library/Caches/xla/exla/elixir-1.14.2-erts-13.1.3-xla-0.4.4-exla-0.5.1-glbdezc2mejtrwrosmbkx5ny5u/libexla.so
+Compiling 21 files (.ex)
+Generated exla app
+==> cc_precompiler
+Compiling 3 files (.ex)
+Generated cc_precompiler app
+==> vix
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o pipe.o pipe.c
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o vix.o vix.c
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o vips_image.o vips_image.c
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o utils.o utils.c
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o vips_interpolate.o vips_interpolate.c
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o vips_foreign.o vips_foreign.c
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o g_object/g_value.o g_object/g_value.c
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o g_object/g_boxed.o g_object/g_boxed.c
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o g_object/g_param_spec.o g_object/g_param_spec.c
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o g_object/g_object.o g_object/g_object.c
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o g_object/g_type.o g_object/g_type.c
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o vips_boxed.o vips_boxed.c
+cc -c -O2 -g -fno-stack-check -O2 -Wall -Werror -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c11 -D_POSIX_C_SOURCE=200809L -fPIC -I /Users/kip/.asdf/installs/erlang/25.2/erts-13.1.3/include -I /Users/kip/.asdf/installs/erlang/25.2/usr/include `pkg-config vips --cflags` -o vips_operation.o vips_operation.c
+cc pipe.o vix.o vips_image.o utils.o vips_interpolate.o vips_foreign.o g_object/g_value.o g_object/g_boxed.o g_object/g_param_spec.o g_object/g_object.o g_object/g_type.o vips_boxed.o vips_operation.o -o /Users/kip/Library/Caches/mix/installs/elixir-1.14.2-erts-13.1.3/e32543add834a1363d0f24820fd2fa44/_build/dev/lib/vix/priv/vix.so -flat_namespace -undefined suppress -shared -L /Users/kip/.asdf/installs/erlang/25.2/usr/lib `pkg-config vips --libs`
+Compiling 26 files (.ex)
+Generated vix app
+==> rustler_precompiled
+Compiling 4 files (.ex)
+Generated rustler_precompiled app
+==> tokenizers
+Compiling 7 files (.ex)
+
+20:59:21.655 [debug] Copying NIF from cache and extracting to /Users/kip/Library/Caches/mix/installs/elixir-1.14.2-erts-13.1.3/e32543add834a1363d0f24820fd2fa44/_build/dev/lib/tokenizers/priv/native/libex_tokenizers-v0.3.0-nif-2.16-aarch64-apple-darwin.so
+Generated tokenizers app
+==> bumblebee
+Compiling 80 files (.ex)
+Generated bumblebee app
+==> yolo
+Compiling 7 files (.ex)
+warning: module attribute @channel_counts was set but never used
+  lib/yolo/preprocess.ex:2
+
+Generated yolo app
+==> sweet_xml
+Compiling 2 files (.ex)
+Generated sweet_xml app
+==> image
+Compiling 50 files (.ex)
+Generated image app
+
+20:59:31.070 [debug] the following PyTorch parameters were unused:
+
+  * resnet.embedder.embedder.normalization.num_batches_tracked
+  * resnet.encoder.stages.0.layers.0.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.0.layers.0.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.0.layers.0.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.0.layers.0.shortcut.normalization.num_batches_tracked
+  * resnet.encoder.stages.0.layers.1.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.0.layers.1.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.0.layers.1.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.0.layers.2.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.0.layers.2.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.0.layers.2.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.0.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.0.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.0.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.0.shortcut.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.1.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.1.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.1.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.2.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.2.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.2.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.3.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.3.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.1.layers.3.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.0.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.0.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.0.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.0.shortcut.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.1.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.1.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.1.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.2.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.2.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.2.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.3.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.3.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.3.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.4.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.4.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.4.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.5.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.5.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.2.layers.5.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.3.layers.0.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.3.layers.0.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.3.layers.0.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.3.layers.0.shortcut.normalization.num_batches_tracked
+  * resnet.encoder.stages.3.layers.1.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.3.layers.1.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.3.layers.1.layer.2.normalization.num_batches_tracked
+  * resnet.encoder.stages.3.layers.2.layer.0.normalization.num_batches_tracked
+  * resnet.encoder.stages.3.layers.2.layer.1.normalization.num_batches_tracked
+  * resnet.encoder.stages.3.layers.2.layer.2.normalization.num_batches_tracked
+
+
+20:59:31.430 [info] TfrtCpuClient created.
+
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
 ```
 
 ## Introduction
@@ -33,6 +297,12 @@ Make a note of the pathname to the `yolov8n.onnx` file - its required later on.
 model_path = "/Users/kip/Development/image_models/yolov8n.onnx"
 ```
 
+<!-- livebook:{"output":true} -->
+
+```
+"/Users/kip/Development/image_models/yolov8n.onnx"
+```
+
 ```elixir
 uploaded_image = Kino.Input.image("Image in which to detect objects")
 ```
@@ -43,6 +313,12 @@ uploaded_image = Kino.Input.image("Image in which to detect objects")
   uploaded_image
   |> Kino.Input.read()
   |> Image.from_kino()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok, %Vix.Vips.Image{ref: #Reference<0.2849704140.3562930204.194061>}}
 ```
 
 ```elixir
