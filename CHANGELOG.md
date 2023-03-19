@@ -6,7 +6,9 @@ This is the changelog for Image version 0.27.0 released on ______, 2023.  For ol
 
 ### Enhancement
 
-* Add `Image.from_kino/1` to simplify create an image from a [Kino](https://hex.pm/packages/kino) image in [Livebook](https://livebook.dev).
+* Add `Image.Detection` module. This is an experimental module that uses the Yolov8 ML model to detect objects using [axon](https://hex.pm/packages/axon) and [axon_onnx](https://hex.pm/packages/axon_opnnx).
+
+* Add `Image.from_kino/2` and `Image.from_kino!/2` to simplify create an image from a [Kino](https://hex.pm/packages/kino) image in [Livebook](https://livebook.dev).
 
 * Add `Image.average/1` and `Image.average!/1` to calulate the average color of an image.
 
