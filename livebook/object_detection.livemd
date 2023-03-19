@@ -1,0 +1,51 @@
+# Elixir Image Detection
+
+```elixir
+Mix.install([
+  {:image, github: "elixir-image/image", branch: "detect"},
+  {:kino, "~> 0.9.0"}
+])
+```
+
+## Introduction
+
+This livebook is based upon a talk on [object detection by @hansihe](https://www.youtube.com/watch?v=OsxGB6MbA8o&t=1s) at the Warsaw Elixir meeting in March 2023.
+
+Before starting the Yolov8n model needs to be installed. These commands need to be run outside livebook.
+
+1. Ensure Python 3.10 is installed
+2. Install required libraries:
+   ```bash
+   % pip3.10 install ultralytics
+   % pip3.10 install onnx
+   ```
+3. Generate the yolov8n.onnx model
+   ```bash
+   % yolo export model=yolov8n.pt format=onnx imgsz=640
+   ```
+
+Make a note of the pathname to the `yolov8n.onnx` file - its required later on.
+
+## Example
+
+```elixir
+# Save the path to the model file. This will need to be customised for your setup.
+model_path = "/Users/kip/Development/image_models/yolov8n.onnx"
+```
+
+```elixir
+uploaded_image = Kino.Input.image("Image in which to detect objects")
+```
+
+```elixir
+# Create an Image.t from the input
+{:ok, image} =
+  uploaded_image
+  |> Kino.Input.read()
+  |> Image.from_kino()
+```
+
+```elixir
+# Now run image detection on the image
+Image.Detection.detect!(image, model_path)
+```

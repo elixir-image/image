@@ -16,7 +16,8 @@ defmodule Image.Detection do
   3.10 is required (apparently it won't work with 3.11).
 
   ```bash
-    pip3.10 install ultralytics onnyx
+    pip3.10 install ultralytics
+    pip3.10 install onnx
     yolo export model=yolov8n.pt format=onnx imgsz=640
   ```
 
