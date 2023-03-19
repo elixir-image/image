@@ -2,6 +2,12 @@ defmodule Image.Draw do
   @moduledoc """
   Functions to draw directly on a mutable image.
 
+  **Note** that while the functions in this module
+  mutate an image, the mutations are performed on
+  a copy of the image so no harm will come to other
+  functions maintaining a reference to the original
+  image.
+
   """
 
   alias Vix.Vips.Image, as: Vimage

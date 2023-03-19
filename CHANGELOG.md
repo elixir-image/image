@@ -14,6 +14,8 @@ This is the changelog for Image version 0.27.0 released on ______, 2023.  For ol
 
 * Add `Image.embed/4` and `Image.embed!/4` to embed an image in a larger canvas, generating additional border pixels as required.
 
+* Add `Image.Shape.rect/3` to draw a rectangle image.
+
 ## Image 0.26.0
 
 This is the changelog for Image version 0.26.0 released on March 12th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

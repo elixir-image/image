@@ -20,7 +20,7 @@ config :nx,
   default_backend: EXLA.Backend
 
 config :logger,
-  level: :debug
+  level: :warning
 
 config :image, :classifier, autostart: true
 

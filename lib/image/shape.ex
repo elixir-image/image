@@ -6,6 +6,7 @@ defmodule Image.Shape do
   [Scalable Vector Graphics](https://developer.mozilla.org/en-US/docs/Web/SVG)
   including:
 
+  * Rectangle
   * Polygon
   * Circle
   * Ellipse
@@ -40,8 +41,120 @@ defmodule Image.Shape do
   @default_star_rotation 0
 
   @doc """
-  Creates an image of a polygon as a single
-  band image on a transparent background.
+  Creates a image of a rectangle.
+
+  * `width` is the number of pixels wide.
+
+  * `height` is the number of pixels high.
+
+  * `options` is a `t:Keyword.t/0` list of options.
+
+  ### Options
+
+  * `:fill_color` is the color used to fill in the
+    polygon. The default is `:none`.
+
+  * `:stroke_width` is the width of the line used
+    to draw the rectangle. The default is `1px`.
+
+  * `:stroke_color` is the color used for the outline
+    of the polygon. The default is `:black`
+
+  * `:opacity` is the opacity as a float between
+    `0.0` and `1.0` where `0.0` is completely transparent
+    and `1.0` is completely opaque. The default is `0.7`.
+
+  * `:rotation` is the number of degrees to rotate the
+    axis of a generated rectangle.
+
+  ### Returns
+
+  * `{:ok, rectangle_image}` or
+
+  * `{:error, reason}`
+
+  ### Examples
+
+  """
+  @doc since: "1.27.0"
+
+  @spec rect(width :: pos_integer(), height :: pos_integer(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
+
+  def rect(width, height, options \\ []) do
+    with {:ok, options} <- Image.Options.Shape.validate_polygon_options(options) do
+      svg = """
+      <svg viewBox="0 0 #{width} #{height}">
+        <style type="text/css">
+          svg rect {
+            fill: #{options.fill_color};
+            stroke: #{options.stroke_color};
+            stroke-width: #{options.stroke_width};
+            opacity: #{options.opacity};
+          }
+        </style>
+        <rect width="#{width}" height="#{height}" />
+      </svg>
+      """
+
+      case Operation.svgload_buffer(svg) do
+        {:ok, {polygon, _flags}} -> {:ok, polygon}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  @doc """
+  Creates a image of a rectangle or raises
+  and exception.
+
+  * `width` is the number of pixels wide.
+
+  * `height` is the number of pixels high.
+
+  * `options` is a `t:Keyword.t/0` list of options.
+
+  ### Options
+
+  * `:fill_color` is the color used to fill in the
+    polygon. The default is `:none`.
+
+  * `:stroke_width` is the width of the line used
+    to draw the rectangle. The default is `1px`.
+
+  * `:stroke_color` is the color used for the outline
+    of the polygon. The default is `:black`.
+
+  * `:opacity` is the opacity as a float between
+    `0.0` and `1.0` where `0.0` is completely transparent
+    and `1.0` is completely opaque. The default is `0.7`.
+
+  * `:rotation` is the number of degrees to rotate the
+    axis of a generated rectangle.
+
+  ### Returns
+
+  * `rectangle_image` or
+
+  * raises an exception.
+
+  ### Examples
+
+  """
+  @doc since: "1.27.0"
+
+  @spec rect!(width :: pos_integer(), height :: pos_integer(), options :: Keyword.t()) ::
+          Vimage.t() | no_return()
+
+  def rect!(width, height, options \\ []) do
+    case rect(width, height, options) do
+      {:ok, rectangle} -> rectangle
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Creates an image of a polygon.
 
   ### Arguments
 
@@ -69,6 +182,9 @@ defmodule Image.Shape do
 
   * `:fill_color` is the color used to fill in the
     polygon. The default is `:none`.
+
+  * `:stroke_width` is the width of the line used
+    to draw the polygon. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
     of the polygon. The default is `:black`
@@ -134,7 +250,7 @@ defmodule Image.Shape do
       |> format_points()
 
     svg = """
-    <svg width="#{width}px" height="#{height}px">
+    <svg width="#{width}" height="#{height}">
       <style type="text/css">
         svg polygon {
           fill: #{options.fill_color};
@@ -218,6 +334,9 @@ defmodule Image.Shape do
 
   * `:fill_color` is the color used to fill in the
     polygon. The default is `:none`.
+
+  * `:stroke_width` is the width of the line used
+    to draw the polygon. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
     of the polygon. The default is `:black`

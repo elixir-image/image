@@ -3585,6 +3585,7 @@ defmodule Image do
   def crop(%Vimage{} = image, left, top, width, height) do
     with {left, top, width, height} <-
            Options.Crop.normalize_box(dims(image), left, top, width, height) do
+             IO.inspect( {left, top, width, height} )
       crop(image, left, top, width, height)
     end
   end
@@ -5630,13 +5631,15 @@ defmodule Image do
         This is the default action.
 
       * `:hwc` or `:hwb` which reshapes the tensor to
-        `height, width, channels` which is commonly use
+        `height, width, channels` which is commonly used
         for machine learning models.
 
     ### Returns
 
-    * An `t:Nx.Tensor.t/0` tensor suitable for use in
-      the `Nx` library.
+    * `{:ok, tensor)` where tensor is an `t:Nx.Tensor.t/0` tensor
+      suitable for use in the `Nx` library or
+
+    * `{:error, reason}`.
 
     ### Example
 
@@ -5688,6 +5691,56 @@ defmodule Image do
     defp maybe_reshape_tensor(_tensor, shape) do
       {:error,
        "Invalid shape. Allowable shapes are :whb, :whc, :hwc and :hwb. Found #{inspect(shape)}"}
+    end
+
+    @doc """
+    Converts an image into an [Nx](https://hex.pm/packages/nx)
+    tensor.
+
+    ### Arguments
+
+    * `image` is any `t:Vimage.t/0`
+
+    * `options` is a keyword list of options
+
+    ### Options
+
+    * `:shape` determines how the tensor is shaped. The valid
+      values are:
+
+      * `:whb` or `:whc` which leaves the tensor unchanged with
+        the underlying data in `width, height, bands` shape.
+        This is the default action.
+
+      * `:hwc` or `:hwb` which reshapes the tensor to
+        `height, width, channels` which is commonly used
+        for machine learning models.
+
+    ### Returns
+
+    * `tensor` where tensor is an `t:Nx.Tensor.t/0` tensor
+      suitable for use in the `Nx` library or
+
+    * raises an exception.
+
+    ### Example
+
+        iex> {:ok, image} = Vix.Vips.Operation.black(3, 3)
+        iex> Image.to_nx!(image, backend: Nx.BinaryBackend)
+        Nx.tensor([[[0], [0], [0]], [[0], [0], [0]], [[0], [0], [0]]],
+          type: {:u, 8}, names: [:width, :height, :bands], backend: Nx.BinaryBackend)}
+
+    """
+    @doc subject: "Matrix", since: "0.27.0"
+
+    @spec to_nx!(image :: Vimage.t(), options :: Keyword.t()) ::
+            Nx.Tensor.t() | no_return()
+
+    def to_nx!(%Vimage{} = image, options \\ []) do
+      case to_nx(image, options) do
+        {:ok, tensor} -> tensor
+        {:error, reason} -> raise Image.Error, reason
+      end
     end
 
     @doc """
