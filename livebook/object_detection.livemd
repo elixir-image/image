@@ -13,10 +13,10 @@ Mix.install([
 
 ```
 * Getting image (https://github.com/elixir-image/image.git - origin/detect)
-remote: Enumerating objects: 3368, done.        
-remote: Counting objects: 100% (256/256), done.        
-remote: Compressing objects: 100% (114/114), done.        
-remote: Total 3368 (delta 152), reused 241 (delta 140), pack-reused 3112        
+remote: Enumerating objects: 3379, done.        
+remote: Counting objects: 100% (267/267), done.        
+remote: Compressing objects: 100% (122/122), done.        
+remote: Total 3379 (delta 159), reused 248 (delta 143), pack-reused 3112        
 * Getting axon_onnx (https://github.com/elixir-image/axon_onnx.git)
 remote: Enumerating objects: 724, done.        
 remote: Counting objects: 100% (718/718), done.        
@@ -30,7 +30,7 @@ remote: Compressing objects: 100% (28/28), done.
 remote: Total 39 (delta 12), reused 36 (delta 9), pack-reused 0        
 origin/HEAD set to master
 Resolving Hex dependencies...
-Resolution completed in 0.119s
+Resolution completed in 0.107s
 New:
   axon 0.5.1
   bumblebee 0.2.0
@@ -186,7 +186,7 @@ Generated rustler_precompiled app
 ==> tokenizers
 Compiling 7 files (.ex)
 
-20:59:21.655 [debug] Copying NIF from cache and extracting to /Users/kip/Library/Caches/mix/installs/elixir-1.14.2-erts-13.1.3/e32543add834a1363d0f24820fd2fa44/_build/dev/lib/tokenizers/priv/native/libex_tokenizers-v0.3.0-nif-2.16-aarch64-apple-darwin.so
+21:49:34.608 [debug] Copying NIF from cache and extracting to /Users/kip/Library/Caches/mix/installs/elixir-1.14.2-erts-13.1.3/e32543add834a1363d0f24820fd2fa44/_build/dev/lib/tokenizers/priv/native/libex_tokenizers-v0.3.0-nif-2.16-aarch64-apple-darwin.so
 Generated tokenizers app
 ==> bumblebee
 Compiling 80 files (.ex)
@@ -204,7 +204,7 @@ Generated sweet_xml app
 Compiling 50 files (.ex)
 Generated image app
 
-20:59:31.070 [debug] the following PyTorch parameters were unused:
+21:49:44.098 [debug] the following PyTorch parameters were unused:
 
   * resnet.embedder.embedder.normalization.num_batches_tracked
   * resnet.encoder.stages.0.layers.0.layer.0.normalization.num_batches_tracked
@@ -261,7 +261,7 @@ Generated image app
   * resnet.encoder.stages.3.layers.2.layer.2.normalization.num_batches_tracked
 
 
-20:59:31.430 [info] TfrtCpuClient created.
+21:49:44.383 [info] TfrtCpuClient created.
 
 ```
 
@@ -318,7 +318,7 @@ uploaded_image = Kino.Input.image("Image in which to detect objects")
 <!-- livebook:{"output":true} -->
 
 ```
-{:ok, %Vix.Vips.Image{ref: #Reference<0.2849704140.3562930204.194061>}}
+{:ok, %Vix.Vips.Image{ref: #Reference<0.3452568544.81133597.234069>}}
 ```
 
 ```elixir
