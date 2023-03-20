@@ -2,11 +2,21 @@
 
 ## Image 0.27.0
 
-This is the changelog for Image version 0.27.0 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.27.0 released on March 20th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
 
-### Enhancement
+### Image packaging future
 
-* Add `Image.Detection` module. This is an experimental module that uses the Yolov8 ML model to detect objects using [axon](https://hex.pm/packages/axon) and [axon_onnx](https://hex.pm/packages/axon_opnnx).
+In a future release, Image will be split into several packages
+
+* `:image` which will retain all the core components of image transformation based upon `vix` and `libvips`.
+* `:image_nx` which will provide `:nx` interoperability (and will depend on `:image`)
+* `:image_exif` which will provide metadata support (and will depend on `:image`)
+* `:image_classification` which will provide image classification (and will depend on `:image` and `:bumblebee`)
+* `:image_detection` which will provide object detection (and will depend on `:image`, `:axon`, `:axon_onnx`)
+* `:image_qrcode` which will provide QRcode scanning and production (and will depend on`:image` and `:evision`)
+* `:image_video` which will provide video frame extraction (and will depend on`:image` and `:evision`)
+
+### Enhancements
 
 * Add `Image.from_kino/2` and `Image.from_kino!/2` to simplify create an image from a [Kino](https://hex.pm/packages/kino) image in [Livebook](https://livebook.dev).
 

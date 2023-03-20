@@ -43,54 +43,6 @@ You can choose this using `VIX_COMPILATION_MODE` environment variable. This vari
   * Install `pkg-config`
   * Ensure a supported C compiler is installed
 
-### Configuring Libvips
-
-`Vix` and `libvips` offer various configuration parameters that affect debug output, image caching, concurrency of imaging operations and memory leak detection. Each of these options has reasonable defaults so no action is required in order to start using the library.
-
-#### Vix NIF Error Logging
-
-`Vix` NIF code writes logs to stderr on certain errors. This is disabled by default. To enable logging set the `VIX_LOG_ERROR` environment variable to `true`.
-
-#### GLib Debug Output
-
-The platform upon which `Image` and `Vix` stand is [libvips](https://www.libvips.org), a `C` library that performs the image manipulation. It's `libvips` that delivers the speed, memory efficiency and functionality.
-
-`libvips` uses the [GLib](https://docs.gtk.org/glib/) library which has configurable debug output. This output depends on the setting of the environment variable `G_DEBUG`.  The initial value will depend on the installation method of `libvips` for a given system. It can be changed by setting the `G_DEBUG` environment variable to one of the following:
-
-* **fatal-warnings** which causes GLib to abort the operation at the first call to g_warning() or g_critical().
-
-* **fatal-criticals** causes GLib to abort the operation at the first call to g_critical().
-
-* **gc-friendly** causes newly allocated memory that isn't directly initialized, as well as memory being freed to be reset to 0. The point here is to allow memory checkers and similar programs that use Boehm GC alike algorithms to produce more accurate results.
-
-* **resident-modules** causes all modules loaded by GModule will be made resident. This can be useful for tracking memory leaks in modules which are later unloaded; but it can also hide bugs where code is accessed after the module would have normally been unloaded.
-
-* **bind-now-modules** causes all modules loaded by GModule to bind their symbols at load time, even when the code uses %G_MODULE_BIND_LAZY.
-
-To produce debug output for only the most critical issues, set `G_DEBUG` as follows (in bash and compatible shells):
-
-```bash
-export G_DEBUG=fatal-criticals
-```
-
-#### Memory Leak Detection
-
-The environment variable `VIPS_LEAK` determines whether `libvips` reports possible memory leaks. To enable leak detection (on `bash` compatible systems):
-```bash
-export VIPS_LEAK=true
-```
-
-To stop leak detection:
-```bash
-unset VIPS_LEAK
-```
-
-#### Concurrency
-
-`Image` (because of `Vix` and `libvips`) will execute concurrent image operations using a number of system native threads (not BEAM processes). The number of threads available for concurrent image operations is configurable by either setting the environment variable `VIPS_CONCURRENCY` or through a call to `Image.put_concurrency/1`.  The current number of configured threads is returned from `Image.get_concurrency/0`.
-
-The default number of threads is equal to the number of cores detected on the running system. This may create CPU contention with other workloads given that image processing is CPU intensive.  Therefore it may be prudent to reduce the number of threads if overall system throughput is being affected.
-
 ### Installing Nx
 
 [Nx](https://hex.pm/packages/nx) provides multi-dimensional arrays (tensors) and numerical definitions for Elixir. These tensors can also be used as an interchange format for binary image data. When `Nx` is installed and `Image` is compiled, the functions `Image.to_nx/2` and `Image.from_nx/1` are defined.
@@ -172,6 +124,66 @@ mix deps.get
 ```
 
 Then proceed as normal.  `eVision` will download a precompiled `OpenCV` for the appropriate system architecture and compile both the NIF and Elixir code.
+
+## Configuring Libvips
+
+`Vix` and `libvips` offer various configuration parameters that affect debug output, image caching, concurrency of imaging operations and memory leak detection. Each of these options has reasonable defaults so no action is required in order to start using the library.
+
+### Vix NIF Error Logging
+
+`Vix` NIF code writes logs to stderr on certain errors. This is disabled by default. To enable logging set the `VIX_LOG_ERROR` environment variable to `true`.
+
+### GLib Debug Output
+
+The platform upon which `Image` and `Vix` stand is [libvips](https://www.libvips.org), a `C` library that performs the image manipulation. It's `libvips` that delivers the speed, memory efficiency and functionality.
+
+`libvips` uses the [GLib](https://docs.gtk.org/glib/) library which has configurable debug output. This output depends on the setting of the environment variable `G_DEBUG`.  The initial value will depend on the installation method of `libvips` for a given system. It can be changed by setting the `G_DEBUG` environment variable to one of the following:
+
+* **fatal-warnings** which causes GLib to abort the operation at the first call to g_warning() or g_critical().
+
+* **fatal-criticals** causes GLib to abort the operation at the first call to g_critical().
+
+* **gc-friendly** causes newly allocated memory that isn't directly initialized, as well as memory being freed to be reset to 0. The point here is to allow memory checkers and similar programs that use Boehm GC alike algorithms to produce more accurate results.
+
+* **resident-modules** causes all modules loaded by GModule will be made resident. This can be useful for tracking memory leaks in modules which are later unloaded; but it can also hide bugs where code is accessed after the module would have normally been unloaded.
+
+* **bind-now-modules** causes all modules loaded by GModule to bind their symbols at load time, even when the code uses %G_MODULE_BIND_LAZY.
+
+To produce debug output for only the most critical issues, set `G_DEBUG` as follows (in bash and compatible shells):
+
+```bash
+export G_DEBUG=fatal-criticals
+```
+
+### Memory Leak Detection
+
+The environment variable `VIPS_LEAK` determines whether `libvips` reports possible memory leaks. To enable leak detection (on `bash` compatible systems):
+```bash
+export VIPS_LEAK=true
+```
+
+To stop leak detection:
+```bash
+unset VIPS_LEAK
+```
+
+### Concurrency
+
+`Image` (because of `Vix` and `libvips`) will execute concurrent image operations using a number of system native threads (not BEAM processes). The number of threads available for concurrent image operations is configurable by either setting the environment variable `VIPS_CONCURRENCY` or through a call to `Image.put_concurrency/1`.  The current number of configured threads is returned from `Image.get_concurrency/0`.
+
+The default number of threads is equal to the number of cores detected on the running system. This may create CPU contention with other workloads given that image processing is CPU intensive.  Therefore it may be prudent to reduce the number of threads if overall system throughput is being affected.
+
+## Library packaging future
+
+In a future release, `:image` will be split into several packages
+
+* `:image` which will retain all the core components of image transformation based upon `vix` and `libvips`.
+* `:image_nx` which will provide `:nx` interoperability (and will depend on `:image`)
+* `:image_exif` which will provide metadata support (and will depend on `:image`)
+* `:image_classification` which will provide image classification (and will depend on `:image` and `:bumblebee`)
+* `:image_detection` which will provide object detection (and will depend on `:image`, `:axon`, `:axon_onnx`)
+* `:image_qrcode` which will provide QRcode scanning and production (and will depend on`:image` and `:evision`)
+* `:image_video` which will provide video frame extraction (and will depend on`:image` and `:evision`)
 
 ## Security Considerations
 

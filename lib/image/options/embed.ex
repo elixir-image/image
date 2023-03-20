@@ -51,13 +51,13 @@ defmodule Image.Options.Embed do
   end
 
   defp validate_option({:background, :average}, image, _width, _height, options) do
-    case Image.average!(image) do
-      {:error, reason} ->
-        {:halt, {:error, "Could not get the image average: #{inspect(reason)}"}}
-
-      color ->
+    case Image.average(image) do
+      color when is_list(color) ->
         options = Keyword.put(options, :background, color)
         {:cont, options}
+
+      {:error, reason} ->
+        {:halt, {:error, "Could not get the image average: #{inspect(reason)}"}}
     end
   end
 

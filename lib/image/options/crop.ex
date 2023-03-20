@@ -137,9 +137,7 @@ defmodule Image.Options.Crop do
   end
 
   def normalize_box({w, h}, left, :middle, width, height) when is_size(width) and is_size(height) do
-    IO.inspect h, label: "Height"
-    IO.inspect height, label: "Required height"
-    top = round((h - height) / 2) |> IO.inspect(label: "Calculated offset")
+    top = round((h - height) / 2)
 
     normalize_box({w, h}, left, top, width, height)
   end
@@ -176,6 +174,10 @@ defmodule Image.Options.Crop do
     {:error, location_error("top", top)}
   end
 
+   def normalize_box(dims, left, top, width, height) do
+     {:error, "Could not normalize box with #{inspect {dims, left, top, width, height}}"}
+   end
+
   @doc false
   def normalize_dims({w, _h} = dims, width, height) when is_positive_percent(width) do
     normalize_dims(dims, round(width * w), height)
@@ -197,6 +199,10 @@ defmodule Image.Options.Crop do
   def normalize_dims(_dims, _width, height)
       when not is_integer(height) and not is_positive_percent(height) do
     {:error, size_error("height", height)}
+  end
+
+  def normalize_dims(_dims, width, height) do
+    {:error, "Could not normalize dimensions within #{width}, #{height}"}
   end
 
   defp size_error(dim, size) when is_number(size) do

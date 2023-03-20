@@ -223,6 +223,26 @@ defmodule Image do
   """
   @type format :: {:u | :s | :f | :c | :bf, 8 | 16 | 32 | 64 | 128}
 
+  @typedoc """
+  The x location on an image which is either a
+  non_negative 0-based integer relative to the image left or
+  a negative -1-based integer relative to the image right or
+  the symbolic references `:left`, `:center` and
+  `:right`.
+
+  """
+  @type x_location :: integer() | :left | :center | :right
+
+  @typedoc """
+  The y location on an image which is either a
+  non_negative 0-based integer relative to the image top or
+  a negative -1-based integer relative to the image right or
+  the symbolic references `:top`, `:middle` and
+  `:bottom`.
+
+  """
+  @type y_location :: integer() | :top | :middle | :bottom
+
   @doc """
   Guards whether the given struct is an image type
   either `Vix.Vips.Image` or `Vix.Vips.MutableImage`.
@@ -3601,7 +3621,7 @@ defmodule Image do
   """
   @doc subject: "Crop"
 
-  @spec crop(Vimage.t(), integer(), integer(), pos_integer(), pos_integer()) ::
+  @spec crop(Vimage.t(), x_location(), y_location(), pos_integer(), pos_integer()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def crop(%Vimage{} = image, left, top, width, height)
@@ -3631,7 +3651,6 @@ defmodule Image do
   def crop(%Vimage{} = image, left, top, width, height) do
     with {left, top, width, height} <-
            Options.Crop.normalize_box(dims(image), left, top, width, height) do
-             IO.inspect( {left, top, width, height} )
       crop(image, left, top, width, height)
     end
   end
@@ -5750,8 +5769,13 @@ defmodule Image do
             type: {:u, 8}, names: [:width, :height, :bands], backend: Nx.BinaryBackend)}
 
     """
+
+    # For some reason dialyzer thinks Vix.Vips.Image.write_to_tensor/1
+    # can only return `{:error, _}`.
     @dialyzer {:nowarn_function, {:to_nx, 1}}
     @dialyzer {:nowarn_function, {:to_nx, 2}}
+
+    @default_shape :whb
 
     @doc subject: "Matrix", since: "0.5.0"
 
@@ -5759,7 +5783,7 @@ defmodule Image do
             {:ok, Nx.Tensor.t()} | {:error, error_message()}
 
     def to_nx(%Vimage{} = image, options \\ []) do
-      {to_shape, options} = Keyword.pop(options, :shape)
+      {to_shape, options} = Keyword.pop(options, :shape, @default_shape)
 
       with {:ok, tensor} <- Vix.Vips.Image.write_to_tensor(image),
            {:ok, shape, names} <- maybe_reshape_tensor(tensor, to_shape) do
@@ -5772,9 +5796,9 @@ defmodule Image do
       end
     end
 
+    # Because of the dialyzer issue for to_nx/2, dialyzer then
+    # thinks this function won't be called.
     @dialyzer {:nowarn_function, {:maybe_reshape_tensor, 2}}
-
-    defp maybe_reshape_tensor(%Vix.Tensor{shape: shape, names: names}, nil), do: {:ok, shape, names}
 
     defp maybe_reshape_tensor(%Vix.Tensor{shape: shape, names: names}, :whb),
       do: {:ok, shape, names}
@@ -5782,11 +5806,11 @@ defmodule Image do
     defp maybe_reshape_tensor(%Vix.Tensor{shape: shape, names: names}, :whc),
       do: {:ok, shape, names}
 
-    defp maybe_reshape_tensor(%Vix.Tensor{} = tensor, :hwb), do: maybe_reshape_tensor(tensor, :hwc)
+    defp maybe_reshape_tensor(%Vix.Tensor{} = tensor, :hwb),
+      do: maybe_reshape_tensor(tensor, :hwc)
 
-    defp maybe_reshape_tensor(%Vix.Tensor{shape: {width, height, bands}}, :hwc) do
-      {:ok, {height, width, bands}, [:height, :width, :channels]}
-    end
+    defp maybe_reshape_tensor(%Vix.Tensor{shape: {width, height, bands}}, :hwc),
+      do: {:ok, {height, width, bands}, [:height, :width, :channels]}
 
     defp maybe_reshape_tensor(_tensor, shape) do
       {:error,
@@ -5828,10 +5852,15 @@ defmodule Image do
         iex> {:ok, image} = Vix.Vips.Operation.black(3, 3)
         iex> Image.to_nx!(image, backend: Nx.BinaryBackend)
         Nx.tensor([[[0], [0], [0]], [[0], [0], [0]], [[0], [0], [0]]],
-          type: {:u, 8}, names: [:width, :height, :bands], backend: Nx.BinaryBackend)}
+          type: {:u, 8}, names: [:width, :height, :bands], backend: Nx.BinaryBackend)
 
     """
     @doc subject: "Matrix", since: "0.27.0"
+
+    # Because of the dialyzer issue for to_nx/2, dialyzer then
+    # thinks this function has no local return.
+    @dialyzer {:nowarn_function, {:to_nx!, 1}}
+    @dialyzer {:nowarn_function, {:to_nx!, 2}}
 
     @spec to_nx!(image :: Vimage.t(), options :: Keyword.t()) ::
             Nx.Tensor.t() | no_return()
