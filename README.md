@@ -181,6 +181,7 @@ In a future release, `:image` will be split into several packages
 * `:image_nx` which will provide `:nx` interoperability (and will depend on `:image`)
 * `:image_exif` which will provide metadata support (and will depend on `:image`)
 * `:image_classification` which will provide image classification (and will depend on `:image` and `:bumblebee`)
+* `:image_generation` which will provide image generation (and will depend on `:image` and `:bumblebee`)
 * `:image_detection` which will provide object detection (and will depend on `:image`, `:axon`, `:axon_onnx`)
 * `:image_qrcode` which will provide QRcode scanning and production (and will depend on`:image` and `:evision`)
 * `:image_video` which will provide video frame extraction (and will depend on`:image` and `:evision`)
