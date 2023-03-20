@@ -126,8 +126,8 @@ defmodule Image.Options.Embed do
 
   defp default_options do
     [
-      x: :center,
-      y: :center,
+      x: 0,
+      y: 0,
       extend_mode: :black,
       background: :black
     ]

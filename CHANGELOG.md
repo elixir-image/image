@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.27.1
+
+This is the changelog for Image version 0.27.1 released on March 20th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Behaviour Change
+
+* Changes the default position for an image embedded via `Image.embed/2` to be `[0, 0]` not `[:center, :center]`.
+
 ## Image 0.27.0
 
 This is the changelog for Image version 0.27.0 released on March 20th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
