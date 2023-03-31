@@ -3594,13 +3594,13 @@ defmodule Image do
 
   * `width` is the width of area remaining as a
     positive integer or float in the range `0.0..1.0`.
-    If `width` is an integer it is the absolute nunber
+    If `width` is an integer it is the absolute number
     of pixels. If `width` is a float it is the fraction
     of the original image width.
 
   * `height` is the width of area remaining as a
     positive integer or float in the range `0.0..1.0`.
-    If `height` is an integer it is the absolute nunber
+    If `height` is an integer it is the absolute number
     of pixels. If `height` is a float it is the fraction
     of the original image height.
 
@@ -3689,13 +3689,13 @@ defmodule Image do
 
   * `width` is the width of area remaining as a
     positive integer or float in the range `0.0..1.0`.
-    If `width` is an integer it is the absolute nunber
+    If `width` is an integer it is the absolute number
     of pixels. If `width` is a float it is the fraction
     of the original image width.
 
   * `height` is the width of area remaining as a
     positive integer or float in the range `0.0..1.0`.
-    If `height` is an integer it is the absolute nunber
+    If `height` is an integer it is the absolute number
     of pixels. If `height` is a float it is the fraction
     of the original image height.
 
@@ -3727,13 +3727,13 @@ defmodule Image do
 
   * `width` is the width of area remaining as a
     positive integer or float in the range `0.0..1.0`.
-    If `width` is an integer it is the absolute nunber
+    If `width` is an integer it is the absolute number
     of pixels. If `width` is a float it is the fraction
     of the original image width.
 
   * `height` is the width of area remaining as a
     positive integer or float in the range `0.0..1.0`.
-    If `height` is an integer it is the absolute nunber
+    If `height` is an integer it is the absolute number
     of pixels. If `height` is a float it is the fraction
     of the original image height.
 
@@ -3770,13 +3770,14 @@ defmodule Image do
 
   * `width` is the width of area remaining as a
     positive integer or float in the range `0.0..1.0`.
-    If `width` is an integer it is the absolute nunber
+    If `width` is an integer it is the absolute number
     of pixels. If `width` is a float it is the fraction
     of the original image width.
 
   * `height` is the width of area remaining as a
     positive integer or float in the range `0.0..1.0`.
-    If `height` is an integer it is the absolute nunber
+    If `height` is an integer it is the absolute number
+    
     of pixels. If `height` is a float it is the fraction
     of the original image height.
 
