@@ -6031,6 +6031,80 @@ defmodule Image do
        "The tensor must have the shape {height, width, bands} with bands between" <>
          "1 and 5. Found shape #{inspect(shape)}"}
     end
+
+    @doc """
+    Performs a perspective distortion.
+
+    ### Arguments
+
+    * `vips_image`
+
+    ### Returns
+
+    * {:ok, image}
+    """
+    def warp_perspective(%Vimage{} = image, from, to) do
+      {{dx1, dy1}, {dx2, dy2}, {dx3, dy3}, {dx4, dy4}} = from
+      {{sx1, sy1}, {sx2, sy2}, {sx3, sy3}, {sx4, sy4}} = to
+
+      src =
+        [
+          [sx1, sy1, 1, 0, 0, 0, -sx1 * dx1, -sy1 * dx1],
+          [sx2, sy2, 1, 0, 0, 0, -sx2 * dx2, -sy2 * dx2],
+          [sx3, sy3, 1, 0, 0, 0, -sx3 * dx3, -sy3 * dx3],
+          [sx4, sy4, 1, 0, 0, 0, -sx4 * dx4, -sy4 * dx4],
+          [0, 0, 0, sx1, sy1, 1, -sx1 * dy1, -sy1 * dy1],
+          [0, 0, 0, sx2, sy2, 1, -sx2 * dy2, -sy2 * dy2],
+          [0, 0, 0, sx3, sy3, 1, -sx3 * dy3, -sy3 * dy3],
+          [0, 0, 0, sx4, sy4, 1, -sx4 * dy4, -sy4 * dy4],
+        ]
+
+      dest = [dx1, dx2, dx3, dx4, dy1, dy2, dy3, dy4]
+
+      tensor = Nx.LinAlg.solve(Nx.tensor(src), Nx.tensor(dest))
+
+      map = generate_map(Image.width(image), Image.height(image), tensor)
+
+      Operation.mapim(image, map)
+    end
+
+    def warp_perspective!(image, from, to) do
+      case warp_perspective(image, from, to) do
+        {:ok, image} -> image
+        {:error, reason} -> raise Image.Error, reason
+      end
+    end
+
+    defp generate_map(width, height, tensor) do
+      use Image.Math
+
+      [t0, t1, t2, t3, t4, t5, t6, t7] = Nx.to_list(tensor)
+      index = Operation.xyz!(width, height)
+
+      x =
+        (
+          t = index * [t0, t1]
+          x_a = t[0] + t[1] + t2
+
+          t = index * [t6, t7]
+          x_b = t[0] + t[1] + 1
+
+          x_a / x_b
+        )
+
+      y =
+        (
+          t = index * [t3, t4]
+          y_a = t[0] + t[1] + t5
+
+          t = index * [t6, t7]
+          y_b = t[0] + t[1] + 1
+
+          y_a / y_b
+        )
+
+      Vix.Vips.Operation.bandjoin!([x, y])
+    end
   end
 
   @doc """
