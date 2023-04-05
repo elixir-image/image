@@ -119,5 +119,16 @@ defmodule Image.Resize.Test do
 
       assert_images_equal(resized, validate_path)
     end
+
+    test "Resize image with alpha" do
+      image_path = image_path("penguin_with_alpha.png")
+      validate_path = validate_path("resize/penguin_with_alpha.png")
+
+      {:ok, image} = Image.open(image_path)
+      {:ok, resized} = Image.resize(image, 1.5)
+
+      # Image.write!(resized, validate_path)
+      assert_images_equal(resized, validate_path)
+    end
   end
 end
