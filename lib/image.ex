@@ -151,6 +151,15 @@ defmodule Image do
   @type aspect :: :landscape | :portrait | :square
 
   @typedoc """
+  An image bounding box being a four element list
+  of 2-tuples representing the points of a rectangle
+  in the order top left -> top right -> bottom right ->
+  bottom left.
+
+  """
+  @type bounding_box :: [{x :: non_neg_integer(), y :: non_neg_integer()}, ...]
+
+  @typedoc """
   A composition is a 2-tuple defining an image
   and the options which describe how to
   compose this image on a base image.
@@ -263,6 +272,28 @@ defmodule Image do
   defguard is_box(left, top, width, height)
            when is_integer(left) and is_integer(top) and is_integer(width) and is_integer(height) and
                   width > 0 and height > 0
+
+
+  @doc """
+  Guards whether a parameter is a bounding box. A
+  bounding box is a list of four 2-tuples that must
+  represent a rectangle (not an arbitrary quadrangle)
+
+  The order of points is top_left -> top right -> bottom
+  right -> bottm left.
+
+  """
+  @doc subject: "Guard"
+  defguard is_bounding_box(top_left, top_right, bottom_right, bottom_left) when
+    is_tuple(top_left) and
+    is_tuple(top_right) and
+    is_tuple(bottom_right) and
+    is_tuple(bottom_left) and
+    elem(top_left, 0) == elem(bottom_left, 0) and
+    elem(top_right, 0) == elem(bottom_right, 0) and
+    elem(top_left, 1) == elem(top_right, 1) and
+    elem(bottom_right, 1) == elem(bottom_left, 1)
+
 
   @doc """
   Guards whether a number can be reasonably interpreted
@@ -3671,6 +3702,85 @@ defmodule Image do
 
   defp dims(%Vimage{} = image) do
     {width(image), height(image)}
+  end
+
+  @doc """
+  Crop an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `bounding_box` is a list of four 2-tuples
+    representing the points of the bounding rectangle. The
+    points must be ordered as `[top_left, top_right, bottom_right, bottom_left]`
+    Each point is of the form `{x, y}` where `x` is the
+    0-based offset from the left of the image and `y` is
+    the 0-based offset from the top of the image.
+
+  ### Returns
+
+  * `{:ok, cropped_image}` or
+
+  * `{:error, reason}`
+
+  ### Note
+
+  The bounding box must be a rectangle, not an
+  arbitrary quadrilateral. If required, use `Image.warp_perspective/4`
+  prior to cropping.
+
+  """
+  @doc subject: "Crop", since: "0.28.0"
+
+  @spec crop(Vimage.t(), bounding_box()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def crop(%Vimage{} = image, [top_left, top_right, bottom_right, bottom_left] = bounding_box)
+      when is_bounding_box(top_left, top_right, bottom_right, bottom_left) do
+    [{left, top}, _, {bottom_right_x, bottom_right_y}, _] = bounding_box
+    width = bottom_right_x - left + 1
+    height = bottom_right_y - top + 1
+    crop(image, left, top, width, height)
+  end
+
+  def crop(%Vimage{} = _image, bounding_box) do
+    {:error, "Invalid crop bounding box. Found #{inspect bounding_box}"}
+  end
+
+  @doc """
+  Crop an image or raises an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `bounding_box` is a list of four 2-tuples
+    representing the points of the bounding rectangle. The
+    points must be ordered as `[top_left, top_right, bottom_right, bottom_left]`
+    Each point is of the form `{x, y}` where `x` is the
+    0-based offset from the left of the image and `y` is
+    the 0-based offset from the top of the image.
+
+  ### Returns
+
+  * `cropped_image` or
+
+  * raises an exception.
+
+  ### Note
+
+  The bounding box must be a rectangle, not an
+  arbitrary quadrilateral. If required, use `Image.warp_perspective/4`
+  prior to cropping.
+
+  """
+  @doc subject: "Crop", since: "0.28.0"
+
+  @spec crop!(Vimage.t(), bounding_box()) :: Vimage.t() | no_return()
+  def crop!(%Vimage{} = image, bounding_box) do
+    case crop(image, bounding_box) do
+      {:ok, cropped} -> cropped
+      {:error, reason} -> raise Image.Error, reason
+    end
   end
 
   @doc """

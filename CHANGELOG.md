@@ -1,5 +1,19 @@
 # Changelog
 
+## Image 0.28.0
+
+This is the changelog for Image version 0.28.0 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Fixes resizing images with alpha bands. Resizing images with alpha bands requires premultiplying the alpha band into the image and reversing that after resizing.
+
+### Enhancements
+
+* Adds `Image.warp_perspective/4` to apply a warp transformation to an image. Thanks very much to @sodapopcan for the PR.
+
+* Adds `Image.crop/2` which is a variation of `Image.crop/5` that takes the same format of bounding box as that applied to `Image.warp_perspective/4` making it easy to apply a warp transform and then crop to the transformed area. Note that cropping requires that the bounding box be a rectangle, not an arbitrary quadrilateral.
+
 ## Image 0.27.1
 
 This is the changelog for Image version 0.27.1 released on March 20th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
