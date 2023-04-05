@@ -6145,6 +6145,12 @@ defmodule Image do
       * `:background` means the generated pixels are the background
         color setin `options`.
 
+    ### Notes
+
+    * The image is flattened before warping and therefore any
+      alpha band will be multiplied into to the image data and
+      removed.
+
     ### Returns
 
     * `{:ok, image}` or
@@ -6163,7 +6169,8 @@ defmodule Image do
 
     def warp_perspective(%Vimage{} = image, source, destination, options) do
       with {:ok, options} <- Options.WarpPerspective.validate_options(image, options),
-           {:ok, transform_map} <- transform_map(image, source, destination) do
+           {:ok, flattened} <- flatten(image),
+           {:ok, transform_map} <- transform_map(flattened, source, destination) do
         Operation.mapim(image, transform_map, options)
       end
     end
