@@ -29,6 +29,19 @@ defmodule Image.Perspective.Test do
     assert_images_equal(result, validate_path)
   end
 
+  test "warps an image to a rectangular perspective" do
+    image_path = image_path("warp_perspective.jpg")
+    validate_path = validate_path("warp_perspective_straighten.png")
+
+    {:ok, image} = Image.open(image_path)
+    {:ok, result} = Image.warp_perspective(image, @warp_from, :straighten)
+
+    # Image.write! result, validate_path
+    {:ok, result} = Vix.Vips.Image.write_to_buffer(result, ".png")
+
+    assert_images_equal(result, validate_path)
+  end
+
   test "post-crop of a warped image" do
     image_path = image_path("warp_perspective.jpg")
     validate_path = validate_path("warp_perspective_cropped.png")

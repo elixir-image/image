@@ -274,16 +274,16 @@ defmodule Image do
                   width > 0 and height > 0
 
   @doc """
-  Guards whether a parameter is a bounding box. A
-  bounding box is a list of four 2-tuples that must
-  represent a rectangle (not an arbitrary quadrangle)
+  Guards whether a parameter is a rectangular bounding box. A
+  rectangular bounding box is a list of four 2-tuples that must
+  represent a rectangle (not an arbitrary quadrilateral),
 
   The order of points is top_left -> top right -> bottom
   right -> bottm left.
 
   """
   @doc subject: "Guard"
-  defguard is_bounding_box(top_left, top_right, bottom_right, bottom_left)
+  defguard is_rectangle(top_left, top_right, bottom_right, bottom_left)
            when is_tuple(top_left) and
                   is_tuple(top_right) and
                   is_tuple(bottom_right) and
@@ -3734,7 +3734,7 @@ defmodule Image do
 
   @spec crop(Vimage.t(), bounding_box()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def crop(%Vimage{} = image, [top_left, top_right, bottom_right, bottom_left] = bounding_box)
-      when is_bounding_box(top_left, top_right, bottom_right, bottom_left) do
+      when is_rectangle(top_left, top_right, bottom_right, bottom_left) do
     [{left, top}, _, {bottom_right_x, bottom_right_y}, _] = bounding_box
     width = bottom_right_x - left + 1
     height = bottom_right_y - top + 1
@@ -6172,7 +6172,9 @@ defmodule Image do
 
     * `to` is a list of four 2-tuples representing the
       four corners of the destination image into which the
-      subject-of-interest is transformed.
+      subject-of-interest is transformed. `to` may also be
+      `:straighten` in which case a rectangular transform is
+      applied.
 
     ### Options
 
@@ -6208,18 +6210,83 @@ defmodule Image do
 
     * `{:error, reason}`
 
-    ### Example
-
     """
-    def warp_perspective(%Vimage{} = image, from, to, options \\ []) do
+    def warp_perspective(image, from, to, options \\ [])
+
+    def warp_perspective(%Vimage{} = image, from, :straighten, options) do
+      with [{dx1, dy1}, {dx2, _dy2}, {_dx3, _dy3}, {_dx4, dy4}] <- from do
+        to = [{dx1, dy1}, {dx2, dy1}, {dx2, dy4}, {dx1, dy4}]
+        warp_perspective(image, from, to, options)
+      end
+    end
+
+    def warp_perspective(%Vimage{} = image, from, to, options) do
       with {:ok, options} <- Options.WarpPerspective.validate_options(image, options),
            {:ok, transform_map} <- transform_map(image, from, to) do
         Operation.mapim(image, transform_map, options)
       end
     end
 
-    def warp_perspective!(image, from, to) do
-      case warp_perspective(image, from, to) do
+    @doc """
+    Performs a warp perspective transformation on an
+    image or raises an exception.
+
+    Perspective transforms are often used to straighten
+    an image so that a subject of interest appears to be
+    in the same plane as the viewer.
+
+    ### Arguments
+
+    * `image` is any `t:Vimage.t/0`
+
+    * `from` is a list of four 2-tuples representing the
+      four corners of the subject-of-interest in `image`.
+
+    * `to` is a list of four 2-tuples representing the
+      four corners of the destination image into which the
+      subject-of-interest is transformed. `to` may also be
+      `:straighten` in which case a rectangular transform is
+      applied.
+
+    ### Options
+
+    * `:background` defines the color of any generated background
+      pixels. This can be specified as a single integer which will
+      be applied to all bands, or a list of integers representing
+      the color for each band. The color can also be supplied as a
+      CSS color name as a string or atom. For example: `:misty_rose`.
+      It can also be supplied as a hex string of
+      the form `#rrggbb`. The default is `:black`. `:background` can
+      also be set to `:average` in which case the background will be
+      the average color of the base image. See also `Image.Color.color_map/0`
+      and `Image.Color.rgb_color/1`.
+
+    * `:extend_mode` determines how any additional pixels
+      are generated. The values are:
+
+      * `:black` (the default) meaning the generated pixels are
+        black.
+      * `:white` meaning the generated pixels are white.
+      * `:copy` means the generated pixels take the value of the
+        nearest edge pixel of the base image.
+      * `:repeat` means the generated pixels are tiles from the
+        base image.
+      * `:mirror` means the generated pixels are a reflected tiles of
+        the base image.
+      * `:background` means the generated pixels are the background
+        color setin `options`.
+
+    ### Returns
+
+    * `warped_image` or
+
+    * raises an exception,
+
+    ### Example
+
+    """
+    def warp_perspective!(image, from, to, options \\ []) do
+      case warp_perspective(image, from, to, options) do
         {:ok, image} -> image
         {:error, reason} -> raise Image.Error, reason
       end
@@ -6228,7 +6295,7 @@ defmodule Image do
     defp transform_map(image, from, to) do
       with [{dx1, dy1}, {dx2, dy2}, {dx3, dy3}, {dx4, dy4}] <- from,
            [{sx1, sy1}, {sx2, sy2}, {sx3, sy3}, {sx4, sy4}] <- to do
-        src = [
+        src = Nx.tensor([
           [sx1, sy1, 1, 0, 0, 0, -sx1 * dx1, -sy1 * dx1],
           [sx2, sy2, 1, 0, 0, 0, -sx2 * dx2, -sy2 * dx2],
           [sx3, sy3, 1, 0, 0, 0, -sx3 * dx3, -sy3 * dx3],
@@ -6237,11 +6304,11 @@ defmodule Image do
           [0, 0, 0, sx2, sy2, 1, -sx2 * dy2, -sy2 * dy2],
           [0, 0, 0, sx3, sy3, 1, -sx3 * dy3, -sy3 * dy3],
           [0, 0, 0, sx4, sy4, 1, -sx4 * dy4, -sy4 * dy4]
-        ]
+          ])
 
-        dest = [dx1, dx2, dx3, dx4, dy1, dy2, dy3, dy4]
+        dest = Nx.tensor([dx1, dx2, dx3, dx4, dy1, dy2, dy3, dy4])
 
-        tensor = Nx.LinAlg.solve(Nx.tensor(src), Nx.tensor(dest))
+        tensor = Nx.LinAlg.solve(src, dest)
         {:ok, generate_map(Image.width(image), Image.height(image), tensor)}
       else
         _error ->
