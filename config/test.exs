@@ -14,6 +14,6 @@ config :ex_aws, :s3,
 
 config :nx,
   default_backend: EXLA.Backend
-  
+
 config :logger,
   level: :warning
