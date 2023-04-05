@@ -22,7 +22,7 @@ defmodule Image.Draw do
            when is_integer(cx) and is_integer(cy) and cx >= 0 and cy >= 0 and is_integer(radius) and
                   radius > 0
 
-  @doc "Validate a point localtion on an image"
+  @doc "Validate a point location on an image"
   defguard is_point(left, top) when is_integer(left) and is_integer(top) and left >= 0 and top >= 0
 
   @doc """
