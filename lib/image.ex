@@ -6108,12 +6108,12 @@ defmodule Image do
 
     * `image` is any `t:Vimage.t/0`
 
-    * `from` is a list of four 2-tuples representing the
+    * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
 
-    * `to` is a list of four 2-tuples representing the
+    * `destination` is a list of four 2-tuples representing the
       four corners of the destination image into which the
-      subject-of-interest is transformed. `to` may also be
+      subject-of-interest is transformed. `destination` may also be
       `:straighten` in which case a rectangular transform is
       applied.
 
@@ -6154,16 +6154,16 @@ defmodule Image do
     """
     def warp_perspective(image, from, to, options \\ [])
 
-    def warp_perspective(%Vimage{} = image, from, :straighten, options) do
-      with [{dx1, dy1}, {dx2, _dy2}, {_dx3, _dy3}, {_dx4, dy4}] <- from do
-        to = [{dx1, dy1}, {dx2, dy1}, {dx2, dy4}, {dx1, dy4}]
-        warp_perspective(image, from, to, options)
+    def warp_perspective(%Vimage{} = image, source, :straighten, options) do
+      with [{sx1, sy1}, {sx2, _sy2}, {_sx3, _sy3}, {_sx4, sy4}] <- source do
+        destination = [{sx1, sy1}, {sx2, sy1}, {sx2, sy4}, {sx1, sy4}]
+        warp_perspective(image, source, destination, options)
       end
     end
 
-    def warp_perspective(%Vimage{} = image, from, to, options) do
+    def warp_perspective(%Vimage{} = image, source, destination, options) do
       with {:ok, options} <- Options.WarpPerspective.validate_options(image, options),
-           {:ok, transform_map} <- transform_map(image, from, to) do
+           {:ok, transform_map} <- transform_map(image, source, destination) do
         Operation.mapim(image, transform_map, options)
       end
     end
@@ -6180,12 +6180,12 @@ defmodule Image do
 
     * `image` is any `t:Vimage.t/0`
 
-    * `from` is a list of four 2-tuples representing the
+    * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
 
-    * `to` is a list of four 2-tuples representing the
+    * `destination` is a list of four 2-tuples representing the
       four corners of the destination image into which the
-      subject-of-interest is transformed. `to` may also be
+      subject-of-interest is transformed. `destination` may also be
       `:straighten` in which case a rectangular transform is
       applied.
 
@@ -6233,24 +6233,24 @@ defmodule Image do
       end
     end
 
-    defp transform_map(image, from, to) do
-      with [{dx1, dy1}, {dx2, dy2}, {dx3, dy3}, {dx4, dy4}] <- from,
-           [{sx1, sy1}, {sx2, sy2}, {sx3, sy3}, {sx4, sy4}] <- to do
-        src = Nx.tensor([
-          [sx1, sy1, 1, 0, 0, 0, -sx1 * dx1, -sy1 * dx1],
-          [sx2, sy2, 1, 0, 0, 0, -sx2 * dx2, -sy2 * dx2],
-          [sx3, sy3, 1, 0, 0, 0, -sx3 * dx3, -sy3 * dx3],
-          [sx4, sy4, 1, 0, 0, 0, -sx4 * dx4, -sy4 * dx4],
-          [0, 0, 0, sx1, sy1, 1, -sx1 * dy1, -sy1 * dy1],
-          [0, 0, 0, sx2, sy2, 1, -sx2 * dy2, -sy2 * dy2],
-          [0, 0, 0, sx3, sy3, 1, -sx3 * dy3, -sy3 * dy3],
-          [0, 0, 0, sx4, sy4, 1, -sx4 * dy4, -sy4 * dy4]
+    defp transform_map(image, source, destination) do
+      with [{sx1, sy1}, {sx2, sy2}, {sx3, sy3}, {sx4, sy4}] <- source,
+           [{dx1, dy1}, {dx2, dy2}, {dx3, dy3}, {dx4, dy4}] <- destination do
+        source = Nx.tensor([
+          [dx1, dy1, 1, 0, 0, 0, -dx1 * sx1, -dy1 * sx1],
+          [dx2, dy2, 1, 0, 0, 0, -dx2 * sx2, -dy2 * sx2],
+          [dx3, dy3, 1, 0, 0, 0, -dx3 * sx3, -dy3 * sx3],
+          [dx4, dy4, 1, 0, 0, 0, -dx4 * sx4, -dy4 * sx4],
+          [0, 0, 0, dx1, dy1, 1, -dx1 * sy1, -dy1 * sy1],
+          [0, 0, 0, dx2, dy2, 1, -dx2 * sy2, -dy2 * sy2],
+          [0, 0, 0, dx3, dy3, 1, -dx3 * sy3, -dy3 * sy3],
+          [0, 0, 0, dx4, dy4, 1, -dx4 * sy4, -dy4 * sy4]
           ])
 
-        dest = Nx.tensor([dx1, dx2, dx3, dx4, dy1, dy2, dy3, dy4])
+        destination = Nx.tensor([sx1, sx2, sx3, sx4, sy1, sy2, sy3, sy4])
 
-        tensor = Nx.LinAlg.solve(src, dest)
-        {:ok, generate_map(Image.width(image), Image.height(image), tensor)}
+        transform_matrix = Nx.LinAlg.solve(source, destination)
+        {:ok, generate_map(Image.width(image), Image.height(image), transform_matrix)}
       else
         _error ->
           {:error, "Could not destructure `from` or `to`"}
