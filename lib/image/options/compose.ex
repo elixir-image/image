@@ -8,6 +8,65 @@ defmodule Image.Options.Compose do
   # or numeric and can even by a function this becomes more
   # complex that it might initially seem
 
+  @typedoc """
+  When composing an image on a base image, these
+  options drive how the composition proceeds.
+
+  * `:x` describes the absolute `x` offset on the
+    base image where this image will be placed. If
+    this option is set to `:left`, `:center` or
+    `:right` then the `x` position will be calculated
+    relative to the base image. If `:x` is nil
+    (the default) then the image will be placed according
+    to the relative offset of the previously composed
+    image using `:dx`.
+
+  * `:y` describes the absolute `y` offset on the
+    base image where this image will be placed. If
+    this option is set to `:top`, `:middle` or
+    `:bottom` then the `y` position will be calculated
+    relative to the base image. If `:y` is nil
+    (the default) then the image will be placed according
+    to the relative offset of the previously composed
+    image using `:dy`.
+
+  * `:dx` describes the relative offset used to calculate
+    the `x` value. `:dx` is an integer offset from the
+    edge of the previously composed image. Which edge is
+    determined by the `:x_baseline` option. If `:x` is also
+    specified then `:x` is first calculated, then `:dx` is
+    added to it. In this case, `:x_baseline` is ignored.
+
+  * `:dy` describes the relative offset used to calculate
+    the `y` value. `:dy` is an integer offset from the
+    edge of the previously composed image. Which edge is
+    determined by the `:y_baseline` option. If `:y` is also
+    specified then `:y` is first calculated, then `:dy` is
+    added to it. In this case, `:x_baseline` is ignored.
+
+  * `:blend_mode` is the `t:Image.BlendMode.t/0` used when
+    composing this image over its base image. The default
+    is `:over` which is appropriate for most use cases.
+
+  * `:x_baseline` establishes the baseline on the
+    previously composed image from which `:dx` is
+    calculated. The default is `:right`.
+
+  * `:y_baseline` establishes the baseline on the
+    previously composed image from which `:dy` is
+    calculated. The default is `:bottom`.
+
+  """
+  @type composition_options :: [
+          {:x, non_neg_integer() | nil | :left | :center | :right},
+          {:y, non_neg_integer() | nil | :top | :middle | :bottom},
+          {:dx, integer()},
+          {:dy, integer()},
+          {:blend_mode, Image.BlendMode.t()},
+          {:x_baseline, nil | :left | :center | :right},
+          {:y_baseline, nil | :top | :middle | :bottom}
+        ]
+
   @doc false
   def get_x(image, prev_x, prev_width, x, dx, baseline) when is_function(x, 6) do
     x = x.(image, prev_x, prev_width, x, dx, baseline)
