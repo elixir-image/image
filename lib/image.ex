@@ -3104,7 +3104,21 @@ defmodule Image do
 
   def resize(%Vimage{} = image, scale, options \\ []) when scale >= 0 do
     with {:ok, options} <- Resize.validate_options(options) do
-      Operation.resize(image, scale, options)
+      do_resize(image, scale, options, has_alpha?(image))
+    end
+  end
+
+  defp do_resize(image, scale, options, false = _has_alpha?) do
+    Operation.resize(image, scale, options)
+  end
+
+  defp do_resize(image, scale, options, true = _has_alpha?) do
+    band_format = Vix.Vips.Image.format(image)
+    premultiplied = Operation.premultiply!(image)
+    with {:ok, resized} <- Operation.resize(premultiplied, scale, options) do
+      resized
+      |> Operation.unpremultiply!()
+      |> Operation.cast(band_format)
     end
   end
 
