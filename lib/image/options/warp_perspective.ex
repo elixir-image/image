@@ -6,10 +6,16 @@ defmodule Image.Options.WarpPerspective do
   alias Image.Color
 
   @typedoc """
+  Options for Image.warp_perspective/4.
+
+  """
+  @type t :: [warp_perspective_option()]
+
+  @typedoc """
   Options applicable to `Image.embed/4`.
 
   """
-  @type warp_perspective_options :: [
+  @type warp_perspective_option :: [
           {:background, Color.t() | :average}
           | {:extend_node, extend_mode()}
         ]
@@ -40,7 +46,7 @@ defmodule Image.Options.WarpPerspective do
         {:error, value}
 
       options ->
-        {:ok, Map.new(options)}
+        {:ok, options}
     end
   end
 
