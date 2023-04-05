@@ -12,6 +12,8 @@ This is the changelog for Image version 0.28.0 released on ______, 2023.  For ol
 
 * Adds `Image.warp_perspective/4` to apply a warp transformation to an image. Thanks very much to @sodapopcan for the PR.
 
+* Adds `Image.straighten_perspective/3` to apply a warp perspective that straighens the image. It is basically `Image.warp_perspective/4` with algorithmically derived `destination` parameter.
+
 * Adds `Image.crop/2` which is a variation of `Image.crop/5` that takes the same format of bounding box as that applied to `Image.warp_perspective/4` making it easy to apply a warp transform and then crop to the transformed area. Note that cropping requires that the bounding box be a rectangle, not an arbitrary quadrilateral.
 
 ## Image 0.27.1
