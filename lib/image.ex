@@ -157,7 +157,7 @@ defmodule Image do
   bottom left.
 
   """
-  @type bounding_box :: [{x :: non_neg_integer(), y :: non_neg_integer()}, ...]
+  @type quadrilateral :: [{x :: non_neg_integer(), y :: non_neg_integer()}, ...]
 
   @typedoc """
   A composition is a 2-tuple defining an image
@@ -3651,7 +3651,7 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `bounding_box` is a list of four 2-tuples
+  * `quadrilateral` is a list of four 2-tuples
     representing the points of the bounding rectangle. The
     points must be ordered as `[top_left, top_right, bottom_right, bottom_left]`
     Each point is of the form `{x, y}` where `x` is the
@@ -3673,17 +3673,17 @@ defmodule Image do
   """
   @doc subject: "Crop", since: "0.28.0"
 
-  @spec crop(Vimage.t(), bounding_box()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def crop(%Vimage{} = image, [top_left, top_right, bottom_right, bottom_left] = bounding_box)
+  @spec crop(Vimage.t(), quadrilateral()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def crop(%Vimage{} = image, [top_left, top_right, bottom_right, bottom_left] = quadrilateral)
       when is_rectangle(top_left, top_right, bottom_right, bottom_left) do
-    [{left, top}, _, {bottom_right_x, bottom_right_y}, _] = bounding_box
+    [{left, top}, _, {bottom_right_x, bottom_right_y}, _] = quadrilateral
     width = bottom_right_x - left + 1
     height = bottom_right_y - top + 1
     crop(image, left, top, width, height)
   end
 
-  def crop(%Vimage{} = _image, bounding_box) do
-    {:error, "Invalid crop bounding box. Found #{inspect(bounding_box)}"}
+  def crop(%Vimage{} = _image, quadrilateral) do
+    {:error, "Invalid crop bounding box. Found #{inspect(quadrilateral)}"}
   end
 
   @doc """
@@ -3693,7 +3693,7 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `bounding_box` is a list of four 2-tuples
+  * `quadrilateral` is a list of four 2-tuples
     representing the points of the bounding rectangle. The
     points must be ordered as `[top_left, top_right, bottom_right, bottom_left]`
     Each point is of the form `{x, y}` where `x` is the
@@ -3715,9 +3715,9 @@ defmodule Image do
   """
   @doc subject: "Crop", since: "0.28.0"
 
-  @spec crop!(Vimage.t(), bounding_box()) :: Vimage.t() | no_return()
-  def crop!(%Vimage{} = image, bounding_box) do
-    case crop(image, bounding_box) do
+  @spec crop!(Vimage.t(), quadrilateral()) :: Vimage.t() | no_return()
+  def crop!(%Vimage{} = image, quadrilateral) do
+    case crop(image, quadrilateral) do
       {:ok, cropped} -> cropped
       {:error, reason} -> raise Image.Error, reason
     end
@@ -6161,7 +6161,7 @@ defmodule Image do
     """
     @doc subject: "Operation", since: "0.28.0"
 
-    @spec warp_perspective(Vimage.t(), source :: bounding_box(), destination :: bounding_box(), Options.WarpPerspective.t()) ::
+    @spec warp_perspective(Vimage.t(), source :: quadrilateral(), destination :: quadrilateral(), Options.WarpPerspective.t()) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
     def warp_perspective(%Vimage{} = image, source, destination, options \\ []) do
@@ -6356,8 +6356,8 @@ defmodule Image do
     """
     @doc subject: "Operation", since: "0.28.0"
 
-    @spec straighten_perspective(Vimage.t(), source :: bounding_box(), Options.WarpPerspective.t()) ::
-      {:ok, bounding_box(), Vimage.t()} | {:error, error_message()}
+    @spec straighten_perspective(Vimage.t(), source :: quadrilateral(), Options.WarpPerspective.t()) ::
+      {:ok, quadrilateral(), Vimage.t()} | {:error, error_message()}
 
     def straighten_perspective(%Vimage{} = image, source, options \\ []) do
       with [{sx1, sy1}, {sx2, _sy2}, {_sx3, _sy3}, {_sx4, sy4}] <- source do
@@ -6433,7 +6433,7 @@ defmodule Image do
     """
     @doc subject: "Operation", since: "0.28.0"
 
-    @spec straighten_perspective!(Vimage.t(), source :: bounding_box(), Options.WarpPerspective.t()) ::
+    @spec straighten_perspective!(Vimage.t(), source :: quadrilateral(), Options.WarpPerspective.t()) ::
       Vimage.t() | no_return()
 
     def straighten_perspective!(%Vimage{} = image, source, options \\ []) do
