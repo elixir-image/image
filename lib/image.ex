@@ -6113,9 +6113,10 @@ defmodule Image do
 
     * `destination` is a list of four 2-tuples representing the
       four corners of the destination image into which the
-      subject-of-interest is transformed. `destination` may also be
-      `:straighten` in which case a rectangular transform is
-      applied.
+      subject-of-interest is transformed.
+
+    * `options` is a keyword list of options. The default
+      is `[]`.
 
     ### Options
 
@@ -6153,21 +6154,17 @@ defmodule Image do
 
     ### Returns
 
-    * `{:ok, image}` or
+    * `{:ok, warped_image}` or
 
     * `{:error, reason}`
 
     """
-    def warp_perspective(image, from, to, options \\ [])
+    @doc subject: "Operation", since: "0.28.0"
 
-    def warp_perspective(%Vimage{} = image, source, :straighten, options) do
-      with [{sx1, sy1}, {sx2, _sy2}, {_sx3, _sy3}, {_sx4, sy4}] <- source do
-        destination = [{sx1, sy1}, {sx2, sy1}, {sx2, sy4}, {sx1, sy4}]
-        warp_perspective(image, source, destination, options)
-      end
-    end
+    @spec warp_perspective(Vimage.t(), source :: bounding_box(), destination :: bounding_box(), Options.WarpPerspective.t()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
 
-    def warp_perspective(%Vimage{} = image, source, destination, options) do
+    def warp_perspective(%Vimage{} = image, source, destination, options \\ []) do
       with {:ok, options} <- Options.WarpPerspective.validate_options(image, options),
            {:ok, flattened} <- flatten(image),
            {:ok, transform_map} <- transform_map(flattened, source, destination) do
@@ -6192,9 +6189,10 @@ defmodule Image do
 
     * `destination` is a list of four 2-tuples representing the
       four corners of the destination image into which the
-      subject-of-interest is transformed. `destination` may also be
-      `:straighten` in which case a rectangular transform is
-      applied.
+      subject-of-interest is transformed.
+
+    * `options` is a keyword list of options. The default
+      is `[]`.
 
     ### Options
 
@@ -6293,6 +6291,159 @@ defmodule Image do
         )
 
       Vix.Vips.Operation.bandjoin!([x, y])
+    end
+
+    @doc """
+    Performs a warp perspective transformation on an
+    image to straighten its perspective.
+
+    ### Arguments
+
+    * `image` is any `t:Vimage.t/0`
+
+    * `source` is a list of four 2-tuples representing the
+      four corners of the subject-of-interest in `image`.
+
+    * `options` is a keyword list of options. The default
+      is `[]`.
+
+    ### Options
+
+    * `:background` defines the color of any generated background
+      pixels. This can be specified as a single integer which will
+      be applied to all bands, or a list of integers representing
+      the color for each band. The color can also be supplied as a
+      CSS color name as a string or atom. For example: `:misty_rose`.
+      It can also be supplied as a hex string of
+      the form `#rrggbb`. The default is `:black`. `:background` can
+      also be set to `:average` in which case the background will be
+      the average color of the base image. See also `Image.Color.color_map/0`
+      and `Image.Color.rgb_color/1`.
+
+    * `:extend_mode` determines how any additional pixels
+      are generated. The values are:
+
+      * `:black` (the default) meaning the generated pixels are
+        black.
+      * `:white` meaning the generated pixels are white.
+      * `:copy` means the generated pixels take the value of the
+        nearest edge pixel of the base image.
+      * `:repeat` means the generated pixels are tiles from the
+        base image.
+      * `:mirror` means the generated pixels are a reflected tiles of
+        the base image.
+      * `:background` means the generated pixels are the background
+        color setin `options`.
+
+    ### Returns
+
+    * `{:ok, destination, straightened_image}` or
+
+    * `{:error, reason}`
+
+    ### Notes
+
+    * The image is flattened before warping and therefore any
+      alpha band will be multiplied into to the image data and
+      removed.
+
+    * The returned `destination` is a four element list of
+      2-tuples representing the four points to which the `source`
+      points were transformed. `destination` can be passed as
+      a parameter to `Image.crop/2` to crop the transformed image
+      to the subject-of-interest that was warped.
+
+    """
+    @doc subject: "Operation", since: "0.28.0"
+
+    @spec straighten_perspective(Vimage.t(), source :: bounding_box(), Options.WarpPerspective.t()) ::
+      {:ok, bounding_box(), Vimage.t()} | {:error, error_message()}
+
+    def straighten_perspective(%Vimage{} = image, source, options \\ []) do
+      with [{sx1, sy1}, {sx2, _sy2}, {_sx3, _sy3}, {_sx4, sy4}] <- source do
+        destination = [{sx1, sy1}, {sx2, sy1}, {sx2, sy4}, {sx1, sy4}]
+        case warp_perspective(image, source, destination, options) do
+          {:ok, warped} -> {:ok, destination, warped}
+          other -> other
+        end
+      end
+    end
+
+    @doc """
+    Performs a warp perspective transformation on an
+    image to straighten its perspective or raises an
+    exception.
+
+    ### Arguments
+
+    * `image` is any `t:Vimage.t/0`
+
+    * `source` is a list of four 2-tuples representing the
+      four corners of the subject-of-interest in `image`.
+
+    * `options` is a keyword list of options. The default
+      is `[]`.
+
+    ### Options
+
+    * `:background` defines the color of any generated background
+      pixels. This can be specified as a single integer which will
+      be applied to all bands, or a list of integers representing
+      the color for each band. The color can also be supplied as a
+      CSS color name as a string or atom. For example: `:misty_rose`.
+      It can also be supplied as a hex string of
+      the form `#rrggbb`. The default is `:black`. `:background` can
+      also be set to `:average` in which case the background will be
+      the average color of the base image. See also `Image.Color.color_map/0`
+      and `Image.Color.rgb_color/1`.
+
+    * `:extend_mode` determines how any additional pixels
+      are generated. The values are:
+
+      * `:black` (the default) meaning the generated pixels are
+        black.
+      * `:white` meaning the generated pixels are white.
+      * `:copy` means the generated pixels take the value of the
+        nearest edge pixel of the base image.
+      * `:repeat` means the generated pixels are tiles from the
+        base image.
+      * `:mirror` means the generated pixels are a reflected tiles of
+        the base image.
+      * `:background` means the generated pixels are the background
+        color setin `options`.
+
+    ### Returns
+
+    * `straightened_image` or
+
+    * `{:error, reason}`
+
+    ### Notes
+
+    * The image is flattened before warping and therefore any
+      alpha band will be multiplied into to the image data and
+      removed.
+
+    * The returned `destination` is a four element list of
+      2-tuples representing the four points to which the `source`
+      points were transformed. `destination` can be passed as
+      a parameter to `Image.crop/2` to crop the transformed image
+      to the subject-of-interest that was warped.
+
+    """
+    @doc subject: "Operation", since: "0.28.0"
+
+    @spec straighten_perspective!(Vimage.t(), source :: bounding_box(), Options.WarpPerspective.t()) ::
+      Vimage.t() | no_return()
+
+    def straighten_perspective!(%Vimage{} = image, source, options \\ []) do
+      with [{sx1, sy1}, {sx2, _sy2}, {_sx3, _sy3}, {_sx4, sy4}] <- source do
+        destination = [{sx1, sy1}, {sx2, sy1}, {sx2, sy4}, {sx1, sy4}]
+        case warp_perspective(image, source, destination, options) do
+          {:ok, warped} -> warped
+          {:error, reason} -> raise Image.Error, reason
+        end
+      end
     end
   end
 

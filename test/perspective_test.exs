@@ -34,11 +34,12 @@ defmodule Image.Perspective.Test do
     validate_path = validate_path("warp_perspective_straighten.png")
 
     {:ok, image} = Image.open(image_path)
-    {:ok, result} = Image.warp_perspective(image, @warp_from, :straighten)
+    {:ok, destination, result} = Image.straighten_perspective(image, @warp_from)
 
     # Image.write! result, validate_path
     {:ok, result} = Vix.Vips.Image.write_to_buffer(result, ".png")
 
+    assert [{139, 125}, {826, 125}, {826, 483}, {139, 483}] = destination
     assert_images_equal(result, validate_path)
   end
 
