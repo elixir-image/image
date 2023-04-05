@@ -174,9 +174,9 @@ defmodule Image.Options.Crop do
     {:error, location_error("top", top)}
   end
 
-   def normalize_box(dims, left, top, width, height) do
-     {:error, "Could not normalize box with #{inspect {dims, left, top, width, height}}"}
-   end
+  def normalize_box(dims, left, top, width, height) do
+    {:error, "Could not normalize box with #{inspect({dims, left, top, width, height})}"}
+  end
 
   @doc false
   def normalize_dims({w, _h} = dims, width, height) when is_positive_percent(width) do

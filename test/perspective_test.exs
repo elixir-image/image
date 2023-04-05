@@ -3,18 +3,18 @@ defmodule Image.Perspective.Test do
   import Image.TestSupport
 
   @warp_from [
-         {139, 125},
-         {826, 74},
-         {796, 559},
-         {155, 483}
-       ]
+    {139, 125},
+    {826, 74},
+    {796, 559},
+    {155, 483}
+  ]
 
   @warp_to [
-          {139, 125},
-          {815, 125},
-          {815, 528},
-          {139, 528}
-        ]
+    {139, 125},
+    {815, 125},
+    {815, 528},
+    {139, 528}
+  ]
 
   test "warps an image to perspective" do
     image_path = image_path("warp_perspective.jpg")

@@ -92,5 +92,4 @@ defmodule Image.Options.WarpPerspective do
       background: :black
     ]
   end
-
 end

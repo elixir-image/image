@@ -273,7 +273,6 @@ defmodule Image do
            when is_integer(left) and is_integer(top) and is_integer(width) and is_integer(height) and
                   width > 0 and height > 0
 
-
   @doc """
   Guards whether a parameter is a bounding box. A
   bounding box is a list of four 2-tuples that must
@@ -284,16 +283,15 @@ defmodule Image do
 
   """
   @doc subject: "Guard"
-  defguard is_bounding_box(top_left, top_right, bottom_right, bottom_left) when
-    is_tuple(top_left) and
-    is_tuple(top_right) and
-    is_tuple(bottom_right) and
-    is_tuple(bottom_left) and
-    elem(top_left, 0) == elem(bottom_left, 0) and
-    elem(top_right, 0) == elem(bottom_right, 0) and
-    elem(top_left, 1) == elem(top_right, 1) and
-    elem(bottom_right, 1) == elem(bottom_left, 1)
-
+  defguard is_bounding_box(top_left, top_right, bottom_right, bottom_left)
+           when is_tuple(top_left) and
+                  is_tuple(top_right) and
+                  is_tuple(bottom_right) and
+                  is_tuple(bottom_left) and
+                  elem(top_left, 0) == elem(bottom_left, 0) and
+                  elem(top_right, 0) == elem(bottom_right, 0) and
+                  elem(top_left, 1) == elem(top_right, 1) and
+                  elem(bottom_right, 1) == elem(bottom_left, 1)
 
   @doc """
   Guards whether a number can be reasonably interpreted
@@ -3146,6 +3144,7 @@ defmodule Image do
   defp do_resize(image, scale, options, true = _has_alpha?) do
     band_format = Vix.Vips.Image.format(image)
     premultiplied = Operation.premultiply!(image)
+
     with {:ok, resized} <- Operation.resize(premultiplied, scale, options) do
       resized
       |> Operation.unpremultiply!()
@@ -3743,7 +3742,7 @@ defmodule Image do
   end
 
   def crop(%Vimage{} = _image, bounding_box) do
-    {:error, "Invalid crop bounding box. Found #{inspect bounding_box}"}
+    {:error, "Invalid crop bounding box. Found #{inspect(bounding_box)}"}
   end
 
   @doc """
@@ -6229,25 +6228,24 @@ defmodule Image do
     defp transform_map(image, from, to) do
       with [{dx1, dy1}, {dx2, dy2}, {dx3, dy3}, {dx4, dy4}] <- from,
            [{sx1, sy1}, {sx2, sy2}, {sx3, sy3}, {sx4, sy4}] <- to do
-        src =
-          [
-            [sx1, sy1, 1, 0, 0, 0, -sx1 * dx1, -sy1 * dx1],
-            [sx2, sy2, 1, 0, 0, 0, -sx2 * dx2, -sy2 * dx2],
-            [sx3, sy3, 1, 0, 0, 0, -sx3 * dx3, -sy3 * dx3],
-            [sx4, sy4, 1, 0, 0, 0, -sx4 * dx4, -sy4 * dx4],
-            [0, 0, 0, sx1, sy1, 1, -sx1 * dy1, -sy1 * dy1],
-            [0, 0, 0, sx2, sy2, 1, -sx2 * dy2, -sy2 * dy2],
-            [0, 0, 0, sx3, sy3, 1, -sx3 * dy3, -sy3 * dy3],
-            [0, 0, 0, sx4, sy4, 1, -sx4 * dy4, -sy4 * dy4],
-          ]
+        src = [
+          [sx1, sy1, 1, 0, 0, 0, -sx1 * dx1, -sy1 * dx1],
+          [sx2, sy2, 1, 0, 0, 0, -sx2 * dx2, -sy2 * dx2],
+          [sx3, sy3, 1, 0, 0, 0, -sx3 * dx3, -sy3 * dx3],
+          [sx4, sy4, 1, 0, 0, 0, -sx4 * dx4, -sy4 * dx4],
+          [0, 0, 0, sx1, sy1, 1, -sx1 * dy1, -sy1 * dy1],
+          [0, 0, 0, sx2, sy2, 1, -sx2 * dy2, -sy2 * dy2],
+          [0, 0, 0, sx3, sy3, 1, -sx3 * dy3, -sy3 * dy3],
+          [0, 0, 0, sx4, sy4, 1, -sx4 * dy4, -sy4 * dy4]
+        ]
 
-        dest =
-          [dx1, dx2, dx3, dx4, dy1, dy2, dy3, dy4]
+        dest = [dx1, dx2, dx3, dx4, dy1, dy2, dy3, dy4]
 
         tensor = Nx.LinAlg.solve(Nx.tensor(src), Nx.tensor(dest))
         {:ok, generate_map(Image.width(image), Image.height(image), tensor)}
-      else _error ->
-        {:error, "Could not destructure `from` or `to`"}
+      else
+        _error ->
+          {:error, "Could not destructure `from` or `to`"}
       end
     end
 
