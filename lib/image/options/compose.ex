@@ -9,6 +9,12 @@ defmodule Image.Options.Compose do
   # complex that it might initially seem
 
   @typedoc """
+  Image compoositions options
+
+  """
+  @type t :: [composition_option(), ...]
+
+  @typedoc """
   When composing an image on a base image, these
   options drive how the composition proceeds.
 
@@ -57,7 +63,7 @@ defmodule Image.Options.Compose do
     calculated. The default is `:bottom`.
 
   """
-  @type composition_options :: [
+  @type composition_option :: [
           {:x, non_neg_integer() | nil | :left | :center | :right},
           {:y, non_neg_integer() | nil | :top | :middle | :bottom},
           {:dx, integer()},

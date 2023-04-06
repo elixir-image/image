@@ -160,14 +160,6 @@ defmodule Image do
   @type quadrilateral :: [{x :: non_neg_integer(), y :: non_neg_integer()}, ...]
 
   @typedoc """
-  A composition is a 2-tuple defining an image
-  and the options which describe how to
-  compose this image on a base image.
-
-  """
-  @type composition :: {Vimage.t(), Compose.composition_options()}
-
-  @typedoc """
   The data type of the image, using the same
   type definitions as `t:Nx.Type.t/0`.
   """
