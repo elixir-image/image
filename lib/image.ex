@@ -5995,8 +5995,8 @@ defmodule Image do
 
     defp shape_error(shape) do
       {:error,
-       "The tensor must have the shape {height, width, bands} with bands between" <>
-         "1 and 5. Found shape #{inspect(shape)}"}
+       "The tensor must have the shape {height, width, bands} with bands between " <>
+         "1 and 5. Found shape #{inspect(shape)}."}
     end
 
     @doc """
@@ -6073,7 +6073,7 @@ defmodule Image do
     def warp_perspective(%Vimage{} = image, source, destination, options \\ []) do
       with {:ok, options} <- Options.WarpPerspective.validate_options(image, options),
            {:ok, flattened} <- flatten(image),
-           {:ok, transform_map} <- transform_map(flattened, source, destination) do
+           {:ok, transform_map} <- transform_matrix(flattened, source, destination) do
         Operation.mapim(image, transform_map, options)
       end
     end
@@ -6154,62 +6154,6 @@ defmodule Image do
         {:ok, image} -> image
         {:error, reason} -> raise Image.Error, reason
       end
-    end
-
-    defp transform_map(image, source, destination) do
-      with [{sx1, sy1}, {sx2, sy2}, {sx3, sy3}, {sx4, sy4}] <- source,
-           [{dx1, dy1}, {dx2, dy2}, {dx3, dy3}, {dx4, dy4}] <- destination do
-        source =
-          Nx.tensor([
-            [dx1, dy1, 1, 0, 0, 0, -dx1 * sx1, -dy1 * sx1],
-            [dx2, dy2, 1, 0, 0, 0, -dx2 * sx2, -dy2 * sx2],
-            [dx3, dy3, 1, 0, 0, 0, -dx3 * sx3, -dy3 * sx3],
-            [dx4, dy4, 1, 0, 0, 0, -dx4 * sx4, -dy4 * sx4],
-            [0, 0, 0, dx1, dy1, 1, -dx1 * sy1, -dy1 * sy1],
-            [0, 0, 0, dx2, dy2, 1, -dx2 * sy2, -dy2 * sy2],
-            [0, 0, 0, dx3, dy3, 1, -dx3 * sy3, -dy3 * sy3],
-            [0, 0, 0, dx4, dy4, 1, -dx4 * sy4, -dy4 * sy4]
-          ])
-
-        destination = Nx.tensor([sx1, sx2, sx3, sx4, sy1, sy2, sy3, sy4])
-
-        transform_matrix = Nx.LinAlg.solve(source, destination)
-        {:ok, generate_map(Image.width(image), Image.height(image), transform_matrix)}
-      else
-        _error ->
-          {:error, "Could not destructure `from` or `to`"}
-      end
-    end
-
-    defp generate_map(width, height, tensor) do
-      use Image.Math
-
-      [t0, t1, t2, t3, t4, t5, t6, t7] = Nx.to_list(tensor)
-      index = Operation.xyz!(width, height)
-
-      x =
-        (
-          t = index * [t0, t1]
-          x_a = t[0] + t[1] + t2
-
-          t = index * [t6, t7]
-          x_b = t[0] + t[1] + 1
-
-          x_a / x_b
-        )
-
-      y =
-        (
-          t = index * [t3, t4]
-          y_a = t[0] + t[1] + t5
-
-          t = index * [t6, t7]
-          y_b = t[0] + t[1] + 1
-
-          y_a / y_b
-        )
-
-      Vix.Vips.Operation.bandjoin!([x, y])
     end
 
     @doc """
@@ -6375,6 +6319,101 @@ defmodule Image do
       end
     end
 
+    @doc """
+    Returns a transformation matrix for a given
+    image, source quadrilateral and desintation quadrilateral.
+
+    A transformation matrix when applied to an image
+    (using, for example, `Image.map/2`) maps pixels from
+    the source persecptive to the destination perspective.
+
+    Requires `Nx` to be configured as a dependency.
+
+    ### Arguments
+
+    * `image` is any `t:Vimage.t/0`
+
+    * `source` is a list of four 2-tuples representing the
+      four corners of the subject-of-interest in `image`.
+
+    * `destination` is a list of four 2-tuples representing the
+      four corners of the destination image into which the
+      subject-of-interest is transformed.
+
+    ### Returns
+
+    * `{:ok, transform_matrix}` or
+
+    * `{:error, reason}`.
+
+    """
+    @doc subject: "Operation", since: "0.28.0"
+
+    @spec transform_matrix(
+            Vimage.t(),
+            source :: quadrilateral(),
+            destination :: quadrilateral()
+          ) ::
+            {:ok, transform_matrix :: Vimage.t()} | {:error, error_message()}
+
+    def transform_matrix(image, source, destination) do
+      with [{sx1, sy1}, {sx2, sy2}, {sx3, sy3}, {sx4, sy4}] <- source,
+           [{dx1, dy1}, {dx2, dy2}, {dx3, dy3}, {dx4, dy4}] <- destination do
+        source =
+          Nx.tensor([
+            [dx1, dy1, 1, 0, 0, 0, -dx1 * sx1, -dy1 * sx1],
+            [dx2, dy2, 1, 0, 0, 0, -dx2 * sx2, -dy2 * sx2],
+            [dx3, dy3, 1, 0, 0, 0, -dx3 * sx3, -dy3 * sx3],
+            [dx4, dy4, 1, 0, 0, 0, -dx4 * sx4, -dy4 * sx4],
+            [0, 0, 0, dx1, dy1, 1, -dx1 * sy1, -dy1 * sy1],
+            [0, 0, 0, dx2, dy2, 1, -dx2 * sy2, -dy2 * sy2],
+            [0, 0, 0, dx3, dy3, 1, -dx3 * sy3, -dy3 * sy3],
+            [0, 0, 0, dx4, dy4, 1, -dx4 * sy4, -dy4 * sy4]
+          ])
+
+        destination = Nx.tensor([sx1, sx2, sx3, sx4, sy1, sy2, sy3, sy4])
+
+        transform_matrix = Nx.LinAlg.solve(source, destination)
+        {:ok, generate_map(Image.width(image), Image.height(image), transform_matrix)}
+      else
+        _error ->
+          {:error,
+            "Invalid source or destination quadrilateral. " <>
+            "Found source #{inspect source} and destination #{inspect destination}."}
+      end
+    end
+
+    defp generate_map(width, height, tensor) do
+      use Image.Math
+
+      [t0, t1, t2, t3, t4, t5, t6, t7] = Nx.to_list(tensor)
+      index = Operation.xyz!(width, height)
+
+      x =
+        (
+          t = index * [t0, t1]
+          x_a = t[0] + t[1] + t2
+
+          t = index * [t6, t7]
+          x_b = t[0] + t[1] + 1
+
+          x_a / x_b
+        )
+
+      y =
+        (
+          t = index * [t3, t4]
+          y_a = t[0] + t[1] + t5
+
+          t = index * [t6, t7]
+          y_b = t[0] + t[1] + 1
+
+          y_a / y_b
+        )
+
+      Vix.Vips.Operation.bandjoin!([x, y])
+    end
+
     # TODO Needs to respect the image type when doing the
     # color channel order conversion (ie when its an RGB-A etc etc)
     # Same for interpretation (not every image is srgb!)
@@ -6472,6 +6511,38 @@ defmodule Image do
           end
         end
       end
+    end
+  end
+
+  @doc """
+  Applies a transformation matrix to an image.
+
+  A transformation matrix is returned by
+  `Image.transform_matrix/3`.
+
+  `Image.warp_perspective/4` uses this function to
+  apply a perspective transform to an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0`
+
+  * `transform_matrix` is a matrix returned by
+    `Image.transform_matrix/3`.
+
+  ### Returns
+
+  * `{:ok, mapped_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc subject: "Operation", since: "0.28.0"
+
+  @spec map(Vimage.t(), Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def map(%Vimage{} = image, %Vimage{} = transformation_matrix, options \\ []) do
+    with {:ok, options} <- Options.WarpPerspective.validate_options(image, options) do
+      Operation.mapim(image, transformation_matrix, options)
     end
   end
 

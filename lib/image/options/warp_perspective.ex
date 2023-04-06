@@ -3,6 +3,7 @@ defmodule Image.Options.WarpPerspective do
   Options and option validation for `Image.warp_perspective/4`.
 
   """
+  alias Vix.Vips.Image, as: Vimage
   alias Image.Color
 
   @typedoc """
@@ -38,6 +39,7 @@ defmodule Image.Options.WarpPerspective do
   Validate the options for `Image.warp_perspective/4`.
 
   """
+  @spec validate_options(Vimage.t(), Keyword.t()) :: {:ok, Keyword.t()} | {:error, Image.error_message()}
   def validate_options(image, options) when is_list(options) do
     options = Keyword.merge(default_options(), options)
 
@@ -48,10 +50,6 @@ defmodule Image.Options.WarpPerspective do
       options ->
         {:ok, options}
     end
-  end
-
-  def validate_options(%{} = options) do
-    {:ok, options}
   end
 
   defp validate_option({:background, :average}, image, options) do

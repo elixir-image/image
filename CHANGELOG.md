@@ -2,7 +2,7 @@
 
 ## Image 0.28.0
 
-This is the changelog for Image version 0.28.0 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.28.0 released on April 6th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
 
 ### Bug Fixes
 
@@ -10,9 +10,11 @@ This is the changelog for Image version 0.28.0 released on ______, 2023.  For ol
 
 ### Enhancements
 
-* Adds `Image.warp_perspective/4` to apply a warp transformation to an image. Thanks very much to @sodapopcan for the PR.
+* Adds `Image.warp_perspective/4` to apply a warp transformation to an image. Thanks very much to @sodapopcan for the PR and collaboration.
 
 * Adds `Image.straighten_perspective/3` to apply a warp perspective that straighens the image. It is basically `Image.warp_perspective/4` with algorithmically derived `destination` parameter.
+
+* Adds `Image.map/2` which applies a transformation matrix (not a convolution kernel) to an image. A transformation matrix can be returned from `Image.transform_matrix/3`. These two functions underpin `Image.warp_perspective/4`.
 
 * Adds `Image.crop/2` which is a variation of `Image.crop/5` that takes the same format of bounding box as that applied to `Image.warp_perspective/4` making it easy to apply a warp transform and then crop to the transformed area. Note that cropping requires that the bounding box be a rectangle, not an arbitrary quadrilateral.
 
