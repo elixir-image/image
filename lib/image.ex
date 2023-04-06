@@ -2058,7 +2058,7 @@ defmodule Image do
 
       bands(alpha_image) > 1 ->
         {:error, "Alpha image has more than one band"}
-        true
+      true ->
         Vix.Vips.Operation.bandjoin([image, alpha_image])
     end
   end
