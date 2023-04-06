@@ -165,7 +165,7 @@ defmodule Image do
   compose this image on a base image.
 
   """
-  @type composition :: {Vimage.t(), Compose.composition_options}
+  @type composition :: {Vimage.t(), Compose.composition_options()}
 
   @typedoc """
   The data type of the image, using the same
@@ -6062,8 +6062,13 @@ defmodule Image do
     """
     @doc subject: "Operation", since: "0.28.0"
 
-    @spec warp_perspective(Vimage.t(), source :: quadrilateral(), destination :: quadrilateral(), Options.WarpPerspective.t()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+    @spec warp_perspective(
+            Vimage.t(),
+            source :: quadrilateral(),
+            destination :: quadrilateral(),
+            Options.WarpPerspective.t()
+          ) ::
+            {:ok, Vimage.t()} | {:error, error_message()}
 
     def warp_perspective(%Vimage{} = image, source, destination, options \\ []) do
       with {:ok, options} <- Options.WarpPerspective.validate_options(image, options),
@@ -6134,6 +6139,16 @@ defmodule Image do
       removed.
 
     """
+    @doc subject: "Operation", since: "0.28.0"
+
+    @spec warp_perspective!(
+            Vimage.t(),
+            source :: quadrilateral(),
+            destination :: quadrilateral(),
+            Options.WarpPerspective.t()
+          ) ::
+            Vimage.t()} | no_return()
+
     def warp_perspective!(image, from, to, options \\ []) do
       case warp_perspective(image, from, to, options) do
         {:ok, image} -> image
@@ -6144,15 +6159,16 @@ defmodule Image do
     defp transform_map(image, source, destination) do
       with [{sx1, sy1}, {sx2, sy2}, {sx3, sy3}, {sx4, sy4}] <- source,
            [{dx1, dy1}, {dx2, dy2}, {dx3, dy3}, {dx4, dy4}] <- destination do
-        source = Nx.tensor([
-          [dx1, dy1, 1, 0, 0, 0, -dx1 * sx1, -dy1 * sx1],
-          [dx2, dy2, 1, 0, 0, 0, -dx2 * sx2, -dy2 * sx2],
-          [dx3, dy3, 1, 0, 0, 0, -dx3 * sx3, -dy3 * sx3],
-          [dx4, dy4, 1, 0, 0, 0, -dx4 * sx4, -dy4 * sx4],
-          [0, 0, 0, dx1, dy1, 1, -dx1 * sy1, -dy1 * sy1],
-          [0, 0, 0, dx2, dy2, 1, -dx2 * sy2, -dy2 * sy2],
-          [0, 0, 0, dx3, dy3, 1, -dx3 * sy3, -dy3 * sy3],
-          [0, 0, 0, dx4, dy4, 1, -dx4 * sy4, -dy4 * sy4]
+        source =
+          Nx.tensor([
+            [dx1, dy1, 1, 0, 0, 0, -dx1 * sx1, -dy1 * sx1],
+            [dx2, dy2, 1, 0, 0, 0, -dx2 * sx2, -dy2 * sx2],
+            [dx3, dy3, 1, 0, 0, 0, -dx3 * sx3, -dy3 * sx3],
+            [dx4, dy4, 1, 0, 0, 0, -dx4 * sx4, -dy4 * sx4],
+            [0, 0, 0, dx1, dy1, 1, -dx1 * sy1, -dy1 * sy1],
+            [0, 0, 0, dx2, dy2, 1, -dx2 * sy2, -dy2 * sy2],
+            [0, 0, 0, dx3, dy3, 1, -dx3 * sy3, -dy3 * sy3],
+            [0, 0, 0, dx4, dy4, 1, -dx4 * sy4, -dy4 * sy4]
           ])
 
         destination = Nx.tensor([sx1, sx2, sx3, sx4, sy1, sy2, sy3, sy4])
@@ -6262,11 +6278,12 @@ defmodule Image do
     @doc subject: "Operation", since: "0.28.0"
 
     @spec straighten_perspective(Vimage.t(), source :: quadrilateral(), Options.WarpPerspective.t()) ::
-      {:ok, quadrilateral(), Vimage.t()} | {:error, error_message()}
+            {:ok, quadrilateral(), Vimage.t()} | {:error, error_message()}
 
     def straighten_perspective(%Vimage{} = image, source, options \\ []) do
       with [{sx1, sy1}, {sx2, _sy2}, {_sx3, _sy3}, {_sx4, sy4}] <- source do
         destination = [{sx1, sy1}, {sx2, sy1}, {sx2, sy4}, {sx1, sy4}]
+
         case warp_perspective(image, source, destination, options) do
           {:ok, warped} -> {:ok, destination, warped}
           other -> other
@@ -6340,12 +6357,17 @@ defmodule Image do
     """
     @doc subject: "Operation", since: "0.28.0"
 
-    @spec straighten_perspective!(Vimage.t(), source :: quadrilateral(), Options.WarpPerspective.t()) ::
-      Vimage.t() | no_return()
+    @spec straighten_perspective!(
+            Vimage.t(),
+            source :: quadrilateral(),
+            Options.WarpPerspective.t()
+          ) ::
+            Vimage.t() | no_return()
 
     def straighten_perspective!(%Vimage{} = image, source, options \\ []) do
       with [{sx1, sy1}, {sx2, _sy2}, {_sx3, _sy3}, {_sx4, sy4}] <- source do
         destination = [{sx1, sy1}, {sx2, sy1}, {sx2, sy4}, {sx1, sy4}]
+
         case warp_perspective(image, source, destination, options) do
           {:ok, warped} -> warped
           {:error, reason} -> raise Image.Error, reason
