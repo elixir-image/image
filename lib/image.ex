@@ -6147,7 +6147,7 @@ defmodule Image do
             destination :: quadrilateral(),
             Options.WarpPerspective.t()
           ) ::
-            Vimage.t()} | no_return()
+            Vimage.t() | no_return()
 
     def warp_perspective!(image, from, to, options \\ []) do
       case warp_perspective(image, from, to, options) do
