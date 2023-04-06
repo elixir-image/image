@@ -54,7 +54,7 @@ defmodule Image.Options.ChromaKey do
   end
 
   defp validate_option({:threshold, threshold}, options)
-       when is_integer(threshold) and threshold > 0 do
+       when is_integer(threshold) and threshold >= 0 do
     {:cont, options}
   end
 

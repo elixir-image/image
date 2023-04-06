@@ -1,5 +1,17 @@
 # Changelog
 
+## Image 0.28.1
+
+This is the changelog for Image version 0.28.1 released on April 7th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+
+### Bug Fixes
+
+* Fixes `Image.add_alpha/2`. Thanks to @kwando for the PR. Closes #71.
+
+* Fixes `:threshold` option in `Image.Options.ChromaKey` to allow a value of `0`.
+
+* Fixes `Image.warp_perspective/4` to correctly flatten an image with an alpha band before the transform. Closes #70.
+
 ## Image 0.28.0
 
 This is the changelog for Image version 0.28.0 released on April 6th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)

@@ -6066,7 +6066,7 @@ defmodule Image do
       with {:ok, options} <- Options.WarpPerspective.validate_options(image, options),
            {:ok, flattened} <- flatten(image),
            {:ok, transform_map} <- transform_matrix(flattened, source, destination) do
-        Operation.mapim(image, transform_map, options)
+        Operation.mapim(flattened, transform_map, options)
       end
     end
 
