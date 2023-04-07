@@ -5,10 +5,15 @@ defmodule Image.Color do
   """
 
   @priv_dir :code.priv_dir(:image) |> List.to_string()
-  @path Path.join(@priv_dir, "color_map.csv")
+  @css_color_path Path.join(@priv_dir, "color/css_colors.csv")
+  @additional_color_path Path.join(@priv_dir, "color/additional_colors.csv")
 
-  @color_map File.read!(@path)
+  @css_colors File.read!(@css_color_path)
+  @additional_colors File.read!(@additional_color_path)
+
+  @color_map (@css_colors <> "\n" <> @additional_colors)
              |> String.split("\n", trim: true)
+             |> Enum.reject(&String.starts_with?(&1, "#"))
              |> Enum.map(&String.split(&1, ", "))
              |> Enum.map(fn [name, hex] ->
                <<"#", r::bytes-2, g::bytes-2, b::bytes-2>> = hex

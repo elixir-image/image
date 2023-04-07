@@ -1,8 +1,24 @@
 # Changelog
 
+## Image 0.29.0
+
+This is the changelog for Image version 0.29.0 released on ____, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Add `chroma_green` and `chroma_blue` as recognised color names.
+
+* Add `Image.Shape.line/3`. Closes #53.
+
+* Add `Image.Shape.circle/4`.
+
+* Add `Image.Shape.elipse/4`.
+
+* Add `Image.Shape.triangle/4`.
+
 ## Image 0.28.1
 
-This is the changelog for Image version 0.28.1 released on April 7th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.28.1 released on April 7th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -14,7 +30,7 @@ This is the changelog for Image version 0.28.1 released on April 7th, 2023.  For
 
 ## Image 0.28.0
 
-This is the changelog for Image version 0.28.0 released on April 6th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.28.0 released on April 6th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -32,7 +48,7 @@ This is the changelog for Image version 0.28.0 released on April 6th, 2023.  For
 
 ## Image 0.27.1
 
-This is the changelog for Image version 0.27.1 released on March 20th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.27.1 released on March 20th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Behaviour Change
 
@@ -40,7 +56,7 @@ This is the changelog for Image version 0.27.1 released on March 20th, 2023.  Fo
 
 ## Image 0.27.0
 
-This is the changelog for Image version 0.27.0 released on March 20th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.27.0 released on March 20th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Image packaging future
 
@@ -69,7 +85,7 @@ In a future release, Image will be split into several packages
 
 ## Image 0.26.0
 
-This is the changelog for Image version 0.26.0 released on March 12th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.26.0 released on March 12th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Breaking change
 
@@ -91,7 +107,7 @@ This is the changelog for Image version 0.26.0 released on March 12th, 2023.  Fo
 
 ## Image 0.25.1
 
-This is the changelog for Image version 0.25.1 released on March 1st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.25.1 released on March 1st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -103,7 +119,7 @@ This is the changelog for Image version 0.25.1 released on March 1st, 2023.  For
 
 ## Image 0.25.0
 
-This is the changelog for Image version 0.25.0 released on February March 1st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.25.0 released on February March 1st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Behavior Change
 
@@ -127,7 +143,7 @@ This is the changelog for Image version 0.25.0 released on February March 1st, 2
 
 ## Image 0.24.1
 
-This is the changelog for Image version 0.24.1 released on February 14th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.24.1 released on February 14th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -137,7 +153,7 @@ This is the changelog for Image version 0.24.1 released on February 14th, 2023. 
 
 ## Image 0.24.0
 
-This is the changelog for Image version 0.24.0 released on February 6th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.24.0 released on February 6th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -149,7 +165,7 @@ This is the changelog for Image version 0.24.0 released on February 6th, 2023.  
 
 ## Image 0.23.2
 
-This is the changelog for Image version 0.23.2 released on January 31st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.23.2 released on January 31st, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -157,7 +173,7 @@ This is the changelog for Image version 0.23.2 released on January 31st, 2023.  
 
 ## Image 0.23.1
 
-This is the changelog for Image version 0.23.1 released on January 30th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.23.1 released on January 30th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -165,7 +181,7 @@ This is the changelog for Image version 0.23.1 released on January 30th, 2023.  
 
 ## Image 0.23.0
 
-This is the changelog for Image version 0.23.0 released on January 29th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.23.0 released on January 29th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -193,7 +209,7 @@ This is the changelog for Image version 0.23.0 released on January 29th, 2023.  
 
 ## Image 0.22.1
 
-This is the changelog for Image version 0.22.1 released on January 9th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.22.1 released on January 9th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -201,7 +217,7 @@ This is the changelog for Image version 0.22.1 released on January 9th, 2023.  F
 
 ## Image 0.22.0
 
-This is the changelog for Image version 0.22.0 released on January 9th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.22.0 released on January 9th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -211,7 +227,7 @@ This is the changelog for Image version 0.22.0 released on January 9th, 2023.  F
 
 ## Image 0.21.0
 
-This is the changelog for Image version 0.21.0 released on January 8th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.21.0 released on January 8th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Breaking change
 
@@ -227,7 +243,7 @@ This is the changelog for Image version 0.21.0 released on January 8th, 2023.  F
 
 ## Image 0.20.0
 
-This is the changelog for Image version 0.20.0 released on January 8th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.20.0 released on January 8th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -241,7 +257,7 @@ This is the changelog for Image version 0.20.0 released on January 8th, 2023.  F
 
 ## Image 0.19.0
 
-This is the changelog for Image version 0.19.0 released on December 24th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.19.0 released on December 24th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -249,7 +265,7 @@ This is the changelog for Image version 0.19.0 released on December 24th, 2022. 
 
 ## Image 0.18.1
 
-This is the changelog for Image version 0.18.1 released on December 21st, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.18.1 released on December 21st, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -257,7 +273,7 @@ This is the changelog for Image version 0.18.1 released on December 21st, 2022. 
 
 ## Image 0.18.0
 
-This is the changelog for Image version 0.18.0 released on December 20th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.18.0 released on December 20th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -267,7 +283,7 @@ This is the changelog for Image version 0.18.0 released on December 20th, 2022. 
 
 ## Image 0.17.0
 
-This is the changelog for Image version 0.17.0 released on December 19, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.17.0 released on December 19, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Breaking change
 
@@ -287,7 +303,7 @@ This is the changelog for Image version 0.17.0 released on December 19, 2022.  F
 
 ## Image 0.16.0
 
-This is the changelog for Image version 0.16.0 released on Decmber 18th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.16.0 released on Decmber 18th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -295,7 +311,7 @@ This is the changelog for Image version 0.16.0 released on Decmber 18th, 2022.  
 
 ## Image 0.15.1
 
-This is the changelog for Image version 0.15.1 released on Decmber 13th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.15.1 released on Decmber 13th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -303,7 +319,7 @@ This is the changelog for Image version 0.15.1 released on Decmber 13th, 2022.  
 
 ## Image 0.15.0
 
-This is the changelog for Image version 0.15.0 released on Decmber 4th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.15.0 released on Decmber 4th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -315,7 +331,7 @@ This is the changelog for Image version 0.15.0 released on Decmber 4th, 2022.  F
 
 ## Image 0.14.4
 
-This is the changelog for Image version 0.14.4 released on November 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.14.4 released on November 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -327,7 +343,7 @@ This is the changelog for Image version 0.14.4 released on November 14th, 2022. 
 
 ## Image 0.14.3
 
-This is the changelog for Image version 0.14.3 released on November 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.14.3 released on November 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -337,7 +353,7 @@ This is the changelog for Image version 0.14.3 released on November 14th, 2022. 
 
 ## Image 0.14.2
 
-This is the changelog for Image version 0.14.2 released on November 13th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.14.2 released on November 13th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -347,7 +363,7 @@ This is the changelog for Image version 0.14.2 released on November 13th, 2022. 
 
 ## Image 0.14.1
 
-This is the changelog for Image version 0.14.1 released on November 11th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.14.1 released on November 11th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -355,7 +371,7 @@ This is the changelog for Image version 0.14.1 released on November 11th, 2022. 
 
 ## Image 0.14.0
 
-This is the changelog for Image version 0.14.0 released on November 11th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.14.0 released on November 11th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -369,7 +385,7 @@ This is the changelog for Image version 0.14.0 released on November 11th, 2022. 
 
 ## Image 0.13.1
 
-This is the changelog for Image version 0.13.1 released on October 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.13.1 released on October 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug fixes
 
@@ -377,7 +393,7 @@ This is the changelog for Image version 0.13.1 released on October 23rd, 2022.  
 
 ## Image 0.13.0
 
-This is the changelog for Image version 0.13.0 released on October 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.13.0 released on October 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Breaking change
 
@@ -415,7 +431,7 @@ This is the changelog for Image version 0.13.0 released on October 23rd, 2022.  
 
 ## Image 0.12.0
 
-This is the changelog for Image version 0.12.0 released on October 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.12.0 released on October 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -423,7 +439,7 @@ This is the changelog for Image version 0.12.0 released on October 14th, 2022.  
 
 ## Image 0.11.0
 
-This is the changelog for Image version 0.11.0 released on October 8th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.11.0 released on October 8th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -431,7 +447,7 @@ This is the changelog for Image version 0.11.0 released on October 8th, 2022.  F
 
 ## Image 0.10.0
 
-This is the changelog for Image version 0.10.0 released on October 5th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.10.0 released on October 5th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -439,7 +455,7 @@ This is the changelog for Image version 0.10.0 released on October 5th, 2022.  F
 
 ## Image 0.9.0
 
-This is the changelog for Image version 0.9.0 released on October 1st, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.9.0 released on October 1st, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -457,7 +473,7 @@ This is the changelog for Image version 0.9.0 released on October 1st, 2022.  Fo
 
 ## Image 0.8.0
 
-This is the changelog for Image version 0.8.0 released on September 30, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.8.0 released on September 30, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -465,7 +481,7 @@ This is the changelog for Image version 0.8.0 released on September 30, 2022.  F
 
 ## Image 0.7.0
 
-This is the changelog for Image version 0.7.0 released on September 30, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.7.0 released on September 30, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -479,7 +495,7 @@ This is the changelog for Image version 0.7.0 released on September 30, 2022.  F
 
 ## Image 0.6.0
 
-This is the changelog for Image version 0.6.0 released on July 19th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.6.0 released on July 19th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug fixes
 
@@ -499,7 +515,7 @@ This is the changelog for Image version 0.6.0 released on July 19th, 2022.  For 
 
 ## Image 0.5.0
 
-This is the changelog for Image version 0.5.0 released on June 24th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.5.0 released on June 24th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -509,7 +525,7 @@ This is the changelog for Image version 0.5.0 released on June 24th, 2022.  For 
 
 ## Image 0.4.0
 
-This is the changelog for Image version 0.4.0 released on June 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.4.0 released on June 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -521,7 +537,7 @@ This is the changelog for Image version 0.4.0 released on June 23rd, 2022.  For 
 
 ## Image 0.3.0
 
-This is the changelog for Image version 0.3.0 released on June 4th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.3.0 released on June 4th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -533,7 +549,7 @@ This is the changelog for Image version 0.3.0 released on June 4th, 2022.  For o
 
 ## Image 0.2.0
 
-This is the changelog for Image version 0.2.0 released on May 18th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.2.0 released on May 18th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
@@ -545,7 +561,7 @@ This is the changelog for Image version 0.2.0 released on May 18th, 2022.  For o
 
 ## Image 0.1.0
 
-This is the changelog for Image version 0.1.0 released on May 4th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/image/tags)
+This is the changelog for Image version 0.1.0 released on May 4th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
