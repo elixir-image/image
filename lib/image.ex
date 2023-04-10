@@ -1347,7 +1347,7 @@ defmodule Image do
 
   @doc """
   Scans the condition image cond and uses it to select
-  pixels from either the then `if_image` or the `else_image`.
+  pixels from either the `if_image` or the `else_image`.
 
   Non-zero means copy a pixel from `if_image`, `0` means
   copy a pixel from `else_image`.
@@ -3208,8 +3208,8 @@ defmodule Image do
     pathname to an image file.
 
   * `length` is the integer length of the longest
-    side of the resulting image after resizing. It c
-    an also be of the form "<width>x<height>". That
+    side of the resulting image after resizing. It can
+    also be of the form "<width>x<height>". That
     is, a string with the width and height separated
     by an `x`. The `<height>` may be omitted in which
     case it is the same as providing an integer length.
