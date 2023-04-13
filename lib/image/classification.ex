@@ -128,7 +128,6 @@ if Image.bumblebee_configured?() do
       with {:ok, model_info} <- Bumblebee.load_model(model),
            {:ok, featurizer} = Bumblebee.load_featurizer(featurizer) do
         Bumblebee.Vision.image_classification(model_info, featurizer,
-          top_k: 1,
           compile: [batch_size: 10],
           defn_options: [compiler: EXLA]
         )
@@ -161,7 +160,8 @@ if Image.bumblebee_configured?() do
     ### Example
 
         iex> puppy = Image.open!("./test/support/images/puppy.webp")
-        iex> %{predictions: [%{label: "Blenheim spaniel", score: _}]} = Image.Classification.classify(puppy)
+        iex> %{predictions: [%{label: "Blenheim spaniel", score: _} | _rest]} =
+        ...>   Image.Classification.classify(puppy)
 
     """
 

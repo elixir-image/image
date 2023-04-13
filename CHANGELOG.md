@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.28.2
+
+This is the changelog for Image version 0.28.2 released on April 13th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* `Image.Classification.serving/2` was applying the option `top_k: 1` which means not all predictions were being returned. This option is now removed. Thanks to @tmariaz for raising the issue.
+
 ## Image 0.28.1
 
 This is the changelog for Image version 0.28.1 released on April 7th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
