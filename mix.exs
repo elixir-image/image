@@ -150,7 +150,8 @@ defmodule Image.MixProject do
     Image.BlendMode,
     Image.CombineMode,
     Image.Interpretation,
-    Image.Kernel
+    Image.Kernel,
+    Image.ExtendMode
   ]
 
   defp groups_for_modules do
