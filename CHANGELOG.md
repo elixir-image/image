@@ -1,21 +1,5 @@
 # Changelog
 
-## Image 0.29.0
-
-This is the changelog for Image version 0.29.0 released on ____, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
-
-### Enhancements
-
-* Add `chroma_green` and `chroma_blue` as recognised color names.
-
-* Add `Image.Shape.line/3`. Closes #53.
-
-* Add `Image.Shape.circle/4`.
-
-* Add `Image.Shape.elipse/4`.
-
-* Add `Image.Shape.triangle/4`.
-
 ## Image 0.28.1
 
 This is the changelog for Image version 0.28.1 released on April 7th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

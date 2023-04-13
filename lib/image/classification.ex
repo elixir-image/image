@@ -151,7 +151,7 @@ if Image.bumblebee_configured?() do
       `Nx.default_backend/0`.
 
     * `:server` is the name of the process performing the
-      classification service. The default is `#{@default_classifier_name}`.
+      classification service. The default is `#{inspect @default_classifier_name}`.
 
     ### Returns
 
@@ -160,8 +160,8 @@ if Image.bumblebee_configured?() do
 
     ### Example
 
-      iex> puppy = Image.open!("./test/support/images/puppy.webp")
-      iex> %{predictions: [%{label: "Blenheim spaniel", score: _}]} = Image.Classification.classify(puppy)
+        iex> puppy = Image.open!("./test/support/images/puppy.webp")
+        iex> %{predictions: [%{label: "Blenheim spaniel", score: _}]} = Image.Classification.classify(puppy)
 
     """
 
