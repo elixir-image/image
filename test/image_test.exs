@@ -256,7 +256,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(autorotated, out_path)
 
-    assert {:ok, 180} = Keyword.fetch(flags, :angle)
+    assert {:ok, 180} = Map.fetch(flags, :angle)
     assert_images_equal out_path, validate_path("autorotated.jpg")
   end
 

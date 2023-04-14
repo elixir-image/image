@@ -876,7 +876,7 @@ defmodule Image.Text do
 
     {:ok, {image, _flags}} = Operation.svgload_buffer(svg)
 
-    {:ok, {x, y, width, height, _flags}} =
+    {:ok, {x, y, width, height}} =
       Operation.find_trim(image, background: @black, threshold: 10.0)
 
     Image.crop(image, x, y, width, height)

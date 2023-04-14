@@ -590,7 +590,7 @@ defmodule Image.Draw do
       color = maybe_add_alpha(image, options.color)
 
       Vimage.mutate(image, fn mut_img ->
-        MutableOperation.draw_line(mut_img, color, x1, y1, x2, y2, [])
+        MutableOperation.draw_line(mut_img, color, x1, y1, x2, y2)
       end)
     end
     |> maybe_wrap()
@@ -611,7 +611,7 @@ defmodule Image.Draw do
              is_integer(x2) and is_integer(y2) and x2 >= 0 and y2 >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(:line, options) do
       color = maybe_add_alpha(image, options.color)
-      MutableOperation.draw_line(image, color, x1, y1, x2, y2, [])
+      MutableOperation.draw_line(image, color, x1, y1, x2, y2)
     end
     |> maybe_wrap()
   end

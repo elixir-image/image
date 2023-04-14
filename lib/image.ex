@@ -4155,7 +4155,7 @@ defmodule Image do
       |> Operation.hist_cum!()
       |> Operation.hist_norm!()
 
-    {:ok, {_c, r, _other}} = Operation.profile(norm > width(norm) * percentage / 100)
+    {:ok, {_c, r}} = Operation.profile(norm > width(norm) * percentage / 100)
 
     Operation.avg!(r)
   end
@@ -4214,7 +4214,7 @@ defmodule Image do
       threshold = options.threshold
 
       case Vix.Vips.Operation.find_trim(image, background: background, threshold: threshold) do
-        {:ok, {_left, _top, 0, 0, _other}} ->
+        {:ok, {_left, _top, 0, 0}} ->
           {:error, :uncropped}
 
         {:ok, {left, top, width, height, _other}} ->
@@ -4664,10 +4664,10 @@ defmodule Image do
   }
 
   defp decode_rotation_flags(flags) do
-    angle = Keyword.fetch!(flags, :angle)
+    angle = Map.fetch!(flags, :angle)
     angle = Map.fetch!(@rotation_encoding, angle)
 
-    Keyword.put(flags, :angle, angle)
+    Map.put(flags, :angle, angle)
   end
 
   @doc """
@@ -6758,7 +6758,7 @@ defmodule Image do
     @spec skew_angle(Vimage.t()) :: float()
 
     def skew_angle(%Vimage{} = image) do
-      {_columns, rows, []} =
+      {_columns, rows} =
         image
         |> fft!()
         |> to_rectangular_coordinates!()

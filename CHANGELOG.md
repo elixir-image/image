@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.29.0
+
+This is the changelog for Image version 0.29.0 released on April 14th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Supports [vix version 0.17.0](https://hex.pm/packages.vix/0.17.0).
+
 ## Image 0.28.2
 
 This is the changelog for Image version 0.28.2 released on April 13th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
