@@ -18,7 +18,7 @@ defmodule Image do
   alias Vix.Vips.{Operation, MutableImage}
   alias Vix.Vips.Image, as: Vimage
 
-  alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode}
+  alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode, BandFormat}
   alias Image.Options.{Resize, Thumbnail, Compose, Open, ChromaKey}
   alias Image.Math
   alias Image.Draw
@@ -6911,6 +6911,34 @@ defmodule Image do
   end
 
   @doc """
+  Casts an image from one band format to another.
+
+  The band format is the numeric type of each pixel.
+  In the common case of *sRGB` images, the format is
+  `{:u, 8}` meaning unsigned 8-bit vallues.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `band_format` is any known band format. See
+    `Image.BandFormat.known_band_formats/0`.
+
+  ### Returns
+
+  * `{:ok, cast_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @spec cast(Vimage.t(), BandFormat.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def cast(%Vimage{} = image, band_format) do
+    with {:ok, band_format} <- BandFormat.validate(band_format) do
+      Operation.cast(image, band_format)
+    end
+  end
+
+  @doc """
   Execute a function over the image without
   its alpha band (if any) ensuring the alpha
   band is replaced when the function returns.
@@ -6941,6 +6969,33 @@ defmodule Image do
       {:error, reason} -> {:error, reason}
     end
   end
+
+  @doc """
+  Execute a function over the image casting it
+  first to a color space and ensuring the color
+  space conversion is reverted when the function
+  returns.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `colorspace` is any valid color space.
+    See `Image.Interpretation.known_interpretations/0`.
+
+  * `fun` is any 1-arity function that is
+    required to return `{:ok, image}` or
+    `{:error, reason}`.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`
+
+  """
+  @spec with_colorspace(Vimage.t(), colorspace :: Interpretation.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})) ::
+          {:ok, Vimage.t()} | {:error, error_message}
 
   def with_colorspace(image, colorspace, fun) do
     original_colorspace = interpretation(image)

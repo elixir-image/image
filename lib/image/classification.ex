@@ -177,7 +177,9 @@ if Image.bumblebee_configured?() do
       backend = Keyword.get(options, :backend, Nx.default_backend())
       server = Keyword.get(options, :server, @default_classifier_name)
 
-      with {:ok, tensor} <- Image.to_nx(image, shape: :hwc, backend: backend) do
+      with {:ok, flattened} <- Image.flatten(image),
+           {:ok, srgb} <- Image.to_colorspace(flattened, :srgb),
+           {:ok, tensor} <- Image.to_nx(srgb, shape: :hwc, backend: backend) do
         Nx.Serving.batched_run(server, tensor)
       end
     end

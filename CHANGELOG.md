@@ -1,5 +1,17 @@
 # Changelog
 
+## Image 0.30.0
+
+This is the changelog for Image version 0.30.0 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Add documentation for `Image.with_colorspace/3`.
+
+### Enhancements
+
+* Adds `Image.cast/2` to convert the band format of an image to a different numeric type.
+
 ## Image 0.29.0
 
 This is the changelog for Image version 0.29.0 released on April 14th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

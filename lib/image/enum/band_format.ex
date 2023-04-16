@@ -19,6 +19,75 @@ defmodule Image.BandFormat do
           | {:f, 32}
           | {:f, 64}
 
+  @long_format_map %{
+    {:u, 8} => :VIPS_FORMAT_UCHAR,
+    {:s, 8} => :VIPS_FORMAT_CHAR,
+    {:u, 16} => :VIPS_FORMAT_USHORT,
+    {:s, 16} => :VIPS_FORMAT_SHORT,
+    {:u, 32} => :VIPS_FORMAT_UINT,
+    {:s, 32} => :VIPS_FORMAT_INT,
+    {:u, 64} => :VIPS_FORMAT_UINT,
+    {:s, 64} => :VIPS_FORMAT_UINT,
+    {:f, 32} => :VIPS_FORMAT_FLOAT,
+    {:f, 64} => :VIPS_FORMAT_DOUBLE
+  }
+
+  @short_format_map @long_format_map
+  |> Enum.map(fn {{sign, size}, enum} ->
+    {String.to_atom(to_string(sign) <> to_string(size)), enum}
+  end)
+  |> Map.new()
+
+  @band_format_map Map.merge(@long_format_map, @short_format_map)
+
+  @inverse_band_format_map @long_format_map
+  |> Enum.map(fn {code, enum} -> {enum, code} end)
+  |> Map.new()
+
+  defp band_format_map do
+    @band_format_map
+  end
+
+  defp inverse_band_format_map do
+    @inverse_band_format_map
+  end
+
+  @known_band_formats Map.keys(@long_format_map)
+
+  @doc """
+  Returns a list of the known band formats.
+
+  """
+  def known_band_formats do
+    @known_band_formats
+  end
+
+  @doc """
+  Validates a band format returning the band
+  format value required in the underlying
+  `Vix` code.
+
+  ### Arguments
+
+  * `format` is any format returned by
+    `Image.BandFormat.known_band_formats/0`.
+
+  ### Returns
+
+  * `{:ok, validated_foramt}` or
+
+  * `{:error, reason}`
+
+  """
+  def validate(format) do
+    case Map.get(band_format_map(), format) do
+      nil ->
+        {:error, "Invalid band format. Found #{inspect(format)}"}
+      format ->
+        {:ok, format}
+    end
+  end
+
   if Code.ensure_loaded?(Nx) do
     def image_format_from_nx(%Nx.Tensor{} = tensor) do
       tensor
@@ -27,79 +96,61 @@ defmodule Image.BandFormat do
     end
   end
 
-  def image_format_from_nx(nx_type) do
-    case nx_type do
-      {:u, 8} ->
-        {:ok, :VIPS_FORMAT_UCHAR}
-
-      {:s, 8} ->
-        {:ok, :VIPS_FORMAT_CHAR}
-
-      {:u, 16} ->
-        {:ok, :VIPS_FORMAT_USHORT}
-
-      {:s, 16} ->
-        {:ok, :VIPS_FORMAT_SHORT}
-
-      {:u, 32} ->
-        {:ok, :VIPS_FORMAT_UINT}
-
-      {:s, 32} ->
-        {:ok, :VIPS_FORMAT_INT}
-
-      # 32 bits in libvips, long is not supported
-      {:u, 64} ->
-        {:ok, :VIPS_FORMAT_UINT}
-
-      # 32 bits in libvips, long is not supported
-      {:s, 64} ->
-        {:ok, :VIPS_FORMAT_INT}
-
-      {:f, 32} ->
-        {:ok, :VIPS_FORMAT_FLOAT}
-
-      {:f, 64} ->
-        {:ok, :VIPS_FORMAT_DOUBLE}
-
-      other ->
-        {:error, "Cannot convert this data type to an image. Found #{inspect(other)}"}
-    end
-  end
-
   @dialyzer {:nowarn_function, {:nx_format, 1}}
 
+  @doc """
+  Returns the `Image` format type for an
+  `Nx` format type.
+
+  `Image1 uses the same type formats as `Nx` so
+  this function is more a validation than a
+  conversion.
+
+  ### Arguments
+
+  * Any `Nx` type like `{:u, 8}`.
+
+  ### Returns
+
+  * `{:ok, band_format}` or
+
+  * `{:error, reason}`
+
+  """
+  def image_format_from_nx(nx_type) do
+    validate(nx_type)
+  end
+
+  @doc """
+  Returns the `Nx` format type for an
+  `Image` of image format type.
+
+  `Image` uses the same type formats as `Nx` so
+  this function is more a validation than a
+  conversion.
+
+  ### Arguments
+
+  * Any `t:Vimage.t/0` of format in the list
+    returned by `Image.BandFormat.known_band_formats/0`.
+
+  ### Returns
+
+  * `{:ok, band_format}` or
+
+  * `{:error, reason}`
+
+  """
   def nx_format(%Vimage{} = image) do
     nx_format(Vix.Vips.Image.format(image))
   end
 
   def nx_format(format) when is_atom(format) do
-    case format do
-      :VIPS_FORMAT_UCHAR ->
-        {:ok, {:u, 8}}
-
-      :VIPS_FORMAT_CHAR ->
-        {:ok, {:s, 8}}
-
-      :VIPS_FORMAT_USHORT ->
-        {:ok, {:u, 16}}
-
-      :VIPS_FORMAT_SHORT ->
-        {:ok, {:s, 16}}
-
-      :VIPS_FORMAT_UINT ->
-        {:ok, {:u, 32}}
-
-      :VIPS_FORMAT_INT ->
-        {:ok, {:s, 32}}
-
-      :VIPS_FORMAT_FLOAT ->
-        {:ok, {:f, 32}}
-
-      :VIPS_FORMAT_DOUBLE ->
-        {:ok, {:f, 64}}
-
-      other ->
-        {:error, "Cannot convert this image type to binary. Found #{inspect(other)}"}
+    case Map.get(inverse_band_format_map(), format) do
+      nil ->
+        {:error, "Invalid band format. Found #{inspect(format)}"}
+      format ->
+        {:ok, format}
     end
   end
 end
