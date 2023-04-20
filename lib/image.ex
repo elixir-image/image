@@ -1367,6 +1367,12 @@ defmodule Image do
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
 
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`.
+
   ### Notes
 
   Any image can have either 1 band or `n` bands, where `n`
@@ -1401,7 +1407,7 @@ defmodule Image do
 
   def if_then_else(%Vimage{} = condition_image, if_color, else_image_or_color)
       when is_color(if_color) do
-    with {:ok, [hex: _hex, rgb: if_color]} <- Color.rgb_color(if_color),
+    with {:ok, if_color} <- Color.validate_color(if_color),
          {:ok, if_image} <- new(condition_image, color: if_color) do
       if_then_else(condition_image, if_image, else_image_or_color)
     end
@@ -1409,9 +1415,73 @@ defmodule Image do
 
   def if_then_else(%Vimage{} = condition_image, if_image_or_color, else_color)
       when is_color(else_color) do
-    with {:ok, [hex: _hex, rgb: else_color]} <- Color.rgb_color(else_color),
+    with {:ok, else_color} <- Color.validate_color(else_color),
          {:ok, else_image} <- new(condition_image, color: else_color) do
       if_then_else(condition_image, if_image_or_color, else_image)
+    end
+  end
+
+  @doc """
+  Scans the condition image cond and uses it to select
+  pixels from either the `if_image` or the `else_image`.
+  Raise an exception on error.
+
+  Non-zero means copy a pixel from `if_image`, `0` means
+  copy a pixel from `else_image`.
+
+  ### Arguments
+
+  * `condition_image` is any image. Typically it is an image
+    formed by the relation operations such as `Image.Math.greater_than/2`.
+
+  * `if_image_or_color` is either an `t:Vimage.t/0` or
+    a `t:Image.Color.t/0`. If a color is provided then
+    an image is constructed with the same shape as `condition_image`
+    filled with the provided color.
+
+  * `else_image_or_color` is either an `t:Vimage.t/0` or
+    a `t:Image.Color.t/0`. If a color is provided then
+    an image is constructed with the same shape as `condition_image`
+    filled with the provided color.
+
+  ### Returns
+
+  * `image` or
+
+  * raises an exception.
+
+  ### Notes
+
+  Any image can have either 1 band or `n` bands, where `n`
+  is the same for all the non-1-band images. Single band
+  images are then effectively copied to make n-band images.
+
+  Images `if_image` and `else_image` are cast up to the
+  smallest common format. The `condition_image` is cast to
+  `{:u, 8}`.
+
+  If the images differ in size, the smaller images are
+  enlarged to match the largest by adding zero pixels along
+  the bottom and right.
+
+  The output image is calculated pixel by pixel as:
+
+      (condition_image / 255) * if_image + (1 - condition_image / 255) *`else_image`
+
+  """
+  @doc subject: "Operation", since: "0.30.0"
+
+  @spec if_then_else!(
+          condition_image :: Vimage.t(),
+          if_image :: image_or_color(),
+          else_image :: image_or_color()
+        ) ::
+          Vimage.t() | no_return()
+
+  def if_then_else!(%Vimage{} = condition_image, if_color, else_image_or_color) do
+    case if_then_else(condition_image, if_color, else_image_or_color) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -1543,9 +1613,11 @@ defmodule Image do
   end
 
   def chroma_mask(%Vimage{} = image, %{greater_than: greater_than, less_than: less_than}) do
-    with {:ok, greater} <- Image.Math.greater_than(image, greater_than),
-         {:ok, less} = Image.Math.less_than(image, less_than),
-         {:ok, color_mask} = Image.Math.boolean_and(greater, less),
+    alias Image.Math
+
+    with {:ok, greater} <- Math.greater_than(image, greater_than),
+         {:ok, less} = Math.less_than(image, less_than),
+         {:ok, color_mask} = Math.boolean_and(greater, less),
          {:ok, mask} = Vix.Vips.Operation.bandbool(color_mask, :VIPS_OPERATION_BOOLEAN_AND) do
       Vix.Vips.Operation.invert(mask)
     end
@@ -1674,9 +1746,9 @@ defmodule Image do
 
   def chroma_key(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.ChromaKey.validate_options(options),
-         {:ok, mask} <- chroma_mask(image, options) do
-      image = if has_alpha?(image), do: Operation.flatten!(image), else: image
-      Operation.bandjoin([image, mask])
+         {:ok, mask} <- chroma_mask(image, options),
+         {:ok, flattened} <- flatten(image) do
+      Operation.bandjoin([flattened, mask])
     end
   end
 
@@ -4161,6 +4233,156 @@ defmodule Image do
   end
 
   @doc """
+  Replace one color in an image with another.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  With the exception of the option `:replace_with`, the
+  options for specifying the color or color range
+  to be replaced are passed to `Image.chroma_mask/2`.
+
+  * `:replace_with` is the replacement color.  This can be specified as
+    a single integer which wil be applied to all bands, or a
+    list of integers representing the color for each band. The
+    color can also be supplied as a CSS color name as a string or
+    atom. For example: `:misty_rose`. It can also be supplied as a
+    hex string of the form `#rrggbb`. The default is `:black`.
+    See also `Image.Color.color_map/0` and `Image.Color.validate_color/1`.
+
+  There are two strategies available for selecting the
+  color or color range to be replaced: the
+  thresholding strategy (default) and the color
+  range strategy.
+
+  #### Threshold strategy
+
+  * `:color` is an RGB color which represents the the
+    chroma key to be selected. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name. The default is
+    `:auto` in which the average of the top left `10x10`
+    pixels of the image is used.
+
+  * `:threshold`is a positive integer to indicate the
+    threshold around `:color` when calculating the mask.
+    The default is `20`.
+
+  #### Color range strategy
+
+  * `:greater_than` is an RGB color which represents the upper
+     end of the color range to be selected. The color can be an
+     integer between `0..255`, a three-element list of
+     integers representing an RGB color or an atom
+     representing a CSS color name.
+
+  * `:less_than` is an RGB color which represents the lower
+     end of the color range to be selected. The color can be an
+     integer between `0..255`, a three-element list of
+     integers representing an RGB color or an atom
+     representing a CSS color name.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`.
+
+  """
+  @spec replace_color(Vimage.t(), ChromaKey.chroma_key_options() | map() | :replace_with) ::
+   {:ok, Vimage.t()} | {:error, error_message()}
+
+  def replace_color(%Vimage{} = image, options \\ []) do
+    {to_color, options} = Keyword.pop(options, :replace_with, :black)
+
+    with {:ok, to_color} <- Color.validate_color(to_color),
+         {:ok, chroma_mask} <- chroma_mask(image, options),
+         {:ok, inverted} <- Operation.invert(chroma_mask) do
+      if_then_else(inverted, to_color, image)
+    end
+  end
+
+  @doc """
+  Replace one color in an image with another or
+  raises an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  With the exception of the option `:replace_with`, the
+  options for specifying the color or color range
+  to be replaced are passed to `Image.chroma_mask/2`.
+
+  * `:replace_with` is the replacement color.  This can be specified as
+    a single integer which wil be applied to all bands, or a
+    list of integers representing the color for each band. The
+    color can also be supplied as a CSS color name as a string or
+    atom. For example: `:misty_rose`. It can also be supplied as a
+    hex string of the form `#rrggbb`. The default is `:black`.
+    See also `Image.Color.color_map/0` and `Image.Color.validate_color/1`.
+
+  There are two strategies available for selecting the
+  color or color range to be replaced: the
+  thresholding strategy (default) and the color
+  range strategy.
+
+  #### Threshold strategy
+
+  * `:color` is an RGB color which represents the the
+    chroma key to be selected. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name. The default is
+    `:auto` in which the average of the top left `10x10`
+    pixels of the image is used.
+
+  * `:threshold`is a positive integer to indicate the
+    threshold around `:color` when calculating the mask.
+    The default is `20`.
+
+  #### Color range strategy
+
+  * `:greater_than` is an RGB color which represents the upper
+     end of the color range to be selected. The color can be an
+     integer between `0..255`, a three-element list of
+     integers representing an RGB color or an atom
+     representing a CSS color name.
+
+  * `:less_than` is an RGB color which represents the lower
+     end of the color range to be selected. The color can be an
+     integer between `0..255`, a three-element list of
+     integers representing an RGB color or an atom
+     representing a CSS color name.
+
+  ### Returns
+
+  * `image` or
+
+  * raises an exception.
+
+  """
+  @spec replace_color!(Vimage.t(), ChromaKey.chroma_key_options() | map() | :replace_with) ::
+   Vimage.t() | no_return()
+
+  def replace_color!(%Vimage{} = image, options \\ []) do
+    case replace_color(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Trims an image to the bounding box of the non-background
   area.
 
@@ -4213,11 +4435,11 @@ defmodule Image do
       background = maybe_calculate_color(image, options.background)
       threshold = options.threshold
 
-      case Vix.Vips.Operation.find_trim(image, background: background, threshold: threshold) do
+      case Operation.find_trim(image, background: background, threshold: threshold) do
         {:ok, {_left, _top, 0, 0}} ->
           {:error, :uncropped}
 
-        {:ok, {left, top, width, height, _other}} ->
+        {:ok, {left, top, width, height}} ->
           Image.crop(image, left, top, width, height)
 
         error ->
@@ -4644,7 +4866,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec autorotate(image :: Vimage.t()) ::
-          {:ok, {Vimage.t(), Keyword.t()}} | {:error, error_message()}
+          {:ok, {Vimage.t(), map()}} | {:error, error_message()}
 
   def autorotate(%Vimage{} = image) do
     case Operation.autorot(image) do

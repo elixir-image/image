@@ -2,15 +2,23 @@
 
 ## Image 0.30.0
 
-This is the changelog for Image version 0.30.0 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.30.0 released on April 20th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
 * Add documentation for `Image.with_colorspace/3`.
 
+* Fix `Image.trim/2` reflecting the updated `vix` return data structure.
+
+* Fix `Image.if_then_else/3` to validate color options correctly.
+
 ### Enhancements
 
 * Adds `Image.cast/2` to convert the band format of an image to a different numeric type.
+
+* Adds `Image.replace_color/2` and `Image.replace_color!/2`.
+
+* Adds `Image.if_then_else!/3`.
 
 ## Image 0.29.0
 

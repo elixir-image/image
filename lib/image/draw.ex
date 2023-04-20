@@ -914,7 +914,7 @@ defmodule Image.Draw do
 
   defp flood(%MutableImage{} = image, left, top, color, equal) do
     case MutableOperation.draw_flood(image, color, left, top, equal: equal) do
-      {:ok, {box}} when is_list(box) -> {:ok, {image, box}}
+      {:ok, {%{} = box}} -> {:ok, {image, box}}
       other -> other
     end
   end
