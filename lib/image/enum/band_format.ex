@@ -102,7 +102,7 @@ defmodule Image.BandFormat do
   Returns the `Image` format type for an
   `Nx` format type.
 
-  `Image1 uses the same type formats as `Nx` so
+  `Image` uses the same type formats as `Nx` so
   this function is more a validation than a
   conversion.
 

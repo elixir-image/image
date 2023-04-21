@@ -2105,9 +2105,10 @@ defmodule Image do
   ### Note
 
   If `color` is provided then the alpha layer determines
-  the level of transparency of `image`. White (RGB color
-  255) means that `imaage` will be opaque.  Black (the
-  default, RGB 0) means that `image` will be transparent.
+  the level of transparency of `image`.
+
+  White (RGB color 255) means that `image` will be opaque.
+  Black (the default, RGB 0) means that `image` will be transparent.
   Other colors will determine the level of transparency
   between the two.
 
@@ -2167,9 +2168,10 @@ defmodule Image do
   ### Note
 
   If `color` is provided then the alpha layer determines
-  the level of transparency of `image`. White (RGB color
-  255) means that `imaage` will be opaque.  Black (the
-  default, RGB 0) means that `image` will be transparent.
+  the level of transparency of `image`.
+
+  White (RGB color 255) means that `image` will be opaque.
+  Black (the default, RGB 0) means that `image` will be transparent.
   Other colors will determine the level of transparency
   between the two.
 
@@ -4295,6 +4297,8 @@ defmodule Image do
   * `{:error, reason}`.
 
   """
+  @doc since: "0.30.0", subject: "Color"
+
   @spec replace_color(Vimage.t(), ChromaKey.chroma_key_options() | map() | :replace_with) ::
    {:ok, Vimage.t()} | {:error, error_message()}
 
@@ -4372,6 +4376,8 @@ defmodule Image do
   * raises an exception.
 
   """
+  @doc since: "0.30.0", subject: "Color"
+
   @spec replace_color!(Vimage.t(), ChromaKey.chroma_key_options() | map() | :replace_with) ::
    Vimage.t() | no_return()
 
@@ -6838,9 +6844,9 @@ defmodule Image do
 
   ### Arguments
 
-  * `image_1` is any `t:Vix.Vips.Image.t/0`
+  * `image_1` is any `t:Vix.Vips.Image.t/0`.
 
-  * `image_2` is any `t:Vix.Vips.Image.t/0`
+  * `image_2` is any `t:Vix.Vips.Image.t/0`.
 
   Alternatively, both arguments may be image hashes
   returned by `Image.dhash/1`. Both arguments must
@@ -6890,7 +6896,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vix.Vips.Image.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
     ### Returns
 
@@ -6921,7 +6927,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vix.Vips.Image.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
     ### Returns
 
@@ -6960,7 +6966,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vix.Vips.Image.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
     ### Returns
 
@@ -7005,7 +7011,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
@@ -7036,7 +7042,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
@@ -7061,7 +7067,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
@@ -7136,8 +7142,8 @@ defmodule Image do
   Casts an image from one band format to another.
 
   The band format is the numeric type of each pixel.
-  In the common case of *sRGB` images, the format is
-  `{:u, 8}` meaning unsigned 8-bit vallues.
+  In the common case of `sRGB` images, the format is
+  `{:u, 8}` meaning unsigned 8-bit values.
 
   ### Arguments
 
@@ -7150,9 +7156,11 @@ defmodule Image do
 
   * `{:ok, cast_image}` or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   """
+  @doc since: "0.30.0", subject: "Operation"
+
   @spec cast(Vimage.t(), BandFormat.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def cast(%Vimage{} = image, band_format) do
     with {:ok, band_format} <- BandFormat.validate(band_format) do
@@ -7177,9 +7185,11 @@ defmodule Image do
 
   * `{:ok, image}` or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   """
+  @doc since: "0.29.0", subject: "Operation"
+
   @spec without_alpha_band(Vimage.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})) ::
           {:ok, Vimage.t()} | {:error, error_message}
 
@@ -7213,9 +7223,11 @@ defmodule Image do
 
   * `{:ok, image}` or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   """
+  @doc since: "0.29.0", subject: "Operation"
+
   @spec with_colorspace(Vimage.t(), colorspace :: Interpretation.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})) ::
           {:ok, Vimage.t()} | {:error, error_message}
 
