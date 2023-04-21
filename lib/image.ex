@@ -4303,7 +4303,7 @@ defmodule Image do
 
     with {:ok, to_color} <- Color.validate_color(to_color),
          {:ok, chroma_mask} <- chroma_mask(image, options),
-         {:ok, inverted} <- Operation.invert(chroma_mask) do
+         {:ok, inverted} <- Operation.invert(chroma_mask)do
       if_then_else(inverted, to_color, image)
     end
   end

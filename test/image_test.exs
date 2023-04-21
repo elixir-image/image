@@ -295,4 +295,13 @@ defmodule Image.Test do
     assert Image.bands(Image.new!(20, 20, color: [0, 0, 0, 0])) == 4
     assert Image.bands(Image.new!(20, 20, color: [0, 0, 0])) == 3
   end
+
+  test "Image color replacement" do
+    validate_path = validate_path("green.tiff")
+
+    {:ok, red} = Image.new(20, 20, color: :red)
+    {:ok, replaced} = Image.replace_color(red, color: :red, replace_with: :green)
+
+    assert_images_equal replaced, validate_path
+  end
 end
