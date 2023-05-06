@@ -18,7 +18,7 @@ defmodule Image.Options.WarpPerspective do
   """
   @type warp_perspective_option :: [
           {:background, Color.t() | :average}
-          | {:extend_node, extend_mode()}
+          | {:extend_mode, extend_mode()}
         ]
 
   @typedoc """

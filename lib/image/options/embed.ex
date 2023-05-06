@@ -11,7 +11,7 @@ defmodule Image.Options.Embed do
   """
   @type embed_options :: [
           {:background, Color.t() | :average}
-          | {:extend_node, extend_mode()}
+          | {:extend_mode, extend_mode()}
           | {:x, non_neg_integer() | :center}
           | {:y, non_neg_integer() | :center}
         ]
