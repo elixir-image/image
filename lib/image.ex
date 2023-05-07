@@ -4260,6 +4260,10 @@ defmodule Image do
   options for specifying the color or color range
   to be replaced are passed to `Image.chroma_mask/2`.
 
+  * `:blend` is a boolean indicating if a the replacement
+    should blend at the border of the color replacement.
+    The default is `false`.
+
   * `:replace_with` is the replacement color.  This can be specified as
     a single integer which wil be applied to all bands, or a
     list of integers representing the color for each band. The
