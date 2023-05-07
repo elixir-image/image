@@ -1367,6 +1367,13 @@ defmodule Image do
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
 
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:blend` is a boolean indicating if a the operation should blend
+    smoothly between `then` and `else` images. The default is `false`.
+
   ### Returns
 
   * `{:ok, image}` or
@@ -1397,27 +1404,31 @@ defmodule Image do
   @spec if_then_else(
           condition_image :: Vimage.t(),
           if_image :: image_or_color(),
-          else_image :: image_or_color()
+          else_image :: image_or_color(),
+          options :: Keyword.t()
         ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def if_then_else(%Vimage{} = condition_image, %Vimage{} = if_image, %Vimage{} = else_image) do
-    Operation.ifthenelse(condition_image, if_image, else_image)
+  def if_then_else(condition_image, if_image_or_color, else_image_or_color, options \\ [])
+
+  def if_then_else(%Vimage{} = condition_image, %Vimage{} = if_image, %Vimage{} = else_image, options) do
+    blend = Keyword.get(options, :blend, false)
+    Operation.ifthenelse(condition_image, if_image, else_image, blend: blend)
   end
 
-  def if_then_else(%Vimage{} = condition_image, if_color, else_image_or_color)
+  def if_then_else(%Vimage{} = condition_image, if_color, else_image_or_color, options)
       when is_color(if_color) do
     with {:ok, if_color} <- Color.validate_color(if_color),
          {:ok, if_image} <- new(condition_image, color: if_color) do
-      if_then_else(condition_image, if_image, else_image_or_color)
+      if_then_else(condition_image, if_image, else_image_or_color, options)
     end
   end
 
-  def if_then_else(%Vimage{} = condition_image, if_image_or_color, else_color)
+  def if_then_else(%Vimage{} = condition_image, if_image_or_color, else_color, options)
       when is_color(else_color) do
     with {:ok, else_color} <- Color.validate_color(else_color),
          {:ok, else_image} <- new(condition_image, color: else_color) do
-      if_then_else(condition_image, if_image_or_color, else_image)
+      if_then_else(condition_image, if_image_or_color, else_image, options)
     end
   end
 
@@ -4304,11 +4315,15 @@ defmodule Image do
 
   def replace_color(%Vimage{} = image, options \\ []) do
     {to_color, options} = Keyword.pop(options, :replace_with, :black)
+    {blend, options} = Keyword.pop(options, :blend, false)
+    xres = Vix.Vips.Image.xres(image)
+    yres = Vix.Vips.Image.yres(image)
 
     with {:ok, to_color} <- Color.validate_color(to_color),
          {:ok, chroma_mask} <- chroma_mask(image, options),
-         {:ok, inverted} <- Operation.invert(chroma_mask)do
-      if_then_else(inverted, to_color, image)
+         {:ok, inverted} <- Operation.invert(chroma_mask),
+         {:ok, blend} = if_then_else(inverted, to_color, image, blend: blend) do
+      Operation.copy(blend, xres: xres, yres: yres)
     end
   end
 
