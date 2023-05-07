@@ -1,6 +1,6 @@
 defmodule Image.Options.Meme do
   @moduledoc """
-  Options and option validation for `Image.blur/2`.
+  Options and option validation for `Image.meme/2`.
 
   """
 
