@@ -6,11 +6,11 @@ This is the changelog for Image version 0.31.0 released on May 7th, 2023.  For o
 
 ### Bug Fixes
 
-* Fix resolution of the image returned from `Image.replace_color/2`
+* Fix resolution of the image returned from `Image.replace_color/2`. Thanks to @tielur for the report. Closes #78.
 
 ### Enhancements
 
-* Add `:blend` option to `Image.if_then_else/4`. When set to true with smoothly blend between the `then` and `else`` images. The default is `false`.
+* Add `:blend` option to `Image.if_then_else/4`. When set to true with smoothly blend between the `then` and `else`  images. The default is `false`.
 
 ## Image 0.30.0
 
