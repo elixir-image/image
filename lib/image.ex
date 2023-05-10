@@ -4397,7 +4397,7 @@ defmodule Image do
   """
   @doc since: "0.30.0", subject: "Color"
 
-  @spec replace_color!(Vimage.t(), ChromaKey.chroma_key_options() | map() | :replace_with) ::
+  @spec replace_color!(Vimage.t(), ChromaKey.chroma_key_options() | [{:replace_with, Color.t()}]) ::
    Vimage.t() | no_return()
 
   def replace_color!(%Vimage{} = image, options \\ []) do
