@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.31.1
+
+This is the changelog for Image version 0.31.1 released on May 10th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix spec for `Image.replace_color/2` and `Image.replace_color!/2`. Thanks to @tielur. Closes #79.
+
 ## Image 0.31.0
 
 This is the changelog for Image version 0.31.0 released on May 7th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
