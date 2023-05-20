@@ -876,10 +876,13 @@ defmodule Image.Text do
 
     {:ok, {image, _flags}} = Operation.svgload_buffer(svg)
 
-    {:ok, {x, y, width, height}} =
-      Operation.find_trim(image, background: @black, threshold: 10.0)
+    case Operation.find_trim(image, background: @black, threshold: 10.0) do
+      {:ok, {_x, _y, width, height}} when width == 0 or height == 0 ->
+        {:ok, image}
 
-    Image.crop(image, x, y, width, height)
+      {:ok, {x, y, width, height}} ->
+        Image.crop(image, x, y, width, height)
+    end
   end
 
   @points_to_pixels 1.333
