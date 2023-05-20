@@ -13,6 +13,8 @@ on:
 # Sets the ENV `MIX_ENV` to `test` for running tests
 env:
   MIX_ENV: test
+  EVISION_PREFER_PRECOMPILED: true
+  VIX_COMPILATION_MODE: PLATFORM_PROVIDED_LIBVIPS
 
 permissions:
   contents: read
