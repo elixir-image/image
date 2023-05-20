@@ -8,6 +8,8 @@ This is the changelog for Image version 0.31.2 released on May 20th, 2023.  For 
 
 * Fix `Image.Text.text/2` when the text fill color is black (within a tolerance). When the text image is created, `Vix.Vips.Operation.find_trim/2` is called to trim the image assuming a black background. Since the fill color is also black, the resulting trim is 0 pixels wide and 0 pixels high. When then cropping the image, the crop fails because the crop size is invalid.  The fix is to not crop if there is no trim detected. Thanks to @tielur for the report. Closes #84.
 
+* Fix specification for `Image.compose/3` to remove dialyzer error (and include test case). Thanks to @tielur for the report. Closes #85.
+
 ## Image 0.31.1
 
 This is the changelog for Image version 0.31.1 released on May 10th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

@@ -12,7 +12,7 @@ defmodule Image.Options.Compose do
   Image compoositions options
 
   """
-  @type t :: [composition_option(), ...]
+  @type t :: list(composition_option())
 
   @typedoc """
   When composing an image on a base image, these
@@ -63,15 +63,14 @@ defmodule Image.Options.Compose do
     calculated. The default is `:bottom`.
 
   """
-  @type composition_option :: [
-          {:x, non_neg_integer() | nil | :left | :center | :right},
-          {:y, non_neg_integer() | nil | :top | :middle | :bottom},
-          {:dx, integer()},
-          {:dy, integer()},
-          {:blend_mode, Image.BlendMode.t()},
-          {:x_baseline, nil | :left | :center | :right},
-          {:y_baseline, nil | :top | :middle | :bottom}
-        ]
+  @type composition_option ::
+          {:x, non_neg_integer() | nil | :left | :center | :right}
+          | {:y, non_neg_integer() | nil | :top | :middle | :bottom}
+          | {:dx, integer()}
+          | {:dy, integer()}
+          | {:blend_mode, Image.BlendMode.t()}
+          | {:x_baseline, nil | :left | :center | :right}
+          | {:y_baseline, nil | :top | :middle | :bottom}
 
   @doc false
   def get_x(image, prev_x, prev_width, x, dx, baseline) when is_function(x, 6) do

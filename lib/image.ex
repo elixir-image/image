@@ -40,27 +40,6 @@ defmodule Image do
   """
   @type image_hash :: binary()
 
-  # Default radius of rounded corners
-  @default_round_corner_radius 50
-
-  # When pixelating an image resize to this scale
-  # the scale up by the inverse using nearest_neighbour
-  # scaling
-  @pixelate_scale 0.05
-
-  # The default sigma applied to a gaussian blur.
-  # Used by blur/3 and feather/2
-  @default_blur_sigma Options.Blur.default_blur_sigma()
-
-  # if the ratio between width and height differs
-  # by less than this amount, consider the image
-  # to be square
-  @square_when_ratio_less_than 0.0
-
-  # The percent from absolute black and
-  # absolute white in autolevel/1
-  @level_trim_percent 0.3
-
   @typedoc """
   The valid sources of image data when opening an
   image.
@@ -184,6 +163,41 @@ defmodule Image do
 
   """
   @type y_location :: integer() | :top | :middle | :bottom
+
+  @typedoc """
+  A list of images or images with placement options used in
+  Image.compose/2.
+
+  """
+  @type composition_list :: [composition, ...]
+
+  @typedoc """
+  A composition can be a simple image, or an image with
+  associated composition options.
+
+  """
+  @type composition :: Vimage.t() | {Vimage.t(), Options.Compose.t()}
+
+  # Default radius of rounded corners
+  @default_round_corner_radius 50
+
+  # When pixelating an image resize to this scale
+  # the scale up by the inverse using nearest_neighbour
+  # scaling
+  @pixelate_scale 0.05
+
+  # The default sigma applied to a gaussian blur.
+  # Used by blur/3 and feather/2
+  @default_blur_sigma Options.Blur.default_blur_sigma()
+
+  # if the ratio between width and height differs
+  # by less than this amount, consider the image
+  # to be square
+  @square_when_ratio_less_than 0.0
+
+  # The percent from absolute black and
+  # absolute white in autolevel/1
+  @level_trim_percent 0.3
 
   @doc """
   Guards whether the given struct is an image type
@@ -2269,7 +2283,7 @@ defmodule Image do
 
   When `overlay_image` is an `image_list`, each entry in
   the list is either a `t:Vix.Vips.Image.t/0` or a
-  `t:composition/0`. A composition supports the specification
+  `t:Image.composition_list/0`. A composition supports the specification
   of how a particular image is composed onto the base image.
 
   * `:x` describes the absolute `x` offset on the
@@ -2351,7 +2365,7 @@ defmodule Image do
   """
   @doc subject: "Operation"
 
-  @spec compose(base_image :: Vimage.t(), overlay_image :: Vimage.t(), options :: Keyword.t()) ::
+  @spec compose(base_image :: Vimage.t(), overlay_image :: Vimage.t(), options :: Options.Compose.t()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def compose(base_image, overlay_image_or_images, options \\ [])
@@ -2367,7 +2381,7 @@ defmodule Image do
     end
   end
 
-  @spec compose(base_image :: Vimage.t(), image_list :: [Vimage.t(), ...], options :: Keyword.t()) ::
+  @spec compose(base_image :: Vimage.t(), image_list :: composition_list(), options :: Options.Compose.t()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def compose(%Vimage{} = base_image, image_list, _options) when is_list(image_list) do
@@ -2458,7 +2472,7 @@ defmodule Image do
 
   When `overlay_image` is an `image_list`, each entry in
   the list is either a `t:Vix.Vips.Image.t/0` or a
-  `t:composition/0`. A composition supports the specification
+  `t:Image.composition_list/0`. A composition supports the specification
   of how a particular image is composed onto the base image.
 
   * `:x` describes the absolute `x` offset on the
@@ -2540,7 +2554,7 @@ defmodule Image do
   """
   @doc subject: "Operation"
 
-  @spec compose!(base_image :: Vimage.t(), overlay_image :: Vimage.t(), options :: Keyword.t()) ::
+  @spec compose!(base_image :: Vimage.t(), overlay_image :: Vimage.t(), options :: Options.Compose.t()) ::
           Vimage.t() | no_return()
 
   def compose!(base_image, image_or_image_list, options \\ [])
@@ -2552,7 +2566,7 @@ defmodule Image do
     end
   end
 
-  @spec compose!(base_image :: Vimage.t(), image_list :: [Vimage.t(), ...], options :: Keyword.t()) ::
+  @spec compose!(base_image :: Vimage.t(), image_list :: composition_list(), options :: Options.Compose.t()) ::
           Vimage.t() | no_return()
 
   def compose!(%Vimage{} = base_image, image_list, options) when is_list(image_list) do
