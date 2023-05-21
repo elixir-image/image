@@ -825,6 +825,109 @@ defmodule Image do
   end
 
   @doc """
+  Returns an image created from an SVG string.
+
+  ### Arguments
+
+  * `svg` is an SVG string.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:access` is the file access mode, either `:random`
+    or `:sequential`. The default is `:random`.
+    When `:sequential`, `Image` (via `Vix`) is able
+    to support streaming transformations and optimise
+    memory usage more effectively. However `:sequential`
+    also means that some operations cannot be completed
+    because they would require non-sequential access to
+    the image. In these cases, `:random` access is required.
+
+  * `:fail_on` sets the error level at which image
+    loading and decoding will stop. The default is `:none`.
+    Each error state implies all the states before it such
+    that `:error` implies also `:truncated`.
+
+  * `:scale` will scale the image on load. The value is
+    a number greater than `0` and less than or equal
+    to `1024` with a default of `1.0` meaning no scaling
+    on load. Numbers less than `1.0` scale the image down
+    so that a scale of `0.5` will halve the image size on
+    load.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc subject: "Load and save", since: "0.32.0"
+
+  @spec from_svg(svg :: binary(), options :: Open.image_open_options()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def from_svg(svg, options \\ []) when is_binary(svg) do
+    case Operation.svgload_buffer(svg, options) do
+      {:ok, {image, _flags}} -> {:ok, image}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Returns an image created from an SVG string or
+  raises an exception.
+
+  ### Arguments
+
+  * `svg` is an SVG string.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:access` is the file access mode, either `:random`
+    or `:sequential`. The default is `:random`.
+    When `:sequential`, `Image` (via `Vix`) is able
+    to support streaming transformations and optimise
+    memory usage more effectively. However `:sequential`
+    also means that some operations cannot be completed
+    because they would require non-sequential access to
+    the image. In these cases, `:random` access is required.
+
+  * `:fail_on` sets the error level at which image
+    loading and decoding will stop. The default is `:none`.
+    Each error state implies all the states before it such
+    that `:error` implies also `:truncated`.
+
+  * `:scale` will scale the image on load. The value is
+    a number greater than `0` and less than or equal
+    to `1024` with a default of `1.0` meaning no scaling
+    on load. Numbers less than `1.0` scale the image down
+    so that a scale of `0.5` will halve the image size on
+    load.
+
+  ### Returns
+
+  * `image` or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Load and save", since: "0.32.0"
+
+  @spec from_svg!(svg :: binary(), options :: Open.image_open_options()) ::
+          Vimage.t() | no_return()
+
+  def from_svg!(svg, options \\ []) when is_binary(svg) do
+    case from_svg(svg, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Returns an image created from an in-memory binary representation
   of an image.
 
@@ -855,6 +958,39 @@ defmodule Image do
     with {:ok, options} <- Options.Open.validate_options(options) do
       options = Keyword.delete(options, :access)
       Vimage.new_from_buffer(binary, options)
+    end
+  end
+
+  @doc """
+  Returns an image created from an in-memory binary representation
+  of an image or raises an exception.
+
+  * `binary` is a binary representation of a formatted image
+    including `.jpg`, `.png`, `.webp` and `.svg` binary data.
+
+  ### Arguments
+
+  * `binary` is a binary representation of a formatted image
+
+  * `options` is a keyword list of options. See `Image.open/2`
+    for the list of applicable options.
+
+  ### Returns
+
+  * `image` or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Load and save", since: "0.25.0"
+
+  @spec from_binary!(binary :: binary(), options :: Open.image_open_options()) ::
+          Vimage.t() | no_return()
+
+  def from_binary!(binary, options \\ []) when is_binary(binary) do
+    case from_binary(binary, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -944,39 +1080,6 @@ defmodule Image do
 
   def from_kino!(%{data: binary, width: width, height: height, format: :rgb}, options \\ []) do
     case from_kino(%{data: binary, width: width, height: height, format: :rgb}, options) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  @doc """
-  Returns an image created from an in-memory binary representation
-  of an image or raises an exception.
-
-  * `binary` is a binary representation of a formatted image
-    including `.jpg`, `.png`, `.webp` and `.svg` binary data.
-
-  ### Arguments
-
-  * `binary` is a binary representation of a formatted image
-
-  * `options` is a keyword list of options. See `Image.open/2`
-    for the list of applicable options.
-
-  ### Returns
-
-  * `image` or
-
-  * raises an exception.
-
-  """
-  @doc subject: "Load and save", since: "0.25.0"
-
-  @spec from_binary!(binary :: binary(), options :: Open.image_open_options()) ::
-          Vimage.t() | no_return()
-
-  def from_binary!(binary, options \\ []) when is_binary(binary) do
-    case from_binary(binary, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
