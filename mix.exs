@@ -23,7 +23,7 @@ defmodule Image.MixProject do
       preferred_cli_env: preferred_cli_env(),
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
-        plt_add_apps: ~w(mix nx plug evision bumblebee)a
+        plt_add_apps: ~w(mix nx plug evision bumblebee ex_unit)a
       ],
       compilers: Mix.compilers()
     ]
