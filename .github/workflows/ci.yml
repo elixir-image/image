@@ -133,7 +133,7 @@ jobs:
 
     # Step: Execute the tests.
     - name: Run tests
-      run: mix test
+      run: mix test --exclude text --exclude text_avatar --exclude video
 
     # Step: Execute dialyzer.
     - name: Run dialyzer

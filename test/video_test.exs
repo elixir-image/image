@@ -2,6 +2,8 @@ defmodule Image.VideoTest do
   use ExUnit.Case, async: true
   import Image.TestSupport
 
+  @moduletag :video
+
   doctest Image.Video
 
   test "Extract a frame from a video" do

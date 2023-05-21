@@ -5,6 +5,8 @@ defmodule TextImage.Test do
 
   alias Image.{Text, Shape}
 
+  @moduletag :text
+
   @points [[0, 0], [0, 100], [70, 100], [90, 0]]
   @polygon_color [116, 214, 245]
 

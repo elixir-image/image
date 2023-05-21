@@ -425,7 +425,7 @@ if Image.evision_configured?() do
 
     ### Examples
 
-        iex> {:ok, video} = Image.Video.open "./test/support/video/video_sample.mp4"
+        iex> {:ok, video} = Image.Video.open("./test/support/video/video_sample.mp4")
         iex> {:ok, _image} = Image.Video.seek(video, frame: 0)
         iex> {:ok, _image} = Image.Video.seek(video, millisecond: 1_000)
         iex> Image.Video.seek(video, frame: -1)
@@ -610,7 +610,7 @@ if Image.evision_configured?() do
 
     ### Examples
 
-        iex> {:ok, video} = Image.Video.open "./test/support/video/video_sample.mp4"
+        iex> {:ok, video} = Image.Video.open("./test/support/video/video_sample.mp4")
         iex> {:ok, _image} = Image.Video.image_from_video(video)
         iex> {:ok, _image} = Image.Video.image_from_video(video, frame: 0)
         iex> {:ok, _image} = Image.Video.image_from_video(video, millisecond: 1_000)

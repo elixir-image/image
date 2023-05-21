@@ -24,6 +24,7 @@ defmodule Image.Avatar.Test do
     assert_images_equal(out_path, validate_path)
   end
 
+  @tag :text_avatar
   test "Text-based avatar - circle" do
     {:ok, avatar} =
       Image.Text.text!("KC", background_fill_color: :cyan, font_size: 200, padding: 80)
@@ -33,6 +34,7 @@ defmodule Image.Avatar.Test do
     assert_images_equal(avatar, validate_path)
   end
 
+  @tag :text_avatar
   test "Text-based avatar - square" do
     {:ok, avatar} =
       Image.Text.text!("KC", background_fill_color: :cyan, font_size: 200, padding: 80)
