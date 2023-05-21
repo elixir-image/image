@@ -130,6 +130,14 @@ defmodule Image do
   @type aspect :: :landscape | :portrait | :square
 
   @typedoc """
+  The level of transparency for an alpha band
+  where `0` means fully opaque and `255` means
+  fully transparent.
+
+  """
+  @type transparency :: 0..255 | :opaque | :transparent
+
+  @typedoc """
   An image bounding box being a four element list
   of 2-tuples representing the points of a rectangle
   in the order top left -> top right -> bottom right ->
@@ -198,6 +206,12 @@ defmodule Image do
   # The percent from absolute black and
   # absolute white in autolevel/1
   @level_trim_percent 0.3
+
+  # Representing an opque alpha band
+  @opaque_ 0
+
+  # Representing a transparent alpha band
+  @transparent 255
 
   @doc """
   Guards whether the given struct is an image type
@@ -326,7 +340,7 @@ defmodule Image do
         iex> {:ok, _image} = Image.new(100, 100, color: :dark_slate_blue)
 
         # 100x100 pixel green image, fully transparent
-        iex> {:ok, _image} = Image.new(100, 100, color: [0, 255, 0, 1], bands: 4)
+        iex> {:ok, _image} = Image.new(100, 100, color: [0, 255, 0, 255], bands: 4)
 
   """
   @doc subject: "Load and save"
@@ -2221,24 +2235,12 @@ defmodule Image do
 
   OR
 
-  * `:color` which defines the color of the alpha
-    image. This can be specified as a single integer
-    which will be applied to all bands, or a list of
-    integers representing the color for each
-    band. The default is `0`, meaning black. The color
-    can also be supplied as a CSS color name as a
-    string or atom. For example: `:misty_rose`. See
-    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
-
-  ### Note
-
-  If `color` is provided then the alpha layer determines
-  the level of transparency of `image`.
-
-  White (RGB color 255) means that `image` will be opaque.
-  Black (the default, RGB 0) means that `image` will be transparent.
-  Other colors will determine the level of transparency
-  between the two.
+  * an integer in the range `0..255` that represents
+    the level of transparency of the alpha band. `0`
+    represents fully opaque and `255` represents fully
+    transparent. The atoms `:opaque` and `:transparent`
+    may also be provided representing the values of
+    `0` and `255` respectively.
 
   ### Returns
 
@@ -2249,7 +2251,7 @@ defmodule Image do
   """
   @doc subject: "Operation", since: "0.13.0"
 
-  @spec add_alpha(image :: Vimage.t(), alpha_image :: Vimage.t() | Image.Color.t()) ::
+  @spec add_alpha(image :: Vimage.t(), alpha_image :: Vimage.t() | transparency()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def add_alpha(%Vimage{} = image, %Vimage{} = alpha_image) do
@@ -2259,16 +2261,24 @@ defmodule Image do
 
       bands(alpha_image) > 1 ->
         {:error, "Alpha image has more than one band"}
+
       true ->
         Vix.Vips.Operation.bandjoin([image, alpha_image])
     end
   end
 
-  def add_alpha(%Vimage{} = image, color) when Color.is_color(color) do
-    with {:ok, color} <- Color.validate_color(color),
-         {:ok, alpha_image} <- Image.new(image, bands: 1, color: color) do
+  def add_alpha(%Vimage{} = image, transparency) when transparency in 0..255 do
+    with {:ok, alpha_image} <- Image.new(image, bands: 1, color: transparency) do
       add_alpha(image, alpha_image)
     end
+  end
+
+  def add_alpha(%Vimage{} = image, :transparent) do
+    add_alpha(image, @transparent)
+  end
+
+  def add_alpha(%Vimage{} = image, :opaque) do
+    add_alpha(image, @opaque_)
   end
 
   @doc """

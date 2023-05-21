@@ -10,6 +10,8 @@ This is the changelog for Image version 0.32.0 released on May ____, 2023.  For 
 
 * Fix specification for `Image.compose/3` to remove dialyzer error (and include test case). Thanks to @tielur for the report. Closes #85.
 
+* Fix `Image.add_alpha/2` when providing a "color". In fact the value should be an integer in the range 0..255 representing the level of transparency of the alpha band. The function spec, documentation and implementation are now changed to accept only an integer (or the atoms :opaque and :transparent).
+
 ### Enhancements
 
 * Adds `Image.from_svg/2` and `Image.from_svg!/2` to provide a more discoverable means of creating an image from an SVG string.
