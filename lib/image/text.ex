@@ -8,8 +8,6 @@ defmodule Image.Text do
   alias Vix.Vips.Operation
   alias Image.Options
 
-  @black [0, 0, 0]
-
   @doc """
   Create a new image from the provided string and
   formatting options.
@@ -854,34 +852,30 @@ defmodule Image.Text do
   end
 
   defp render_text(text, %{autofit: false} = options) do
-    height = Map.get(options, :height, round(options.font_size * 1.5))
-    dy = div(height - options.font_size, 2)
+    height = round(options.font_size * 2.0)
+    width = round(String.length(text) * options.font_size)
 
     svg = """
-    <svg height="#{options.font_size}px">
+    <svg viewBox="0 0 #{width} #{height}" xmlns="http://www.w3.org/2000/svg">
       <style type="text/css">
         svg text {
           font-family: #{options.font};
-          font-size: #{options.font_size};
+          font-size: #{options.font_size}px;
           font-weight: #{options.font_weight};
           fill: #{options.text_fill_color};
           stroke: #{options.text_stroke_color};
           stroke-width: #{options.text_stroke_width};
-          text-anchor: middle;
+          text-anchor: "left";
         }
       </style>
-      <text dy="#{dy}" x="50%" y="50%">#{text}</text>
+      <text x="1" y="50%">#{text}</text>
     </svg>
     """
 
-    {:ok, {image, _flags}} = Operation.svgload_buffer(svg)
-
-    case Operation.find_trim(image, background: @black, threshold: 10.0) do
-      {:ok, {_x, _y, width, height}} when width == 0 or height == 0 ->
-        {:ok, image}
-
-      {:ok, {x, y, width, height}} ->
-        Image.crop(image, x, y, width, height)
+    with {:ok, {image, _flags}} <- Operation.svgload_buffer(svg),
+         {:ok, trim_color} <- find_trim_color(image),
+         {:ok, {x, y, width, height}} <- Operation.find_trim(image, background: trim_color) do
+      Image.crop(image, x, y, width, height)
     end
   end
 
@@ -911,6 +905,11 @@ defmodule Image.Text do
       # provided so we embed in an image of the exact size.
       Operation.embed(joined, x, y, width, height)
     end
+  end
+
+  defp find_trim_color(image) do
+    image = Image.flatten!(image)
+    Image.get_pixel(image, Image.width(image) - 1, Image.height(image) - 1)
   end
 
   defp location_from_options(image, :left, y, width, height) do

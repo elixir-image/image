@@ -5837,7 +5837,9 @@ defmodule Image do
           {:ok, Color.rgb_color()} | {:error, error_message()}
 
   def get_pixel(%Vimage{} = image, x, y) do
-    Operation.getpoint(image, x, y)
+    with {:ok, values} <- Operation.getpoint(image, x, y) do
+      {:ok, Enum.map(values, &round/1)}
+    end
   end
 
   @doc """

@@ -26,21 +26,26 @@ defmodule Image.Avatar.Test do
 
   @tag :text_avatar
   test "Text-based avatar - circle" do
+    validate_path = validate_path("text_avatar.png")
+
     {:ok, avatar} =
       Image.Text.text!("KC", background_fill_color: :cyan, font_size: 200, padding: 80)
       |> Image.avatar(shape: :circle)
+      # |> Image.preview
 
-    validate_path = validate_path("text_avatar.png")
+    # Image.write(avatar, validate_path)
     assert_images_equal(avatar, validate_path)
   end
 
   @tag :text_avatar
   test "Text-based avatar - square" do
+    validate_path = validate_path("text_avatar_square.png")
+
     {:ok, avatar} =
       Image.Text.text!("KC", background_fill_color: :cyan, font_size: 200, padding: 80)
       |> Image.avatar(shape: :square)
+      # |> Image.preview
 
-    validate_path = validate_path("text_avatar_square.png")
     # Image.write!(avatar, validate_path)
     assert_images_equal(avatar, validate_path)
   end

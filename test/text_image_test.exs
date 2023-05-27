@@ -28,9 +28,9 @@ defmodule TextImage.Test do
         opacity: 0.8
       )
 
-    {:ok, explore_new} = Text.text("EXPLORE NEW", font_size: 95, font: "DIN Alternate")
-    {:ok, places} = Text.text("PLACES", font_size: 95, font: "DIN Alternate")
-    {:ok, blowout} = Text.text("BLOWOUT SINGAPORE SALE", font_size: 40, font: "DIN Alternate")
+    {:ok, explore_new} = Text.text("EXPLORE NEW", font_size: 70, font: "DIN Alternate")
+    {:ok, places} = Text.text("PLACES", font_size: 70, font: "DIN Alternate")
+    {:ok, blowout} = Text.text("BLOWOUT SINGAPORE SALE", font_size: 30, font: "DIN Alternate")
 
     {:ok, start_saving} =
       Text.text("START SAVING",
@@ -48,7 +48,9 @@ defmodule TextImage.Test do
       |> Image.compose!(places, x: 260, y: 260)
       |> Image.compose!(blowout, x: 260, y: 340)
       |> Image.compose!(start_saving, x: 260, y: 400)
+      # |> Image.preview()
 
+    # Image.write(final_image, validate_path)
     assert_images_equal(final_image, validate_path)
   end
 
@@ -57,7 +59,7 @@ defmodule TextImage.Test do
 
     {:ok, singapore} =
       Text.text("SINGAPORE",
-        font_size: 250,
+        font_size: 160,
         font: "DIN Alternate",
         padding: base_image,
         text_fill_color: :transparent,
@@ -66,7 +68,9 @@ defmodule TextImage.Test do
       )
 
     {:ok, final_image} = Image.compose(base_image, singapore, x: :center, y: :middle)
+    # Image.preview final_image
 
+    # Image.write(final_image, validate_path)
     assert_images_equal(final_image, validate_path)
   end
 
@@ -75,7 +79,9 @@ defmodule TextImage.Test do
 
     {:ok, singapore} = Text.text("Singapore", font_size: 100, font: "DIN Alternate")
     final_image = Image.compose!(base_image, singapore, x: :center, y: :middle)
+    # Image.preview final_image
 
+    # Image.write(final_image, validate_path)
     assert_images_equal(final_image, validate_path)
   end
 
@@ -90,9 +96,9 @@ defmodule TextImage.Test do
         opacity: 0.8
       )
 
-    {:ok, explore_new} = Text.text("EXPLORE NEW", font_size: 95, font: "DIN Alternate")
-    {:ok, places} = Text.text("PLACES", font_size: 95, font: "DIN Alternate")
-    {:ok, blowout} = Text.text("BLOWOUT SINGAPORE SALE", font_size: 40, font: "DIN Alternate")
+    {:ok, explore_new} = Text.text("EXPLORE NEW", font_size: 70, font: "DIN Alternate")
+    {:ok, places} = Text.text("PLACES", font_size: 70, font: "DIN Alternate")
+    {:ok, blowout} = Text.text("BLOWOUT SINGAPORE SALE", font_size: 30, font: "DIN Alternate")
 
     {:ok, start_saving} =
       Text.text("START SAVING",
@@ -112,7 +118,9 @@ defmodule TextImage.Test do
         {blowout, dy: 20},
         {start_saving, dy: 50}
       ])
+      # |> Image.preview
 
+    # Image.write(final_image, validate_path)
     assert_images_equal(final_image, validate_path)
   end
 
