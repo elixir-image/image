@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.32.1
+
+This is the changelog for Image version 0.32.1 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix generation of images from text when `autofit: false` (the default). In these cases the text image is generated from SVG. The original implementation operated on the basis that the image would be generated with a height and width necessary to contain the text of a given font size. The result is not consistent and is influenced by whether the text has ascenders or desenders.  The new implementation creates an SVG container of a size large enough to contain the text at the given font-size and then trims away the background to produce the final result. Thanks to @ilesar for the report. Closes #86.
+
 ## Image 0.32.0
 
 This is the changelog for Image version 0.32.0 released on May 24th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
