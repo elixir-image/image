@@ -1,12 +1,14 @@
 # Changelog
 
-## Image 0.32.1
+## Image 0.33.0
 
-This is the changelog for Image version 0.32.1 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.32.1 released on June 2nd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
-### Bug Fixes
+### Breaking Changes
 
-* Fix generation of images from text when `autofit: false` (the default). In these cases the text image is generated from SVG. The original implementation operated on the basis that the image would be generated with a height and width necessary to contain the text of a given font size. The result is not consistent and is influenced by whether the text has ascenders or desenders.  The new implementation creates an SVG container of a size large enough to contain the text at the given font-size and then trims away the background to produce the final result. Thanks to @ilesar for the report. Closes #86.
+* `Image.dhash/1` now returns a 64-bit hash rather than a 512-bit hash. The original algorithm is intended to return a 64-bit hash so this is both a breaking change and bug fix.
+
+* Fix generation of images from text when `autofit: false` (the default). In these cases the text image is generated from SVG. The original implementation operated on the basis that the image would be generated with a height and width necessary to contain the text of a given font size. The result is not consistent and is influenced by whether the text has ascenders or desenders.  The new implementation creates an SVG container of a size large enough to contain the text at the given font-size and then trims away the background to produce the final result. Thanks to @ilesar for the report. Closes #86. **As a result of this fix, existing text-generated images may not now be the same as previous releases.**
 
 ## Image 0.32.0
 

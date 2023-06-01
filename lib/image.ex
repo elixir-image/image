@@ -6915,13 +6915,13 @@ defmodule Image do
   end
 
   @doc """
-  Returns a 512-bit difference hash as a binary.
+  Returns a 64-bit difference hash as a binary.
 
   Image hashes can be used to compare the similarity
   of images. See `Image.hamming_distance/2`.
 
-  dhash is generates a "difference hash" for a given image -- a
-  perceptual hash based on Neal Krawetz's dHash algorithm in
+  dhash is generates a "difference hash" for a given image. This
+  is a perceptual hash based on Neal Krawetz's dHash algorithm in
   a [Hacker Factor](http://www.hackerfactor.com/blog/index.php?/archives/529-Kind-of-Like-That.html)
   blog entry.
 
@@ -6934,7 +6934,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, 512-bit binary}` or
+  * `{:ok, 64-bit binary}` or
 
   * `{:error, reason}`
 
@@ -6948,8 +6948,14 @@ defmodule Image do
   def dhash(%Vimage{} = image, hash_size \\ 8) when is_integer(hash_size) and hash_size > 0 do
     alias Image.Math
 
-    {:ok, convolution} = Image.Matrix.image_from_matrix([[1, -1]])
+    with {:ok, convolution} <- Image.Matrix.image_from_matrix([[1, -1]]),
+         {:ok, pixels} <- dhash_pixels(image, convolution, hash_size) do
+      dhash = for <<_::7, v::1 <- pixels>>, into: <<>>, do: <<v::1>>
+      {:ok, dhash}
+    end
+  end
 
+  def dhash_pixels(image, convolution, hash_size) do
     image
     |> pixelate_for_hash(hash_size)
     |> Operation.cast!(:VIPS_FORMAT_INT)

@@ -10,7 +10,7 @@ defmodule Image.Hash.Test do
       |> Image.open!()
       |> Image.dhash()
 
-    assert :erlang.bit_size(hash) == 512
+    assert :erlang.bit_size(hash) == 64
   end
 
   test "Comparing an image to itself is 0 difference" do
