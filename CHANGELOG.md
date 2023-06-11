@@ -6,7 +6,7 @@ This is the changelog for Image version 0.34 released on ______, 2023.  For olde
 
 ### Enhancements
 
-* Adds `Image.compare/3` to compare two images for similarity using a given metric (default is `:mse` or mean squared error)
+* Adds `Image.compare/3` to compare two images for similarity using a given metric (default is `:rmse` or root mean squared error). The two metrics implemented in this release are `:mse` (mean squared error) and `:rmse` (room mean squared error which returns a value between 0.0 and 1.0).
 
 * Add `hash_size` as an argument to `Image.hamming_distance/3`. The is the size in bits of the returned hash. The default is 64. The size of the returned hash is only guaranteed to be this size if the `:math.sqrt(hash_size)` is an integer.
 

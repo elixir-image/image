@@ -6934,10 +6934,21 @@ defmodule Image do
 
   ### Options
 
-  * `:metric` indicates which comparison metric to use.
-    The valid metrics are:
+  * `:metric` indicates which comparison metric to use. The default
+    is `:rmse`. The valid metrics are:
 
-    * `:mse` which is the mean squared error (default).
+    * [:rmse](https://en.wikipedia.org/wiki/Root-mean-square_deviation) is the root
+      mean square error. The returned value is conformed to the range of
+      the underlying image format. Therefore the returned value is between `0.0`
+      and `1.0` expressing a calculated similarity between the two images.
+
+    * [:mse](https://en.wikipedia.org/wiki/Mean_squared_error) which
+      is the mean squared error (default). The returned value is a float
+      indicating how similar the images are. A value of
+      `0.0` means the images are the same. The number itself it simly a
+      measure of the error difference between images. A larger number means
+      the two images are less similar but the number itself cannot be
+      interpreted as a percentage value.
 
   ### Notes
 
@@ -6973,8 +6984,29 @@ defmodule Image do
     |> Vix.Vips.Operation.avg()
   end
 
+  # Root mean square error, fit to the range of
+  # the band format and therefore in the range 0.0 to 1.0
+  defp do_compare(image_1, image_2, :rmse) do
+    with {:ok, mse} <- do_compare(image_1, image_2, :mse),
+         {:ok, format_size} <- format_size(image_1) do
+      rmse =
+        mse
+        |> :math.sqrt()
+        |> Kernel./(format_size)
+
+      {:ok, rmse}
+    end
+  end
+
   defp do_compare(_image_1, _image_2, metric) do
-    {:error, "Invalid metric #{inspect metric}"}
+    {:error, "Invalid metric #{inspect metric}. Value metrics are :mse and :rmse"}
+  end
+
+  defp format_size(image) do
+    case Image.BandFormat.nx_format(image) do
+      {:ok, {:u, size}} -> {:ok, round(:math.pow(2, size))}
+      {:ok, {:f, size}} -> {:ok, round(:math.pow(2, trunc(size)))}
+    end
   end
 
   @doc """
