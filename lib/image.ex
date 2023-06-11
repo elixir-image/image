@@ -1425,10 +1425,15 @@ defmodule Image do
       |> ExAws.S3.upload("images", "some_object_name.jpg")
       |> ExAws.request()
 
-  Since AWS S3 requires multipart uploads to be 5MiB per
-  chunk, we specify the `:buffer_size` option to
-  `Image.stream!/2`.
-
+  > #### S3 and Buffer Size {: .info}
+  > You may get an error from S3 if you do not specify a buffer size:
+  >
+  > ```text
+  > EntityTooSmall: Your proposed upload is smaller than the minimum allowed object size.
+  > ```
+  >
+  > Since AWS S3 requires multipart uploads to be 5MiB per chunk, we specify
+  > the `:buffer_size` option to `Image.stream!/2`.
   """
   @doc subject: "Load and save"
 
