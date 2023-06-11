@@ -6915,6 +6915,63 @@ defmodule Image do
   end
 
   @doc """
+  Compare two images using a particular comparison metric
+  returning a score indicating the similarity of the images.
+
+  ### Arguments
+
+  * `image_1` is any `t:Vix.Vips.Image.t/0`.
+
+  * `image_2` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:metric` indicates which comparison metric to use.
+    The valid metrics are:
+
+    * `:mse` which is the mean squared error (default).
+
+  ### Notes
+
+  * The images are conformed to the band format of the
+    first image before comparison.
+
+  * No attempt is made to resize or reshape the images
+    in any way.  Comparison of images of different sizes
+    should not expect to be meaningful.
+
+  ### Returns
+
+  * `{:ok, comparison_score}` or
+
+  * `{:error, reason}`
+
+  """
+  @spec compare(Vimage.t(), Vimage.t(), Keyword.t()) :: {:ok, number} | {:error, error_message()}
+  def compare(%Vimage{} = image_1, %Vimage{} = image_2, options \\ []) when is_list(options) do
+    with band_format <- Vix.Vips.Image.format(image_1),
+         {:ok, image_2} <- Operation.cast(image_2, band_format) do
+      metric = Keyword.get(options, :metric, :mse)
+      do_compare(image_1, image_2, metric)
+    end
+  end
+
+  # Mean square error
+  # mse = ((a - b) ** 2).avg()
+  defp do_compare(image_1, image_2, :mse) do
+    image_1
+    |> Math.subtract!(image_2)
+    |> Math.pow!(2)
+    |> Vix.Vips.Operation.avg()
+  end
+
+  defp do_compare(_image_1, _image_2, metric) do
+    {:error, "Invalid metric #{inspect metric}"}
+  end
+
+  @doc """
   Returns a 64-bit difference hash as a binary.
 
   Image hashes can be used to compare the similarity

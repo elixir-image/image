@@ -1,8 +1,16 @@
 # Changelog
 
+## Image 0.34.0
+
+This is the changelog for Image version 0.34 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds `Image.compare/3` to compare two images for similarity using a given metric (default is `:mse` or mean squared error)
+
 ## Image 0.33.0
 
-This is the changelog for Image version 0.32.1 released on June 2nd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.33.0 released on June 2nd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Breaking Changes
 
