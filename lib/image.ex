@@ -6978,7 +6978,8 @@ defmodule Image do
   end
 
   @doc """
-  Returns a 64-bit difference hash as a binary.
+  Returns a 64-bit (for a has size of the default 64) difference hash as a
+  binary.
 
   Image hashes can be used to compare the similarity
   of images. See `Image.hamming_distance/2`.
@@ -6995,6 +6996,11 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
+  * `hash_size` is the size in bits of the returned hash.
+    The default is `64`. The returned binary is only
+    guaranteed to be the provided size if `sqrt(hash_size)` is
+    an integer.
+
   ### Returns
 
   * `{:ok, 64-bit binary}` or
@@ -7007,9 +7013,11 @@ defmodule Image do
 
   @doc subject: "Metadata", since: "0.6.0"
 
-  @spec dhash(image :: Vimage.t()) :: image_hash()
-  def dhash(%Vimage{} = image, hash_size \\ 8) when is_integer(hash_size) and hash_size > 0 do
+  @spec dhash(image :: Vimage.t(), hash_size :: pos_integer()) :: image_hash()
+  def dhash(%Vimage{} = image, hash_size \\ 64) when is_integer(hash_size) and hash_size > 0 do
     alias Image.Math
+
+    hash_size = round(:math.sqrt(hash_size))
 
     with {:ok, convolution} <- Image.Matrix.image_from_matrix([[1, -1]]),
          {:ok, pixels} <- dhash_pixels(image, convolution, hash_size) do
@@ -7079,12 +7087,15 @@ defmodule Image do
   """
   @doc subject: "Operation", since: "0.6.0"
 
-  @spec hamming_distance(image_1 :: Vimage.t(), image_2 :: Vimage.t()) ::
+  @spec hamming_distance(image_1 :: Vimage.t(), image_2 :: Vimage.t(), hash_size :: pos_integer()) ::
           {:ok, non_neg_integer()} | {:error, error_message()}
 
-  def hamming_distance(%Vimage{} = image_1, %Vimage{} = image_2) do
-    with {:ok, hash_1} <- dhash(image_1),
-         {:ok, hash_2} <- dhash(image_2) do
+  def hamming_distance(image_1, image_2, hash_size \\ 64)
+
+  def hamming_distance(%Vimage{} = image_1, %Vimage{} = image_2, hash_size)
+      when is_integer(hash_size) and hash_size > 0 do
+    with {:ok, hash_1} <- dhash(image_1, hash_size),
+         {:ok, hash_2} <- dhash(image_2, hash_size) do
       hamming_distance(hash_1, hash_2)
     end
   end
@@ -7092,7 +7103,8 @@ defmodule Image do
   @spec hamming_distance(image_hash(), image_hash()) ::
           {:ok, non_neg_integer()} | {:error, error_message()}
 
-  def hamming_distance(hash_1, hash_2) when is_binary(hash_1) and is_binary(hash_2) do
+  def hamming_distance(hash_1, hash_2, hash_size)
+      when is_binary(hash_1) and is_binary(hash_2) and is_integer(hash_size) and hash_size > 0 do
     hash_1
     |> :crypto.exor(hash_2)
     |> count_ones()

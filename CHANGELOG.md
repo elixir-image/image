@@ -8,6 +8,8 @@ This is the changelog for Image version 0.34 released on ______, 2023.  For olde
 
 * Adds `Image.compare/3` to compare two images for similarity using a given metric (default is `:mse` or mean squared error)
 
+* Add `hash_size` as an argument to `Image.hamming_distance/3`. The is the size in bits of the returned hash. The default is 64. The size of the returned hash is only guaranteed to be this size if the `:math.sqrt(hash_size)` is an integer.
+
 ## Image 0.33.0
 
 This is the changelog for Image version 0.33.0 released on June 2nd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
