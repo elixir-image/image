@@ -6975,6 +6975,9 @@ defmodule Image do
     end
   end
 
+  @dialyzer {:nowarn_function, {:format_size, 1}}
+  @dialyzer {:nowarn_function, {:do_compare, 3}}
+
   # Mean square error
   # mse = ((a - b) ** 2).avg()
   defp do_compare(image_1, image_2, :mse) do
