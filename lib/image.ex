@@ -1413,6 +1413,16 @@ defmodule Image do
     streaming to an external service such as
     S3, Minio or any other enumerable consumer.
 
+  > #### S3 and Buffer Size {: .info}
+  > You may get an error from S3 if you do not specify a buffer size.
+  >
+  > ```text
+  > EntityTooSmall: Your proposed upload is smaller than the minimum allowed object size.
+  > ```
+  >
+  > Since AWS S3 requires multipart uploads to be 5MiB per chunk, we specify
+  > the `:buffer_size` option to `Image.stream!/2`.
+
   ### Example
 
   In this example an image is opened, resized
@@ -1424,10 +1434,6 @@ defmodule Image do
       |> Image.stream!(suffix: ".jpg", buffer_size: 5_242_880)
       |> ExAws.S3.upload("images", "some_object_name.jpg")
       |> ExAws.request()
-
-  Since AWS S3 requires multipart uploads to be 5MiB per
-  chunk, we specify the `:buffer_size` option to
-  `Image.stream!/2`.
 
   """
   @doc subject: "Load and save"
