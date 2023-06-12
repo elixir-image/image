@@ -213,6 +213,10 @@ defmodule Image do
   # Representing a transparent alpha band
   @transparent 255
 
+  # Ussed by Image.compare/3 and defines the
+  # default metric to be used.
+  @default_compare_metric :ae
+
   @doc """
   Guards whether the given struct is an image type
   either `Vix.Vips.Image` or `Vix.Vips.MutableImage`.
@@ -1483,7 +1487,7 @@ defmodule Image do
   end
 
   @doc """
-  Scans the condition image cond and uses it to select
+  Scans the `condition_image` cond and uses it to select
   pixels from either the `if_image` or the `else_image`.
 
   Non-zero means copy a pixel from `if_image`, `0` means
@@ -1533,7 +1537,7 @@ defmodule Image do
 
   The output image is calculated pixel by pixel as:
 
-      (condition_image / 255) * if_image + (1 - condition_image / 255) *`else_image`
+      (condition_image / 255) * if_image + (1 - condition_image / 255) * else_image
 
   """
   @doc subject: "Operation", since: "0.13.0"
@@ -6935,17 +6939,24 @@ defmodule Image do
   ### Options
 
   * `:metric` indicates which comparison metric to use. The default
-    is `:rmse`. The valid metrics are:
+    is `:ae`. The valid metrics are:
+
+    * [:ae](https://en.wikipedia.org/wiki/Sum_of_absolute_differences) which returns
+      the absolute nuber of pixels that are different between the two images.
+      The returned value is conformed to the range of the underlying image format.
+      Therefore the returned value is between `0.0` (images appear to be the same)
+      and `1.0` (meaning the images appear completely different).
 
     * [:rmse](https://en.wikipedia.org/wiki/Root-mean-square_deviation) is the root
       mean square error. The returned value is conformed to the range of
       the underlying image format. Therefore the returned value is between `0.0`
-      and `1.0` expressing a calculated similarity between the two images.
+      (images appear to be the same) and `1.0` (meaning the images appear
+      completely different),
 
     * [:mse](https://en.wikipedia.org/wiki/Mean_squared_error) which
       is the mean squared error (default). The returned value is a float
       indicating how similar the images are. A value of
-      `0.0` means the images are the same. The number itself it simly a
+      `0.0` means the images are the same. The number itself it simply a
       measure of the error difference between images. A larger number means
       the two images are less similar but the number itself cannot be
       interpreted as a percentage value.
@@ -6953,11 +6964,18 @@ defmodule Image do
   ### Notes
 
   * The images are conformed to the band format of the
-    first image before comparison.
+    first image before comparison and cast up to the smallest common
+    format.
 
-  * No attempt is made to resize or reshape the images
-    in any way.  Comparison of images of different sizes
-    should not expect to be meaningful.
+  * If the images differ in size, the smaller image is enlarged
+    to match the larger by adding zero pixels along the bottom and right.
+
+  * If the number of bands differs, one of the images must have one band.
+    In this case, an n-band image is formed from the one-band image by joining
+    `n` copies of the one-band image together, and then the two n-band images
+    are operated upon.
+
+  * The two input images are cast up to the smallest common format.
 
   ### Returns
 
@@ -6970,7 +6988,7 @@ defmodule Image do
   def compare(%Vimage{} = image_1, %Vimage{} = image_2, options \\ []) when is_list(options) do
     with band_format <- Vix.Vips.Image.format(image_1),
          {:ok, image_2} <- Operation.cast(image_2, band_format) do
-      metric = Keyword.get(options, :metric, :mse)
+      metric = Keyword.get(options, :metric, @default_compare_metric)
       do_compare(image_1, image_2, metric)
     end
   end
@@ -7001,6 +7019,21 @@ defmodule Image do
     end
   end
 
+  # Absolute error. Count the number of pixels that are
+  # different between the two images forced into a 0,0 to
+  # 1.0 range
+  defp do_compare(image_1, image_2, :ae) do
+    with {:ok, difference} <- Image.Math.subtract(image_1, image_2),
+         {:ok, non_zero} <- Image.Math.not_equal(difference, 0),
+         {:ok, binary} <- Vimage.write_to_binary(non_zero[0]),
+         {:ok, non_zero_pixel_count} <- non_zero_pixel_count(binary) do
+      image_1_size = Image.width(image_1) * Image.height(image_1)
+      image_2_size = Image.width(image_2) * Image.height(image_2)
+
+      {:ok, non_zero_pixel_count / max(image_1_size, image_2_size)}
+    end
+  end
+
   defp do_compare(_image_1, _image_2, metric) do
     {:error, "Invalid metric #{inspect metric}. Value metrics are :mse and :rmse"}
   end
@@ -7010,6 +7043,15 @@ defmodule Image do
       {:ok, {:u, size}} -> {:ok, round(:math.pow(2, size))}
       {:ok, {:f, size}} -> {:ok, round(:math.pow(2, trunc(size)))}
     end
+  end
+
+  defp non_zero_pixel_count(binary) do
+    count_of_different_pixels =
+      for <<byte::integer-8-native <- binary>>, byte != 0, reduce: 0 do
+        acc -> acc + 1
+      end
+
+    {:ok, count_of_different_pixels}
   end
 
   @doc """

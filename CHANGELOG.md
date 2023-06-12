@@ -6,9 +6,9 @@ This is the changelog for Image version 0.34 released on ______, 2023.  For olde
 
 ### Enhancements
 
-* Adds `Image.compare/3` to compare two images for similarity using a given metric (default is `:rmse` or root mean squared error). The two metrics implemented in this release are `:mse` (mean squared error) and `:rmse` (room mean squared error which returns a value between 0.0 and 1.0).
+* Adds `Image.compare/3` to compare two images for similarity using a given metric (default is `:ae` or rabsolute error). The three metrics implemented in this release are `:ae` (absolute error which returns a value between 0.0 and 1.0), `:mse` (mean squared error) and `:rmse` (root mean squared error which returns a value between 0.0 and 1.0).
 
-* Add `hash_size` as an argument to `Image.hamming_distance/3`. The is the size in bits of the returned hash. The default is 64. The size of the returned hash is only guaranteed to be this size if the `:math.sqrt(hash_size)` is an integer.
+* Add `hash_size` as an argument to `Image.hamming_distance/3`. This is the size in bits of the returned hash. The default is 64. The size of the returned hash is only guaranteed to be this size if the `:math.sqrt(hash_size)` is an integer.
 
 ## Image 0.33.0
 
@@ -16,7 +16,7 @@ This is the changelog for Image version 0.33.0 released on June 2nd, 2023.  For 
 
 ### Breaking Changes
 
-* `Image.dhash/1` now returns a 64-bit hash rather than a 512-bit hash. The original algorithm is intended to return a 64-bit hash so this is both a breaking change and bug fix.
+* `Image.dhash/1` now returns a 64-bit hash (by default) rather than a 512-bit hash. The original algorithm is intended to return a 64-bit hash so this is both a breaking change and bug fix.
 
 * Fix generation of images from text when `autofit: false` (the default). In these cases the text image is generated from SVG. The original implementation operated on the basis that the image would be generated with a height and width necessary to contain the text of a given font size. The result is not consistent and is influenced by whether the text has ascenders or desenders.  The new implementation creates an SVG container of a size large enough to contain the text at the given font-size and then trims away the background to produce the final result. Thanks to @ilesar for the report. Closes #86. **As a result of this fix, existing text-generated images may not now be the same as previous releases.**
 
