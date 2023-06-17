@@ -7127,17 +7127,10 @@ defmodule Image do
   @spec compare(Vimage.t(), Vimage.t(), Keyword.t()) :: {:ok, number} | {:error, error_message()}
   def compare(%Vimage{} = image_1, %Vimage{} = image_2, options \\ []) when is_list(options) do
     with {:ok, options} <- Options.Compare.validate_options(options),
-         {:ok, image_2} <- Operation.cast(image_2,  Vix.Vips.Image.format(image_1)),
-         {:ok, difference} <- Image.Math.subtract(image_1, image_2),
-         {:ok, metric} <- do_compare(image_1, image_2, difference, options.metric),
-         {:ok, color_difference} <- if_then_else(difference, options.difference_color, :transparent),
-         {:ok, color_difference} <- Image.Math.multiply(color_difference, options.difference_boost),
-         {:ok, bw_difference} <- to_colorspace(difference, :bw),
-         {:ok, alpha_difference} <- add_alpha(color_difference, bw_difference),
-         {:ok, saturated} <- saturation(image_1, options.saturation),
-         {:ok, brightened} <- brightness(saturated, options.brightness),
-         {:ok, difference_image} <- compose(brightened, alpha_difference) do
-      {:ok, metric, difference_image}
+         {:ok, image_difference} <- image_difference(image_1, image_2),
+         {:ok, metric} <- do_compare(image_1, image_2, image_difference, options.metric),
+         {:ok, composed_difference} <- compose_difference(image_1, image_difference, options) do
+      {:ok, metric, composed_difference}
     end
   end
 
@@ -7181,6 +7174,24 @@ defmodule Image do
 
   defp do_compare(_image_1, _image_2, _difference, metric) do
     {:error, "Invalid metric #{inspect metric}. Value metrics are :ae, :mse and :rmse"}
+  end
+
+  defp image_difference(image_1, image_2) do
+    with {:ok, image_2} <- Operation.cast(image_2,  Vix.Vips.Image.format(image_1)),
+         {:ok, difference} <- Image.Math.subtract(image_1, image_2) do
+      Operation.abs(difference)
+    end
+  end
+
+  defp compose_difference(image, difference, options) do
+    with {:ok, color_difference} <- if_then_else(difference, options.difference_color, :transparent),
+         {:ok, color_difference} <- Image.Math.multiply(color_difference, options.difference_boost),
+         {:ok, bw_difference} <- to_colorspace(difference, :bw),
+         {:ok, alpha_difference} <- add_alpha(color_difference, bw_difference),
+         {:ok, saturated} <- saturation(image, options.saturation),
+         {:ok, brightened} <- brightness(saturated, options.brightness) do
+      compose(brightened, alpha_difference)
+    end
   end
 
   @dialyzer {:nowarn_function, {:format_size, 1}}
