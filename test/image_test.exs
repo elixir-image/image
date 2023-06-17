@@ -6,6 +6,7 @@ defmodule Image.Test do
 
   doctest Image
   doctest Image.Classification
+  doctest Image.Color
 
   setup do
     Temp.track!()

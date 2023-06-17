@@ -109,6 +109,83 @@ defmodule Image.Color do
   end
 
   @doc """
+  Converts a color name or RGB value
+  to a hex string.
+
+  ### Arguments
+
+  `color` which can be specified as a single integer
+  which or a list of integers representing the color.
+  The color can also be supplied as a CSS color name as a
+  string or atom. For example: `:misty_rose`. See
+  `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  ### Returns
+
+  * `{:ok, #RRGGBB}` string or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> Image.Color.rgb_to_hex(:green)
+      {:ok, "#008000"}
+
+      iex> Image.Color.rgb_to_hex([10,20,30])
+      {:ok, "#A141E"}
+
+  """
+  def rgb_to_hex(color) do
+    with {:ok, color} <- validate_color(color) do
+      case color do
+        [color] -> {:ok, convert_to_hex(color, color, color)}
+        [r, g, b] -> {:ok, convert_to_hex(r, g, b)}
+      end
+    end
+  end
+
+  @doc """
+  Converts a hex color string to an RGB
+  list.
+
+  ### Arguments
+
+  `color` is a hex string representing an RGB color. It has
+  the form `#RRGGBB`.
+
+  ### Returns
+
+  * `{:ok, [r, g, b]}` or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> Image.Color.validate_color "#0000FF"
+      {:ok, [0, 0, 255]}
+
+  """
+  def hex_to_rgb(<<"#", r::bytes-2, g::bytes-2, b::bytes-2>>) do
+    {:ok, [String.to_integer(r, 16), String.to_integer(g, 16), String.to_integer(b, 16)]}
+  end
+
+  def hex_to_rgb(invalid_color) do
+    {:error, "Invalid hex color. Found #{inspect invalid_color}"}
+  end
+
+  defp convert_to_hex(r, g, b) do
+    "#" <> to_hex(r) <> to_hex(g) <> to_hex(b)
+  end
+
+  defp to_hex(i) when i >= 10 do
+    Integer.to_string(i, 16)
+  end
+
+  defp to_hex(i) do
+    "0" <> Integer.to_string(i, 16)
+  end
+
+  @doc """
   Validates a color returning an
   `[r, g, b]` triplet or error.
 
@@ -173,6 +250,7 @@ defmodule Image.Color do
     @min_opacity
   end
 
+  @doc false
   def rgba_color!(color, a \\ @max_opacity)
 
   def rgba_color!(color, _a) when color in [:none, :transparent] do
@@ -213,6 +291,7 @@ defmodule Image.Color do
     color
   end
 
+  @doc false
   def normalize(color) do
     color
     |> to_string()
