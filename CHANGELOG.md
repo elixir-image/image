@@ -8,6 +8,8 @@ This is the changelog for Image version 0.34 released on ______, 2023.  For olde
 
 * Adds `Image.compare/3` to compare two images for similarity using a given metric (default is `:ae` or rabsolute error). The three metrics implemented in this release are `:ae` (absolute error which returns a value between 0.0 and 1.0), `:mse` (mean squared error) and `:rmse` (root mean squared error which returns a value between 0.0 and 1.0).
 
+* Adds `Image.brightness/2` and `Image.saturation/2` to adjust the image brightness and saturation by a percentage amount between `0.0` and `1.0`. Also adds `Image.brightness!/2` and `Image.saturation!/2`.
+
 * Add `hash_size` as an argument to `Image.hamming_distance/3`. This is the size in bits of the returned hash. The default is 64. The size of the returned hash is only guaranteed to be this size if the `:math.sqrt(hash_size)` is an integer.
 
 ## Image 0.33.0

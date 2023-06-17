@@ -213,10 +213,6 @@ defmodule Image do
   # Representing a transparent alpha band
   @transparent 255
 
-  # Ussed by Image.compare/3 and defines the
-  # default metric to be used.
-  @default_compare_metric :ae
-
   @doc """
   Guards whether the given struct is an image type
   either `Vix.Vips.Image` or `Vix.Vips.MutableImage`.
@@ -6174,6 +6170,132 @@ defmodule Image do
     end
   end
 
+  @doc """
+  Apply a percentage adjustment to an image's brightness
+  (luminance).
+
+  The image is converted to the `lch` color space, multiplies the
+  luminance band by the provided float percentage and converts
+  the image back to its original color space.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `brightness` is any float between `0.0` and `1.0`.
+
+  ### Returns
+
+  * `{:ok, adjusted_image}` or
+
+  * `{:error, reason}`.
+
+  """
+  @doc since: "0.34.0"
+  @doc subject: "Operation"
+
+  @spec brightness(image :: Vimage.t(), brightness :: float()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def brightness(%Vimage{} = image, brightness) when is_positive_percent(brightness) do
+    with_colorspace image, :lch, fn i ->
+      Image.Math.multiply(i, [brightness, 1.0, 1.0])
+    end
+  end
+
+  @doc """
+  Apply a percentage adjustment to an image's brightness
+  (luminance) or raises an exception.
+
+  The image is converted to the `lch` color space, multiplies the
+  luminance band by the provided float percentage and converts
+  the image back to its original color space.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `brightness` is any float between `0.0` and `1.0`.
+
+  ### Returns
+
+  * `adjusted_image` or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.34.0"
+  @doc subject: "Operation"
+
+  @spec brightness!(image :: Vimage.t, brightness :: float()) :: Vimage.t() | no_return()
+  def brightness!(%Vimage{} = image, brightness) when is_positive_percent(brightness) do
+    case brightness(image, brightness) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Apply a percentage adjustment to an image's saturation
+  (chroma).
+
+  The image is converted to the `lch` color space, multiplies the
+  chroma band by the provided float percentage and converts
+  the image back to its original color space.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `saturation` is any float between `0.0` and `1.0`.
+
+  ### Returns
+
+  * `{:ok, adjusted_image}` or
+
+  * `{:error, reason}`.
+
+  """
+  @doc since: "0.34.0"
+  @doc subject: "Operation"
+
+  @spec saturation(image :: Vimage.t, saturation :: float()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def saturation(%Vimage{} = image, saturation) when is_positive_percent(saturation) do
+    with_colorspace image, :lch, fn i ->
+      Image.Math.multiply(i, [1.0, saturation, 1.0])
+    end
+  end
+
+  @doc """
+  Apply a percentage adjustment to an image's saturation
+  (chroma) or raises an exception.
+
+  The image is converted to the `lch` color space, multiplies the
+  chroma band by the provided float percentage and converts
+  the image back to its original color space.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `saturation` is any float between `0.0` and `1.0`.
+
+  ### Returns
+
+  * `adjusted_image` or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.34.0"
+  @doc subject: "Operation"
+
+  @spec saturation!(image :: Vimage.t, saturation :: float()) :: Vimage.t() | no_return()
+  def saturation!(%Vimage{} = image, saturation) when is_positive_percent(saturation) do
+    case saturation(image, saturation) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
   if match?({:module, _module}, Code.ensure_compiled(Nx)) do
     @doc """
     Converts an image into an [Nx](https://hex.pm/packages/nx)
@@ -6961,6 +7083,21 @@ defmodule Image do
       the two images are less similar but the number itself cannot be
       interpreted as a percentage value.
 
+  * `:saturation` is a float between `0.0` and `1.0` that is applied to the
+    base image when overlaying the difference image. This may help the difference
+    pixels become more obvious. The default ia `1.0` meaning no change in
+    saturation.
+
+  * `:brightness` is a float between `0.0` and `1.0` that is applied to the
+    base image when overlaying the difference image. This may help the difference
+    pixels become more obvious. The default ia `1.0` meaning no change in
+    brightness.
+
+  * `:difference_boost` is a float multiplier that is applied to the difference
+    image. This has the effect of boosting the overall brightness of the difference
+    pixels making them stand out more against the background image. The default
+    is `1.5`.
+
   ### Notes
 
   * The images are conformed to the band format of the
@@ -6984,31 +7121,40 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+  @doc since: "0.34.0"
+  @doc subject: "Operation"
+
   @spec compare(Vimage.t(), Vimage.t(), Keyword.t()) :: {:ok, number} | {:error, error_message()}
   def compare(%Vimage{} = image_1, %Vimage{} = image_2, options \\ []) when is_list(options) do
-    with band_format <- Vix.Vips.Image.format(image_1),
-         {:ok, image_2} <- Operation.cast(image_2, band_format) do
-      metric = Keyword.get(options, :metric, @default_compare_metric)
-      do_compare(image_1, image_2, metric)
+    with {:ok, options} <- Options.Compare.validate_options(options),
+         {:ok, image_2} <- Operation.cast(image_2,  Vix.Vips.Image.format(image_1)),
+         {:ok, difference} <- Image.Math.subtract(image_1, image_2),
+         {:ok, metric} <- do_compare(image_1, image_2, difference, options.metric),
+         {:ok, color_difference} <- if_then_else(difference, options.difference_color, :transparent),
+         {:ok, color_difference} <- Image.Math.multiply(color_difference, options.difference_boost),
+         {:ok, bw_difference} <- to_colorspace(difference, :bw),
+         {:ok, alpha_difference} <- add_alpha(color_difference, bw_difference),
+         {:ok, saturated} <- saturation(image_1, options.saturation),
+         {:ok, brightened} <- brightness(saturated, options.brightness),
+         {:ok, difference_image} <- compose(brightened, alpha_difference) do
+      {:ok, metric, difference_image}
     end
   end
 
-  @dialyzer {:nowarn_function, {:format_size, 1}}
-  @dialyzer {:nowarn_function, {:do_compare, 3}}
+  @dialyzer {:nowarn_function, {:do_compare, 4}}
 
   # Mean square error
   # mse = ((a - b) ** 2).avg()
-  defp do_compare(image_1, image_2, :mse) do
-    image_1
-    |> Math.subtract!(image_2)
+  defp do_compare(_image_1, _image_2, difference, :mse) do
+    difference
     |> Math.pow!(2)
-    |> Vix.Vips.Operation.avg()
+    |> Operation.avg()
   end
 
   # Root mean square error, fit to the range of
   # the band format and therefore in the range 0.0 to 1.0
-  defp do_compare(image_1, image_2, :rmse) do
-    with {:ok, mse} <- do_compare(image_1, image_2, :mse),
+  defp do_compare(image_1, image_2, diff, :rmse) do
+    with {:ok, mse} <- do_compare(image_1, image_2, diff, :mse),
          {:ok, format_size} <- format_size(image_1) do
       rmse =
         mse
@@ -7022,9 +7168,8 @@ defmodule Image do
   # Absolute error. Count the number of pixels that are
   # different between the two images forced into a 0,0 to
   # 1.0 range
-  defp do_compare(image_1, image_2, :ae) do
-    with {:ok, difference} <- Image.Math.subtract(image_1, image_2),
-         {:ok, non_zero} <- Image.Math.not_equal(difference, 0),
+  defp do_compare(image_1, image_2, difference, :ae) do
+    with {:ok, non_zero} <- Image.Math.not_equal(difference, 0),
          {:ok, binary} <- Vimage.write_to_binary(non_zero[0]),
          {:ok, non_zero_pixel_count} <- non_zero_pixel_count(binary) do
       image_1_size = Image.width(image_1) * Image.height(image_1)
@@ -7034,9 +7179,11 @@ defmodule Image do
     end
   end
 
-  defp do_compare(_image_1, _image_2, metric) do
-    {:error, "Invalid metric #{inspect metric}. Value metrics are :mse and :rmse"}
+  defp do_compare(_image_1, _image_2, _difference, metric) do
+    {:error, "Invalid metric #{inspect metric}. Value metrics are :ae, :mse and :rmse"}
   end
+
+  @dialyzer {:nowarn_function, {:format_size, 1}}
 
   defp format_size(image) do
     case Image.BandFormat.nx_format(image) do

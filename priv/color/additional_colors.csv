@@ -2,3 +2,5 @@
 # https://clipchamp.com/en/blog/chroma-key/
 ChromaGreen, #00B140
 ChromaBlue, #0047BB
+Transparent, #FFFFFF
+Opaque, #000000

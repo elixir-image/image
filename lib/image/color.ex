@@ -7,6 +7,7 @@ defmodule Image.Color do
   @priv_dir :code.priv_dir(:image) |> List.to_string()
   @css_color_path Path.join(@priv_dir, "color/css_colors.csv")
   @additional_color_path Path.join(@priv_dir, "color/additional_colors.csv")
+  @external_resource @additional_color_path
 
   @css_colors File.read!(@css_color_path)
   @additional_colors File.read!(@additional_color_path)
