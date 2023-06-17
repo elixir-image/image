@@ -7135,7 +7135,7 @@ defmodule Image do
     end
   end
 
-  @dialyzer {:nowarn_function, {:do_compare, 4}}
+  @dialyzer {:nowarn_function, {:compare_by_metric, 4}}
 
   # Mean square error
   # mse = ((a - b) ** 2).avg()
