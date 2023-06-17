@@ -7093,6 +7093,11 @@ defmodule Image do
     It can also be supplied as a hex string of the form `#rrggbb`. The default
     is `:red`.
 
+  * `:difference_boost` is a float multiplier that is applied to the difference
+    image. This has the effect of boosting the overall brightness of the difference
+    pixels making them stand out more against the background image. The default
+    is `1.5`.
+
   * `:saturation` is a float between `0.0` and `1.0` that is applied to the
     base image when overlaying the difference image. This may help the difference
     pixels become more obvious. The default ia `1.0` meaning no change in
@@ -7102,11 +7107,6 @@ defmodule Image do
     base image when overlaying the difference image. This may help the difference
     pixels become more obvious. The default ia `1.0` meaning no change in
     brightness.
-
-  * `:difference_boost` is a float multiplier that is applied to the difference
-    image. This has the effect of boosting the overall brightness of the difference
-    pixels making them stand out more against the background image. The default
-    is `1.5`.
 
   ### Notes
 
