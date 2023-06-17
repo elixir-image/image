@@ -7124,7 +7124,8 @@ defmodule Image do
   @doc since: "0.34.0"
   @doc subject: "Operation"
 
-  @spec compare(Vimage.t(), Vimage.t(), Keyword.t()) :: {:ok, number} | {:error, error_message()}
+  @spec compare(Vimage.t(), Vimage.t(), Keyword.t()) ::
+    {:ok, number, Vimage.t()} | {:error, error_message()}
   def compare(%Vimage{} = image_1, %Vimage{} = image_2, options \\ []) when is_list(options) do
     with {:ok, options} <- Options.Compare.validate_options(options),
          {:ok, difference} <- image_difference(image_1, image_2),
