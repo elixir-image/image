@@ -1135,7 +1135,7 @@ defmodule Image do
   * `:quality` which influences image compression and
     is a integer in the range `1..100`. The default for
     most image formats is `75`. For PNG files it is the
-    compression amount with a default  of `60`. For
+    quantization quality with a default of `100`. For
     HEIF files the default is `50`.
 
   ### Streaming images and :memory images
@@ -1174,6 +1174,9 @@ defmodule Image do
     to apply a number of techniques to minimise the file
     size of the `png` file at the cost of additional time to
     save the image. All metadata will also be removed.
+
+  * `:compression`  is the compression factor which is an
+    integer in the range `1..9`. The default is `6`.
 
   * `:effort` is an integer to adjust the level of CPU
     effort to reduce the file size. The value must be in the

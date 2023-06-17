@@ -51,6 +51,7 @@ defmodule Image.Options.Write do
           | {:effort, 1..10}
           | {:minimize_file_size, boolean()}
 
+  @typedoc "Options for writing a gif file with `Image.write/2`."
   @type gif_write_option ::
           {:interframe_maxerror, 0..32}
           | {:effort, 1..10}
@@ -111,12 +112,10 @@ defmodule Image.Options.Write do
 
   defp validate_option({:quality, quality}, options, image_type)
        when is_png(image_type) and is_integer(quality) and quality in 1..100 do
-    compression = round(quality / 10)
-
     options =
       options
       |> Keyword.delete(:quality)
-      |> Keyword.put(:compression, compression)
+      |> Keyword.put(:Q, quality)
 
     {:cont, options}
   end
@@ -152,6 +151,11 @@ defmodule Image.Options.Write do
       |> Keyword.delete(:progressive)
       |> Keyword.put(:interlace, progressive?)
 
+    {:cont, options}
+  end
+
+  defp validate_option({:compression, compression}, options, image_type)
+      when is_png(image_type) and compression in 1..9 do
     {:cont, options}
   end
 
