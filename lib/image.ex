@@ -7127,9 +7127,10 @@ defmodule Image do
   @spec compare(Vimage.t(), Vimage.t(), Keyword.t()) :: {:ok, number} | {:error, error_message()}
   def compare(%Vimage{} = image_1, %Vimage{} = image_2, options \\ []) when is_list(options) do
     with {:ok, options} <- Options.Compare.validate_options(options),
-         {:ok, image_difference} <- image_difference(image_1, image_2),
-         {:ok, metric} <- do_compare(image_1, image_2, image_difference, options.metric),
-         {:ok, composed_difference} <- compose_difference(image_1, image_difference, options) do
+         {:ok, difference} <- image_difference(image_1, image_2),
+         {:ok, metric} <- compare_by_metric(image_1, image_2, difference, options.metric),
+         {:ok, composed_difference} <- compose_difference(image_1, difference, options) do
+
       {:ok, metric, composed_difference}
     end
   end
@@ -7138,7 +7139,7 @@ defmodule Image do
 
   # Mean square error
   # mse = ((a - b) ** 2).avg()
-  defp do_compare(_image_1, _image_2, difference, :mse) do
+  defp compare_by_metric(_image_1, _image_2, difference, :mse) do
     difference
     |> Math.pow!(2)
     |> Operation.avg()
@@ -7146,8 +7147,8 @@ defmodule Image do
 
   # Root mean square error, fit to the range of
   # the band format and therefore in the range 0.0 to 1.0
-  defp do_compare(image_1, image_2, diff, :rmse) do
-    with {:ok, mse} <- do_compare(image_1, image_2, diff, :mse),
+  defp compare_by_metric(image_1, image_2, diff, :rmse) do
+    with {:ok, mse} <- compare_by_metric(image_1, image_2, diff, :mse),
          {:ok, format_size} <- format_size(image_1) do
       rmse =
         mse
@@ -7161,7 +7162,7 @@ defmodule Image do
   # Absolute error. Count the number of pixels that are
   # different between the two images forced into a 0,0 to
   # 1.0 range
-  defp do_compare(image_1, image_2, difference, :ae) do
+  defp compare_by_metric(image_1, image_2, difference, :ae) do
     with {:ok, non_zero} <- Image.Math.not_equal(difference, 0),
          {:ok, binary} <- Vimage.write_to_binary(non_zero[0]),
          {:ok, non_zero_pixel_count} <- non_zero_pixel_count(binary) do
@@ -7172,7 +7173,7 @@ defmodule Image do
     end
   end
 
-  defp do_compare(_image_1, _image_2, _difference, metric) do
+  defp compare_by_metric(_image_1, _image_2, _difference, metric) do
     {:error, "Invalid metric #{inspect metric}. Value metrics are :ae, :mse and :rmse"}
   end
 
@@ -7189,8 +7190,9 @@ defmodule Image do
          {:ok, bw_difference} <- to_colorspace(difference, :bw),
          {:ok, alpha_difference} <- add_alpha(color_difference, bw_difference),
          {:ok, saturated} <- saturation(image, options.saturation),
-         {:ok, brightened} <- brightness(saturated, options.brightness) do
-      compose(brightened, alpha_difference)
+         {:ok, brightened} <- brightness(saturated, options.brightness),
+         {:ok, composed} <- compose(brightened, alpha_difference) do
+      Operation.cast(composed, Vix.Vips.Image.format(image))
     end
   end
 
