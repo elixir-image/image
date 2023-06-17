@@ -1134,9 +1134,8 @@ defmodule Image do
 
   * `:quality` which influences image compression and
     is a integer in the range `1..100`. The default for
-    most image formats is `75`. For PNG files it is the
-    quantization quality with a default of `100`. For
-    HEIF files the default is `50`.
+    most image formats is `75`. For HEIF files the default
+    is `50`.For PNG files the `:quality` option is ignored.
 
   ### Streaming images and :memory images
 

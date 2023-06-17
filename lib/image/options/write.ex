@@ -111,12 +111,13 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
+  # :quality for png files is ignored, there's no practical setting
+  # that adjust quality in the same way as other formats.
   defp validate_option({:quality, quality}, options, image_type)
        when is_png(image_type) and is_integer(quality) and quality in 1..100 do
     options =
       options
       |> Keyword.delete(:quality)
-      |> Keyword.put(:Q, quality)
 
     {:cont, options}
   end
