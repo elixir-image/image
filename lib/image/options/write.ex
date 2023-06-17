@@ -39,6 +39,7 @@ defmodule Image.Options.Write do
           {:strip_metadata, boolean()}
           | {:icc_profile, Path.t()}
           | {:minimize_file_size, boolean()}
+          | {:compression, 1..9}
           | {:effort, 1..10}
 
   @typedoc "Options for writing a tiff file with `Image.write/2`."
