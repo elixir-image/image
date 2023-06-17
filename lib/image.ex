@@ -7085,6 +7085,14 @@ defmodule Image do
       the two images are less similar but the number itself cannot be
       interpreted as a percentage value.
 
+  * `:difference_color` is the color to be used for the pixels that are
+    different between the two images. This can be specified as a single integer
+    which will be applied to all bands, or a list of integers representing
+    he color for each band. The color can also be supplied as a
+    CSS color name as a string or atom. For example: `:misty_rose`.
+    It can also be supplied as a hex string of the form `#rrggbb`. The default
+    is `:red`.
+
   * `:saturation` is a float between `0.0` and `1.0` that is applied to the
     base image when overlaying the difference image. This may help the difference
     pixels become more obvious. The default ia `1.0` meaning no change in
