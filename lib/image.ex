@@ -7131,7 +7131,6 @@ defmodule Image do
          {:ok, difference} <- image_difference(image_1, image_2),
          {:ok, metric} <- compare_by_metric(image_1, image_2, difference, options.metric),
          {:ok, composed_difference} <- compose_difference(image_1, difference, options) do
-
       {:ok, metric, composed_difference}
     end
   end
