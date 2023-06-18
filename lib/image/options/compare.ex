@@ -63,16 +63,16 @@ defmodule Image.Options.Compare do
     {:cont, options}
   end
 
-  defp validate_option({:saturation, saturation}, options) when is_positive_percent(saturation) do
+  defp validate_option({:saturation, saturation}, options) when is_multiplier(saturation) do
     {:cont, options}
   end
 
-  defp validate_option({:brightness, brightness}, options) when is_positive_percent(brightness) do
+  defp validate_option({:brightness, brightness}, options) when is_multiplier(brightness) do
     {:cont, options}
   end
 
   defp validate_option({:difference_boost, difference_boost}, options)
-      when is_float(difference_boost) and difference_boost > 0.0 do
+      when is_multiplier(difference_boost) do
     {:cont, options}
   end
 

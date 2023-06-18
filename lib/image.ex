@@ -282,7 +282,14 @@ defmodule Image do
   by a float greater than `0.0` and less than or equal to `1.0`.
   """
   @doc subject: "Guard"
-  defguard is_positive_percent(value) when is_float(value) and value > 0.0 and value <= 1.0
+  defguard is_positive_percent(value) when is_float(value) and value >= 0.0 and value <= 1.0
+
+  @doc """
+  Guards whether a value is a multiplier as representeed
+  by a float greater than `0.0`.
+  """
+  @doc subject: "Guard"
+  defguard is_multiplier(value) when is_float(value) and value >= 0.0
 
   @doc """
   Create a new image of the given dimensions.
