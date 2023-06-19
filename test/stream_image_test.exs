@@ -5,10 +5,6 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
 
     import Image.TestSupport
 
-    # Minimum buffer size for S3 unless it the last
-    # chunk
-    @s3_buffer_size 5 * 1024 * 1024
-
     setup do
       Temp.track!()
       dir = Temp.mkdir!()
@@ -108,6 +104,10 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
     end
 
     if System.find_executable("minio") do
+      # Minimum buffer size for S3 unless it the last
+      # chunk
+      @s3_buffer_size 5 * 1024 * 1024
+
       test "Streaming from minio", %{dir: dir} do
         out_path = Temp.path!(suffix: ".jpg", basedir: dir)
 
