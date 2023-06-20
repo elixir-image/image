@@ -7996,6 +7996,18 @@ defmodule Image do
     {x, y}
   end
 
+  defp xy_offset(%Vimage{} = base_image, %Vimage{} = overlay, x, y)
+      when is_number(x) and is_atom(y) do
+    y = offset_from(y, Image.height(base_image), Image.height(overlay))
+    {x, y}
+  end
+
+  defp xy_offset(%Vimage{} = base_image, %Vimage{} = overlay, x, y)
+      when is_atom(x) and is_number(y) do
+    x = offset_from(x, Image.width(base_image), Image.width(overlay))
+    {x, y}
+  end
+
   defp xy_offset(%Vimage{} = base_image, %Vimage{} = overlay, x, y) do
     x = offset_from(x, Image.width(base_image), Image.width(overlay))
     y = offset_from(y, Image.height(base_image), Image.height(overlay))
