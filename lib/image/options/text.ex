@@ -20,6 +20,7 @@ defmodule Image.Options.Text do
           | {:background_stroke_opacity, float()}
           | {:background_fill_opacity, float()}
           | {:padding, [non_neg_integer(), ...]}
+          | {:letter_spacing, :normal | integer()}
           | {:x, :center | :left | :right}
           | {:y, :middle | :top | :bottom}
           | {:autofit, boolean()}
@@ -44,6 +45,7 @@ defmodule Image.Options.Text do
       background_stroke_opacity: 0.7,
       background_fill_opacity: 0.7,
       padding: [0, 0],
+      letter_spacing: :normal,
       x: :center,
       y: :middle,
       autofit: false,
@@ -185,6 +187,15 @@ defmodule Image.Options.Text do
     padding_top = div(Image.height(image), 2)
 
     {:cont, Keyword.put(options, option, [padding_left, padding_top])}
+  end
+
+  defp validate_option({:letter_spacing = option, :normal}, options) do
+    {:cont, Keyword.put(options, option, "normal")}
+  end
+
+  defp validate_option({:letter_spacing = option, letter_spacing}, options)
+      when is_integer(letter_spacing) do
+    {:cont, Keyword.put(options, option, letter_spacing)}
   end
 
   defp validate_option({:fontfile, nil}, options) do

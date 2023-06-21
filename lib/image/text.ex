@@ -87,6 +87,9 @@ defmodule Image.Text do
     from the image dimensions such that the background covers the
     whole of the impage.  THe default is `[0, 0]`.
 
+  * `:letter_spacing` is the amount of space in pixels between each letter.
+    Default is `:normal`.
+
   * `:background_fill_color` is the background fill color behind
     the text. The default is `:none` which indicates no
     background. Note that if
@@ -220,6 +223,9 @@ defmodule Image.Text do
     from the image dimensions such that the background covers the
     whole of the impage.  THe default is `[0, 0]`.
 
+  * `:letter_spacing` is the amount of space in pixels between each letter.
+    Default is `:normal`.
+
   * `:background_fill_color` is the background fill color behind
     the text. The default is `:none` which indicates no
     background. Note that if
@@ -337,6 +343,9 @@ defmodule Image.Text do
   * `:align` indicates how multiple lines of text are aligned.
     The options are `:left`, `:right` and `:center`. The default
     is `:left`.
+
+  * `:letter_spacing` is the amount of space in pixels between each letter.
+    Default is `:normal`.
 
   #### Options applicable in all cases
 
@@ -457,6 +466,9 @@ defmodule Image.Text do
   * `:align` indicates how multiple lines of text are aligned.
     The options are `:left`, `:right` and `:center`. The default
     is `:left`.
+
+  * `:letter_spacing` is the amount of space in pixels between each letter.
+    Default is `:normal`.
 
   #### Options applicable in all cases
 
@@ -865,6 +877,7 @@ defmodule Image.Text do
           fill: #{options.text_fill_color};
           stroke: #{options.text_stroke_color};
           stroke-width: #{options.text_stroke_width};
+          letter-spacing: #{options.letter_spacing}px;
           text-anchor: "left";
         }
       </style>
