@@ -871,14 +871,7 @@ defmodule Image.Text do
     <svg viewBox="0 0 #{width} #{height}" xmlns="http://www.w3.org/2000/svg">
       <style type="text/css">
         svg text {
-          font-family: #{options.font};
-          font-size: #{options.font_size}px;
-          font-weight: #{options.font_weight};
-          fill: #{options.text_fill_color};
-          stroke: #{options.text_stroke_color};
-          stroke-width: #{options.text_stroke_width};
-          letter-spacing: #{options.letter_spacing}px;
-          text-anchor: "left";
+          #{svg_options(options)}
         }
       </style>
       <text x="1" y="50%">#{text}</text>
@@ -910,7 +903,8 @@ defmodule Image.Text do
       ]
       |> Image.maybe_add_fontfile(options[:fontfile])
 
-    with {:ok, {text_mask, _}} <- Operation.text(text, text_options),
+    with {:ok, text} <- maybe_add_letter_spacing(text, options.letter_spacing),
+         {:ok, {text_mask, _}} <- Operation.text(text, text_options),
          {:ok, color_layer} <- Image.new(text_mask, color: options.text_fill_color),
          {:ok, joined} <- Operation.bandjoin([color_layer, text_mask]),
          {:ok, {x, y}} <- location_from_options(joined, options.x, options.y, width, height) do
@@ -920,8 +914,44 @@ defmodule Image.Text do
     end
   end
 
+  defp svg_options(options) do
+    [
+      "font-family: #{options.font}",
+      "font-size: #{options.font_size}px",
+      "font-weight: #{options.font_weight}",
+      "fill: #{options.text_fill_color}",
+      "stroke: #{options.text_stroke_color}",
+      "stroke-width: #{options.text_stroke_width}",
+      "letter-spacing: #{letter_spacing(options.letter_spacing)}",
+      "text-anchor: left"
+    ]
+    |> Enum.join("; ")
+  end
+
+  defp letter_spacing("normal"), do: "normal"
+  defp letter_spacing(other), do: "#{other}px"
+
+  # If the text starts with a span then we assume the user is
+  # determining the text format
+  defp maybe_add_letter_spacing("<span" <> _rest = text, _letter_spacing) do
+    {:ok, text}
+  end
+
+  # If the spacing is normal, don't change the text
+  defp maybe_add_letter_spacing(text, "normal") do
+    {:ok, text}
+  end
+
+  # pango letter_spacing is in 1/1024 of a point.
+  # We need to convert pixels to this unit.
+  defp maybe_add_letter_spacing(text, letter_spacing) do
+    letter_spacing = round(letter_spacing / @points_to_pixels * 1024)
+    {:ok, "<span letter_spacing=\"#{letter_spacing}\">#{text}</span>"}
+  end
+
+  # If the text is black, use white as the trim color
   defp find_trim_color(_image, %{text_stroke_color: :black, text_fill_color: :black}) do
-    {:ok, [255,255,255]}
+    Image.Color.validate_color(:white)
   end
 
   defp find_trim_color(image, _options) do
