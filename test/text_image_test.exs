@@ -74,6 +74,16 @@ defmodule TextImage.Test do
     assert_images_equal(final_image, validate_path)
   end
 
+  test "Black text trims correctly" do
+    validate_path = validate_path("text/black_text.tif")
+
+    {:ok, black_text} = Text.text("Some Black Text", text_stroke_color: :black, text_fill_color: :black)
+    # Image.preview black_text
+
+    # Image.write(black_text, validate_path)
+    assert_images_equal(black_text, validate_path)
+  end
+
   test "Text centered on a base image", %{image: base_image} do
     validate_path = validate_path("compose/composition_3.tif")
 

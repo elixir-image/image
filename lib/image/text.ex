@@ -886,8 +886,8 @@ defmodule Image.Text do
     """
 
     with {:ok, {image, _flags}} <- Operation.svgload_buffer(svg),
-         {:ok, trim_color} <- find_trim_color(image),
-         {:ok, {x, y, width, height}} <- Operation.find_trim(image, background: trim_color) do
+         {:ok, trim_color} <- find_trim_color(image, options),
+         {:ok, {x, y, width, height}} <- Operation.find_trim(image, background: trim_color, threshold: 0) do
       Image.crop(image, x, y, width, height)
     end
   end
@@ -920,7 +920,11 @@ defmodule Image.Text do
     end
   end
 
-  defp find_trim_color(image) do
+  defp find_trim_color(_image, %{text_stroke_color: :black, text_fill_color: :black}) do
+    {:ok, [255,255,255]}
+  end
+
+  defp find_trim_color(image, _options) do
     image = Image.flatten!(image)
     Image.get_pixel(image, Image.width(image) - 1, Image.height(image) - 1)
   end
