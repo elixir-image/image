@@ -4,13 +4,23 @@
 
 This is the changelog for Image version 0.34 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
+### Bug Fixes
+
+* Corrects generating text images with `Image.Text.text/2` whent the `text_stroke_color` and `text_fill_color` are black. Closes #87 (again).
+
+* Fixes using a combination of atom and numeric arguments to `Image.compose/3`. Thanks to @sodapopcan for the PR. Closes #97.
+
+* Removes a warning when testing without minio being installed. Thanks to @sodapopcan for the PR. Closes #95.
+
 ### Enhancements
 
-* Adds `Image.compare/3` to compare two images for similarity using a given metric (default is `:ae` or rabsolute error). The three metrics implemented in this release are `:ae` (absolute error which returns a value between 0.0 and 1.0), `:mse` (mean squared error) and `:rmse` (root mean squared error which returns a value between 0.0 and 1.0).
+* Adds `Image.compare/3` to compare two images for similarity using a given metric (default is `:ae` or absolute error). The three metrics implemented in this release are `:ae` (absolute error which returns a value between 0.0 and 1.0), `:mse` (mean squared error) and `:rmse` (root mean squared error which returns a value between 0.0 and 1.0).
 
 * Adds `Image.brightness/2` and `Image.saturation/2` to adjust the image brightness and saturation by a percentage amount between `0.0` and `1.0`. Also adds `Image.brightness!/2` and `Image.saturation!/2`.
 
-* Add `hash_size` as an argument to `Image.hamming_distance/3`. This is the size in bits of the returned hash. The default is 64. The size of the returned hash is only guaranteed to be this size if the `:math.sqrt(hash_size)` is an integer.
+* Adds `hash_size` as an argument to `Image.hamming_distance/3`. This is the size in bits of the returned hash. The default is 64. The size of the returned hash is only guaranteed to be this size if the `:math.sqrt(hash_size)` is an integer.
+
+* Adds `:letter_spacing` as an option to `Image.Text.text/2`. Thanks to @sodapopcan for the PR. Closes #97.
 
 ## Image 0.33.0
 

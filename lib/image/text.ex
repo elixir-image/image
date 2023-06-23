@@ -950,7 +950,7 @@ defmodule Image.Text do
   end
 
   # If the text is black, use white as the trim color
-  defp find_trim_color(_image, %{text_stroke_color: :black, text_fill_color: :black}) do
+  defp find_trim_color(_image, %{text_stroke_color: :black}) do
     Image.Color.validate_color(:white)
   end
 
