@@ -80,8 +80,18 @@ defmodule TextImage.Test do
     {:ok, black_text} = Text.text("Some Black Text", text_stroke_color: :black, text_fill_color: :black)
     # Image.preview black_text
 
-    # Image.write(black_text, validate_path)
+    #Image.write(black_text, validate_path)
     assert_images_equal(black_text, validate_path)
+  end
+
+  test "Autofit text with letter spacing" do
+    validate_path = validate_path("text/autofit_letter_spacing.tif")
+
+    {:ok, text} = Image.Text.text("This is some text", width: 100, height: 50, letter_spacing: 10, autofit: true)
+    # Image.preview text
+
+    # Image.write(text, validate_path)
+    assert_images_equal(text, validate_path)
   end
 
   test "Text centered on a base image", %{image: base_image} do
