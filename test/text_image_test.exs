@@ -78,10 +78,25 @@ defmodule TextImage.Test do
     validate_path = validate_path("text/black_text.tif")
 
     {:ok, black_text} = Text.text("Some Black Text", text_stroke_color: :black, text_fill_color: :black)
+    {:ok, black_text1} = Image.Text.text("Some Black Text", text_fill_color: :black, text_stroke_color: "#000000")
+    {:ok, black_text2} = Image.Text.text("Some Black Text", text_fill_color: "#000000", text_stroke_color: :black)
+    {:ok, black_text3} = Image.Text.text("Some Black Text", text_fill_color: "#000000", text_stroke_color: "#000000")
+
     # Image.preview black_text
 
     #Image.write(black_text, validate_path)
     assert_images_equal(black_text, validate_path)
+    assert_images_equal(black_text1, validate_path)
+    assert_images_equal(black_text2, validate_path)
+    assert_images_equal(black_text3, validate_path)
+  end
+
+  test "Black text with transparent stroke" do
+    assert {:ok, _black_text3} =
+      Image.Text.text("Some Black Text", text_stroke_color: :transparent, text_fill_color: :black)
+
+    assert {:ok, _black_text4} =
+      Image.Text.text("Some Black Text", text_stroke_color: :transparent, text_fill_color: "#000000")
   end
 
   test "Autofit text with letter spacing" do

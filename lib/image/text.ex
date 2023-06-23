@@ -954,6 +954,18 @@ defmodule Image.Text do
     Image.Color.validate_color(:white)
   end
 
+  defp find_trim_color(_image, %{text_stroke_color: "#000000"}) do
+    Image.Color.validate_color(:white)
+  end
+
+  defp find_trim_color(_image, %{text_stroke_color: :transparent, text_fill_color: :black}) do
+    Image.Color.validate_color(:white)
+  end
+
+  defp find_trim_color(_image, %{text_stroke_color: :transparent, text_fill_color: "#000000"}) do
+    Image.Color.validate_color(:white)
+  end
+
   defp find_trim_color(image, _options) do
     image = Image.flatten!(image)
     Image.get_pixel(image, Image.width(image) - 1, Image.height(image) - 1)
