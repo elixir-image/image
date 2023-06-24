@@ -189,8 +189,8 @@ defmodule Image.Options.Text do
     {:cont, Keyword.put(options, option, [padding_left, padding_top])}
   end
 
-  defp validate_option({:letter_spacing = option, :normal}, options) do
-    {:cont, Keyword.put(options, option, "normal")}
+  defp validate_option({:letter_spacing, :normal}, options) do
+    {:cont, options}
   end
 
   defp validate_option({:letter_spacing = option, letter_spacing}, options)

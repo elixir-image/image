@@ -864,8 +864,10 @@ defmodule Image.Text do
   end
 
   defp render_text(text, %{autofit: false} = options) do
+    spacing = if options.letter_spacing == :normal, do: 1, else: options.letter_spacing
+    length = String.length(text)
     height = round(options.font_size * 2.0)
-    width = round(String.length(text) * options.font_size)
+    width = round(length * (options.font_size + spacing))
 
     svg = """
     <svg viewBox="0 0 #{width} #{height}" xmlns="http://www.w3.org/2000/svg">
@@ -938,7 +940,7 @@ defmodule Image.Text do
   end
 
   # If the spacing is normal, don't change the text
-  defp maybe_add_letter_spacing(text, "normal") do
+  defp maybe_add_letter_spacing(text, :normal) do
     {:ok, text}
   end
 

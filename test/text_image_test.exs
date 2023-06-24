@@ -91,6 +91,16 @@ defmodule TextImage.Test do
     assert_images_equal(black_text3, validate_path)
   end
 
+  test "Large letter spacing isn't clipped" do
+    validate_path = validate_path("text/large_letter_spacing.tif")
+
+    {:ok, spacing} = Text.text("Hello", letter_spacing: 50)
+    # Image.preview spacing
+
+    # Image.write(spacing, validate_path)
+    assert_images_equal(spacing, validate_path)
+  end
+
   test "Black text with transparent stroke" do
     assert {:ok, _black_text3} =
       Image.Text.text("Some Black Text", text_stroke_color: :transparent, text_fill_color: :black)
