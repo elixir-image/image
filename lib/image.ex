@@ -6247,12 +6247,7 @@ defmodule Image do
   end
 
   @doc """
-  Apply a percentage adjustment to an image's contrast
-  (luminance).
-
-  The image is converted to the `lch` color space, multiplies the
-  luminance band by the provided float percentage and converts
-  the image back to its original color space.
+  Apply a percentage adjustment to an image's contrast.
 
   ### Arguments
 
@@ -6283,11 +6278,8 @@ defmodule Image do
 
   @doc """
   Apply a percentage adjustment to an image's contrast
-  (luminance) or raises an exception.
+  or raises an exception.
 
-  The image is converted to the `lch` color space, multiplies the
-  luminance band by the provided float percentage and converts
-  the image back to its original color space.
 
   ### Arguments
 
