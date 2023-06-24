@@ -84,7 +84,7 @@ defmodule TextImage.Test do
 
     # Image.preview black_text
 
-    #Image.write(black_text, validate_path)
+    # Image.write(black_text, validate_path)
     assert_images_equal(black_text, validate_path)
     assert_images_equal(black_text1, validate_path)
     assert_images_equal(black_text2, validate_path)
