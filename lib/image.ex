@@ -7145,6 +7145,8 @@ defmodule Image do
     {:ok, number, Vimage.t()} | {:error, error_message()}
   def compare(%Vimage{} = image_1, %Vimage{} = image_2, options \\ []) when is_list(options) do
     with {:ok, options} <- Options.Compare.validate_options(options),
+         {:ok, image_1} <- Image.flatten(image_1),
+         {:ok, image_2} <- Image.flatten(image_2),
          {:ok, difference} <- image_difference(image_1, image_2),
          {:ok, metric} <- compare_by_metric(image_1, image_2, difference, options.metric),
          {:ok, composed_difference} <- compose_difference(image_1, difference, options) do
