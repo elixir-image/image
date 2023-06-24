@@ -6255,7 +6255,7 @@ defmodule Image do
 
   * `contrast` is any float greater than `0.0`. A number less
     than `1.0` means reduce contrast. A number greater than `1.0`
-    means increas contrast.
+    means increase contrast.
 
   ### Returns
 
@@ -6287,7 +6287,7 @@ defmodule Image do
 
   * `contrast` is any float greater than `0.0`. A number less
     than `1.0` means reduce contrast. A number greater than `1.0`
-    means increas contrast.
+    means increase contrast.
 
   ### Returns
 
