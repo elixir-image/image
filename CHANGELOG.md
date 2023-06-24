@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.35.0
+
+This is the changelog for Image version 0.35 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds `Image.contrast/2` to apply simple contrast adjustments to an image. The contrast parameter is provided as a float > 0.0 with contract less than 1.0 meaning reduce contrast and greater than 1.0 meaning increase contrast.
+
 ## Image 0.34.0
 
 This is the changelog for Image version 0.34 released on June 24th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

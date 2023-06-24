@@ -6191,7 +6191,9 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `brightness` is any float between `0.0` and `1.0`.
+  * `brightness` is any float greater than `0.0`. A number less
+    than `1.0` means reduce brightness. A number greater than `1.0`
+    means increas brightness.
 
   ### Returns
 
@@ -6204,7 +6206,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec brightness(image :: Vimage.t(), brightness :: float()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def brightness(%Vimage{} = image, brightness) when is_positive_percent(brightness) do
+  def brightness(%Vimage{} = image, brightness) when is_multiplier(brightness) do
     with_colorspace image, :lch, fn i ->
       Image.Math.multiply(i, [brightness, 1.0, 1.0])
     end
@@ -6222,7 +6224,9 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `brightness` is any float between `0.0` and `1.0`.
+  * `brightness` is any float greater than `0.0`. A number less
+    than `1.0` means reduce brightness. A number greater than `1.0`
+    means increas brightness.
 
   ### Returns
 
@@ -6235,8 +6239,77 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec brightness!(image :: Vimage.t, brightness :: float()) :: Vimage.t() | no_return()
-  def brightness!(%Vimage{} = image, brightness) when is_positive_percent(brightness) do
+  def brightness!(%Vimage{} = image, brightness) when is_multiplier(brightness) do
     case brightness(image, brightness) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Apply a percentage adjustment to an image's contrast
+  (luminance).
+
+  The image is converted to the `lch` color space, multiplies the
+  luminance band by the provided float percentage and converts
+  the image back to its original color space.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `contrast` is any float greater than `0.0`. A number less
+    than `1.0` means reduce contrast. A number greater than `1.0`
+    means increas contrast.
+
+  ### Returns
+
+  * `{:ok, adjusted_image}` or
+
+  * `{:error, reason}`.
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Operation"
+
+  @spec contrast(image :: Vimage.t(), contrast :: float()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def contrast(%Vimage{} = image, contrast) when is_multiplier(contrast) do
+    band_format = Vix.Vips.Image.format(image)
+
+    with {:ok, contrasted} <- Image.Math.multiply(image, contrast) do
+      Vix.Vips.Operation.cast(contrasted, band_format)
+    end
+  end
+
+  @doc """
+  Apply a percentage adjustment to an image's contrast
+  (luminance) or raises an exception.
+
+  The image is converted to the `lch` color space, multiplies the
+  luminance band by the provided float percentage and converts
+  the image back to its original color space.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `contrast` is any float greater than `0.0`. A number less
+    than `1.0` means reduce contrast. A number greater than `1.0`
+    means increas contrast.
+
+  ### Returns
+
+  * `adjusted_image` or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Operation"
+
+  @spec contrast!(image :: Vimage.t, contrast :: float()) :: Vimage.t() | no_return()
+  def contrast!(%Vimage{} = image, contrast) when is_multiplier(contrast) do
+    case contrast(image, contrast) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
@@ -6254,7 +6327,9 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `saturation` is any float between `0.0` and `1.0`.
+  * `saturation` is any float greater than `0.0`. A number less
+    than `1.0` means reduce saturation. A number greater than `1.0`
+    means increas saturation.
 
   ### Returns
 
@@ -6267,7 +6342,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec saturation(image :: Vimage.t, saturation :: float()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def saturation(%Vimage{} = image, saturation) when is_positive_percent(saturation) do
+  def saturation(%Vimage{} = image, saturation) when is_multiplier(saturation) do
     with_colorspace image, :lch, fn i ->
       Image.Math.multiply(i, [1.0, saturation, 1.0])
     end
@@ -6285,7 +6360,9 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `saturation` is any float between `0.0` and `1.0`.
+  * `saturation` is any float greater than `0.0`. A number less
+    than `1.0` means reduce saturation. A number greater than `1.0`
+    means increas saturation.
 
   ### Returns
 
@@ -6298,7 +6375,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec saturation!(image :: Vimage.t, saturation :: float()) :: Vimage.t() | no_return()
-  def saturation!(%Vimage{} = image, saturation) when is_positive_percent(saturation) do
+  def saturation!(%Vimage{} = image, saturation) when is_multiplier(saturation) do
     case saturation(image, saturation) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
