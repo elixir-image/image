@@ -1,6 +1,6 @@
 defmodule Image.Options.Compare do
   @moduledoc """
-  Options and option validation for `Image.comapre/3`.
+  Options and option validation for `Image.compare/3`.
 
   """
   import Image, only: :macros
