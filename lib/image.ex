@@ -4257,7 +4257,7 @@ defmodule Image do
   end
 
   defp normalize_if_possible(image, _lab_image, _luminance, _min, _max) do
-    image
+    {:ok, image}
   end
 
   @doc """
