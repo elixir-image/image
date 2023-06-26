@@ -9,7 +9,7 @@ defmodule Image.Normalize.Test do
     validate_path = validate_path(image_file)
 
     image = Image.open!(image_path, access: :random)
-    {:ok, normalized} = Image.normalize(image)
+    {:ok, normalized} = Image.equalize(image, :luminance)
 
     # {:ok, _image} = Image.write(normalized, validate_path)
     assert_images_equal(normalized, validate_path)

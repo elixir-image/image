@@ -4240,184 +4240,6 @@ defmodule Image do
   end
 
   @doc """
-  Normalize an image by expanding the luminance
-  of an image to cover the full dynamic range.
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`.
-
-  ### Returns
-
-  * `{:ok, normalized_image}` or
-
-  * `{:error, reason}`.
-
-  """
-  @doc subject: "Operation", since: "0.23.0"
-
-  @min_luminance 1.0
-  @max_luminance 99.0
-
-  @spec normalize(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def normalize(%Vimage{} = image) do
-    with {:ok, lab_image} <- to_colorspace(image, :lab) do
-      luminance = lab_image[0]
-      min = Operation.percent!(luminance, @min_luminance)
-      max = Operation.percent!(luminance, @max_luminance)
-
-      normalize_if_possible(image, lab_image, luminance, min, max)
-    end
-  end
-
-  defp normalize_if_possible(image, lab_image, luminance, min, max) when abs(max - min) > 1 do
-    without_alpha_band(image, fn image ->
-      original_interpretation = interpretation(image)
-      chroma = Operation.extract_band!(lab_image, 1, n: 2)
-      f = 100.0 / (max - min)
-      a = -(min * f)
-
-      luminance
-      |> Operation.linear!([f], [a])
-      |> bandjoin!(chroma)
-      |> to_colorspace(original_interpretation)
-    end)
-  end
-
-  defp normalize_if_possible(image, _lab_image, _luminance, _min, _max) do
-    {:ok, image}
-  end
-
-  @doc """
-  Normalize an image by expanding the luminance
-  of an image to cover the full dynamic range.
-  Raises an exception on error.
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`.
-
-  ### Returns
-
-  * `normalized_image` or
-
-  * raises an exception.
-
-  """
-  @doc subject: "Operation", since: "0.23.0"
-
-  @spec normalize!(image :: Vimage.t()) :: Vimage.t() | no_return()
-  def normalize!(%Vimage{} = image) do
-    case normalize(image) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  @doc """
-  Scales each band of an image to fit the full
-  dynamic range. Unlike `Image.normalize/1`, each
-  band is scaled separately.
-
-  The function finds the image histogram, searches for
-  thresholds which will select #{inspect(@level_trim_percent)}% and
-  #{inspect(1 - @level_trim_percent)}% of pixels
-  in each image band, then rescales the image so that those pixel
-  values become `0` and `255`.
-
-  The scaling is performed in the `:srgb` color space
-  but the image is converted back to its original
-  color space after levelling.
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`.
-
-  ### Returns
-
-  * `{:ok, auto_levelled_image}` or
-
-  * `{:error, reason}`.
-
-  """
-
-  # Implemented based upon https://stackoverflow.com/questions/59666277/remove-color-cast-using-libvips
-  # FIXME Scale factor of 255 below will only work for 8 bit per band images
-
-  @doc subject: "Operation", since: "0.23.0"
-
-  @spec autolevel(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def autolevel(%Vimage{} = image) do
-    use Image.Math
-
-    band_format = Vix.Vips.Image.format(image)
-
-    with_colorspace(image, :srgb, fn image ->
-      bands =
-        image
-        |> Operation.hist_find!()
-        |> split_bands()
-
-      low = Enum.map(bands, &level_percent(&1, @level_trim_percent))
-      high = Enum.map(bands, &level_percent(&1, 100 - @level_trim_percent))
-      scale = for {h, l} <- Enum.zip(high, low), do: 255.0 / (h - l)
-      scaled = (image - low) * scale
-
-      Operation.cast(scaled, band_format)
-    end)
-  end
-
-  @doc """
-  Scales each band of an image to fit the full
-  dynamic range. Unlike `Image.normalize/1`, each
-  band is scaled separately. Raises an exception
-  on error.
-
-  The function finds the image histogram, searches for
-  thresholds which will select #{inspect(@level_trim_percent)}% and
-  #{inspect(1 - @level_trim_percent)}% of pixels
-  in each image band, then rescales the image so that those pixel
-  values become `0` and `255`.
-
-  The scaling is performed in the `:srgb` color space
-  but the image is converted back to its original
-  color space after levelling.
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`.
-
-  ### Returns
-
-  * `auto_levelled_image` or
-
-  * raises an exception.
-
-  """
-  @doc subject: "Operation", since: "0.23.0"
-
-  @spec autolevel!(Vimage.t()) :: Vimage.t() | no_return()
-  def autolevel!(%Vimage{} = image) do
-    case autolevel(image) do
-      {:ok, leveled} -> leveled
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  defp level_percent(hist, percentage) do
-    use Image.Math
-
-    norm =
-      hist
-      |> Operation.hist_cum!()
-      |> Operation.hist_norm!()
-
-    {:ok, {_c, r}} = Operation.profile(norm > width(norm) * percentage / 100)
-
-    Operation.avg!(r)
-  end
-
-  @doc """
   Replace one color in an image with another.
 
   ### Arguments
@@ -6338,14 +6160,36 @@ defmodule Image do
   end
 
   @doc """
-  Apply a global contrast adjustment to an image.
+  Equalizes the histogram of an imaage.
 
-  Equalizes the histogram by the same factor
-  for all bands.
+  Equalization is the process of expanding the
+  tone range of an image by stretching the darkest
+  tones towards black and the lightest tones towards
+  white. As a result, equalization affects overall
+  image contrast.
 
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `bands` determines which bands are equalized. The
+    value may be one of:
+
+    * `:all` (defaalt) means that all bands are eqalized
+      such that the darkest tones are expanded to black and the
+      lightest tones are expanded to white.
+
+    * `:each` means that each band is equalized individually
+      such that each band is expanded to fill the range
+      between 5% and 95% of the available tone range. Since
+      each band is equalized separately there may be some
+      color shifts detected.
+
+    * `:luminance` means that only the luminance band is
+      equqlized to fill between 1% and 99% of the tone range.
+      The image is converted to the `:lab` color space, the
+      `l` band is equalized and the image is converted back to
+      its origianal color space.
 
   ### Returns
 
@@ -6357,21 +6201,119 @@ defmodule Image do
   @doc since: "0.35.0"
   @doc subject: "Operation"
 
-  @spec equalize(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def equalize(%Vimage{} = image) do
+  @spec equalize(image :: Vimage.t(), bands :: Options.Equalize.equalize_option()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def equalize(image, bands \\ :all)
+
+  def equalize(%Vimage{} = image, bands) when bands in [:all, :each, :luminance] do
+    do_equalize(image, bands)
+  end
+
+  def equalize(%Vimage{} = _image, bands)  do
+    {:error, "Invalid bands parameter. Valid parameters are :all, :each and :luminance. Found #{inspect bands}."}
+  end
+
+  defp do_equalize(image, :all) do
     Operation.hist_equal(image)
   end
 
-  @doc """
-  Apply a global contrast adjustment to an image or
-  raises an exception.
+  defp do_equalize(image, :each) do
+    use Image.Math
 
-  Equalizes the histogram by the same factor
-  for all bands.
+    band_format = Vix.Vips.Image.format(image)
+
+    with_colorspace(image, :srgb, fn image ->
+      bands =
+        image
+        |> Operation.hist_find!()
+        |> split_bands()
+
+      low = Enum.map(bands, &level_percent(&1, @level_trim_percent))
+      high = Enum.map(bands, &level_percent(&1, 100 - @level_trim_percent))
+      scale = for {h, l} <- Enum.zip(high, low), do: 255.0 / (h - l)
+      scaled = (image - low) * scale
+
+      Operation.cast(scaled, band_format)
+    end)
+  end
+
+  @min_luminance 1.0
+  @max_luminance 99.0
+
+  defp do_equalize(image, :luminance) do
+    with {:ok, lab_image} <- to_colorspace(image, :lab) do
+      luminance = lab_image[0]
+      min = Operation.percent!(luminance, @min_luminance)
+      max = Operation.percent!(luminance, @max_luminance)
+
+      normalize_if_possible(image, lab_image, luminance, min, max)
+    end
+  end
+
+  defp level_percent(hist, percentage) do
+    use Image.Math
+
+    norm =
+      hist
+      |> Operation.hist_cum!()
+      |> Operation.hist_norm!()
+
+    {:ok, {_c, r}} = Operation.profile(norm > width(norm) * percentage / 100)
+
+    Operation.avg!(r)
+  end
+
+  defp normalize_if_possible(image, lab_image, luminance, min, max) when abs(max - min) > 1 do
+    without_alpha_band(image, fn image ->
+      original_interpretation = interpretation(image)
+      chroma = Operation.extract_band!(lab_image, 1, n: 2)
+      f = 100.0 / (max - min)
+      a = -(min * f)
+
+      luminance
+      |> Operation.linear!([f], [a])
+      |> bandjoin!(chroma)
+      |> to_colorspace(original_interpretation)
+    end)
+  end
+
+  defp normalize_if_possible(image, _lab_image, _luminance, _min, _max) do
+    {:ok, image}
+  end
+
+  @doc """
+  Apply a global contrast adjustment to an image
+  or raises an exception.
+
+  Equalization is the process of expanding the
+  tone range of an image by stretching the darkest
+  tones towards black and the lightest tones towards
+  white. As a result, equalization affects overall
+  image contrast.
 
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `bands` determines which bands are equalized. The
+    value may be one of:
+
+    * `:all` (defaalt) means that all bands are eqalized
+      such that the darkest tones are expanded to black and the
+      lightest tones are expanded to white.
+
+    * `:each` means that each band is equalized individually
+      such that each band is expanded to fill the range
+      between 5% and 95% of the available tone range. Since
+      each band is equalized separately there may be some
+      color shifts detected.
+
+    * `:luminance` means that only the luminance band is
+      equqlized to fill between 1% and 99% of the tone range.
+      The image is converted to the `:lab` color space, the
+      `l` band is equalized and the image is converted back to
+      its origianal color space.
 
   ### Returns
 
@@ -6383,9 +6325,11 @@ defmodule Image do
   @doc since: "0.35.0"
   @doc subject: "Operation"
 
-  @spec equalize!(image :: Vimage.t()) :: Vimage.t() | no_return()
-  def equalize!(%Vimage{} = image) do
-    case equalize(image) do
+  @spec equalize!(image :: Vimage.t(), bands :: Options.Equalize.equalize_option()) ::
+    Vimage.t() | no_return()
+
+  def equalize!(%Vimage{} = image, bands \\ :all) do
+    case equalize(image, bands) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end

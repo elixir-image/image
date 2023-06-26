@@ -10,7 +10,7 @@ defmodule Image.AutoLevel.Test do
     validate_path = validate_path(validate_file)
 
     image = Image.open!(image_path, access: :random)
-    {:ok, levelled} = Image.autolevel(image)
+    {:ok, levelled} = Image.equalize(image, :each)
 
     # {:ok, _image} = Image.write(levelled, validate_path)
     assert_images_equal(levelled, validate_path, 4.6)
