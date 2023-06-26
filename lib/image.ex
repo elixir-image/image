@@ -6338,6 +6338,60 @@ defmodule Image do
   end
 
   @doc """
+  Apply a global contrast adjustment to an image.
+
+  Equalizes the histogram by the same factor
+  for all bands.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, adjusted_image}` or
+
+  * `{:error, reason}`.
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Operation"
+
+  @spec equalize(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def equalize(%Vimage{} = image) do
+    Operation.hist_equal(image)
+  end
+
+  @doc """
+  Apply a global contrast adjustment to an image or
+  raises an exception.
+
+  Equalizes the histogram by the same factor
+  for all bands.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `adjusted_image` or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Operation"
+
+  @spec equalize!(image :: Vimage.t()) :: Vimage.t() | no_return()
+  def equalize!(%Vimage{} = image) do
+    case equalize(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Apply a local contrast adjustment to an image.
 
   This function applies a [Constrast Limited Adaptive histogram equalization (AHE)](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#Contrast_Limited_AHE)
