@@ -2278,7 +2278,7 @@ defmodule Image do
         {:error, "Alpha image has more than one band"}
 
       true ->
-        Vix.Vips.Operation.bandjoin([image, alpha_image])
+        Operation.bandjoin([image, alpha_image])
     end
   end
 
@@ -3080,9 +3080,37 @@ defmodule Image do
   """
   @doc subject: "Image info"
 
-  @spec height(image :: Vimage.t()) :: pos_integer()
+  @spec height(image :: Vimage.t()) :: Image.BandFormat.t()
   def height(%Vimage{} = image) do
     Vimage.height(image)
+  end
+
+  @doc """
+  Returns the band format of an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * The band format of the image in `Nx` notation.
+
+  ### Examples
+
+        iex> image = Image.open!("./test/support/images/Singapore-2016-09-5887.jpg")
+        iex> Image.band_format(image)
+        {:u, 8}
+
+  """
+  @doc subject: "Image info"
+  @doc since: "0.35.0"
+
+  @spec band_format(image :: Vimage.t()) :: Image.BandFormat.t()
+  def band_format(%Vimage{} = image) do
+    image
+    |> Vix.Vips.Image.format()
+    |> Image.BandFormat.nx_format!()
   end
 
   @doc """
@@ -4314,12 +4342,15 @@ defmodule Image do
   """
 
   # Implemented based upon https://stackoverflow.com/questions/59666277/remove-color-cast-using-libvips
+  # FIXME Scale factor of 255 below will only work for 8 bit per band images
 
   @doc subject: "Operation", since: "0.23.0"
 
-  @spec autolevel(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec autolevel(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def autolevel(%Vimage{} = image) do
     use Image.Math
+
+    band_format = Vix.Vips.Image.format(image)
 
     with_colorspace(image, :srgb, fn image ->
       bands =
@@ -4332,8 +4363,7 @@ defmodule Image do
       scale = for {h, l} <- Enum.zip(high, low), do: 255.0 / (h - l)
       scaled = (image - low) * scale
 
-      image = Operation.cast!(scaled, :VIPS_FORMAT_UCHAR)
-      {:ok, image}
+      Operation.cast(scaled, band_format)
     end)
   end
 
@@ -6308,6 +6338,103 @@ defmodule Image do
   end
 
   @doc """
+  Apply a local contrast adjustment to an image.
+
+  This function applies a [Constrast Limited Adaptive histogram equalization (AHE)](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#Contrast_Limited_AHE)
+  to improve contrast in images. It differs from ordinary histogram
+  equalization in the respect that the adaptive method computes several
+  histograms, each corresponding to a distinct section of the image, and
+  uses them to redistribute the lightness values of the image.
+
+  It is therefore suitable for improving the local contrast and
+  enhancing the definitions of edges in each region of an image,
+  hence the name of the function.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * :`window_size` is an integer indicating the size of
+    the window (in pixels) into the image in which the contrast adjustment
+    is calculated. The default is `3`.
+
+  * `:max_slope` is the integral level of brightening, between 0 and
+    100, where 0 (the default) disables contrast limiting.
+
+  ### Returns
+
+  * `{:ok, adjusted_image}` or
+
+  * `{:error, reason}`.
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Operation"
+
+  @spec local_contrast(image :: Vimage.t(), options ::Options.LocalContrast.options()) ::
+     {:ok, Vimage.t()} | {:error, error_message()}
+
+  def local_contrast(%Vimage{} = image, options \\ []) do
+    with {:ok, options} <- Options.LocalContrast.validate_options(options) do
+      window = options.window_size
+      Operation.hist_local(image, window, window, "max-slope": options.max_slope)
+    end
+  end
+
+  @doc """
+  Apply a local contrast adjustment to an image
+  or raises an exception.
+
+  This function applies a [Constrast Limited Adaptive histogram equalization (AHE)](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#Contrast_Limited_AHE)
+  to improve contrast in images. It differs from ordinary histogram
+  equalization in the respect that the adaptive method computes several
+  histograms, each corresponding to a distinct section of the image, and
+  uses them to redistribute the lightness values of the image.
+
+  It is therefore suitable for improving the local contrast and
+  enhancing the definitions of edges in each region of an image,
+  hence the name of the function.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * :`window_size` is an integer indicating the size of
+    the window (in pixels) into the image in which the contrast adjustment
+    is calculated. The default is `3`.
+
+  * `:max_slope` is the integral level of brightening, between 0 and
+    100, where 0 (the default) disables contrast limiting.
+
+  ### Returns
+
+  * `adjusted_image` or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Operation"
+
+  @spec local_contrast!(image :: Vimage.t, options :: Options.LocalContrast.options()) ::
+      Vimage.t() | no_return()
+
+  def local_contrast!(%Vimage{} = image, options \\ []) do
+    case local_contrast(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Apply a percentage adjustment to an image's saturation
   (chroma).
 
@@ -7791,6 +7918,52 @@ defmodule Image do
     with {:ok, converted} <- to_colorspace(image, colorspace) do
       case fun.(converted) do
         {:ok, image} -> to_colorspace(image, original_colorspace)
+        other -> other
+      end
+    end
+  end
+
+  @doc """
+  Execute a function over the image casting it
+  first to a different band format and ensuring the band
+  format reverted when the function returns.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `band_format` is any valid band format.
+    See `Image.BandFormat.known_band_formats/0`.
+
+  * `fun` is any 1-arity function that is
+    required to return `{:ok, image}` or
+    `{:error, reason}`.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+        iex> image = Image.open!("./test/support/images/Singapore-2016-09-5887.jpg")
+        iex> {:ok, updated_image} = Image.with_band_format(image, {:s, 16}, fn i -> {:ok, i} end)
+        iex> Image.band_format(updated_image)
+        {:u, 8}
+
+  """
+  @doc since: "0.35.0", subject: "Operation"
+
+  @spec with_band_format(Vimage.t(), band_format :: BandFormat.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})) ::
+          {:ok, Vimage.t()} | {:error, error_message}
+
+  def with_band_format(image, band_format, fun) do
+    original_band_format = band_format(image)
+
+    with {:ok, converted} <- cast(image, band_format) do
+      case fun.(converted) do
+        {:ok, image} -> cast(image, original_band_format)
         other -> other
       end
     end

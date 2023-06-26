@@ -8,6 +8,10 @@ This is the changelog for Image version 0.35 released on ______, 2023.  For olde
 
 * Adds `Image.contrast/2` to apply simple contrast adjustments to an image. The contrast parameter is provided as a float > 0.0 with contract less than 1.0 meaning reduce contrast and greater than 1.0 meaning increase contrast.
 
+* Adds `Image.band_format/1` to return the band format of an image in Nx notation.
+
+* Adds `Image.with_band_format/3` to cast an image to a new band format, execute a function on the cast image and then re-cast the image back to its original band format if the function returns successfully.
+
 ## Image 0.34.0
 
 This is the changelog for Image version 0.34 released on June 24th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

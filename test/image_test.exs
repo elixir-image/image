@@ -7,6 +7,7 @@ defmodule Image.Test do
   doctest Image
   doctest Image.Classification
   doctest Image.Color
+  doctest Image.BandFormat
 
   setup do
     Temp.track!()

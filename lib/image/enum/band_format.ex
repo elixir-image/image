@@ -53,6 +53,7 @@ defmodule Image.BandFormat do
   end
 
   @known_band_formats Map.keys(@long_format_map)
+  @vips_band_formats Map.values(@long_format_map)
 
   @doc """
   Returns a list of the known band formats.
@@ -78,7 +79,22 @@ defmodule Image.BandFormat do
 
   * `{:error, reason}`
 
+  ### Examples
+
+        iex> Image.BandFormat.validate({:u, 8})
+        {:ok, :VIPS_FORMAT_UCHAR}
+
+        iex> Image.BandFormat.validate(:u8)
+        {:ok, :VIPS_FORMAT_UCHAR}
+
+        iex> Image.BandFormat.validate(:VIPS_FORMAT_UCHAR)
+        {:ok, :VIPS_FORMAT_UCHAR}
+
   """
+  def validate(format) when format in @vips_band_formats do
+    {:ok, format}
+  end
+
   def validate(format) do
     case Map.get(band_format_map(), format) do
       nil ->
@@ -123,7 +139,7 @@ defmodule Image.BandFormat do
 
   @doc """
   Returns the `Nx` format type for an
-  `Image` of image format type.
+  `Image` or image format type.
 
   `Image` uses the same type formats as `Nx` so
   this function is more a validation than a
@@ -151,6 +167,34 @@ defmodule Image.BandFormat do
         {:error, "Invalid band format. Found #{inspect(format)}"}
       format ->
         {:ok, format}
+    end
+  end
+
+  @doc """
+  Returns the `Nx` format type for an
+  `Image` or image format type or raises
+  an exception.
+
+  `Image` uses the same type formats as `Nx` so
+  this function is more a validation than a
+  conversion.
+
+  ### Arguments
+
+  * Any `t:Vimage.t/0` of format in the list
+    returned by `Image.BandFormat.known_band_formats/0`.
+
+  ### Returns
+
+  * `band_format` or
+
+  * raises an exception.
+
+  """
+  def nx_format!(image_or_format) do
+    case nx_format(image_or_format) do
+      {:ok, format} -> format
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 end
