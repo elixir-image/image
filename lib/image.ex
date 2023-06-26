@@ -3080,7 +3080,7 @@ defmodule Image do
   """
   @doc subject: "Image info"
 
-  @spec height(image :: Vimage.t()) :: Image.BandFormat.t()
+  @spec height(image :: Vimage.t()) :: pos_integer()
   def height(%Vimage{} = image) do
     Vimage.height(image)
   end
@@ -6375,7 +6375,7 @@ defmodule Image do
   @doc since: "0.35.0"
   @doc subject: "Operation"
 
-  @spec local_contrast(image :: Vimage.t(), options ::Options.LocalContrast.options()) ::
+  @spec local_contrast(image :: Vimage.t(), options :: Options.LocalContrast.local_contrast_options()) ::
      {:ok, Vimage.t()} | {:error, error_message()}
 
   def local_contrast(%Vimage{} = image, options \\ []) do
@@ -6424,7 +6424,7 @@ defmodule Image do
   @doc since: "0.35.0"
   @doc subject: "Operation"
 
-  @spec local_contrast!(image :: Vimage.t, options :: Options.LocalContrast.options()) ::
+  @spec local_contrast!(image :: Vimage.t, options :: Options.LocalContrast.local_contrast_options()) ::
       Vimage.t() | no_return()
 
   def local_contrast!(%Vimage{} = image, options \\ []) do
