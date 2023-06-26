@@ -4,7 +4,15 @@
 
 This is the changelog for Image version 0.35 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
+### Breaking change
+
+* Removes `Image.autolevel/1` which is replaced with `Image.equalize(image, :each)`.
+
+* Removes `Image.normalize/1` which is replaced with `Image.equalize(image, :luminance)`.
+
 ### Enhancements
+
+* Adds `Image.equalize/2` which expands an images tone range to fill the histogram. Equalization can be performed on all bands, on each band or only on the luminance band. This function replaces `Image.normalize/1` and `Image.autolevel/1`.
 
 * Adds `Image.contrast/2` to apply simple contrast adjustments to an image. The contrast parameter is provided as a float > 0.0 with contract less than 1.0 meaning reduce contrast and greater than 1.0 meaning increase contrast.
 

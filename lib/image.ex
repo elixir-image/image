@@ -2937,6 +2937,9 @@ defmodule Image do
   defp transform(text, :upcase), do: String.upcase(text)
   defp transform(text, :downcase), do: String.downcase(text)
 
+  # defp bandjoin(a, nil), do: {:ok, a}
+  defp bandjoin(a, b), do: Operation.bandjoin([a, b])
+
   defp bandjoin!(a, nil), do: a
   defp bandjoin!(a, b), do: Operation.bandjoin!([a, b])
 
@@ -6215,7 +6218,9 @@ defmodule Image do
   end
 
   defp do_equalize(image, :all) do
-    Operation.hist_equal(image)
+    without_alpha_band(image, fn image ->
+      Operation.hist_equal(image)
+    end)
   end
 
   defp do_equalize(image, :each) do
@@ -6223,18 +6228,20 @@ defmodule Image do
 
     band_format = Vix.Vips.Image.format(image)
 
-    with_colorspace(image, :srgb, fn image ->
-      bands =
-        image
-        |> Operation.hist_find!()
-        |> split_bands()
+    without_alpha_band(image, fn image ->
+      with_colorspace(image, :srgb, fn image ->
+        bands =
+          image
+          |> Operation.hist_find!()
+          |> split_bands()
 
-      low = Enum.map(bands, &level_percent(&1, @level_trim_percent))
-      high = Enum.map(bands, &level_percent(&1, 100 - @level_trim_percent))
-      scale = for {h, l} <- Enum.zip(high, low), do: 255.0 / (h - l)
-      scaled = (image - low) * scale
+        low = Enum.map(bands, &level_percent(&1, @level_trim_percent))
+        high = Enum.map(bands, &level_percent(&1, 100 - @level_trim_percent))
+        scale = for {h, l} <- Enum.zip(high, low), do: 255.0 / (h - l)
+        scaled = (image - low) * scale
 
-      Operation.cast(scaled, band_format)
+        Operation.cast(scaled, band_format)
+      end)
     end)
   end
 
@@ -6242,13 +6249,15 @@ defmodule Image do
   @max_luminance 99.0
 
   defp do_equalize(image, :luminance) do
-    with {:ok, lab_image} <- to_colorspace(image, :lab) do
-      luminance = lab_image[0]
-      min = Operation.percent!(luminance, @min_luminance)
-      max = Operation.percent!(luminance, @max_luminance)
+    without_alpha_band(image, fn image ->
+      with_colorspace(image, :lab, fn lab_image ->
+        luminance = lab_image[0]
+        min = Operation.percent!(luminance, @min_luminance)
+        max = Operation.percent!(luminance, @max_luminance)
 
-      normalize_if_possible(image, lab_image, luminance, min, max)
-    end
+        normalize_if_possible(lab_image, luminance, min, max)
+      end)
+    end)
   end
 
   defp level_percent(hist, percentage) do
@@ -6264,22 +6273,18 @@ defmodule Image do
     Operation.avg!(r)
   end
 
-  defp normalize_if_possible(image, lab_image, luminance, min, max) when abs(max - min) > 1 do
-    without_alpha_band(image, fn image ->
-      original_interpretation = interpretation(image)
-      chroma = Operation.extract_band!(lab_image, 1, n: 2)
-      f = 100.0 / (max - min)
-      a = -(min * f)
+  defp normalize_if_possible(lab_image, luminance, min, max) when abs(max - min) > 1 do
+    chroma = Operation.extract_band!(lab_image, 1, n: 2)
+    f = 100.0 / (max - min)
+    a = -(min * f)
 
-      luminance
-      |> Operation.linear!([f], [a])
-      |> bandjoin!(chroma)
-      |> to_colorspace(original_interpretation)
-    end)
+    luminance
+    |> Operation.linear!([f], [a])
+    |> bandjoin(chroma)
   end
 
-  defp normalize_if_possible(image, _lab_image, _luminance, _min, _max) do
-    {:ok, image}
+  defp normalize_if_possible(lab_image, _luminance, _min, _max) do
+    {:ok, lab_image}
   end
 
   @doc """
