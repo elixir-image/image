@@ -3150,7 +3150,7 @@ defmodule Image do
   def range(%Vimage{} = image) do
     case band_format(image) do
       {:u, bits} -> {0, 2 ** bits - 1}
-      {:s, bits} -> {-1.0 * 2.0 ** (bits - 1), 2 ** (bits - 1) - 1.0}
+      {:s, bits} -> {-1.0 * 2 ** (bits - 1), 2 ** (bits - 1) - 1.0}
     end
   end
 
