@@ -3123,6 +3123,38 @@ defmodule Image do
   end
 
   @doc """
+  Returns the range of permissable values
+  as a tuple for each pixel in an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{min_value, max_value}` where `min_value` and
+    `max_value` are integers for unsigned images and
+    floats for signed images.
+
+  ### Examples
+
+        iex> image = Image.open!("./test/support/images/Singapore-2016-09-5887.jpg")
+        iex> Image.range(image)
+        {0, 255}
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Image info"
+
+  @spec range(image :: Vimage.t()) :: {non_neg_integer() | float(), non_neg_integer() | float()}
+  def range(%Vimage{} = image) do
+    case band_format(image) do
+      {:u, bits} -> {0, 2 ** bits - 1}
+      {:s, bits} -> {-1.0 * 2.0 ** (bits - 1), 2 ** (bits - 1) - 1.0}
+    end
+  end
+
+  @doc """
   Return the number of bands in an image.
 
   A band is sometimes referred to as a
@@ -6336,6 +6368,173 @@ defmodule Image do
     case equalize(image, bands) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Applies a tone curve to an image.
+
+  A tone curve is a function to adjust brightness and
+  contrast by controlling the input-output density curve
+  for each band of an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:black_point` is an integer between `0`
+    (the default) and `100` indicating the darkest
+    and most dense black area of the image will
+    lie in the overall range of the image.
+
+  * `:white_point` is an integer between `0`
+    and `100` (the default) indicating the lightest
+    area of the image will lie in the overall range
+    of the image.
+
+  * `:shadow_point` is the point on the tone curve
+    around which the shadow values are tone mapped. The
+    value is between `0.0` and `1.0`. The default is
+    `0.2`.
+
+  * `:mid_point` is the point on the tone curve
+    around which the mid tone values are tone mapped. The
+    value is between `0.0` and `1.0`. The default is
+    `0.5`.
+
+  * `:highlight_point` is the point on the tone curve
+    around which the highlight values are tone mapped. The
+    value is between `0.0` and `1.0`. The default is
+    `0.8`.
+
+  * `:shadows` indicates by how much the shadows should be
+    adjusted. The value is in the range `-30` to `30`.
+    The default is `0`.
+
+  * `:mids` indicates by how much the mid tones should be
+    adjusted. The value is in the range `-30` to `30`.
+    The default is `0`.
+
+  * `:highlights` indicates by how much the highlights should be
+    adjusted. The value is in the range `-30` to `30`.
+    The default is `0`.
+
+  ### Returns
+
+  * `{:ok, tone_mapped_image}` or
+
+  * `{:error, reason}`.
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Operation"
+
+  @spec apply_tone_curve(image :: Vimage.t(), options :: Options.ToneCurve.tone_curve_options()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def apply_tone_curve(%Vimage{} = image, options \\ []) do
+    with {:ok, lut} <- tone_curve(image, options)  do
+      without_alpha_band(image, fn base_image ->
+        Operation.maplut(base_image, lut)
+      end)
+    end
+  end
+
+  @doc """
+  Applies a tone curve to an image or raises
+  an exception.
+
+  A tone curve is a function to adjust brightness and
+  contrast by controlling the input-output density curve
+  for each band of an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:black_point` is an integer between `0`
+    (the default) and `100` indicating the darkest
+    and most dense black area of the image will
+    lie in the overall range of the image.
+
+  * `:white_point` is an integer between `0`
+    and `100` (the default) indicating the lightest
+    area of the image will lie in the overall range
+    of the image.
+
+  * `:shadow_point` is the point on the tone curve
+    around which the shadow values are tone mapped. The
+    value is between `0.0` and `1.0`. The default is
+    `0.2`.
+
+  * `:mid_point` is the point on the tone curve
+    around which the mid tone values are tone mapped. The
+    value is between `0.0` and `1.0`. The default is
+    `0.5`.
+
+  * `:highlight_point` is the point on the tone curve
+    around which the highlight values are tone mapped. The
+    value is between `0.0` and `1.0`. The default is
+    `0.8`.
+
+  * `:shadows` indicates by how much the shadows should be
+    adjusted. The value is in the range `-30` to `30`.
+    The default is `0`.
+
+  * `:mids` indicates by how much the mid tones should be
+    adjusted. The value is in the range `-30` to `30`.
+    The default is `0`.
+
+  * `:highlights` indicates by how much the highlights should be
+    adjusted. The value is in the range `-30` to `30`.
+    The default is `0`.
+
+  ### Returns
+
+  * `tone_mapped_image` or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Operation"
+
+  @spec apply_tone_curve!(image :: Vimage.t(), options :: Options.ToneCurve.tone_curve_options()) ::
+    Vimage.t() | no_return()
+
+  def apply_tone_curve!(%Vimage{} = image, options \\ []) do
+    case apply_tone_curve(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  defp tone_curve(%Vimage{} = image, options) do
+    {_min, _max} = range(image)
+
+    with {:ok, options} <- Options.ToneCurve.validate_options(options),
+         {_min, max} <- range(image),
+         {:ok, lut} <- Operation.tonelut([
+            Lb: options.black_point,
+            Lw: options.white_point,
+            Ps: options.shadow_point,
+            Pm: options.mid_point,
+            Ph: options.highlight_point,
+            S: options.shadows,
+            M: options.mids,
+            H: options.highlights,
+            "in-max": max,
+            "out-max": max
+          ]) do
+      cast(lut, band_format(image))
     end
   end
 
