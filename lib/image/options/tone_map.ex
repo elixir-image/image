@@ -19,7 +19,7 @@ defmodule Image.Options.ToneCurve do
   | {:mid, tone_adjustment()}
   | {:highlight, tone_adjustment()}
 
-  @type tone_curve_options :: [tone_curve_option(), ...] | map()
+  @type tone_curve_options :: [tone_curve_option()] | map()
 
   @typedoc """
   Range for setting the black point and
@@ -40,7 +40,18 @@ defmodule Image.Options.ToneCurve do
   """
   @type tone_adjustment :: -30..30
 
-  defguard is_set_point(point) when point in -30..30
+  @doc """
+  Valid range for setting the black point and
+  white point.
+  """
+  defguard is_set_point(point) when point in 0..100
+
+  @doc """
+  The range in which the shadows, mids and highlights
+  can be adjusted.
+  """
+  defguard is_tone_adjustment(tone) when tone in -30..30
+
   @doc """
   Validate the options for `Image.tone_curve/2`.
 
@@ -63,7 +74,7 @@ defmodule Image.Options.ToneCurve do
           options[:mid_point] >= options[:highlight_point] ->
             {:error, "Highlight_point must be greater than mid_point"}
 
-          true ->
+          {} ->
             {:ok, Map.new(options)}
         end
     end
@@ -89,15 +100,15 @@ defmodule Image.Options.ToneCurve do
     {:cont, options}
   end
 
-  defp validate_option({:shadow, shadow}, options) when is_positive_percent(shadow) do
+  defp validate_option({:shadows, shadow}, options) when is_tone_adjustment(shadow) do
     {:cont, options}
   end
 
-  defp validate_option({:mid, mid}, options) when is_positive_percent(mid) do
+  defp validate_option({:mids, mid}, options) when is_tone_adjustment(mid) do
     {:cont, options}
   end
 
-  defp validate_option({:highlight, highlight}, options) when is_positive_percent(highlight) do
+  defp validate_option({:highlights, highlight}, options) when is_tone_adjustment(highlight) do
     {:cont, options}
   end
 
@@ -116,9 +127,9 @@ defmodule Image.Options.ToneCurve do
       shadow_point: 0.2,
       mid_point: 0.5,
       highlight_point: 0.8,
-      shadow: 0,
-      mid: 0,
-      highlight: 0
+      shadows: 0,
+      mids: 0,
+      highlights: 0
     ]
   end
 end
