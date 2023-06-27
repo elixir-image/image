@@ -204,8 +204,14 @@ defmodule Image do
   @square_when_ratio_less_than 0.0
 
   # The percent from absolute black and
-  # absolute white in autolevel/1
+  # absolute white in equalize/2 for
+  # :each band option.
   @level_trim_percent 0.3
+
+  # The percent from range of the tone
+  # curve when equalizing luminance.
+  @min_luminance 1.0
+  @max_luminance 99.0
 
   # Representing an opque alpha band
   @opaque_ 0
@@ -6209,21 +6215,13 @@ defmodule Image do
 
   def equalize(image, bands \\ :all)
 
-  def equalize(%Vimage{} = image, bands) when bands in [:all, :each, :luminance] do
-    do_equalize(image, bands)
-  end
-
-  def equalize(%Vimage{} = _image, bands)  do
-    {:error, "Invalid bands parameter. Valid parameters are :all, :each and :luminance. Found #{inspect bands}."}
-  end
-
-  defp do_equalize(image, :all) do
+  def equalize(%Vimage{} = image, :all) do
     without_alpha_band(image, fn image ->
       Operation.hist_equal(image)
     end)
   end
 
-  defp do_equalize(image, :each) do
+  def equalize(%Vimage{} = image, :each) do
     use Image.Math
 
     band_format = Vix.Vips.Image.format(image)
@@ -6245,10 +6243,7 @@ defmodule Image do
     end)
   end
 
-  @min_luminance 1.0
-  @max_luminance 99.0
-
-  defp do_equalize(image, :luminance) do
+  def equalize(%Vimage{} = image, :luminance) do
     without_alpha_band(image, fn image ->
       with_colorspace(image, :lab, fn lab_image ->
         luminance = lab_image[0]
@@ -6258,6 +6253,10 @@ defmodule Image do
         normalize_if_possible(lab_image, luminance, min, max)
       end)
     end)
+  end
+
+  def equalize(%Vimage{} = _image, bands)  do
+    {:error, "Invalid bands parameter. Valid parameters are :all, :each and :luminance. Found #{inspect bands}."}
   end
 
   defp level_percent(hist, percentage) do
