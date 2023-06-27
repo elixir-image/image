@@ -1563,7 +1563,12 @@ defmodule Image do
 
   def if_then_else(condition_image, if_image_or_color, else_image_or_color, options \\ [])
 
-  def if_then_else(%Vimage{} = condition_image, %Vimage{} = if_image, %Vimage{} = else_image, options) do
+  def if_then_else(
+        %Vimage{} = condition_image,
+        %Vimage{} = if_image,
+        %Vimage{} = else_image,
+        options
+      ) do
     blend = Keyword.get(options, :blend, false)
     Operation.ifthenelse(condition_image, if_image, else_image, blend: blend)
   end
@@ -2499,7 +2504,11 @@ defmodule Image do
   """
   @doc subject: "Operation"
 
-  @spec compose(base_image :: Vimage.t(), overlay_image :: Vimage.t(), options :: Options.Compose.t()) ::
+  @spec compose(
+          base_image :: Vimage.t(),
+          overlay_image :: Vimage.t(),
+          options :: Options.Compose.t()
+        ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def compose(base_image, overlay_image_or_images, options \\ [])
@@ -2515,7 +2524,11 @@ defmodule Image do
     end
   end
 
-  @spec compose(base_image :: Vimage.t(), image_list :: composition_list(), options :: Options.Compose.t()) ::
+  @spec compose(
+          base_image :: Vimage.t(),
+          image_list :: composition_list(),
+          options :: Options.Compose.t()
+        ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def compose(%Vimage{} = base_image, image_list, _options) when is_list(image_list) do
@@ -2688,7 +2701,11 @@ defmodule Image do
   """
   @doc subject: "Operation"
 
-  @spec compose!(base_image :: Vimage.t(), overlay_image :: Vimage.t(), options :: Options.Compose.t()) ::
+  @spec compose!(
+          base_image :: Vimage.t(),
+          overlay_image :: Vimage.t(),
+          options :: Options.Compose.t()
+        ) ::
           Vimage.t() | no_return()
 
   def compose!(base_image, image_or_image_list, options \\ [])
@@ -2700,7 +2717,11 @@ defmodule Image do
     end
   end
 
-  @spec compose!(base_image :: Vimage.t(), image_list :: composition_list(), options :: Options.Compose.t()) ::
+  @spec compose!(
+          base_image :: Vimage.t(),
+          image_list :: composition_list(),
+          options :: Options.Compose.t()
+        ) ::
           Vimage.t() | no_return()
 
   def compose!(%Vimage{} = base_image, image_list, options) when is_list(image_list) do
@@ -4350,7 +4371,7 @@ defmodule Image do
   @doc since: "0.30.0", subject: "Color"
 
   @spec replace_color(Vimage.t(), ChromaKey.chroma_key_options() | [{:replace_with, Color.t()}]) ::
-   {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def replace_color(%Vimage{} = image, options \\ []) do
     {to_color, options} = Keyword.pop(options, :replace_with, :black)
@@ -4433,7 +4454,7 @@ defmodule Image do
   @doc since: "0.30.0", subject: "Color"
 
   @spec replace_color!(Vimage.t(), ChromaKey.chroma_key_options() | [{:replace_with, Color.t()}]) ::
-   Vimage.t() | no_return()
+          Vimage.t() | no_return()
 
   def replace_color!(%Vimage{} = image, options \\ []) do
     case replace_color(image, options) do
@@ -6098,11 +6119,12 @@ defmodule Image do
   @doc since: "0.34.0"
   @doc subject: "Operation"
 
-  @spec brightness(image :: Vimage.t(), brightness :: float()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec brightness(image :: Vimage.t(), brightness :: float()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
   def brightness(%Vimage{} = image, brightness) when is_multiplier(brightness) do
-    with_colorspace image, :lch, fn i ->
+    with_colorspace(image, :lch, fn i ->
       Image.Math.multiply(i, [brightness, 1.0, 1.0])
-    end
+    end)
   end
 
   @doc """
@@ -6131,7 +6153,7 @@ defmodule Image do
   @doc since: "0.34.0"
   @doc subject: "Operation"
 
-  @spec brightness!(image :: Vimage.t, brightness :: float()) :: Vimage.t() | no_return()
+  @spec brightness!(image :: Vimage.t(), brightness :: float()) :: Vimage.t() | no_return()
   def brightness!(%Vimage{} = image, brightness) when is_multiplier(brightness) do
     case brightness(image, brightness) do
       {:ok, image} -> image
@@ -6141,6 +6163,11 @@ defmodule Image do
 
   @doc """
   Apply a percentage adjustment to an image's contrast.
+
+  This is a very naïve implementation that simply multiplies
+  each pixel value by the contast amount given. In most
+  cases, `Image.apply_tone_curve/2` should be preferred
+  for making constrast adjustments.
 
   ### Arguments
 
@@ -6160,7 +6187,9 @@ defmodule Image do
   @doc since: "0.35.0"
   @doc subject: "Operation"
 
-  @spec contrast(image :: Vimage.t(), contrast :: float()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec contrast(image :: Vimage.t(), contrast :: float()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
   def contrast(%Vimage{} = image, contrast) when is_multiplier(contrast) do
     band_format = Vix.Vips.Image.format(image)
 
@@ -6173,6 +6202,10 @@ defmodule Image do
   Apply a percentage adjustment to an image's contrast
   or raises an exception.
 
+  This is a very naïve implementation that simply multiplies
+  each pixel value by the contast amount given. In most
+  cases, `Image.apply_tone_curve/2` should be preferred
+  for making constrast adjustments.
 
   ### Arguments
 
@@ -6192,7 +6225,7 @@ defmodule Image do
   @doc since: "0.35.0"
   @doc subject: "Operation"
 
-  @spec contrast!(image :: Vimage.t, contrast :: float()) :: Vimage.t() | no_return()
+  @spec contrast!(image :: Vimage.t(), contrast :: float()) :: Vimage.t() | no_return()
   def contrast!(%Vimage{} = image, contrast) when is_multiplier(contrast) do
     case contrast(image, contrast) do
       {:ok, image} -> image
@@ -6243,7 +6276,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec equalize(image :: Vimage.t(), bands :: Options.Equalize.equalize_option()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def equalize(image, bands \\ :all)
 
@@ -6287,8 +6320,9 @@ defmodule Image do
     end)
   end
 
-  def equalize(%Vimage{} = _image, bands)  do
-    {:error, "Invalid bands parameter. Valid parameters are :all, :each and :luminance. Found #{inspect bands}."}
+  def equalize(%Vimage{} = _image, bands) do
+    {:error,
+     "Invalid bands parameter. Valid parameters are :all, :each and :luminance. Found #{inspect(bands)}."}
   end
 
   defp level_percent(hist, percentage) do
@@ -6304,14 +6338,13 @@ defmodule Image do
     Operation.avg!(r)
   end
 
-  defp normalize_if_possible(lab_image, luminance, min, max) when abs(max - min) > 1 do
-    chroma = Operation.extract_band!(lab_image, 1, n: 2)
+  defp normalize_if_possible(lab_image, luminance, min, max) when abs(max - min) >= 1 do
     f = 100.0 / (max - min)
     a = -(min * f)
 
     luminance
     |> Operation.linear!([f], [a])
-    |> bandjoin(chroma)
+    |> bandjoin(lab_image[1..2])
   end
 
   defp normalize_if_possible(lab_image, _luminance, _min, _max) do
@@ -6362,7 +6395,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec equalize!(image :: Vimage.t(), bands :: Options.Equalize.equalize_option()) ::
-    Vimage.t() | no_return()
+          Vimage.t() | no_return()
 
   def equalize!(%Vimage{} = image, bands \\ :all) do
     case equalize(image, bands) do
@@ -6434,10 +6467,10 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec apply_tone_curve(image :: Vimage.t(), options :: Options.ToneCurve.tone_curve_options()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def apply_tone_curve(%Vimage{} = image, options \\ []) do
-    with {:ok, lut} <- tone_curve(image, options)  do
+    with {:ok, lut} <- tone_curve(image, options) do
       without_alpha_band(image, fn base_image ->
         Operation.maplut(base_image, lut)
       end)
@@ -6508,7 +6541,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec apply_tone_curve!(image :: Vimage.t(), options :: Options.ToneCurve.tone_curve_options()) ::
-    Vimage.t() | no_return()
+          Vimage.t() | no_return()
 
   def apply_tone_curve!(%Vimage{} = image, options \\ []) do
     case apply_tone_curve(image, options) do
@@ -6522,18 +6555,19 @@ defmodule Image do
 
     with {:ok, options} <- Options.ToneCurve.validate_options(options),
          {_min, max} <- range(image),
-         {:ok, lut} <- Operation.tonelut([
-            Lb: options.black_point,
-            Lw: options.white_point,
-            Ps: options.shadow_point,
-            Pm: options.mid_point,
-            Ph: options.highlight_point,
-            S: options.shadows,
-            M: options.mids,
-            H: options.highlights,
-            "in-max": max,
-            "out-max": max
-          ]) do
+         {:ok, lut} <-
+           Operation.tonelut(
+             Lb: options.black_point,
+             Lw: options.white_point,
+             Ps: options.shadow_point,
+             Pm: options.mid_point,
+             Ph: options.highlight_point,
+             S: options.shadows,
+             M: options.mids,
+             H: options.highlights,
+             "in-max": max,
+             "out-max": max
+           ) do
       cast(lut, band_format(image))
     end
   end
@@ -6576,8 +6610,11 @@ defmodule Image do
   @doc since: "0.35.0"
   @doc subject: "Operation"
 
-  @spec local_contrast(image :: Vimage.t(), options :: Options.LocalContrast.local_contrast_options()) ::
-     {:ok, Vimage.t()} | {:error, error_message()}
+  @spec local_contrast(
+          image :: Vimage.t(),
+          options :: Options.LocalContrast.local_contrast_options()
+        ) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def local_contrast(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.LocalContrast.validate_options(options) do
@@ -6625,8 +6662,11 @@ defmodule Image do
   @doc since: "0.35.0"
   @doc subject: "Operation"
 
-  @spec local_contrast!(image :: Vimage.t, options :: Options.LocalContrast.local_contrast_options()) ::
-      Vimage.t() | no_return()
+  @spec local_contrast!(
+          image :: Vimage.t(),
+          options :: Options.LocalContrast.local_contrast_options()
+        ) ::
+          Vimage.t() | no_return()
 
   def local_contrast!(%Vimage{} = image, options \\ []) do
     case local_contrast(image, options) do
@@ -6661,11 +6701,12 @@ defmodule Image do
   @doc since: "0.34.0"
   @doc subject: "Operation"
 
-  @spec saturation(image :: Vimage.t, saturation :: float()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec saturation(image :: Vimage.t(), saturation :: float()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
   def saturation(%Vimage{} = image, saturation) when is_multiplier(saturation) do
-    with_colorspace image, :lch, fn i ->
+    with_colorspace(image, :lch, fn i ->
       Image.Math.multiply(i, [1.0, saturation, 1.0])
-    end
+    end)
   end
 
   @doc """
@@ -6694,7 +6735,7 @@ defmodule Image do
   @doc since: "0.34.0"
   @doc subject: "Operation"
 
-  @spec saturation!(image :: Vimage.t, saturation :: float()) :: Vimage.t() | no_return()
+  @spec saturation!(image :: Vimage.t(), saturation :: float()) :: Vimage.t() | no_return()
   def saturation!(%Vimage{} = image, saturation) when is_multiplier(saturation) do
     case saturation(image, saturation) do
       {:ok, image} -> image
@@ -7284,8 +7325,8 @@ defmodule Image do
       else
         _error ->
           {:error,
-            "Invalid source or destination quadrilateral. " <>
-            "Found source #{inspect source} and destination #{inspect destination}."}
+           "Invalid source or destination quadrilateral. " <>
+             "Found source #{inspect(source)} and destination #{inspect(destination)}."}
       end
     end
 
@@ -7539,7 +7580,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec compare(Vimage.t(), Vimage.t(), Keyword.t()) ::
-    {:ok, number, Vimage.t()} | {:error, error_message()}
+          {:ok, number, Vimage.t()} | {:error, error_message()}
   def compare(%Vimage{} = image_1, %Vimage{} = image_2, options \\ []) when is_list(options) do
     with {:ok, options} <- Options.Compare.validate_options(options),
          {:ok, image_1} <- Image.flatten(image_1),
@@ -7590,18 +7631,19 @@ defmodule Image do
   end
 
   defp compare_by_metric(_image_1, _image_2, _difference, metric) do
-    {:error, "Invalid metric #{inspect metric}. Value metrics are :ae, :mse and :rmse"}
+    {:error, "Invalid metric #{inspect(metric)}. Value metrics are :ae, :mse and :rmse"}
   end
 
   defp image_difference(image_1, image_2) do
-    with {:ok, image_2} <- Operation.cast(image_2,  Vix.Vips.Image.format(image_1)),
+    with {:ok, image_2} <- Operation.cast(image_2, Vix.Vips.Image.format(image_1)),
          {:ok, difference} <- Image.Math.subtract(image_1, image_2) do
       Operation.abs(difference)
     end
   end
 
   defp compose_difference(image, difference, options) do
-    with {:ok, color_difference} <- if_then_else(difference, options.difference_color, :transparent),
+    with {:ok, color_difference} <-
+           if_then_else(difference, options.difference_color, :transparent),
          {:ok, color_difference} <- Image.Math.multiply(color_difference, options.difference_boost),
          {:ok, bw_difference} <- to_colorspace(difference, :bw),
          {:ok, alpha_difference} <- add_alpha(color_difference, bw_difference),
@@ -8110,7 +8152,11 @@ defmodule Image do
   """
   @doc since: "0.29.0", subject: "Operation"
 
-  @spec with_colorspace(Vimage.t(), colorspace :: Interpretation.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})) ::
+  @spec with_colorspace(
+          Vimage.t(),
+          colorspace :: Interpretation.t(),
+          (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})
+        ) ::
           {:ok, Vimage.t()} | {:error, error_message}
 
   def with_colorspace(image, colorspace, fun) do
@@ -8156,7 +8202,11 @@ defmodule Image do
   """
   @doc since: "0.35.0", subject: "Operation"
 
-  @spec with_band_format(Vimage.t(), band_format :: BandFormat.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})) ::
+  @spec with_band_format(
+          Vimage.t(),
+          band_format :: BandFormat.t(),
+          (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})
+        ) ::
           {:ok, Vimage.t()} | {:error, error_message}
 
   def with_band_format(image, band_format, fun) do
@@ -8442,13 +8492,13 @@ defmodule Image do
   end
 
   defp xy_offset(%Vimage{} = base_image, %Vimage{} = overlay, x, y)
-      when is_number(x) and is_atom(y) do
+       when is_number(x) and is_atom(y) do
     y = offset_from(y, Image.height(base_image), Image.height(overlay))
     {x, y}
   end
 
   defp xy_offset(%Vimage{} = base_image, %Vimage{} = overlay, x, y)
-      when is_atom(x) and is_number(y) do
+       when is_atom(x) and is_number(y) do
     x = offset_from(x, Image.width(base_image), Image.width(overlay))
     {x, y}
   end

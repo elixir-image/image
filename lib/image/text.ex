@@ -882,7 +882,8 @@ defmodule Image.Text do
 
     with {:ok, {image, _flags}} <- Operation.svgload_buffer(svg),
          {:ok, trim_color} <- find_trim_color(image, options),
-         {:ok, {x, y, width, height}} <- Operation.find_trim(image, background: trim_color, threshold: 0) do
+         {:ok, {x, y, width, height}} <-
+           Operation.find_trim(image, background: trim_color, threshold: 0) do
       Image.crop(image, x, y, width, height)
     end
   end

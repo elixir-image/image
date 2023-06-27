@@ -170,7 +170,7 @@ defmodule Image.Color do
   end
 
   def hex_to_rgb(invalid_color) do
-    {:error, "Invalid hex color. Found #{inspect invalid_color}"}
+    {:error, "Invalid hex color. Found #{inspect(invalid_color)}"}
   end
 
   defp convert_to_hex(r, g, b) do

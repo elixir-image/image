@@ -157,7 +157,7 @@ defmodule Image.Options.Write do
   end
 
   defp validate_option({:compression, compression}, options, image_type)
-      when is_png(image_type) and compression in 1..9 do
+       when is_png(image_type) and compression in 1..9 do
     {:cont, options}
   end
 

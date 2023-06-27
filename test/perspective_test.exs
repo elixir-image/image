@@ -61,10 +61,13 @@ defmodule Image.Perspective.Test do
     validate_path = validate_path("warp/warped_image_with_alpha2.png")
 
     {:ok, image} = Image.open(image_path)
-    {:ok, result} = Image.warp_perspective(image,
-      [{139, 125}, {826, 74}, {796, 559}, {155, 483}],
-      [{139, 125}, {815, 125}, {815, 528}, {139, 528}]
-    )
+
+    {:ok, result} =
+      Image.warp_perspective(
+        image,
+        [{139, 125}, {826, 74}, {796, 559}, {155, 483}],
+        [{139, 125}, {815, 125}, {815, 528}, {139, 528}]
+      )
 
     # Image.write! result, validate_path
     {:ok, result} = Vix.Vips.Image.write_to_buffer(result, ".png")
@@ -77,11 +80,15 @@ defmodule Image.Perspective.Test do
     validate_path = validate_path("warp/warped_image_with_alpha2_transparent.png")
 
     {:ok, image} = Image.open(image_path)
-    {:ok, result} = Image.warp_perspective(image,
-      [{139, 125}, {826, 74}, {796, 559}, {155, 483}],
-      [{139, 125}, {815, 125}, {815, 528}, {139, 528}],
-      background: [1, 177, 64]
-    )
+
+    {:ok, result} =
+      Image.warp_perspective(
+        image,
+        [{139, 125}, {826, 74}, {796, 559}, {155, 483}],
+        [{139, 125}, {815, 125}, {815, 528}, {139, 528}],
+        background: [1, 177, 64]
+      )
+
     {:ok, result} = Image.chroma_key(result, color: [1, 177, 64], threshold: 0)
 
     # Image.write! result, validate_path

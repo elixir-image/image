@@ -150,7 +150,7 @@ if Image.bumblebee_configured?() do
       `Nx.default_backend/0`.
 
     * `:server` is the name of the process performing the
-      classification service. The default is `#{inspect @default_classifier_name}`.
+      classification service. The default is `#{inspect(@default_classifier_name)}`.
 
     ### Returns
 

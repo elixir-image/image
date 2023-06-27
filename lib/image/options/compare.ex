@@ -11,12 +11,12 @@ defmodule Image.Options.Compare do
 
   """
   @type compare_option ::
-            {:color, Color.t() | :auto}
-            | {:threshold, non_neg_integer()}
-            | {:greater_than, Color.t()}
-            | {:less_than, Color.t()}
-            | {:sigma, float()}
-            | {:min_amplitude, float()}
+          {:color, Color.t() | :auto}
+          | {:threshold, non_neg_integer()}
+          | {:greater_than, Color.t()}
+          | {:less_than, Color.t()}
+          | {:sigma, float()}
+          | {:min_amplitude, float()}
 
   @type compare_options :: [compare_option()] | map()
 
@@ -72,7 +72,7 @@ defmodule Image.Options.Compare do
   end
 
   defp validate_option({:difference_boost, difference_boost}, options)
-      when is_multiplier(difference_boost) do
+       when is_multiplier(difference_boost) do
     {:cont, options}
   end
 

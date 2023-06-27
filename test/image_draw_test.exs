@@ -22,7 +22,9 @@ defmodule Image.Draw.Test do
     {:ok, image} =
       Vimage.mutate(image, fn mut_img ->
         :ok =
-          Vix.Vips.MutableOperation.draw_image(mut_img, star, 100, 100, mode: :VIPS_COMBINE_MODE_ADD)
+          Vix.Vips.MutableOperation.draw_image(mut_img, star, 100, 100,
+            mode: :VIPS_COMBINE_MODE_ADD
+          )
       end)
 
     Image.write(image, "/Users/kip/Desktop/draw2.png")

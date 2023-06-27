@@ -33,16 +33,16 @@ defmodule Image.BandFormat do
   }
 
   @short_format_map @long_format_map
-  |> Enum.map(fn {{sign, size}, enum} ->
-    {String.to_atom(to_string(sign) <> to_string(size)), enum}
-  end)
-  |> Map.new()
+                    |> Enum.map(fn {{sign, size}, enum} ->
+                      {String.to_atom(to_string(sign) <> to_string(size)), enum}
+                    end)
+                    |> Map.new()
 
   @band_format_map Map.merge(@long_format_map, @short_format_map)
 
   @inverse_band_format_map @long_format_map
-  |> Enum.map(fn {code, enum} -> {enum, code} end)
-  |> Map.new()
+                           |> Enum.map(fn {code, enum} -> {enum, code} end)
+                           |> Map.new()
 
   defp band_format_map do
     @band_format_map
@@ -99,6 +99,7 @@ defmodule Image.BandFormat do
     case Map.get(band_format_map(), format) do
       nil ->
         {:error, "Invalid band format. Found #{inspect(format)}"}
+
       format ->
         {:ok, format}
     end
@@ -165,6 +166,7 @@ defmodule Image.BandFormat do
     case Map.get(inverse_band_format_map(), format) do
       nil ->
         {:error, "Invalid band format. Found #{inspect(format)}"}
+
       format ->
         {:ok, format}
     end

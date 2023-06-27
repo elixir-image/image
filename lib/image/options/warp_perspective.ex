@@ -39,7 +39,8 @@ defmodule Image.Options.WarpPerspective do
   Validate the options for `Image.warp_perspective/4`.
 
   """
-  @spec validate_options(Vimage.t(), Keyword.t()) :: {:ok, Keyword.t()} | {:error, Image.error_message()}
+  @spec validate_options(Vimage.t(), Keyword.t()) ::
+          {:ok, Keyword.t()} | {:error, Image.error_message()}
   def validate_options(image, options) when is_list(options) do
     options = Keyword.merge(default_options(), options)
 

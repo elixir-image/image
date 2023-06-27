@@ -31,7 +31,8 @@ defmodule Image.Avatar.Test do
     {:ok, avatar} =
       Image.Text.text!("KC", background_fill_color: :cyan, font_size: 200, padding: 80)
       |> Image.avatar(shape: :circle)
-      # |> Image.preview
+
+    # |> Image.preview
 
     # Image.write(avatar, validate_path)
     assert_images_equal(avatar, validate_path)
@@ -44,7 +45,8 @@ defmodule Image.Avatar.Test do
     {:ok, avatar} =
       Image.Text.text!("KC", background_fill_color: :cyan, font_size: 200, padding: 80)
       |> Image.avatar(shape: :square)
-      # |> Image.preview
+
+    # |> Image.preview
 
     # Image.write!(avatar, validate_path)
     assert_images_equal(avatar, validate_path)

@@ -194,7 +194,7 @@ defmodule Image.Options.Text do
   end
 
   defp validate_option({:letter_spacing = option, letter_spacing}, options)
-      when is_integer(letter_spacing) do
+       when is_integer(letter_spacing) do
     {:cont, Keyword.put(options, option, letter_spacing)}
   end
 

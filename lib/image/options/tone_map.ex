@@ -1,23 +1,23 @@
 defmodule Image.Options.ToneCurve do
   @moduledoc """
-  Options and option validation for `Image.tone_curve/2`.
+  Options and option validation for `Image.apply_tone_curve/2`.
 
   """
 
   import Image, only: :macros
 
   @typedoc """
-  Options applicable to `Image.tone_curve/2`.
+  Options applicable to `Image.apply_tone_curve/2`.
   """
   @type tone_curve_option ::
-  {:black_point, set_point()}
-  | {:white_point, set_point()}
-  | {:shadow_point, positive_percent()}
-  | {:mid_point, positive_percent()}
-  | {:highlight_point, positive_percent()}
-  | {:shadow, tone_adjustment()}
-  | {:mid, tone_adjustment()}
-  | {:highlight, tone_adjustment()}
+          {:black_point, set_point()}
+          | {:white_point, set_point()}
+          | {:shadow_point, positive_percent()}
+          | {:mid_point, positive_percent()}
+          | {:highlight_point, positive_percent()}
+          | {:shadow, tone_adjustment()}
+          | {:mid, tone_adjustment()}
+          | {:highlight, tone_adjustment()}
 
   @type tone_curve_options :: [tone_curve_option()] | map()
 
@@ -53,7 +53,7 @@ defmodule Image.Options.ToneCurve do
   defguard is_tone_adjustment(tone) when tone in -30..30
 
   @doc """
-  Validate the options for `Image.tone_curve/2`.
+  Validate the options for `Image.apply_tone_curve/2`.
 
   """
   def validate_options(options) when is_list(options) do
@@ -88,7 +88,8 @@ defmodule Image.Options.ToneCurve do
     {:cont, options}
   end
 
-  defp validate_option({:shadow_point, shadow_point}, options) when is_positive_percent(shadow_point) do
+  defp validate_option({:shadow_point, shadow_point}, options)
+       when is_positive_percent(shadow_point) do
     {:cont, options}
   end
 
@@ -96,7 +97,8 @@ defmodule Image.Options.ToneCurve do
     {:cont, options}
   end
 
-  defp validate_option({:highlight_point, highlight_point}, options) when is_positive_percent(highlight_point) do
+  defp validate_option({:highlight_point, highlight_point}, options)
+       when is_positive_percent(highlight_point) do
     {:cont, options}
   end
 

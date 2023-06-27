@@ -8,8 +8,8 @@ defmodule Image.Options.LocalContrast do
   Options applicable to `Image.local_contrast/2`.
   """
   @type local_contrast_option ::
-            {:window_size, pos_integer()}
-            | {:max_slope, non_neg_integer()}
+          {:window_size, pos_integer()}
+          | {:max_slope, non_neg_integer()}
 
   @typedoc """
   Options list or map for `Image.local_contrast/2`.
@@ -41,12 +41,12 @@ defmodule Image.Options.LocalContrast do
   end
 
   defp validate_option({:window_size, window_size}, options)
-      when is_integer(window_size) and window_size > 0 do
+       when is_integer(window_size) and window_size > 0 do
     {:cont, options}
   end
 
   defp validate_option({:max_slope, max_slope}, options)
-      when is_integer(max_slope) and max_slope >= 0 do
+       when is_integer(max_slope) and max_slope >= 0 do
     {:cont, options}
   end
 
