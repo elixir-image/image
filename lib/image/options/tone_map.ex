@@ -15,9 +15,9 @@ defmodule Image.Options.ToneCurve do
           | {:shadow_point, positive_percent()}
           | {:mid_point, positive_percent()}
           | {:highlight_point, positive_percent()}
-          | {:shadow, tone_adjustment()}
-          | {:mid, tone_adjustment()}
-          | {:highlight, tone_adjustment()}
+          | {:shadows, tone_adjustment()}
+          | {:mid_points, tone_adjustment()}
+          | {:highlights, tone_adjustment()}
 
   @type tone_curve_options :: [tone_curve_option()] | map()
 
@@ -106,7 +106,7 @@ defmodule Image.Options.ToneCurve do
     {:cont, options}
   end
 
-  defp validate_option({:mids, mid}, options) when is_tone_adjustment(mid) do
+  defp validate_option({:mid_points, mid_points}, options) when is_tone_adjustment(mid_points) do
     {:cont, options}
   end
 
@@ -130,7 +130,7 @@ defmodule Image.Options.ToneCurve do
       mid_point: 0.5,
       highlight_point: 0.8,
       shadows: 0,
-      mids: 0,
+      mid_points: 0,
       highlights: 0
     ]
   end

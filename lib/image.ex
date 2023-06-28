@@ -6448,7 +6448,7 @@ defmodule Image do
     adjusted. The value is in the range `-30` to `30`.
     The default is `0`.
 
-  * `:mids` indicates by how much the mid tones should be
+  * `:mid_points` indicates by how much the mid tones should be
     adjusted. The value is in the range `-30` to `30`.
     The default is `0`.
 
@@ -6522,7 +6522,7 @@ defmodule Image do
     adjusted. The value is in the range `-30` to `30`.
     The default is `0`.
 
-  * `:mids` indicates by how much the mid tones should be
+  * `:mid_points` indicates by how much the mid tones should be
     adjusted. The value is in the range `-30` to `30`.
     The default is `0`.
 
@@ -6563,7 +6563,7 @@ defmodule Image do
              Pm: options.mid_point,
              Ph: options.highlight_point,
              S: options.shadows,
-             M: options.mids,
+             M: options.mid_points,
              H: options.highlights,
              "in-max": max,
              "out-max": max
