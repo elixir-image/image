@@ -208,6 +208,10 @@ defmodule Image do
   # :each band option.
   @level_trim_percent 0.3
 
+  # The default window applied to Operation.rank/3
+  # when used in Image.reduce_noise/2
+  @default_median_window_size 3
+
   # The percent from range of the tone
   # curve when equalizing luminance.
   @min_luminance 1.0
@@ -6164,10 +6168,13 @@ defmodule Image do
   @doc """
   Apply a percentage adjustment to an image's contrast.
 
-  This is a very naïve implementation that simply multiplies
-  each pixel value by the contast amount given. In most
-  cases, `Image.apply_tone_curve/2` should be preferred
-  for making constrast adjustments.
+  This is a simple implementation that applies a linear
+  function to the image. In most cases, `Image.apply_tone_curve/2`
+  should be preferred for making constrast adjustments.
+
+  Small increments can have a dramatic affect on the image;
+  contrast in the range of approximately `0.5` to `1.5` are
+  likely to meet most requirement.
 
   ### Arguments
 
@@ -6184,6 +6191,9 @@ defmodule Image do
   * `{:error, reason}`.
 
   """
+
+  # Implementation is based upon https://stackoverflow.com/questions/73601395/adjusting-contrast-in-vips-the-same-way-as-the-matching-css-filter
+
   @doc since: "0.35.0"
   @doc subject: "Operation"
 
@@ -6191,21 +6201,31 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def contrast(%Vimage{} = image, contrast) when is_multiplier(contrast) do
-    band_format = Vix.Vips.Image.format(image)
+    use Image.Math
 
-    with {:ok, contrasted} <- Image.Math.multiply(image, contrast) do
-      Vix.Vips.Operation.cast(contrasted, band_format)
+    source_colorspace = interpretation(image)
+
+    with {:ok, scrgb} <- to_colorspace(image, :scrgb) do
+      contrasted = scrgb * contrast - (0.5 * contrast - 0.5)
+      to_colorspace(contrasted, source_colorspace)
     end
   end
 
-  @doc """
-  Apply a percentage adjustment to an image's contrast
-  or raises an exception.
+  def contrast(%Vimage{} = _image, contrast) do
+    {:error, "Invalid contrast value. Contrast must be a float greater that 0.0. Found #{inspect contrast}"}
+  end
 
-  This is a very naïve implementation that simply multiplies
-  each pixel value by the contast amount given. In most
-  cases, `Image.apply_tone_curve/2` should be preferred
-  for making constrast adjustments.
+  @doc """
+  Apply a percentage adjustment to an image's contrast or
+  raises and exception.
+
+  This is a simple implementation that applies a linear
+  function to the image. In most cases, `Image.apply_tone_curve/2`
+  should be preferred for making constrast adjustments.
+
+  Small increments can have a dramatic affect on the image;
+  contrast in the range of approximately `0.5` to `1.5` are
+  likely to meet most requirement.
 
   ### Arguments
 
@@ -6738,6 +6758,81 @@ defmodule Image do
   @spec saturation!(image :: Vimage.t(), saturation :: float()) :: Vimage.t() | no_return()
   def saturation!(%Vimage{} = image, saturation) when is_multiplier(saturation) do
     case saturation(image, saturation) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Reduces noise in an image by applying a median
+  filter.
+
+  The implementation uses a [median rank filter](https://en.wikipedia.org/wiki/Median_filter)
+  based on ordering the pixel values under a convolution kernel of a given
+  window size and extracting the median value.
+
+  The result is appropriate for removing
+  [salt and pepper noise](https://en.wikipedia.org/wiki/Salt-and-pepper_noise) and
+  may be useful for smoothing gaussian noise in some cases.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `window_size` is the integer size of the convolution kernel use
+    in the median rank filter. The default is `3`.
+
+  ### Returns
+
+  * `{:ok, reduced_noise_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Operation"
+
+  @spec reduce_noise(image :: Vimage.t(), window_size :: pos_integer()) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def reduce_noise(%Vimage{} = image, window_size \\ @default_median_window_size) do
+    Operation.rank(image, window_size, window_size, div(window_size * window_size, 2))
+  end
+
+  @doc """
+  Reduces noise in an image by applying a median
+  filter or raises an exception.
+
+  The implementation uses a [median rank filter](https://en.wikipedia.org/wiki/Median_filter)
+  based on ordering the pixel values under a convolution kernel of a given
+  window size and extracting the median value.
+
+  The result is appropriate for removing
+  [salt and pepper noise](https://en.wikipedia.org/wiki/Salt-and-pepper_noise) and
+  may be useful for smoothing gaussian noise in some cases.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `window_size` is the integer size of the convolution kernel use
+    in the median rank filter. The default is `3`.
+
+  ### Returns
+
+  * `reduced_noise_image` or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Operation"
+
+  @spec reduce_noise!(image :: Vimage.t(), window_size :: pos_integer()) ::
+     Vimage.t() | no_return()
+
+  def reduce_noise!(%Vimage{} = image, window_size \\ @default_median_window_size) do
+    case reduce_noise(image, window_size) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end

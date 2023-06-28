@@ -1,4 +1,4 @@
-defmodule Image.AutoLevel.Test do
+defmodule Image.Equalize.Test do
   use ExUnit.Case, async: true
   import Image.TestSupport
 

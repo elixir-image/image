@@ -6,9 +6,9 @@ This is the changelog for Image version 0.35 released on ______, 2023.  For olde
 
 ### Breaking change
 
-* Removes `Image.autolevel/1` which is replaced with `Image.equalize(image, :each)`.
+* Removes `Image.autolevel/1` which is replaced by `Image.equalize(image, :each)`.
 
-* Removes `Image.normalize/1` which is replaced with `Image.equalize(image, :luminance)`.
+* Removes `Image.normalize/1` which is replaced by `Image.equalize(image, :luminance)`.
 
 ### Enhancements
 
@@ -16,13 +16,15 @@ This is the changelog for Image version 0.35 released on ______, 2023.  For olde
 
 * Adds `Image.apply_tone_curve/2` which applies a tone curve to an image. This is typically used to expand or contract the tone range and therefore affect overall image contrast.
 
-* Adds `Image.contrast/2` to apply simple contrast adjustments to an image. The contrast parameter is provided as a float > 0.0 with contract less than 1.0 meaning reduce contrast and greater than 1.0 meaning increase contrast.
+* Adds `Image.contrast/2` to apply simple contrast adjustments to an image. The contrast parameter is provided as a float > 0.0 with contrast less than 1.0 meaning reduce contrast and greater than 1.0 meaning increase contrast.
 
 * Adds `Image.band_format/1` to return the band format of an image in Nx notation.
 
 * Adds `Image.with_band_format/3` to cast an image to a new band format, execute a function on the cast image and then re-cast the image back to its original band format if the function returns successfully.
 
 * Adds `Image.range/1` that returns the possible range of values for a pixel as a tuple in the form `{min_value, max_value}`.
+
+* Adds `Image.reduce_noise/2` and `Image.reduce_noise!/2` that applies a median filter to reduce salt and pepper noise in an image.
 
 ## Image 0.34.0
 
