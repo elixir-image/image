@@ -2071,6 +2071,218 @@ defmodule Image do
   end
 
   @doc """
+  Sharpens an image.
+
+  Selectively sharpens the `L` channel of a LAB image. `image`
+  is converted to `:labs` for sharpening and the converted back
+  to its original interpretation.
+
+  The operation performs a gaussian blur and subtracts from `image` to generate a
+  high-frequency signal. This signal is passed through a lookup table formed
+  from the five parameters and then added back to `image`.
+
+  The lookup table is formed like this:
+
+  ```
+                      ^
+                   y2 |          -----------
+                      |         /
+                      |        / slope m2
+                      |    .../
+              -x1     | ...   |
+  -------------------...---------------------->
+              |   ... |      x1
+              |... slope m1
+              /       |
+             / m2     |
+            /         |
+           /          |
+          /           |
+         /            |
+  ______/             | -y3
+                      |
+  ```
+
+  Where:
+
+  * `m1` is `:flat_amount`
+  * `m2` is `:jagged_amount`
+  * `x1` is `:threshold`
+  * `y2` is `:max_brightening`
+  * `y3` is `:max_darkening`
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:jagged_amount` is the primary means of specifing how much
+    sharpening to apply. Shaprening is applied to the jagged areas
+    of the image. It is a float greater or equal to `0.0`
+    with a default of `3.0`.
+
+  * `:flat_amount` is the specifies how much
+    sharpening to apply to flat areas of the image. It is a float
+    greater or equal to `0.0` with a default of `0.0`.
+
+  * `:threshold` indicates where the transition from the flat
+    part of the image to the jaggy part of the image is to be
+    considered on the curve. It is a float amount greater than
+    or equal to `0.0` with a default of `2.0`.
+
+  * `:max_brightening` specifies how much the image may be
+    brightened as part of the sharpening process. It is a positive
+    integer greater than or equal to `0`. The default is `10`.
+
+  * `:max_darkening` specifies how much the image may be
+    darkened as part of the sharpening process. It is a positive
+    integer greater than or equal to `0`. The default is `20`.
+
+  * `:sigma` changes the width of the sharpening fringe and can be
+    adjusted according to the output printing resolution. As an approximate
+    guideline, use `0.5` for 4 pixels/mm (display resolution),
+    `1.0` for 12 pixels/mm and `1.5` for 16 pixels/mm (300 dpi == 12
+    pixels/mm). These figures refer to the image raster, not the half-tone
+    resolution. The default is `0.5`.
+
+  ### Returns
+
+  * `{:ok, sharpened_image}` or
+
+  * `{:error reason}`
+
+  ### Output sharpening
+
+  For screen output sharpening the default options are recommended.
+  Adjust `:sigma` for other output devices as required.
+
+  """
+  @doc subject: "Operation"
+  @doc since: "0.35.0"
+
+  @spec sharpen(image :: Vimage.t(), options :: Options.Sharpen.sharpen_options()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def sharpen(image, options \\ []) do
+    with {:ok, options} <- Options.Sharpen.validate_options(options) do
+      Operation.sharpen(image,
+        sigma: options.sigma,
+        x1: options.threshold,
+        y2: options.max_brightening,
+        y3: options.max_darkening,
+        m1: options.flat_amount,
+        m2: options.jagged_amount
+      )
+    end
+  end
+
+  @doc """
+  Sharpens an image or raises an exception.
+
+  Selectively sharpens the `L` channel of a LAB image. `image`
+  is converted to `:labs` for sharpening and the converted back
+  to its original interpretation.
+
+  The operation performs a gaussian blur and subtracts from `image` to generate a
+  high-frequency signal. This signal is passed through a lookup table formed
+  from the five parameters and then added back to `image`.
+
+  The lookup table is formed like this:
+
+  ```
+                      ^
+                   y2 |          -----------
+                      |         /
+                      |        / slope m2
+                      |    .../
+              -x1     | ...   |
+  -------------------...---------------------->
+              |   ... |      x1
+              |... slope m1
+              /       |
+             / m2     |
+            /         |
+           /          |
+          /           |
+         /            |
+  ______/             | -y3
+                      |
+  ```
+
+  Where:
+
+  * `m1` is `:flat_amount`
+  * `m2` is `:jagged_amount`
+  * `x1` is `:threshold`
+  * `y2` is `:max_brightening`
+  * `y3` is `:max_darkening`
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:jagged_amount` is the primary means of specifing how much
+    sharpening to apply. Shaprening is applied to the jagged areas
+    of the image. It is a float greater or equal to `0.0`
+    with a default of `3.0`.
+
+  * `:flat_amount` is the specifies how much
+    sharpening to apply to flat areas of the image. It is a float
+    greater or equal to `0.0` with a default of `0.0`.
+
+  * `:threshold` indicates where the transition from the flat
+    part of the image to the jaggy part of the image is to be
+    considered on the curve. It is a float amount greater than
+    or equal to `0.0` with a default of `2.0`.
+
+  * `:max_brightening` specifies how much the image may be
+    brightened as part of the sharpening process. It is a positive
+    integer greater than or equal to `0`. The default is `10`.
+
+  * `:max_darkening` specifies how much the image may be
+    darkened as part of the sharpening process. It is a positive
+    integer greater than or equal to `0`. The default is `20`.
+
+  * `:sigma` changes the width of the sharpening fringe and can be
+    adjusted according to the output printing resolution. As an approximate
+    guideline, use `0.5` for 4 pixels/mm (display resolution),
+    `1.0` for 12 pixels/mm and `1.5` for 16 pixels/mm (300 dpi == 12
+    pixels/mm). These figures refer to the image raster, not the half-tone
+    resolution. The default is `0.5`.
+
+  ### Returns
+
+  * `sharpened_image` or
+
+  * raises an exception.
+
+  ### Output sharpening
+
+  For screen output sharpening the default options are recommended.
+  Adjust `:sigma` for other output devices as required.
+
+  """
+  @doc subject: "Operation"
+  @doc since: "0.35.0"
+
+  @spec sharpen!(image :: Vimage.t(), options :: Options.Sharpen.sharpen_options()) ::
+          Vimage.t() | no_return()
+
+  def sharpen!(image, options \\ []) do
+    case sharpen(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Feather (blur the edges) of an image
   mask.
 
@@ -6696,11 +6908,11 @@ defmodule Image do
   end
 
   @doc """
-  Apply a percentage adjustment to an image's saturation
+  Apply an adjustment to an image's saturation
   (chroma).
 
   The image is converted to the `lch` color space, multiplies the
-  chroma band by the provided float percentage and converts
+  chroma band by the provided float and converts
   the image back to its original color space.
 
   ### Arguments
@@ -6730,12 +6942,20 @@ defmodule Image do
   end
 
   @doc """
-  Apply a percentage adjustment to an image's saturation
+  Apply an adjustment to an image's saturation
   (chroma) or raises an exception.
 
   The image is converted to the `lch` color space, multiplies the
-  chroma band by the provided float percentage and converts
+  chroma band by the provided float and converts
   the image back to its original color space.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `saturation` is any float greater than `0.0`. A number less
+    than `1.0` means reduce saturation. A number greater than `1.0`
+    means increas saturation.
 
   ### Arguments
 

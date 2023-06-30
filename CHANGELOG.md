@@ -2,7 +2,7 @@
 
 ## Image 0.35.0
 
-This is the changelog for Image version 0.35 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.35.0 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Breaking change
 
@@ -18,7 +18,9 @@ This is the changelog for Image version 0.35 released on ______, 2023.  For olde
 
 * Adds `Image.contrast/2` to apply simple contrast adjustments to an image. The contrast parameter is provided as a float > 0.0 with contrast less than 1.0 meaning reduce contrast and greater than 1.0 meaning increase contrast.
 
-* Adds `Image.local_contrast/2` which applies a [Constrast Limited Adaptive histogram equalization (AHE)](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#Contrast_Limited_AHE) to improve local contrast in images.
+* Adds `Image.local_contrast/2` which applies a [Constrast Limited Adaptive histogram equalization (CLAHE)](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#Contrast_Limited_AHE) to improve local contrast in images.
+
+* Adds `Image.sharpen/2` to apply sharpening to an image.
 
 * Adds `Image.band_format/1` to return the band format of an image in Nx notation.
 
@@ -30,7 +32,7 @@ This is the changelog for Image version 0.35 released on ______, 2023.  For olde
 
 ## Image 0.34.0
 
-This is the changelog for Image version 0.34 released on June 24th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.34.0 released on June 24th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 

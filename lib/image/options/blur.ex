@@ -8,12 +8,15 @@ defmodule Image.Options.Blur do
   Options applicable to Image.blur/2
 
   """
-  @type blur_options ::
-          [
-            {:sigma, float()}
-            | {:min_amplitude, float()}
-          ]
-          | map()
+  @type blur_option ::
+    {:sigma, float()}
+    | {:min_amplitude, float()}
+
+  @typedoc """
+  Options list for Image.blur/2
+
+  """
+  @type blur_options :: [blur_option()] | map()
 
   @default_blur_sigma 5
 
@@ -49,8 +52,6 @@ defmodule Image.Options.Blur do
   end
 
   defp validate_option({:min_amplitude, min_amplitude}, options) when is_float(min_amplitude) do
-    options = Keyword.put(options, :min_amplitude, min_amplitude)
-
     {:cont, options}
   end
 
