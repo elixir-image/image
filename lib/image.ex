@@ -6466,6 +6466,123 @@ defmodule Image do
   end
 
   @doc """
+  Transforms an image using brightness, saturation,
+  hue rotation, and lightness.
+
+  Brightness and lightness both operate on luminance,
+  with the difference being that brightness is multiplicative
+  whereas lightness is additive.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:brightness` is any float greater than `0.0`. A number less
+    than `1.0` means reduce brightness. A number greater than `1.0`
+    means increas brightness.  The default is `1.0` meaning no
+    brightness adjustment.
+
+  * `:lightness` is any float. This value is added to the luminance
+    of an image. This is different to `:brightness` which is *multuplied*
+    by the luminance. The default is `0.0` meaning no lightness
+    adjustment.
+
+  * `:saturation` is any float greater than `0.0`. A number less
+    than `1.0` means reduce saturation. A number greater than `1.0`
+    means increas saturation. The default is `1.0` meaning no
+    saturation adjustment.
+
+  * `:hue` is an integer angle in degrees added to the hue. This is often
+    referred to as the *hug angle* and the operation as adjusting
+    the *hue rotation*. The value should typically be in the range `0..360`.
+    The default is `0` meaning no hue adjustment.
+
+  ### Returns
+
+  * `{:ok, modulated_image}` or
+
+  * `{:error, reason}`.
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Operation"
+
+  @spec modulate(image :: Vimage.t(), options :: Options.Modulate.modulate_options()) ::
+      {:ok, Vimage.t()} | {:error, error_message}
+
+  def modulate(%Vimage{} = image, options \\ []) do
+    with {:ok, options} <- Options.Modulate.validate_options(options) do
+      without_alpha_band(image, fn image ->
+        with_colorspace(image, :lch, fn image ->
+          multipliers = [options.brightness, options.saturation, 1.0]
+          addends = [options.lightness, 0.0, options.hue]
+          Operation.linear(image, multipliers, addends)
+        end)
+      end)
+    end
+  end
+
+  @doc """
+  Transforms an image using brightness, saturation,
+  hue rotation, and lightness or raises an exception.
+
+  Brightness and lightness both operate on luminance,
+  with the difference being that brightness is multiplicative
+  whereas lightness is additive.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:brightness` is any float greater than `0.0`. A number less
+    than `1.0` means reduce brightness. A number greater than `1.0`
+    means increas brightness.  The default is `1.0` meaning no
+    brightness adjustment.
+
+  * `:lightness` is any float. This value is added to the luminance
+    of an image. This is different to `:brightness` which is *multuplied*
+    by the luminance. The default is `0.0` meaning no lightness
+    adjustment.
+
+  * `:saturation` is any float greater than `0.0`. A number less
+    than `1.0` means reduce saturation. A number greater than `1.0`
+    means increas saturation. The default is `1.0` meaning no
+    saturation adjustment.
+
+  * `:hue` is an integer angle in degrees added to the hue. This is often
+    referred to as the *hug angle* and the operation as adjusting
+    the *hue rotation*. The value should typically be in the range `0..360`.
+    The default is `0` meaning no hue adjustment.
+
+  ### Returns
+
+  * `modulated_image` or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.35.0"
+  @doc subject: "Operation"
+
+  @spec modulate!(image :: Vimage.t(), options :: Options.Modulate.modulate_options()) ::
+      Vimage.t() | no_return()
+
+  def modulate!(%Vimage{} = image, options \\ []) do
+    case modulate(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Equalizes the histogram of an imaage.
 
   Equalization is the process of expanding the
@@ -6639,9 +6756,10 @@ defmodule Image do
   @doc """
   Applies a tone curve to an image.
 
-  A tone curve is a function to adjust brightness and
-  contrast by controlling the input-output density curve
-  for each band of an image.
+  A [tone curve](https://en.wikipedia.org/wiki/Curve_(tonality))
+  is typically used to affect overall image contrast. It
+  is a function to adjust brightness and contrast by controlling the
+  input-output density curve for each band of an image.
 
   ### Arguments
 
@@ -6713,9 +6831,10 @@ defmodule Image do
   Applies a tone curve to an image or raises
   an exception.
 
-  A tone curve is a function to adjust brightness and
-  contrast by controlling the input-output density curve
-  for each band of an image.
+  A [tone curve](https://en.wikipedia.org/wiki/Curve_(tonality))
+  is typically used to affect overall image contrast. It
+  is a function to adjust brightness and contrast by controlling the
+  input-output density curve for each band of an image.
 
   ### Arguments
 

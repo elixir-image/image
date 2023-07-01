@@ -14,13 +14,15 @@ This is the changelog for Image version 0.35.0 released on ______, 2023.  For ol
 
 * Adds `Image.equalize/2` which expands an image to fill the tone range. Equalization can be performed on all bands, on each band or only on the luminance band. This function replaces `Image.normalize/1` and `Image.autolevel/1`.
 
-* Adds `Image.apply_tone_curve/2` which applies a tone curve to an image. This is typically used to expand or contract the tone range and therefore affect overall image contrast.
+* Adds `Image.contrast/2` to apply simple contrast adjustments to an image. The contrast parameter is provided as a float >= 0.0 with contrast less than 1.0 meaning reduce contrast and greater than 1.0 meaning increase contrast.
 
-* Adds `Image.contrast/2` to apply simple contrast adjustments to an image. The contrast parameter is provided as a float > 0.0 with contrast less than 1.0 meaning reduce contrast and greater than 1.0 meaning increase contrast.
+* Adds `Image.apply_tone_curve/2` which applies a [tone curve](https://en.wikipedia.org/wiki/Curve_(tonality)) to an image. This is typically used to affect overall image contrast.
 
 * Adds `Image.local_contrast/2` which applies a [Constrast Limited Adaptive histogram equalization (CLAHE)](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#Contrast_Limited_AHE) to improve local contrast in images.
 
 * Adds `Image.sharpen/2` to apply sharpening to an image.
+
+* Adds `Image.modulate/2` to adjust an image using brightness, saturation, hue rotation and lightness.
 
 * Adds `Image.band_format/1` to return the band format of an image in `Nx` notation.
 
