@@ -25,7 +25,7 @@ defmodule Image.Options.Modulate do
   @doc """
   Validate the options for `Image.modulate/2`.
 
-  See `t:Image.Options.Sharpen.modulate_options/0`.
+  See `t:Image.Options.Modulate.modulate_options/0`.
 
   """
   def validate_options(options) when is_list(options) do
