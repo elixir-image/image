@@ -22,7 +22,7 @@ This is the changelog for Image version 0.35.0 released on ______, 2023.  For ol
 
 * Adds `Image.sharpen/2` to apply sharpening to an image.
 
-* Adds `Image.modulate/2` to adjust an image using brightness, saturation, hue rotation and lightness.
+* Adds `Image.modulate/2` to adjust an image using brightness, saturation, hue rotation and lightness in a single call.
 
 * Adds `Image.band_format/1` to return the band format of an image in `Nx` notation.
 
