@@ -304,18 +304,23 @@ defmodule Image.Histogram do
   end
 
   defp decode_binary(tensor, image_max) do
-    divisor =
-      @max_value / image_max
-
     values =
       for <<value::native-integer-32 <- tensor.data>>,
-        do: @max_value - round(value * divisor)
+        do: @max_value - fit(value, image_max)
 
-    if length(values) == @max_value + 1 do
+    if rgb_histogram?(values) do
       values
     else
       resample_luminance(values)
     end
+  end
+
+  defp fit(value, image_max) do
+    value * @max_value / image_max
+  end
+
+  defp rgb_histogram?(values) do
+    length(values) == @max_value + 1
   end
 
   defp generate_path(values) do
