@@ -28,6 +28,11 @@ defmodule Image.Histogram do
   [svg](https://en.wikipedia.org/wiki/SVG) string or as an
   `t:Vimage.t/0`.
 
+  The current implementation does not applying any scale
+  compression or expansion and therefore where the image
+  has very wide tonality differences the differences may
+  be difficult to distinguish if `:height` is small.
+
   """
 
   alias Vix.Vips.Image, as: Vimage
@@ -39,9 +44,16 @@ defmodule Image.Histogram do
   # bucket.
   @max_value 255
 
+  # In lch colorspace, the l band is
+  # in the range 1..100 so we need to
+  # extract the first 100 values and
+  # expand the scale to cover 0..@max_value
+  @number_of_luminance_values 100
+
   @doc """
   Returns an [svg](https://en.wikipedia.org/wiki/SVG) string
-  representing a red, green, blue histogram for an image.
+  representing a red, green, blue and luminance histogram
+  for an image.
 
   ### Arguments
 
@@ -92,8 +104,11 @@ defmodule Image.Histogram do
   def as_svg(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Histogram.validate_options(options),
          {:ok, srgb} <- Image.to_colorspace(image, :srgb),
+         {:ok, lch} <- Image.to_colorspace(image, :lch),
          {:ok, srgb_histogram} <- Operation.hist_find(srgb),
-         {:ok, {srgb_max, _}} <- Operation.max(srgb_histogram) do
+         {:ok, lch_histogram} <- Operation.hist_find(lch),
+         {:ok, {srgb_max, _}} <- Operation.max(srgb_histogram),
+         {:ok, {lch_max, _}} <- Operation.max(lch_histogram) do
 
       svg =
         """
@@ -101,6 +116,7 @@ defmodule Image.Histogram do
           #{generate_histogram(srgb_histogram[2], srgb_max, :blue)}
           #{generate_histogram(srgb_histogram[1], srgb_max, :green)}
           #{generate_histogram(srgb_histogram[0], srgb_max, :red)}
+          #{generate_histogram(lch_histogram[0], lch_max, :white)}
         </svg>
         """
       {:ok, svg}
@@ -109,8 +125,8 @@ defmodule Image.Histogram do
 
   @doc """
   Returns an [svg](https://en.wikipedia.org/wiki/SVG) string
-  representing a red, green, blue histogram for an image or
-  raises an exception.
+  representing a red, green, blue and luminance histogram for
+  an image or raises an exception.
 
   ### Arguments
 
@@ -166,8 +182,8 @@ defmodule Image.Histogram do
   end
 
   @doc """
-  Returns an image representing a red, green, blue histogram
-  for an image.
+  Returns an image representing a red, green, blue and
+  luminance histogram for an image.
 
   ### Arguments
 
@@ -216,8 +232,8 @@ defmodule Image.Histogram do
   end
 
   @doc """
-  Returns an image representing a red, green, blue histogram
-  for an image or raises an exception.
+  Returns an image representing a red, green, blue and
+  luminance histogram for an image or raises an exception.
 
   ### Arguments
 
@@ -287,11 +303,19 @@ defmodule Image.Histogram do
     """
   end
 
-  defp decode_binary(tensor, max) do
-    divisor = @max_value / max
+  defp decode_binary(tensor, image_max) do
+    divisor =
+      @max_value / image_max
 
-    for <<value::native-integer-32 <- tensor.data>>,
-      do: @max_value - round(value * divisor)
+    values =
+      for <<value::native-integer-32 <- tensor.data>>,
+        do: @max_value - round(value * divisor)
+
+    if length(values) == @max_value + 1 do
+      values
+    else
+      resample_luminance(values)
+    end
   end
 
   defp generate_path(values) do
@@ -319,5 +343,26 @@ defmodule Image.Histogram do
         [?L, ?\s, to_string(index), ?\s, to_string(value), ?\s]
     end)
     |> :erlang.iolist_to_binary()
+  end
+
+  # Here we are expanding the list of 100
+  # luminanace values into a list of 256
+  # luminance values. Its a big ad-hoc but
+  # reasonably efficient.
+
+  defp resample_luminance(values) do
+    values =
+      values
+      |> Enum.take(@number_of_luminance_values)
+      |> Enum.with_index(fn
+        v, i when rem(i, 3) == 0 -> [v, v, v]
+        v, i when rem(i, 5) == 0 -> [v, v, v]
+        v, i when rem(i, 7) == 0 -> [v, v, v]
+        v, i when rem(i, 9) == 0 -> [v, v, v]
+        v, _i -> [v, v]
+      end)
+      |> List.flatten()
+
+    [hd(values) | values]
   end
 end
