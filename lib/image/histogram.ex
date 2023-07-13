@@ -315,9 +315,20 @@ defmodule Image.Histogram do
     end
   end
 
+  # This is a straight linear fit into
+  # a range of 0..255. When there is a
+  # spike in one tonal area we end up with
+  # scale compression for the wider range.
+  # Lightroom compresses the ranges in this
+  # situation - something to look at for
+  # the future.
+
   defp fit(value, image_max) do
     value * @max_value / image_max
   end
+
+  # RGB histograms have 256 values,
+  # lCH histograms have 360 values.
 
   defp rgb_histogram?(values) do
     length(values) == @max_value + 1
