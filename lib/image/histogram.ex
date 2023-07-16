@@ -214,7 +214,7 @@ defmodule Image.Histogram do
   to ensure the image is generated at the desired size.
 
   The default of `:auto` will generate an image the size
-  of the underlying SVG viewbox which is `#{@max_value} pixels
+  of the underlying SVG viewbox which is `#{@max_value}` pixels
   wide and `#{@max_value}` pixels high.
 
   """
@@ -264,7 +264,7 @@ defmodule Image.Histogram do
   to ensure the image is generated at the desired size.
 
   The default of `:auto` will generate an image the size
-  of the underlying SVG viewbox which is `#{@max_value} pixels
+  of the underlying SVG viewbox which is `#{@max_value}` pixels
   wide and `#{@max_value}` pixels high.
 
   """
