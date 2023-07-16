@@ -17,7 +17,7 @@ defmodule Image.Options.Histogram do
   @type histogram_options :: [histogram_option()] | map()
 
   @doc """
-  Validate the options for `Image.histogram/2`.
+  Validate the options for `Image.Histogram.as_svg/2`.
 
   """
   def validate_options(options) when is_list(options) do
