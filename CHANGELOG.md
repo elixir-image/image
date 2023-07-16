@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.36.0
+
+This is the changelog for Image version 0.36.0 released on July 16th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds `Image.Histogram.as_svg/1` and `Image.Histogram.as_image/1` to return the histogram of an image as either an SVG format suitable to adding to an HTML page or as an `t:Vix.Vips.Image.t/0`.
+
 ## Image 0.35.0
 
 This is the changelog for Image version 0.35.0 released on July 4th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
