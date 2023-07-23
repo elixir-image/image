@@ -40,7 +40,13 @@ if Code.ensure_loaded?(Nx) do
       image = image_path("Kamchatka-2019-8754.jpg")
 
       {:ok, image} = Image.open(image, access: :random)
+
       {:ok, tensor} = Image.to_nx(image)
+      {:ok, image2} = Image.from_nx(tensor)
+
+      assert_images_equal image, image2
+
+      {:ok, tensor} = Image.to_nx(image, shape: :hwc)
       {:ok, image2} = Image.from_nx(tensor)
 
       assert_images_equal image, image2
