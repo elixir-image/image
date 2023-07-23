@@ -7373,6 +7373,12 @@ defmodule Image do
       with {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
         case Nx.shape(tensor) do
           {width, height, bands} when bands in 1..5 ->
+            {width, height} =
+              case Nx.names(tensor) do
+                [:height, _, _] -> {height, width}
+                _other -> {width, height}
+              end
+
             binary = Nx.to_binary(tensor)
             Vix.Vips.Image.new_from_binary(binary, width, height, bands, tensor_format)
 
