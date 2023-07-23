@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.36.1
+
+This is the changelog for Image version 0.36.1 released on July 23rd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Support negative offsets `:x` and `:y` for `Image.compose/3`.
+
 ## Image 0.36.0
 
 This is the changelog for Image version 0.36.0 released on July 16th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

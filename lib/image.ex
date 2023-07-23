@@ -2624,12 +2624,16 @@ defmodule Image do
     The default is `:over` which is the most common blend
     mode.
 
-  * `:x` is the offset (0-based) from the *left* of the `base_image`
+  * `:x` is the offset (0-based) which, if zero or positive,
+    from the *left* of the `base_image`. If negative is is
+    the offset from the *right* of the `base_image`.
     where the `overlay_image` will be placed. It may also be
     one of the keywords `:left`, `:right` or `:center`. The
     default is `:center`.
 
-  * `:y` is the offset (0-based) from the *top* of the `base_image`
+  * `:y` is the offset (0-based) which, if zero or positive,
+    from the *top* of the `base_image`. If negative is is
+    the offset from the *bottom* of the `base_image`.
     where the `overlay_image` will be placed.  It may also be
     one of the keywords `:top`, `:bottom` or `:middle`. The
     default is `:middle`.
@@ -2821,12 +2825,16 @@ defmodule Image do
     The default is `:over` which is the most common blend
     mode.
 
-  * `:x` is the offset (0-based) from the *left* of the `base_image`
+  * `:x` is the offset (0-based) which, if zero or positive,
+    from the *left* of the `base_image`. If negative is is
+    the offset from the *right* of the `base_image`.
     where the `overlay_image` will be placed. It may also be
     one of the keywords `:left`, `:right` or `:center`. The
     default is `:center`.
 
-  * `:y` is the offset (0-based) from the *top* of the `base_image`
+  * `:y` is the offset (0-based) which, if zero or positive,
+    from the *top* of the `base_image`. If negative is is
+    the offset from the *bottom* of the `base_image`.
     where the `overlay_image` will be placed.  It may also be
     one of the keywords `:top`, `:bottom` or `:middle`. The
     default is `:middle`.
@@ -8921,8 +8929,20 @@ defmodule Image do
     if File.exists?(path, [:raw]), do: {:ok, path}, else: {:error, :enoent}
   end
 
-  defp xy_offset(%Vimage{} = _image, _overlay, x, y) when is_number(x) and is_number(y) do
+  defp xy_offset(%Vimage{} = _image, _overlay, x, y) when is_number(x) and is_number(y) and x >= 0 and y >= 0 do
     {x, y}
+  end
+
+  # Offset from the right of the image
+  defp xy_offset(%Vimage{} = base_image, overlay, x, y) when is_number(x) and x < 0 do
+    x = Image.width(base_image) - Image.width(overlay) + x
+    xy_offset(base_image, overlay, x, y)
+  end
+
+  # Offset from the bottom of the image
+  defp xy_offset(%Vimage{} = base_image, overlay, x, y) when is_number(y) and y < 0 do
+    y = Image.height(base_image) - Image.height(overlay) + y
+    xy_offset(base_image, overlay, x, y)
   end
 
   defp xy_offset(%Vimage{} = base_image, %Vimage{} = overlay, x, y)
