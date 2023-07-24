@@ -7372,19 +7372,21 @@ defmodule Image do
     def from_nx(tensor) when is_struct(tensor, Nx.Tensor) do
       with {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
         case Nx.shape(tensor) do
-          {width, height, bands} when bands in 1..5 ->
-            {width, height} =
-              case Nx.names(tensor) do
-                [:height, _, _] -> {height, width}
-                _other -> {width, height}
-              end
-
+          {x, y, bands} when bands in 1..5 ->
+            {width, height} = dimensions_from_tensor(tensor, x, y)
             binary = Nx.to_binary(tensor)
             Vix.Vips.Image.new_from_binary(binary, width, height, bands, tensor_format)
 
           shape ->
             shape_error(shape)
         end
+      end
+    end
+
+    defp dimensions_from_tensor(tensor, x, y) do
+      case Nx.names(tensor) do
+        [:height, _, _] -> {y, x}
+        _other -> {x, y}
       end
     end
 
@@ -7894,8 +7896,8 @@ defmodule Image do
           tensor = Evision.Mat.to_nx(mat)
 
           case Nx.shape(tensor) do
-            {_, _, bands} when bands in 1..5 ->
-              {height, width, bands} = Nx.shape(tensor)
+            {x, y, bands} when bands in 1..5 ->
+              {width, height} = dimensions_from_tensor(tensor, x, y)
 
               tensor
               |> Nx.reshape({width, height, bands}, names: [:height, :width, :bands])

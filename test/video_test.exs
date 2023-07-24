@@ -14,6 +14,9 @@ defmodule Image.VideoTest do
     {:ok, video} = Image.Video.open("./test/support/video/video_sample.mp4", backend: :avfoundation)
     {:ok, image} = Image.Video.image_from_video(video, millisecond: 0)
 
+    #Image.preview image
+    #Image.preview Image.open!(validate_path)
+
     assert_images_equal(image, validate_path, 2.2)
   end
 end

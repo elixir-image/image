@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.36.2
+
+This is the changelog for Image version 0.36.2 released on July 24th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix `Image.from_nx/1` by respecting the axis name order in the tensor. Thanks to @gBillal for the report. Closes #101.
+
 ## Image 0.36.1
 
 This is the changelog for Image version 0.36.1 released on July 23rd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
