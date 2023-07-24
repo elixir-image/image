@@ -6,7 +6,7 @@ This is the changelog for Image version 0.36.2 released on July 24th, 2023.  For
 
 ### Bug Fixes
 
-* Fix `Image.from_nx/1` by respecting the axis name order in the tensor. Thanks to @gBillal for the report. Closes #101.
+* Fix `Image.from_nx/1` by respecting the axis name order in the tensor. Thanks to @gBillal for the PR. Closes #101.
 
 ## Image 0.36.1
 
