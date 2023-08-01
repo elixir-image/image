@@ -53,7 +53,7 @@ defmodule Image.MixProject do
       # {:vix, path: "../vix"},
 
       # eVision OpenCV bindings
-      {:evision, "~> 0.1.26", optional: true},
+      {:evision, "~> 0.1.33", optional: true},
 
       # For XMP metadata parsing
       {:sweet_xml, "~> 0.7"},
@@ -74,8 +74,9 @@ defmodule Image.MixProject do
       if(otp_release() >= 24,
         do: [
           {:nx, "~> 0.5", optional: true},
-          {:bumblebee, "~> 0.2", optional: true},
-          {:exla, "~> 0.5", optional: true}
+          {:bumblebee, "~> 0.3", optional: true},
+          {:exla, "~> 0.5", optional: true},
+          {:rustler, "> 0.0.0", optional: true}
         ]
       ),
 

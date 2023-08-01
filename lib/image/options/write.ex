@@ -174,7 +174,7 @@ defmodule Image.Options.Write do
       |> Keyword.put(:interlace, true)
       |> Keyword.put(:"optimize-scans", true)
       |> Keyword.put(:"trellis-quant", true)
-      |> Keyword.put(:quant_table, 3)
+      |> Keyword.put(:"quant-table", 3)
 
     {:cont, options}
   end
@@ -195,7 +195,7 @@ defmodule Image.Options.Write do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
-      |> Keyword.put(:min_size, true)
+      |> Keyword.put(:"min-size", true)
       |> Keyword.put(:strip, true)
       |> Keyword.put(:mixed, true)
 
