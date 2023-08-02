@@ -85,6 +85,22 @@ defmodule Image.Options.Write do
   @doc false
   defguard is_gif(image_type) when image_type in [".gif", ".GIF"]
 
+  @suffix_map %{
+    ".jpg" => :jpg,
+    ".jpeg" => :jpg,
+    ".png" => :png,
+    ".tif" => :tif,
+    ".tiff" => :tif,
+    ".heif" => :heif,
+    ".heic" => :heif,
+    ".avif" => :heif,
+    ".gif" => :gif,
+    ".webp" => :webp
+  }
+
+  @suffix_keys Map.keys(@suffix_map)
+  @suffix_values Map.values(@suffix_map) |> Enum.uniq()
+
   def validate_options(options, :require_suffix) when is_list(options) do
     case Keyword.fetch(options, :suffix) do
       {:ok, _options} ->
@@ -96,7 +112,8 @@ defmodule Image.Options.Write do
   end
 
   def validate_options(path, options) when is_binary(path) and is_list(options) do
-    with {:ok, image_type} <- path |> Path.extname() |> image_type_from(options[:suffix]) do
+    with {:ok, image_type} <- path |> Path.extname() |> image_type_from(options[:suffix]),
+         {:ok, options} <- merge_image_type_options(options, image_type) do
       case Enum.reduce_while(options, options, &validate_option(&1, &2, image_type)) do
         {:error, value} ->
           {:error, value}
@@ -105,6 +122,21 @@ defmodule Image.Options.Write do
           {:ok, options}
       end
     end
+  end
+
+  defp merge_image_type_options(options, suffix) when suffix in @suffix_keys do
+    suffix_option = Map.fetch!(@suffix_map, suffix)
+    {format_opts, options} = Keyword.pop(options, suffix_option, [])
+    options = delete_all_type_options(options)
+    {:ok, Keyword.merge(options, format_opts)}
+  end
+
+  defp merge_image_type_options(_options, suffix) do
+    {:error, "Unknown image type #{inspect suffix}"}
+  end
+
+  defp delete_all_type_options(options) do
+    Enum.reduce(@suffix_values, options, &Keyword.delete(&2, &1))
   end
 
   defp validate_option({:suffix, "." <> _suffix}, options, _image_type) do

@@ -1256,6 +1256,27 @@ defmodule Image do
     size of the `heif` file at the cost of additional time to
     save the image. All metadata will also be removed.
 
+  ### Merging image type options
+
+  Options can also be grouped under an option key
+  for each known image type. For example:
+
+      Image.write(image, image_path, minimize_file_size: true,
+        png: [compress: 60, lossy: true],
+        jpg: [quality: 70],
+        webp: [quality: 5])
+
+  When validating options, the options applicable to the
+  image type of `image_path` are merged into the rest of
+  the supplied options.
+
+  The valid image type option keys are `:jpg`, `.png`,
+  `:gif`, `:tif`, `:webp` and `:heif`.
+
+  This makes it easier to define a general purpose image
+  processing pipeline that can still apply specific
+  options when writing the image file.
+
   ### Returns
 
   * `{:ok, image}` (or `{:ok, binary}` is the destination is
