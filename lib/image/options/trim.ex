@@ -10,7 +10,7 @@ defmodule Image.Options.Trim do
 
   """
   @type trim_options :: [
-          {:background, Color.t() | :auto}
+          {:background, Color.t() | :auto | :alpha}
           | {:threshold, non_neg_integer()}
         ]
 

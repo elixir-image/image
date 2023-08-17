@@ -124,21 +124,6 @@ defmodule Image.Options.Write do
     end
   end
 
-  defp merge_image_type_options(options, suffix) when suffix in @suffix_keys do
-    suffix_option = Map.fetch!(@suffix_map, suffix)
-    {format_opts, options} = Keyword.pop(options, suffix_option, [])
-    options = delete_all_type_options(options)
-    {:ok, Keyword.merge(options, format_opts)}
-  end
-
-  defp merge_image_type_options(_options, suffix) do
-    {:error, "Unknown image type #{inspect suffix}"}
-  end
-
-  defp delete_all_type_options(options) do
-    Enum.reduce(@suffix_values, options, &Keyword.delete(&2, &1))
-  end
-
   defp validate_option({:suffix, "." <> _suffix}, options, _image_type) do
     {:cont, options}
   end
@@ -147,9 +132,7 @@ defmodule Image.Options.Write do
   # that adjust quality in the same way as other formats.
   defp validate_option({:quality, quality}, options, image_type)
        when is_png(image_type) and is_integer(quality) and quality in 1..100 do
-    options =
-      options
-      |> Keyword.delete(:quality)
+    options = Keyword.delete(options, :quality)
 
     {:cont, options}
   end
@@ -289,6 +272,22 @@ defmodule Image.Options.Write do
 
   defp invalid_option(option, image_type) do
     "Invalid option or option value: #{inspect(option)} for image type #{inspect(image_type)}"
+  end
+
+  defp merge_image_type_options(options, suffix) when suffix in @suffix_keys do
+    suffix_option = Map.fetch!(@suffix_map, suffix)
+    {format_opts, options} = Keyword.pop(options, suffix_option, [])
+    options = delete_all_type_options(options)
+
+    {:ok, Keyword.merge(options, format_opts)}
+  end
+
+  defp merge_image_type_options(_options, suffix) do
+    {:error, "Unknown image type #{inspect suffix}"}
+  end
+
+  defp delete_all_type_options(options) do
+    Enum.reduce(@suffix_values, options, &Keyword.delete(&2, &1))
   end
 
   # Range 1..10

@@ -1785,8 +1785,6 @@ defmodule Image do
   def chroma_mask(image, options \\ [])
 
   def chroma_mask(%Vimage{} = image, options) when is_list(options) do
-    alias Image.Math
-
     with {:ok, options} <- Options.ChromaKey.validate_options(options) do
       chroma_mask(image, options)
     end
@@ -2605,9 +2603,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{image_bands_without_alpha, alpha_band}` or
+  * `{image_without_alpha, alpha_band}` or
 
-  * `{:image_bands, nil}` if there is not
+  * `{image, nil}` if there is no
     alpha band detected.
 
   """
@@ -4712,9 +4710,9 @@ defmodule Image do
   Trims an image to the bounding box of the non-background
   area.
 
-  Any alpha is flattened out, then the image is median-filtered,
-  all the row and column sums of the absolute difference from
-  background are calculated in a single pass.
+  The image is median-filtered, all the row and column sums
+  of the absolute difference from background are calculated
+  in a single pass.
 
   Then the first row or column in each of the four directions
   where the sum is greater than threshold gives the bounding
@@ -4731,7 +4729,9 @@ defmodule Image do
   * `:background` is the color to be considered
     the background color. The default is automatically
     detected by averaging the pixels at the top
-    left of the image.
+    left of the image. If background is set to
+    `:alpha` then the image is trimmed to the size
+    of the alpha mask.
 
   * `:threshold` is the integer threshold (or color
     similarity) that is applied when determining the
@@ -4757,13 +4757,23 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def trim(%Vimage{} = image, options \\ []) do
+    case Keyword.pop(options, :background) do
+      {:alpha, other_options} ->
+        trim_to_alpha(image, other_options)
+
+      _other ->
+        trim_to_color(image, options)
+    end
+  end
+
+  defp trim_to_color(image, options) do
     with {:ok, options} <- Options.Trim.validate_options(options) do
       background = maybe_calculate_color(image, options.background)
       threshold = options.threshold
 
       case Operation.find_trim(image, background: background, threshold: threshold) do
         {:ok, {_left, _top, 0, 0}} ->
-          {:error, :uncropped}
+          {:error, nothing_to_trim_error()}
 
         {:ok, {left, top, width, height}} ->
           Image.crop(image, left, top, width, height)
@@ -4774,13 +4784,40 @@ defmodule Image do
     end
   end
 
+  defp trim_to_alpha(image, options) do
+    case split_alpha(image) do
+      {_other_bands, alpha} when not is_nil(alpha) ->
+        options = Keyword.put(options, :background, [0, 0, 0])
+
+        with {:ok, options} <-  Options.Trim.validate_options(options) do
+          case Operation.find_trim(alpha, background: options.background, threshold: options.threshold) do
+            {:ok, {_left, _top, 0, 0}} ->
+              {:error, nothing_to_trim_error()}
+
+            {:ok, {left, top, width, height}} ->
+              Image.crop(image, left, top, width, height)
+
+            error ->
+              error
+          end
+        end
+
+      _other ->
+        {:error, {Image.Error, "Image has no alpha band"}}
+    end
+  end
+
+  defp nothing_to_trim_error do
+    {Image.Error, "Could not find anything to trim"}
+  end
+
   @doc """
   Trims an image to the bounding box of the non-background
-  area.
+  area or raises an exception.
 
-  Any alpha is flattened out, then the image is median-filtered,
-  all the row and column sums of the absolute difference from
-  background are calculated in a single pass.
+  The image is median-filtered, all the row and column sums
+  of the absolute difference from background are calculated
+  in a single pass.
 
   Then the first row or column in each of the four directions
   where the sum is greater than threshold gives the bounding
@@ -4797,7 +4834,9 @@ defmodule Image do
   * `:background` is the color to be considered
     the background color. The default is automatically
     detected by averaging the pixels at the top
-    left of the image.
+    left of the image. If background is set to
+    `:alpha` then the image is trimmed to the size
+    of the alpha mask.
 
   * `:threshold` is the integer threshold (or color
     similarity) that is applied when determining the
