@@ -4784,27 +4784,31 @@ defmodule Image do
     end
   end
 
-  defp trim_to_alpha(image, options) do
-    case split_alpha(image) do
-      {_other_bands, alpha} when not is_nil(alpha) ->
-        options = Keyword.put(options, :background, [0, 0, 0])
+  defp trim_to_alpha(%Vimage{} = image, options) do
+    image
+    |> split_alpha()
+    |> trim_to_alpha(image, options)
+  end
 
-        with {:ok, options} <-  Options.Trim.validate_options(options) do
-          case Operation.find_trim(alpha, background: options.background, threshold: options.threshold) do
-            {:ok, {_left, _top, 0, 0}} ->
-              {:error, nothing_to_trim_error()}
+  defp trim_to_alpha({_other_bands, alpha}, image, options) when not is_nil(alpha) do
+    options = Keyword.put(options, :background, [0, 0, 0])
 
-            {:ok, {left, top, width, height}} ->
-              Image.crop(image, left, top, width, height)
+    with {:ok, options} <-  Options.Trim.validate_options(options) do
+      case Operation.find_trim(alpha, background: options.background, threshold: options.threshold) do
+        {:ok, {_left, _top, 0, 0}} ->
+          {:error, nothing_to_trim_error()}
 
-            error ->
-              error
-          end
-        end
+        {:ok, {left, top, width, height}} ->
+          Image.crop(image, left, top, width, height)
 
-      _other ->
-        {:error, {Image.Error, "Image has no alpha band"}}
+        error ->
+          error
+      end
     end
+  end
+
+  defp trim_to_alpha({_other_bands, nil}, _image, _options) do
+    {:error, {Image.Error, "Image has no alpha band"}}
   end
 
   defp nothing_to_trim_error do
