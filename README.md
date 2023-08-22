@@ -30,7 +30,7 @@ Starting from v0.16.0 [Vix](https://hex.pm/packages/vix) which underpins `Image`
 
 By default `Vix` provides pre-built NIF and `libvips` and uses them for operation. This makes deployment and release of your application a breeze. With this you don't have to install any compiler tools or `libvips` to use `Vix`. This is especially useful when using `Image` with [Livebook](https://livebook.dev).
 
-However the pre-built NIF or libvips does not include dependencies support all image formats and operations. If you require those formats or operations then you can bring your own `libvips` by installing it manually and configure `Vix` to use that instead. `Vix` makes sure to generate relevant functions and documentation based on the dependencies you bring. For example, if you install libvips with `tiff` support, vix will generate `tiff` related bindings for you.
+However the pre-built NIF and pre-built libvips do not include dependencies that support all image formats and operations. If you require those formats or operations then you can bring your own `libvips` by installing it manually and configure `Vix` to use that instead. `Vix` makes sure to generate relevant functions and documentation based on the dependencies you bring. For example, if you install libvips with `tiff` support, vix will generate `tiff` related bindings for you.
 
 You can choose this using `VIX_COMPILATION_MODE` environment variable. This variable must be set both during compilation and runtime. Possible values are:
 
