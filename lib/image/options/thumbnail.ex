@@ -23,7 +23,7 @@ defmodule Image.Options.Thumbnail do
           | {:resize, resize_dimension()}
           | {:height, pos_integer()}
           | {:crop, Crop.crop_focus()}
-          | {:file, :fill | :contain | :cover}
+          | {:fit, :fill | :contain | :cover}
         ]
 
   @type resize_dimension :: :width | :height | :both
