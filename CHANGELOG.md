@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.38.0
+
+This is the changelog for Image version 0.38.0 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds a [squircle](https://en.wikipedia.org/wiki/Squircle) mask function and a squircle avatar shape option. Thanks to @gf3 for the PR.
+
 ## Image 0.37.0
 
 This is the changelog for Image version 0.37.0 released on August 17th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
