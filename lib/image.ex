@@ -189,6 +189,9 @@ defmodule Image do
   # Default radius of rounded corners
   @default_round_corner_radius 50
 
+  # Default squircle radius
+  @default_squircle_radius 20
+
   # When pixelating an image resize to this scale
   # the scale up by the inverse using nearest_neighbour
   # scaling
@@ -1338,7 +1341,8 @@ defmodule Image do
     end
   end
 
-  def write(%Vimage{} = image, %module{} = stream, options) when module in [File.Stream, Stream] do
+  def write(%Vimage{} = image, %module{} = stream, options)
+      when module in [File.Stream, Stream] do
     with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
       case write_stream(image, stream, options) do
         :ok -> {:ok, image}
@@ -3752,7 +3756,8 @@ defmodule Image do
   @spec pixelate!(image :: Vimage.t(), scale :: number()) ::
           Vimage.t() | no_return()
 
-  def pixelate!(%Vimage{} = image, scale \\ @pixelate_scale) when is_number(scale) and scale > 0 do
+  def pixelate!(%Vimage{} = image, scale \\ @pixelate_scale)
+      when is_number(scale) and scale > 0 do
     case pixelate(image, scale) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -4069,6 +4074,12 @@ defmodule Image do
 
   defp do_avatar(image, :square) do
     square(image)
+  end
+
+  defp do_avatar(image, :squircle) do
+    {:ok, image} = square(image)
+    {:ok, image} = squircle(image)
+    remove_metadata(image)
   end
 
   defp do_avatar(image, :circle) do
@@ -4793,8 +4804,11 @@ defmodule Image do
   defp trim_to_alpha({_other_bands, alpha}, image, options) when not is_nil(alpha) do
     options = Keyword.put(options, :background, [0, 0, 0])
 
-    with {:ok, options} <-  Options.Trim.validate_options(options) do
-      case Operation.find_trim(alpha, background: options.background, threshold: options.threshold) do
+    with {:ok, options} <- Options.Trim.validate_options(options) do
+      case Operation.find_trim(alpha,
+             background: options.background,
+             threshold: options.threshold
+           ) do
         {:ok, {_left, _top, 0, 0}} ->
           {:error, nothing_to_trim_error()}
 
@@ -5153,7 +5167,11 @@ defmodule Image do
   """
   @doc subject: "Operation"
 
-  @spec rotate(image :: Vimage.t(), angle :: float(), options :: Options.Rotate.rotation_options()) ::
+  @spec rotate(
+          image :: Vimage.t(),
+          angle :: float(),
+          options :: Options.Rotate.rotation_options()
+        ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def rotate(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
@@ -5195,7 +5213,11 @@ defmodule Image do
   """
   @doc subject: "Operation"
 
-  @spec rotate!(image :: Vimage.t(), angle :: float(), options :: Options.Rotate.rotation_options()) ::
+  @spec rotate!(
+          image :: Vimage.t(),
+          angle :: float(),
+          options :: Options.Rotate.rotation_options()
+        ) ::
           Vimage.t() | no_return()
 
   def rotate!(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
@@ -5502,6 +5524,71 @@ defmodule Image do
     end
   end
 
+  @doc """
+  Apply squircle mask to an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:radius` is the desired squircle radius.
+    The default is #{@default_squircle_radius}.
+
+  ### Returns
+
+  * `{:ok, squircle_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc subject: "Generator"
+
+  @spec squircle(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def squircle(%Vimage{} = image, options \\ []) do
+    options = Keyword.put_new(options, :radius, @default_squircle_radius)
+    width = width(image)
+    height = height(image)
+
+    {:ok, mask} = mask(:squircle, width, height, options)
+    Operation.bandjoin([image, mask])
+  end
+
+  @doc """
+  Apply a squircle mask to an image. Returns
+  an image or raises an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:radius` is the desired squircle radius.
+    The default is #{@default_squircle_radius}.
+
+  ### Returns
+
+  * `squircle_image` or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Mask"
+
+  @spec squircle!(Vimage.t(), Keyword.t()) :: Vimage.t() | no_return()
+  def squircle!(%Vimage{} = image, options \\ []) do
+    case squircle(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
   # Create an image mask (alpha transparency) that can
   # then be applied to an image.
 
@@ -5528,6 +5615,23 @@ defmodule Image do
     svg = """
     <svg viewBox="0 0 #{width} #{height}">
       <rect rx="#{radius}" ry="#{radius}" x="0" y="0" width="#{width}" height="#{height}" fill="black" />
+    </svg>
+    """
+
+    {:ok, {mask, _flags}} = Operation.svgload_buffer(svg)
+    Operation.extract_band(mask, alpha_band(mask))
+  end
+
+  defp mask(:squircle, width, height, options) do
+    r = Keyword.get(options, :radius, @default_squircle_radius)
+    h2 = div(height, 2)
+    w2 = div(width, 2)
+    hr = height - r
+    wr = width - r
+
+    svg = """
+    <svg viewBox="0 0 #{width} #{height}">
+      <path d="M 0 #{h2} C 0 #{r}, #{r} 0, #{w2} 0 S #{width} #{r}, #{width} #{h2}, #{wr} #{height} #{w2} #{height}, 0 #{hr}, 0 #{h2}" fill="black" />
     </svg>
     """
 
@@ -6496,7 +6600,8 @@ defmodule Image do
   end
 
   def contrast(%Vimage{} = _image, contrast) do
-    {:error, "Invalid contrast value. Contrast must be a float greater that 0.0. Found #{inspect contrast}"}
+    {:error,
+     "Invalid contrast value. Contrast must be a float greater that 0.0. Found #{inspect(contrast)}"}
   end
 
   @doc """
@@ -6584,7 +6689,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec modulate(image :: Vimage.t(), options :: Options.Modulate.modulate_options()) ::
-      {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error_message}
 
   def modulate(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Modulate.validate_options(options) do
@@ -6645,7 +6750,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec modulate!(image :: Vimage.t(), options :: Options.Modulate.modulate_options()) ::
-      Vimage.t() | no_return()
+          Vimage.t() | no_return()
 
   def modulate!(%Vimage{} = image, options \\ []) do
     case modulate(image, options) do
@@ -7204,7 +7309,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec reduce_noise(image :: Vimage.t(), window_size :: pos_integer()) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def reduce_noise(%Vimage{} = image, window_size \\ @default_median_window_size) do
     Operation.rank(image, window_size, window_size, div(window_size * window_size, 2))
@@ -7240,7 +7345,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec reduce_noise!(image :: Vimage.t(), window_size :: pos_integer()) ::
-     Vimage.t() | no_return()
+          Vimage.t() | no_return()
 
   def reduce_noise!(%Vimage{} = image, window_size \\ @default_median_window_size) do
     case reduce_noise(image, window_size) do
@@ -7682,7 +7787,11 @@ defmodule Image do
     """
     @doc subject: "Operation", since: "0.28.0"
 
-    @spec straighten_perspective(Vimage.t(), source :: quadrilateral(), Options.WarpPerspective.t()) ::
+    @spec straighten_perspective(
+            Vimage.t(),
+            source :: quadrilateral(),
+            Options.WarpPerspective.t()
+          ) ::
             {:ok, quadrilateral(), Vimage.t()} | {:error, error_message()}
 
     def straighten_perspective(%Vimage{} = image, source, options \\ []) do
@@ -8158,7 +8267,8 @@ defmodule Image do
   defp compose_difference(image, difference, options) do
     with {:ok, color_difference} <-
            if_then_else(difference, options.difference_color, :transparent),
-         {:ok, color_difference} <- Image.Math.multiply(color_difference, options.difference_boost),
+         {:ok, color_difference} <-
+           Image.Math.multiply(color_difference, options.difference_boost),
          {:ok, bw_difference} <- to_colorspace(difference, :bw),
          {:ok, alpha_difference} <- add_alpha(color_difference, bw_difference),
          {:ok, saturated} <- saturation(image, options.saturation),
@@ -8628,7 +8738,10 @@ defmodule Image do
   """
   @doc since: "0.29.0", subject: "Operation"
 
-  @spec without_alpha_band(Vimage.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})) ::
+  @spec without_alpha_band(
+          Vimage.t(),
+          (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})
+        ) ::
           {:ok, Vimage.t()} | {:error, error_message}
 
   def without_alpha_band(%Vimage{} = image, fun) when is_function(fun, 1) do
@@ -9001,7 +9114,8 @@ defmodule Image do
     if File.exists?(path, [:raw]), do: {:ok, path}, else: {:error, :enoent}
   end
 
-  defp xy_offset(%Vimage{} = _image, _overlay, x, y) when is_number(x) and is_number(y) and x >= 0 and y >= 0 do
+  defp xy_offset(%Vimage{} = _image, _overlay, x, y)
+       when is_number(x) and is_number(y) and x >= 0 and y >= 0 do
     {x, y}
   end
 

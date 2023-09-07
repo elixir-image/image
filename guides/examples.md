@@ -73,6 +73,12 @@
 </div>
 <div class="column">
   <figure>
+      <img src="https://raw.githubusercontent.com/elixir-image/image/main/guides/images/puppy_squircle.png" alt="Image.squircle/2">
+  </figure>
+  <figcaption>image |> Image.thumbnail!(200, crop: :attention) |> Image.squircle!()</figcaption>
+</div>
+<div class="column">
+  <figure>
       <img src="https://raw.githubusercontent.com/kipcole9/image/main/guides/images/puppy_avatar.png"
       alt="Image.avatar/3">
   </figure>
