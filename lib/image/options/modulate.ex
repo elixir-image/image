@@ -11,10 +11,10 @@ defmodule Image.Options.Modulate do
 
   """
   @type modulate_option ::
-    {:brightness, float()}
-    | {:lightness, float()}
-    | {:saturation, float()}
-    | {:hue, integer()}
+          {:brightness, float()}
+          | {:lightness, float()}
+          | {:saturation, float()}
+          | {:hue, integer()}
 
   @typedoc """
   Options applicable to Image.modulate/2
@@ -77,5 +77,4 @@ defmodule Image.Options.Modulate do
       hue: 0
     ]
   end
-
 end

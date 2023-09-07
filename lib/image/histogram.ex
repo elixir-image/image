@@ -99,7 +99,7 @@ defmodule Image.Histogram do
   @doc subject: "Histogram"
 
   @spec as_svg(Vimage.t(), Options.Histogram.histogram_options()) ::
-    {:ok, String.t()} | {:error, Image.error_message()}
+          {:ok, String.t()} | {:error, Image.error_message()}
 
   def as_svg(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Histogram.validate_options(options),
@@ -109,7 +109,6 @@ defmodule Image.Histogram do
          {:ok, lch_histogram} <- Operation.hist_find(lch),
          {:ok, {srgb_max, _}} <- Operation.max(srgb_histogram),
          {:ok, {lch_max, _}} <- Operation.max(lch_histogram) do
-
       svg =
         """
         <svg height="#{options.height}" width="#{options.width}" viewBox="0 0 #{@max_value} #{@max_value}" preserveAspectRatio="none">
@@ -119,6 +118,7 @@ defmodule Image.Histogram do
           #{generate_histogram(lch_histogram[0], lch_max, :white)}
         </svg>
         """
+
       {:ok, svg}
     end
   end
@@ -172,7 +172,7 @@ defmodule Image.Histogram do
   @doc subject: "Histogram"
 
   @spec as_svg!(Vimage.t(), Options.Histogram.histogram_options()) ::
-    String.t() | no_return()
+          String.t() | no_return()
 
   def as_svg!(%Vimage{} = image, options \\ []) do
     case as_svg(image, options) do
@@ -222,7 +222,7 @@ defmodule Image.Histogram do
   @doc subject: "Histogram"
 
   @spec as_image(Vimage.t(), Options.Histogram.histogram_options()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def as_image(%Vimage{} = image, options \\ []) do
     case as_svg(image, options) do
@@ -272,7 +272,7 @@ defmodule Image.Histogram do
   @doc subject: "Histogram"
 
   @spec as_image!(Vimage.t(), Options.Histogram.histogram_options()) ::
-    Vimage.t() | no_return()
+          Vimage.t() | no_return()
 
   def as_image!(%Vimage{} = image, options \\ []) do
     case as_image(image, options) do

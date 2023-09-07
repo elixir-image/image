@@ -9,12 +9,12 @@ defmodule Image.Options.Sharpen do
 
   """
   @type sharpen_option ::
-    {:jagged_amount, float()}
-    | {:flat_amount, float()}
-    | {:max_darkening, float()}
-    | {:max_brightening, float()}
-    | {:threshold, float()}
-    | {:sigma, float()}
+          {:jagged_amount, float()}
+          | {:flat_amount, float()}
+          | {:max_darkening, float()}
+          | {:max_brightening, float()}
+          | {:threshold, float()}
+          | {:sigma, float()}
 
   @typedoc """
   Options applicable to Image.sharpen/2
@@ -45,32 +45,32 @@ defmodule Image.Options.Sharpen do
   end
 
   defp validate_option({:sigma, sigma}, options)
-      when is_number(sigma) and sigma > 0 and sigma <= 10 do
+       when is_number(sigma) and sigma > 0 and sigma <= 10 do
     {:cont, options}
   end
 
   defp validate_option({:jagged_amount, jagged_amount}, options)
-      when is_number(jagged_amount) and jagged_amount >= 0 do
+       when is_number(jagged_amount) and jagged_amount >= 0 do
     {:cont, options}
   end
 
   defp validate_option({:flat_amount, flat_amount}, options)
-      when is_number(flat_amount) and flat_amount >= 0 do
+       when is_number(flat_amount) and flat_amount >= 0 do
     {:cont, options}
   end
 
   defp validate_option({:threshold, threshold}, options)
-      when is_number(threshold) and threshold >= 0 do
+       when is_number(threshold) and threshold >= 0 do
     {:cont, options}
   end
 
   defp validate_option({:max_brightening, max_brightening}, options)
-      when is_number(max_brightening) and max_brightening >= 0 do
+       when is_number(max_brightening) and max_brightening >= 0 do
     {:cont, options}
   end
 
   defp validate_option({:max_darkening, max_darkening}, options)
-      when is_number(max_darkening) and max_darkening >= 0 do
+       when is_number(max_darkening) and max_darkening >= 0 do
     {:cont, options}
   end
 
@@ -93,5 +93,4 @@ defmodule Image.Options.Sharpen do
       sigma: 1.0
     ]
   end
-
 end

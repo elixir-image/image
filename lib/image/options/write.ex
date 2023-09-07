@@ -283,7 +283,7 @@ defmodule Image.Options.Write do
   end
 
   defp merge_image_type_options(_options, suffix) do
-    {:error, "Unknown image type #{inspect suffix}"}
+    {:error, "Unknown image type #{inspect(suffix)}"}
   end
 
   defp delete_all_type_options(options) do

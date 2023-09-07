@@ -9,8 +9,8 @@ defmodule Image.Options.Blur do
 
   """
   @type blur_option ::
-    {:sigma, float()}
-    | {:min_amplitude, float()}
+          {:sigma, float()}
+          | {:min_amplitude, float()}
 
   @typedoc """
   Options list for Image.blur/2
