@@ -7,7 +7,7 @@ defmodule Image.Options.Avatar do
 
   @type avatar_options :: Crop.crop_options()
 
-  @valid_shapes [:circle, :square]
+  @valid_shapes [:circle, :square, :squircle]
 
   # Standard size of an avatar image, at least for
   # this library

@@ -55,6 +55,17 @@ defmodule Image.Test do
     assert_images_equal(out_path, validate_path("Kip_small_rounded_mask.png"))
   end
 
+  test "Squircled Image", %{dir: dir} do
+    image = image_path("Kip_small.jpg")
+    {:ok, kip} = Vimage.new_from_file(image)
+    {:ok, squircled} = Image.squircle(kip)
+
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    assert :ok = Vimage.write_to_file(squircled, out_path)
+
+    assert_images_equal(out_path, validate_path("Kip_small_squircle_mask.png"))
+  end
+
   test "Image composition", %{dir: dir} do
     image = image_path("lamborghini-forsennato-concept.jpg")
 
@@ -159,7 +170,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     assert :ok = Vimage.write_to_file(im, out_path)
 
-    assert_images_equal out_path, validate_path("image_circle_white.png")
+    assert_images_equal(out_path, validate_path("image_circle_white.png"))
   end
 
   test "Rotating an image 90 degrees", %{dir: dir} do
@@ -214,7 +225,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(rotated, out_path)
 
-    assert_images_equal out_path, validate_path("Kip_small_rotate45_displaced.jpg")
+    assert_images_equal(out_path, validate_path("Kip_small_rotate45_displaced.jpg"))
   end
 
   test "Convert to polar coordinates", %{dir: dir} do
@@ -225,7 +236,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(polar, out_path)
 
-    assert_images_equal out_path, validate_path("polar.jpg")
+    assert_images_equal(out_path, validate_path("polar.jpg"))
   end
 
   test "Convert to rectangular coordinates", %{dir: dir} do
@@ -236,7 +247,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(rectangular, out_path)
 
-    assert_images_equal out_path, validate_path("rectangular.jpg")
+    assert_images_equal(out_path, validate_path("rectangular.jpg"))
   end
 
   test "Ripple Effect", %{dir: dir} do
@@ -247,7 +258,7 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".jpg", basedir: dir)
     assert :ok = Vimage.write_to_file(ripple, out_path)
 
-    assert_images_equal out_path, validate_path("ripple.jpg")
+    assert_images_equal(out_path, validate_path("ripple.jpg"))
   end
 
   test "Autorotate an image", %{dir: dir} do
@@ -259,7 +270,7 @@ defmodule Image.Test do
     assert :ok = Vimage.write_to_file(autorotated, out_path)
 
     assert {:ok, 180} = Map.fetch(flags, :angle)
-    assert_images_equal out_path, validate_path("autorotated.jpg")
+    assert_images_equal(out_path, validate_path("autorotated.jpg"))
   end
 
   test "Image.new/3" do
@@ -304,6 +315,6 @@ defmodule Image.Test do
     {:ok, red} = Image.new(20, 20, color: :red)
     {:ok, replaced} = Image.replace_color(red, color: :red, replace_with: :green)
 
-    assert_images_equal replaced, validate_path
+    assert_images_equal(replaced, validate_path)
   end
 end

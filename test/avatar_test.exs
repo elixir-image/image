@@ -24,6 +24,20 @@ defmodule Image.Avatar.Test do
     assert_images_equal(out_path, validate_path)
   end
 
+  test "Squircle avatar", %{dir: dir} do
+    image = image_path("Kip_small.jpg")
+    {:ok, kip} = Vimage.new_from_file(image)
+
+    {:ok, avatar} = Image.avatar(kip, shape: :squircle)
+
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    validate_path = validate_path("Kip_small_avatar_squircle.png")
+
+    assert {:ok, _image} = Image.write(avatar, out_path)
+    # Image.write!(avatar, validate_path)
+    assert_images_equal(out_path, validate_path)
+  end
+
   @tag :text_avatar
   test "Text-based avatar - circle" do
     validate_path = validate_path("text_avatar.png")
