@@ -4482,6 +4482,15 @@ defmodule Image do
     the average color of the base image. See also `Image.Color.color_map/0`
     and `Image.Color.rgb_color/1`.
 
+  * `:background_transparency` defines the transparency of the
+    `:background` pixels when `image` has an alpha band.
+    The default is `:opaque`. The values are an integer in the
+    range `0..255` where `0` is transparent and `255` is opaque`.
+    The number can also be a float in the range `0.0` to `1.0`.
+    In this case the float is converted to an integer in the range
+    `0..255`. Lastly, the atoms `:transparent` and `:opaque` can
+    also be used.
+
   * `:extend_mode` determines how any additional pixels
     are generated. The values are:
 
