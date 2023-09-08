@@ -4515,7 +4515,7 @@ defmodule Image do
   """
   @doc subject: "Resize", since: "0.27.0"
 
-  @spec embed(Vimage.t(), non_neg_integer(), non_neg_integer(), Options.Embed.embed_options()) ::
+  @spec embed(image :: Vimage.t(), width :: non_neg_integer(), height :: non_neg_integer(), options :: Options.Embed.embed_options()) ::
           {:ok, Vimage.t()} | {:error, error_message}
 
   def embed(image, width, height, options \\ []) do

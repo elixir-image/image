@@ -9,27 +9,32 @@ defmodule Image.Options.Embed do
   Options applicable to `Image.embed/4`.
 
   """
-  @type embed_options :: [
+  @type embed_option ::
           {:background, Color.t() | :average}
           | {:background_transparency, Color.transparency()}
           | {:extend_mode, extend_mode()}
           | {:x, non_neg_integer() | :center}
           | {:y, non_neg_integer() | :center}
-        ]
+
+
+  @typedoc """
+  Options list for `Image.embed/4`.
+
+  """
+  @type embed_options :: [embed_option()]
 
   @typedoc """
   When extending the canvas the generated
   pixels are determined by this option.
 
   """
-  @type extend_mode :: [
+  @type extend_mode ::
           :black
           | :white
           | :copy
           | :repeat
           | :mirror
           | :background
-        ]
 
   @doc """
   Validate the options for `Image.embed/4`.
