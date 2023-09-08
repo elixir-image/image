@@ -145,6 +145,13 @@ defmodule Image.Options.Embed do
     |> Map.delete(:background_transparency)
   end
 
+  defp adjust_transparency(%{extend_mode: :VIPS_EXTEND_WHITE} = options, _bands, true = _has_alpha?) do
+    options
+    |> Map.put(:extend_mode, :VIPS_EXTEND_BACKGROUND)
+    |> Map.put(:background, [255, 255, 255, options.background_transparency])
+    |> Map.delete(:background_transparency)
+  end
+
   defp adjust_transparency(%{extend_mode: :VIPS_EXTEND_BACKGROUND} = options, bands, true = _has_alpha?) do
     if length(options.background) == bands do
       options
