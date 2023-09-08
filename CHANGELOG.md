@@ -4,6 +4,10 @@
 
 This is the changelog for Image version 0.38.0 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
+### Bug Fixes
+
+* Fix `extend_mode: :black` color handling for images with an alpha band. Also fixes when the image is a single band image.  Thanks to @icefoxen for reporting the issue. Closes #108.
+
 ### Enhancements
 
 * Adds a [squircle](https://en.wikipedia.org/wiki/Squircle) mask function and a squircle avatar shape option. Thanks to @gf3 for the PR.

@@ -9,6 +9,9 @@ defmodule Image.Color do
   @additional_color_path Path.join(@priv_dir, "color/additional_colors.csv")
   @external_resource @additional_color_path
 
+  @max_opacity 255
+  @min_opacity 0
+
   @css_colors File.read!(@css_color_path)
   @additional_colors File.read!(@additional_color_path)
 
@@ -23,7 +26,18 @@ defmodule Image.Color do
              end)
              |> Map.new()
 
-  @css_color Map.keys(@color_map) |> Enum.map(&String.to_atom/1)
+  @css_color Map.keys(@color_map)
+  |> Enum.map(&String.to_atom/1)
+
+  @greyscale_color_map @color_map
+  |> Enum.filter(fn {_name, [hex: _hex, rgb: [r, g, b]]} ->
+    if r == b && r == g, do: true, else: false
+  end)
+  |> Map.new()
+
+  # TODO Put back when we validate greyscale colors
+  # @greyscale_color Map.keys(@greyscale_color_map)
+  # |> Enum.map(&String.to_atom/1)
 
   @typedoc """
   An rbg color expressed as a list of numbers.
@@ -45,6 +59,17 @@ defmodule Image.Color do
 
   """
   @type t :: rgb_color | atom() | String.t()
+
+
+  @typedoc """
+  A transparency value which is one of the atoms `:none`,
+  `:transparent` or `:opaque`. Or an integer between `0` and
+  `255` where 0 is transparent and 255 is opaque. Or a float
+  in the range `0.0` to `1.0` that is converted to the range
+  `0` to `255`.
+
+  """
+  @type transparency :: :none | :transparent | :opaque | non_neg_integer() | float()
 
   @typedoc """
   Reference to an ICC color profile
@@ -106,6 +131,15 @@ defmodule Image.Color do
   """
   def color_map do
     @color_map
+  end
+
+  @doc """
+  Returns a mapping from CSS color names to CSS hex values
+  and RGB triplets as a list - but only for greyscal colors.
+
+  """
+  def greyscale_color_map do
+    @greyscale_color_map
   end
 
   @doc """
@@ -213,6 +247,24 @@ defmodule Image.Color do
     end
   end
 
+  @doc """
+  Returns a transparency value in the range 0 to 255
+  where 0 means transparent and 255 means opqque.
+
+  """
+  def validate_transparency(float) when float >= 0.0 and float <= 1.0 do
+    {:ok, round(@max_opacity * float)}
+  end
+
+  def validate_transparency(int) when int in 0..255 do
+    {:ok, int}
+  end
+
+  def validate_transparency(:transparent), do: {:ok, @min_opacity}
+  def validate_transparency(:none), do: {:ok, @min_opacity}
+  def validate_transparency(:opaque), do: {:ok, @max_opacity}
+  def validate_transparency(other), do: {:error, "Invalid transparency value. Found #{inspect other}"}
+
   def rgb_color(color) when is_binary(color) or is_atom(color) do
     case color do
       <<"#", r::bytes-2, g::bytes-2, b::bytes-2>> ->
@@ -236,9 +288,6 @@ defmodule Image.Color do
       {:error, reason} -> raise ArgumentError, reason
     end
   end
-
-  @max_opacity 255
-  @min_opacity 0
 
   @doc false
   def max_opacity do
