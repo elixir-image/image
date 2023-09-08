@@ -4501,9 +4501,9 @@ defmodule Image do
       nearest edge pixel of the base image.
     * `:repeat` means the generated pixels are tiles from the
       base image.
-    * `:mirror` means the generated pixels are a reflected tiles of
+    * `:mirror` means the generated pixels are reflected tiles of
       the base image.
-    * `:background` means the generated pixels are the background
+    * `:background` means the generated pixels are the `:background`
       color set in `options`.
 
   ### Returns
