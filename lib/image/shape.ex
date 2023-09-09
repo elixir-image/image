@@ -497,7 +497,7 @@ defmodule Image.Shape do
   end
 
   @doc """
-  Creates a image of a circle.
+  Creates an image of a circle.
 
   * `radius` is the radius of the circle in pixels.
 
@@ -561,7 +561,7 @@ defmodule Image.Shape do
   end
 
   @doc """
-  Creates a image of a circle or raises an exception.
+  Creates an image of a circle or raises an exception.
 
   * `radius` is the radius of the circle in pixels.
 
@@ -606,7 +606,7 @@ defmodule Image.Shape do
   end
 
   @doc """
-  Creates a image of a ellipse.
+  Creates an image of a ellipse.
 
   * `x_radius` is the radius of the x-aixs of the
     ellipse in pixels.
@@ -675,7 +675,7 @@ defmodule Image.Shape do
   end
 
   @doc """
-  Creates a image of a ellipse or raises an exception.
+  Creates an image of a ellipse or raises an exception.
 
   * `x_radius` is the radius of the x-aixs of the
     ellipse in pixels.
@@ -688,7 +688,7 @@ defmodule Image.Shape do
   ### Options
 
   * `:fill_color` is the color used to fill in the
-    polygon. The default is `:none`.
+    ellipse. The default is `:none`.
 
   * `:stroke_width` is the width of the line used
     to draw the rectangle. The default is `1px`.
@@ -719,6 +719,134 @@ defmodule Image.Shape do
   def ellipse!(x_radius, y_radius, options \\ []) do
     case ellipse(x_radius, y_radius, options) do
       {:ok, ellipse} -> ellipse
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Creates an image of a line.
+
+  * `x1`` Defines the x-axis coordinate of the line
+    starting point in pixels.
+
+  * `y1`` Defines the y-axis coordinate of the line
+    starting point in pixels.
+
+  * `x2`` Defines the x-axis coordinate of the line
+    ending point in pixels.
+
+  * `y2`` Defines the y-axis coordinate of the line
+    ending point in pixels.
+
+  * `options` is a `t:Keyword.t/0` list of options.
+
+  ### Options
+
+  * `:fill_color` is the color used to fill in the
+    line. The default is `:none`.
+
+  * `:stroke_width` is the width of the line used
+    to draw the line. The default is `1px`.
+
+  * `:stroke_color` is the color used for the outline
+    of the line. The default is `:black`.
+
+  * `:opacity` is the opacity as a float between
+    `0.0` and `1.0` where `0.0` is completely transparent
+    and `1.0` is completely opaque. The default is `0.7`.
+
+  ### Returns
+
+  * `{:ok, line_image}` or
+
+  * `{:error, reason}`
+
+  ### Examples
+
+        iex> {:ok, line} = Image.Shape.line(5, 5, 50, 50, stroke_width: 10, stroke_color: :white)
+
+  """
+  @doc since: "1.38.0"
+
+  @spec line(x1 :: pos_integer(), y1 :: pos_integer(), x2 :: pos_integer(), y2 :: pos_integer(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
+
+  def line(x1, y1, x2, y2, options \\ [])
+      when is_integer(x1) and x1 >= 0 and is_integer(y1) and y1 >= 0 and is_integer(x2) and x2 >= 0 and is_integer(y2) and y2 >= 0 do
+    with {:ok, options} <- Image.Options.Shape.validate_polygon_options(options) do
+      width = max(x1, x2) + div(options.stroke_width, 2)
+      height = max(y1, y2) + div(options.stroke_width, 2)
+
+      svg = """
+      <svg viewBox="0 0 #{width} #{height}">
+        <style type="text/css">
+          svg line {
+            fill: #{options.fill_color};
+            stroke: #{options.stroke_color};
+            stroke-width: #{options.stroke_width};
+            opacity: #{options.opacity};
+          }
+        </style>
+        <line x1="#{x1}" y1="#{y1}" x2="#{y2}" y2="#{y2}" />
+      </svg>
+      """
+
+      case Operation.svgload_buffer(svg) do
+        {:ok, {line, _flags}} -> {:ok, line}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  @doc """
+  Creates a image of a line or raises an exception.
+
+  * `x1`` Defines the x-axis coordinate of the line
+    starting point in pixels.
+
+  * `y1`` Defines the y-axis coordinate of the line
+    starting point in pixels.
+
+  * `x2`` Defines the x-axis coordinate of the line
+    ending point in pixels.
+
+  * `y2`` Defines the y-axis coordinate of the line
+    ending point in pixels.
+
+  * `options` is a `t:Keyword.t/0` list of options.
+
+  ### Options
+
+  * `:stroke_width` is the width of the line used
+    to draw the rectangle. The default is `1px`.
+
+  * `:stroke_color` is the color used for the outline
+    of the polygon. The default is `:black`
+
+  * `:opacity` is the opacity as a float between
+    `0.0` and `1.0` where `0.0` is completely transparent
+    and `1.0` is completely opaque. The default is `0.7`.
+
+  ### Returns
+
+  * `line_image` or
+
+  * raises an exception.
+
+  ### Example
+
+        iex> line = Image.Shape.line!(5, 5, 50, 50, stroke_width: 10, stroke_color: :white)
+
+  """
+  @doc since: "1.38.0"
+
+  @spec line!(x1 :: pos_integer(), y1 :: pos_integer(), x2 :: pos_integer(), y2 :: pos_integer(), options :: Keyword.t()) ::
+          Vimage.t()| no_return()
+
+  def line!(x1, y1, x2, y2, options \\ [])
+      when is_integer(x1) and x1 >= 0 and is_integer(y1) and y1 >= 0 and is_integer(x2) and x2 >= 0 and is_integer(y2) and y2 >= 0 do
+    case line(x1, y1, x2, y2, options) do
+      {:ok, line} -> line
       {:error, reason} -> raise Image.Error, reason
     end
   end
