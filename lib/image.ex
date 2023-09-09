@@ -3465,13 +3465,13 @@ defmodule Image do
 
   ### Example
 
-        iex> image = Image.open!("./test/support/images/animated.webp")
-        iex> Image.pages(image)
-        12
+      iex> image = Image.open!("./test/support/images/animated.webp")
+      iex> Image.pages(image)
+      12
 
-        iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
-        iex> Image.pages(image)
-        1
+      iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
+      iex> Image.pages(image)
+      1
 
   """
   @doc subject: "Image info", since: "0.38.0"
@@ -3498,9 +3498,9 @@ defmodule Image do
 
   ### Example
 
-        iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
-        iex> Image.shape(image)
-        {1000,542, 3}
+      iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
+      iex> Image.shape(image)
+      {1000,542, 3}
 
   """
   @doc subject: "Image info", since: "0.9.0"
@@ -3536,9 +3536,9 @@ defmodule Image do
 
   ### Example
 
-        iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
-        iex> Image.interpretation(image)
-        :srgb
+      iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
+      iex> Image.interpretation(image)
+      :srgb
 
   """
   @doc subject: "Image info", since: "0.9.0"
@@ -3562,6 +3562,12 @@ defmodule Image do
   * The image type as a tuple in the same
     format as `t:Nx.Type.t/0`. For example
     `{:u, 8}` for a common `:srgb` image.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
+      iex> Image.type(image)
+      {:ok, {:u, 8}}
 
   """
   @dialyzer {:nowarn_function, {:type, 1}}
@@ -8702,6 +8708,16 @@ defmodule Image do
 
   * `true` or `false`
 
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/image_with_alpha2.png")
+      iex> Image.has_alpha?(image)
+      true
+
+      iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
+      iex> Image.has_alpha?(image)
+      false
+
   """
   @doc subject: "Image info"
 
@@ -8878,10 +8894,10 @@ defmodule Image do
 
   ### Example
 
-        iex> image = Image.open!("./test/support/images/Singapore-2016-09-5887.jpg")
-        iex> {:ok, updated_image} = Image.with_band_format(image, {:s, 16}, fn i -> {:ok, i} end)
-        iex> Image.band_format(updated_image)
-        {:u, 8}
+      iex> image = Image.open!("./test/support/images/Singapore-2016-09-5887.jpg")
+      iex> {:ok, updated_image} = Image.with_band_format(image, {:s, 16}, fn i -> {:ok, i} end)
+      iex> Image.band_format(updated_image)
+      {:u, 8}
 
   """
   @doc since: "0.35.0", subject: "Operation"
@@ -8930,10 +8946,12 @@ defmodule Image do
 
   ### Example
 
-       iex> image = Image.open!("./test/support/images/animated.webp", pages: -1)
-       iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.crop(&1, 0, 0, 100, 100))
+      iex> image = Image.open!("./test/support/images/animated.webp", pages: -1)
+      iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.crop(&1, 0, 100, 200, 200))
 
   """
+  @doc since: "0.38.0", subject: "Operation"
+
   @spec map_pages(Vimage.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message()})) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
