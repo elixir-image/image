@@ -52,13 +52,13 @@ defmodule Image.Shape do
   ### Options
 
   * `:fill_color` is the color used to fill in the
-    polygon. The default is `:none`.
+    rectangle. The default is `:none`.
 
   * `:stroke_width` is the width of the line used
     to draw the rectangle. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the polygon. The default is `:black`
+    of the rectangle. The default is `:black`.
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
@@ -73,7 +73,9 @@ defmodule Image.Shape do
 
   * `{:error, reason}`
 
-  ### Examples
+  ### Example
+
+        iex> {:ok, rectangle} = Image.Shape.rect(50, 100, fill_color: :red, stroke_color: :yellow)
 
   """
   @doc since: "1.27.0"
@@ -117,13 +119,13 @@ defmodule Image.Shape do
   ### Options
 
   * `:fill_color` is the color used to fill in the
-    polygon. The default is `:none`.
+    rectangle. The default is `:none`.
 
   * `:stroke_width` is the width of the line used
     to draw the rectangle. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the polygon. The default is `:black`.
+    of the rectangle. The default is `:black`.
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
@@ -139,6 +141,8 @@ defmodule Image.Shape do
   * raises an exception.
 
   ### Examples
+
+        iex> rectangle = Image.Shape.rect!(50, 100, fill_color: :red, stroke_color: :yellow)
 
   """
   @doc since: "1.27.0"
@@ -339,7 +343,7 @@ defmodule Image.Shape do
     to draw the polygon. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the polygon. The default is `:black`
+    of the polygon. The default is `:black`.
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
@@ -411,8 +415,8 @@ defmodule Image.Shape do
 
   ### Examples
 
-      #=> {:ok, star} = Image.Shape.star
-      #=> {:ok, star} = Image.Shape.star 5, rotation: 90, fill_color: :red, stroke_color: :green
+      iex> {:ok, star} = Image.Shape.star
+      iex> {:ok, star} = Image.Shape.star(5, rotation: 90, fill_color: :red, stroke_color: :green)
 
   """
   @spec star(points :: pos_integer(), options :: Keyword.t()) ::
@@ -476,18 +480,245 @@ defmodule Image.Shape do
 
   * `image` or
 
-  * raises an exception
+  * raises an exception.
 
   ### Examples
 
-      #=> star = Image.Shape.star!
-      #=> star = Image.Shape.star! 5, rotation: 90, fill_color: :red, stroke_color: :green
+      iex> star = Image.Shape.star!
+      iex> star = Image.Shape.star!(5, rotation: 90, fill_color: :red, stroke_color: :green)
 
   """
   @spec star!(points :: pos_integer(), options :: Keyword.t()) :: Vimage.t() | no_return()
   def star!(points \\ @default_star_points, options \\ []) do
     case star(points, options) do
       {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Creates a image of a circle.
+
+  * `radius` is the radius of the circle in pixels.
+
+  * `options` is a `t:Keyword.t/0` list of options.
+
+  ### Options
+
+  * `:fill_color` is the color used to fill in the
+    circle. The default is `:none`.
+
+  * `:stroke_width` is the width of the line used
+    to draw the circle. The default is `1px`.
+
+  * `:stroke_color` is the color used for the outline
+    of the circle. The default is `:black`.
+
+  * `:opacity` is the opacity as a float between
+    `0.0` and `1.0` where `0.0` is completely transparent
+    and `1.0` is completely opaque. The default is `0.7`.
+
+  ### Returns
+
+  * `{:ok, circle_image}` or
+
+  * `{:error, reason}`
+
+  ### Example
+
+        iex> {:ok, circle} = Image.Shape.circle(50, fill_color: :green, stroke_color: :blue)
+
+  """
+  @doc since: "1.38.0"
+
+  @spec circle(radius :: pos_integer(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
+
+  def circle(radius, options \\ []) when is_integer(radius) and radius > 0 do
+    with {:ok, options} <- Image.Options.Shape.validate_polygon_options(options) do
+      diameter = 2 * radius
+      cx = cy = radius
+
+      svg = """
+      <svg viewBox="0 0 #{diameter} #{diameter}">
+        <style type="text/css">
+          svg circle {
+            fill: #{options.fill_color};
+            stroke: #{options.stroke_color};
+            stroke-width: #{options.stroke_width};
+            opacity: #{options.opacity};
+          }
+        </style>
+        <circle cx="#{cx}" cy="#{cy}" r="#{radius}" />
+      </svg>
+      """
+
+      case Operation.svgload_buffer(svg) do
+        {:ok, {circle, _flags}} -> {:ok, circle}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  @doc """
+  Creates a image of a circle or raises an exception.
+
+  * `radius` is the radius of the circle in pixels.
+
+  * `options` is a `t:Keyword.t/0` list of options.
+
+  ### Options
+
+  * `:fill_color` is the color used to fill in the
+    circle. The default is `:none`.
+
+  * `:stroke_width` is the width of the line used
+    to draw the circle. The default is `1px`.
+
+  * `:stroke_color` is the color used for the outline
+    of the circle. The default is `:black`.
+
+  * `:opacity` is the opacity as a float between
+    `0.0` and `1.0` where `0.0` is completely transparent
+    and `1.0` is completely opaque. The default is `0.7`.
+
+  ### Returns
+
+  * `circle_image` or
+
+  * raises an exception.
+
+  ### Example
+
+        iex> circle = Image.Shape.circle!(50, fill_color: :green, stroke_color: :blue)
+
+  """
+  @doc since: "1.38.0"
+
+  @spec circle!(radius :: pos_integer(), options :: Keyword.t()) ::
+          Vimage.t() | no_return()
+
+  def circle!(radius, options \\ []) when is_integer(radius) and radius > 0 do
+    case circle(radius, options) do
+      {:ok, circle} -> circle
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Creates a image of a ellipse.
+
+  * `x_radius` is the radius of the x-aixs of the
+    ellipse in pixels.
+
+  * `y_radius` is the radius of the y-aixs of the
+    ellipse in pixels.
+
+  * `options` is a `t:Keyword.t/0` list of options.
+
+  ### Options
+
+  * `:fill_color` is the color used to fill in the
+    ellipse. The default is `:none`.
+
+  * `:stroke_width` is the width of the line used
+    to draw the ellipse. The default is `1px`.
+
+  * `:stroke_color` is the color used for the outline
+    of the ellipse. The default is `:black`.
+
+  * `:opacity` is the opacity as a float between
+    `0.0` and `1.0` where `0.0` is completely transparent
+    and `1.0` is completely opaque. The default is `0.7`.
+
+  ### Returns
+
+  * `{:ok, ellipse_image}` or
+
+  * `{:error, reason}`
+
+  ### Examples
+
+        iex> {:ok, ellipse} = Image.Shape.ellipse(50, 100, fill_color: :green, stroke_color: :none)
+
+  """
+  @doc since: "1.38.0"
+
+  @spec ellipse(x_radius :: pos_integer(), y_radius :: pos_integer(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
+
+  def ellipse(x_radius, y_radius, options \\ [])
+      when is_integer(x_radius) and x_radius > 0 and is_integer(y_radius) and y_radius > 0 do
+    with {:ok, options} <- Image.Options.Shape.validate_polygon_options(options) do
+      x_diameter = 2 * x_radius
+      y_diameter = 2 * y_radius
+
+      svg = """
+      <svg viewBox="0 0 #{x_diameter} #{y_diameter}">
+        <style type="text/css">
+          svg ellipse {
+            fill: #{options.fill_color};
+            stroke: #{options.stroke_color};
+            stroke-width: #{options.stroke_width};
+            opacity: #{options.opacity};
+          }
+        </style>
+        <ellipse cx="#{x_radius}" cy="#{y_radius}" rx="#{x_radius}" ry="#{y_radius}" />
+      </svg>
+      """
+
+      case Operation.svgload_buffer(svg) do
+        {:ok, {ellipse, _flags}} -> {:ok, ellipse}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  @doc """
+  Creates a image of a ellipse or raises an exception.
+
+  * `x_radius` is the radius of the x-aixs of the
+    ellipse in pixels.
+
+  * `y_radius` is the radius of the y-aixs of the
+    ellipse in pixels.
+
+  * `options` is a `t:Keyword.t/0` list of options.
+
+  ### Options
+
+  * `:fill_color` is the color used to fill in the
+    polygon. The default is `:none`.
+
+  * `:stroke_width` is the width of the line used
+    to draw the rectangle. The default is `1px`.
+
+  * `:stroke_color` is the color used for the outline
+    of the polygon. The default is `:black`
+
+  * `:opacity` is the opacity as a float between
+    `0.0` and `1.0` where `0.0` is completely transparent
+    and `1.0` is completely opaque. The default is `0.7`.
+
+  ### Returns
+
+  * `ellipse_image` or
+
+  * raises an exception.
+
+  ### Example
+
+        iex> ellipse = Image.Shape.ellipse!(50, 100, fill_color: :green, stroke_color: :none)
+
+  """
+  @doc since: "1.38.0"
+
+  @spec ellipse!(x_radius :: pos_integer(), y_radius :: pos_integer(), options :: Keyword.t()) ::
+          Vimage.t() | no_return()
+
+  def ellipse!(x_radius, y_radius, options \\ []) do
+    case ellipse(x_radius, y_radius, options) do
+      {:ok, ellipse} -> ellipse
       {:error, reason} -> raise Image.Error, reason
     end
   end

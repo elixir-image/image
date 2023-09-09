@@ -16,13 +16,6 @@ defmodule Image.Options.Embed do
           | {:x, non_neg_integer() | :center}
           | {:y, non_neg_integer() | :center}
 
-
-  @typedoc """
-  Options list for `Image.embed/4`.
-
-  """
-  @type embed_options :: [embed_option()]
-
   @typedoc """
   When extending the canvas the generated
   pixels are determined by this option.
@@ -36,6 +29,12 @@ defmodule Image.Options.Embed do
           | :mirror
           | :background
 
+  @typedoc """
+  Options list for `Image.embed/4`.
+
+  """
+  @type embed_options :: [embed_option()]
+          
   @doc """
   Validate the options for `Image.embed/4`.
 
