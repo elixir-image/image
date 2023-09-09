@@ -3449,6 +3449,42 @@ defmodule Image do
   end
 
   @doc """
+  Returns the number of pages in an image.
+
+  Animated images will return an integer representing
+  the number of animated frames. Normal images will
+  return `1`.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `integer` number of pages in the `image`.
+
+  ### Example
+
+        iex> image = Image.open!("./test/support/images/animated.webp")
+        iex> Image.pages(image)
+        12
+
+        iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
+        iex> Image.pages(image)
+        1
+
+  """
+  @doc subject: "Image info", since: "0.38.0"
+
+  @spec pages(image :: Vimage.t()) :: pos_integer()
+  def pages(%Vimage{} = image) do
+    case Vix.Vips.Image.header_value(image, "n-pages") do
+      {:ok, pages} -> pages
+      {:error, _reason} -> 1
+    end
+  end
+
+  @doc """
   Returns the shape of an image.
 
   ### Arguments
@@ -3459,6 +3495,12 @@ defmodule Image do
 
   * The image shape as a tuple of
     `{width, height, bands}`.
+
+  ### Example
+
+        iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
+        iex> Image.shape(image)
+        {1000,542, 3}
 
   """
   @doc subject: "Image info", since: "0.9.0"
@@ -3474,8 +3516,8 @@ defmodule Image do
   Returns the image interpretation.
 
   The interpretation is how `Image` understands
-  the image date. For example, `:srgb` or
-  `:cmyk` or `:bw`.
+  the image date. For example, `:srgb`, `:cmyk` or
+  `:bw`.
 
   For most common web applications, the
   interpretation will be `:srgb`.
@@ -3491,6 +3533,12 @@ defmodule Image do
   ### Notes
 
   * See also `Image.Interpretation.known_interpretations/0`
+
+  ### Example
+
+        iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
+        iex> Image.interpretation(image)
+        :srgb
 
   """
   @doc subject: "Image info", since: "0.9.0"
