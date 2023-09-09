@@ -8904,6 +8904,95 @@ defmodule Image do
     end
   end
 
+  @doc """
+  For each page of an image, execute `fun/1` then
+  reassemble the pages.
+
+  If the function is successful for each page,
+  assemble the new pages (returned from `fun/1`)
+  into a new image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `fun` is any 1-arity function that takes a
+    page as a `t:Vix.Vips.Image.t/0` as its argument
+    and is required to return either `{:ok, new_page_image}`
+    or `{:error, reason}` as its return value.
+
+  ### Returns
+
+  * `{:ok, mapped_image}` where all the new pages returned
+    from `fun/1` are assembled into `mapped_image` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+       iex> image = Image.open!("./test/support/images/animated.webp", pages: -1)
+       iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.crop(&1, 0, 0, 100, 100))
+
+  """
+  @spec map_pages(Vimage.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message()})) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def map_pages(%Vimage{} = image, fun) when is_function(fun, 1) do
+    map_pages(image, fun, pages(image))
+  end
+
+  # There is only one page - a normal image
+  # So just invoke the given function.
+  defp map_pages(image, fun, 1) do
+    fun.(image)
+  end
+
+  # The image has multiple pages. We need to split the
+  # image, process and reassemble. The we need to copy the
+  # `page-height`, `n-pages, `delay` and `loop` headers over.
+  defp map_pages(image, fun, pages) do
+    with {:ok, page_height} <- page_height(image),
+         {:ok, new_pages} <- reduce_pages(image, pages, page_height, fun),
+         {:ok, new_image} <- join(Enum.reverse(new_pages)) do
+       new_page_height = Image.height(hd(new_pages))
+
+       case Image.mutate(new_image, &Vix.Vips.MutableImage.set(&1, "page-height", :gint, new_page_height)) do
+         {:ok, updated_image} -> {:ok, updated_image}
+         {:error, reason} -> {:error, "Could not set page height. Reason: #{inspect reason}"}
+       end
+    end
+  end
+
+  defp join(pages) do
+    case Vix.Vips.Operation.arrayjoin(pages, across: 1) do
+      {:ok, image} -> {:ok, image}
+      {:error, reason} -> {:error, "Could not join the pages into a new image. Reason: #{inspect reason}"}
+    end
+  end
+
+  defp page_height(image) do
+    case Vix.Vips.Image.header_value(image, "page-height") do
+      {:ok, page_height} ->
+        {:ok, page_height}
+
+      {:error, _reason} ->
+        {:error, "Image does not define a page height. Perhaps its not a multipage image?"}
+    end
+  end
+
+  defp reduce_pages(image, pages, page_height, fun) do
+    width = width(image)
+
+    Enum.reduce_while(1..pages, {:ok, []}, fn n, {:ok, acc} ->
+      {:ok, page_n} = crop(image, 0, page_height * (n - 1), width, page_height)
+
+      case fun.(page_n) do
+        {:ok, new_page_n} -> {:cont, {:ok, [new_page_n | acc]}}
+        {:error, reason} -> {:halt, {:error, "Page #{n} returned #{inspect reason}"}}
+      end
+    end)
+  end
+
   # The iTerm2 Image Preview protocol is:
   # ESC ] 1337 ; File = [arguments] : base-64 encoded file contents ^G
 
