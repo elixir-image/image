@@ -82,6 +82,7 @@ defmodule Image.Test do
 
   test "Circular Image Gradient 1", %{dir: dir} do
     use Image.Math
+    validate_path = validate_path("radial_gradient_1.png")
 
     start = [100, 50, 0]
     finish = [50, 0, 50]
@@ -109,7 +110,8 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     assert :ok = Vimage.write_to_file(out, out_path)
 
-    assert_images_equal(out_path, validate_path("radial_gradient_1.png"))
+    # Image.write!(out, validate_path)
+    assert_images_equal(out_path, validate_path)
   end
 
   test "Circular Image Gradient 2", %{dir: dir} do

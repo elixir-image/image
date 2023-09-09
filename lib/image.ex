@@ -8961,13 +8961,15 @@ defmodule Image do
 
   # There is only one page - a normal image
   # So just invoke the given function.
+
   defp map_pages(image, fun, 1) do
     fun.(image)
   end
 
   # The image has multiple pages. We need to split the
-  # image, process and reassemble. The we need to copy the
-  # `page-height`, `n-pages, `delay` and `loop` headers over.
+  # image, process and reassemble. Then we need to set the
+  # `page-height` of the new image.
+
   defp map_pages(image, fun, pages) do
     with {:ok, page_height} <- page_height(image),
          {:ok, new_pages} <- reduce_pages(image, pages, page_height, fun),
@@ -8993,8 +8995,8 @@ defmodule Image do
       {:ok, page_height} ->
         {:ok, page_height}
 
-      {:error, _reason} ->
-        {:error, "Image does not define a page height. Perhaps its not a multipage image?"}
+      {:error, reason} ->
+        {:error, "Image does not define a page height. Perhaps it's not a multipage image? Reason: #{inspect reason}"}
     end
   end
 
