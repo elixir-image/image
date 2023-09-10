@@ -85,7 +85,7 @@ jobs:
 
     # Step: Install the dependencies for libvips
     - name: Install libvips build dependencies
-      run: sudo apt-get install build-essential libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgsf-1-dev libglib2.0-dev liborc-0.4-dev libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 curl xz-utils
+      run: sudo apt-get install build-essential meson libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgsf-1-dev libglib2.0-dev liborc-0.4-dev libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 curl xz-utils
 
     # Install latest libvips
     - name: Get latest version of libvips
@@ -104,15 +104,17 @@ jobs:
       if: steps.vips-cache.outputs.cache-hit != 'true'
       run: |
         mkdir vips
-        curl -s -L "${VIPS_LATEST_RELEASE}" | tar xz -C ./vips --strip-components=1
+        curl -s -L "${VIPS_LATEST_RELEASE}" | tar xf -C ./vips --strip-components=1
         cd vips
-        ./configure
-        make
+        meson setup build
+        cd build
+        meson compile
+
 
     - name: Install libvips
       run: |
         cd vips
-        sudo make install
+        meson install
         sudo ldconfig -v
 
     # Step: Download project dependencies. If unchanged, uses
