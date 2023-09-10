@@ -104,7 +104,7 @@ jobs:
       if: steps.vips-cache.outputs.cache-hit != 'true'
       run: |
         mkdir vips
-        curl -s -L "${VIPS_LATEST_RELEASE}" | tar xf -C ./vips --strip-components=1
+        curl -s -L "${VIPS_LATEST_RELEASE}" | tar xz -C ./vips --strip-components=1
         cd vips
         meson setup build
         cd build
