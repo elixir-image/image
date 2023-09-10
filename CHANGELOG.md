@@ -18,6 +18,8 @@ This is the changelog for Image version 0.38.0 released on ______, 2023.  For ol
 
 * Adds `Image.Shape.circle/2`, `Image.Shape.ellipse/3` and `Image.Shape.line/5` as well as their `!` counterparts.
 
+* Allow `pages: :all` as a synonym for `pages: -1` when opening an image.
+
 ## Image 0.37.0
 
 This is the changelog for Image version 0.37.0 released on August 17th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

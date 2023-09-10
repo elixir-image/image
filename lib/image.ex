@@ -9039,14 +9039,14 @@ defmodule Image do
   ### Examples
 
       # The option `pages: -1` means load all the pages of a multi-page image.
-      iex> image = Image.open!("./test/support/images/animated.webp", pages: -1)
+      iex> image = Image.open!("./test/support/images/animated.webp", pages: :all)
       iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.crop(&1, 0, 100, 200, 200))
 
       # Also works for .gif images
-      iex> image = Image.open!("./test/support/images/animated.gif", pages: -1)
+      iex> image = Image.open!("./test/support/images/animated.gif", pages: :all)
       iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.crop(&1, 0, 50, 100, 100))
 
-      # If an image isn't opened with `pages: -1` then only
+      # If an image isn't opened with `pages: :all` then only
       # the first page of an image is loaded.
       iex> image_2 = Image.open!("./test/support/images/animated.webp")
       iex> Image.map_pages image_2, &Image.crop(&1, 0, 150, 200, 200)

@@ -23,4 +23,9 @@ defmodule ForDialyzer do
     {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, extend_mode: :background, background: :green)
 
   end
+
+  def open do
+    Image.open! "./test/support/images/animated.gif", pages: -1
+    Image.open! "./test/support/images/animated.gif", pages: :all
+  end
 end

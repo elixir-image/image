@@ -63,6 +63,7 @@ defmodule Image.Options.Open do
         ]
 
   @type pages :: -1 | pos_integer() | :all
+
   @typedoc """
   The file access mode when opening
   image files. The default in `:sequential`.
