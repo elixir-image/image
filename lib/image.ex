@@ -9092,7 +9092,7 @@ defmodule Image do
   end
 
   defp join(pages) do
-    case Vix.Vips.Operation.arrayjoin(pages, across: 1) do
+    case Operation.arrayjoin(pages, across: 1) do
       {:ok, image} ->
         {:ok, image}
 
