@@ -106,7 +106,7 @@ jobs:
         mkdir vips
         curl -s -L "${VIPS_LATEST_RELEASE}" | unxz | tar x -C ./vips --strip-components=1
         cd vips
-        meson setup build -Ddebug=false
+        meson setup build -Ddebug=false -Dcgif=enabled -Ddeprecated=disabled -Dexamples=disabled
         cd build
         meson compile
 
