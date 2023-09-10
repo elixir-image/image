@@ -12,7 +12,7 @@ This is the changelog for Image version 0.38.0 released on ______, 2023.  For ol
 
 * Adds a [squircle](https://en.wikipedia.org/wiki/Squircle) mask function and a squircle avatar shape option. Thanks to @gf3 for the PR.
 
-* Adds `Image.map_pages/2` to execute a function for each page in an image then reassemble the pages into a new image. This can be used to crop all the frames of an animated image.  Thanks to @Mefgalm for the prompt to get this done. Eventually this function will be used by default for `Image.crop/5` and `Image.thumnail/3`.
+* Adds `Image.map_pages/2` to execute a function for each page in a `.webp` or `.gif` image then reassemble the pages into a new image. This can be used to crop all the frames of an animated image.  Thanks to @Mefgalm for the prompt to get this done. Eventually this function will be used by default for `Image.crop/5` and `Image.thumnail/3`.
 
 * Adds `Image.pages/1` to return the number of pages in an image. For normal images the result will be `1`. For animated images it will be the number of frames in the animation.
 
