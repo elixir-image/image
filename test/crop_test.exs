@@ -93,7 +93,6 @@ defmodule Image.Crop.Test do
     assert_images_equal(cropped, validate_image, 160)
   end
 
-  @tag :multipage_gif_crop
   test "Cropping a multipage gif image" do
     image_path = image_path("animated.gif")
     validate_path = validate_path("crop/animated_cropped.gif")
@@ -101,7 +100,7 @@ defmodule Image.Crop.Test do
     {:ok, image} = Image.open(image_path, pages: :all)
     {:ok, cropped} = Image.crop(image, 0, 100, 150, 150)
 
-    {:ok, _} = Image.write(cropped, validate_path)
+    # {:ok, _} = Image.write(cropped, validate_path)
     {:ok, validate_image} = Image.open(validate_path, pages: :all)
     assert_images_equal(cropped, validate_image)
   end
