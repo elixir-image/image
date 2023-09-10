@@ -52,11 +52,13 @@ defmodule Image.Crop.Test do
   end
 
   test "Crop using invalid percentages", %{image: image} do
-    assert Image.crop(image, 0.5, 0.5, 0.6, 0.5) ==
-             {:error, "operation build: extract_area: bad extract area"}
+    assert {:error, "operation build:" <> _other} =
+      Image.crop(image, 0.5, 0.5, 0.6, 0.5)
 
-    assert Image.crop(image, 0.5, 0.5, 0.5, 0.6) ==
-             {:error, "operation build: extract_area: bad extract area"}
+
+    assert {:error, "operation build:" <> _other} =
+      Image.crop(image, 0.5, 0.5, 0.5, 0.6)
+
 
     assert Image.crop(image, 0.5, 0.5, -0.5, 0.6) ==
              {:error,

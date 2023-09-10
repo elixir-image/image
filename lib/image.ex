@@ -9084,7 +9084,7 @@ defmodule Image do
          {:ok, new_image} <- join(Enum.reverse(new_pages)) do
        new_page_height = Image.height(hd(new_pages))
 
-       case Image.mutate(new_image, &Vix.Vips.MutableImage.set(&1, "page-height", :gint, new_page_height)) do
+       case Image.mutate(new_image, &MutableImage.set(&1, "page-height", :gint, new_page_height)) do
          {:ok, updated_image} ->
            {:ok, updated_image}
 
