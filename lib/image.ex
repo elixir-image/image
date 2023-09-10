@@ -669,7 +669,8 @@ defmodule Image do
     The value must be between `-1` and `100_000`. The default
     value is `1`.  A value of `-1` would load all the available
     pages which is useful if you want to keep the animation of
-    the input image.
+    the input image. The atom `:all` can be used in place of
+    `-1` to indicate all pages should be loaded.
 
   #### TIFF options
 
@@ -683,16 +684,11 @@ defmodule Image do
     value of `0`. This parameter is useful on animated images.
 
   * `:pages` indicates the number of pages to load.
-    The value must be between `-1` and `100_000`.
-    The default value is `1`.
-    A value of `-1` would load all the available pages
-    which is useful if you want to keep the animation of
-    the input image.
-
-  #### PNG options
-
-  * There are no PNG-specific image loading
-    options.
+    The value must be between `-1` and `100_000`. The default
+    value is `1`.  A value of `-1` would load all the available
+    pages which is useful if you want to keep the animation of
+    the input image. The atom `:all` can be used in place of
+    `-1` to indicate all pages should be loaded.
 
   #### GIF options
 
@@ -701,11 +697,16 @@ defmodule Image do
     value of `0`. This parameter is useful on animated images.
 
   * `:pages` indicates the number of pages to load.
-    The value must be between `-1` and `100_000`.
-    The default value is `1`.
-    A value of `-1` would load all the available pages
-    which is useful if you want to keep the animation of
-    the input image.
+    The value must be between `-1` and `100_000`. The default
+    value is `1`.  A value of `-1` would load all the available
+    pages which is useful if you want to keep the animation of
+    the input image. The atom `:all` can be used in place of
+    `-1` to indicate all pages should be loaded.
+
+  #### PNG options
+
+  * There are no PNG-specific image loading
+    options.
 
   ### Returns
 
@@ -838,6 +839,96 @@ defmodule Image do
   * `options` is a keyword list of options. The default is
     `[access: :random]` for all images except images
     derived from binary image data.
+
+  ### Options
+
+  The available options depend upon the image type.
+
+  #### All image types
+
+  * `:access` is the file access mode, either `:random`
+    or `:sequential`. The default is `:random`.
+    When `:sequential`, `Image` (via `Vix`) is able
+    to support streaming transformations and optimise
+    memory usage more effectively. However `:sequential`
+    also means that some operations cannot be completed
+    because they would require non-sequential access to
+    the image. In these cases, `:random` access is required.
+
+  * `:fail_on` sets the error level at which image
+    loading and decoding will stop. The default is `:none`.
+    Each error state implies all the states before it such
+    that `:error` implies also `:truncated`.
+
+  #### JPEG image options
+
+  * `:shrink` is an integer factor in the range `1..16` by
+    which the image is reduced upon loading. This is an
+    optimization that can result in improved performance and
+    reduced memory usage if the image is being loaded
+    with the intent to resize it to smaller dimensions. The
+    default value is `1` meaning no shrink-on-load.
+
+  * `:autorotate` is a boolean value indicating if
+    the image should be rotated according to the orientation
+    data stored in the image metadata. The default is
+    `false`.
+
+  #### WEBP options
+
+  * `:scale` will scale the image on load. The value is
+    a number greater than `0` and less than or equal
+    to `1024` with a default of `1` meaning no scaling
+    on load. Numbers less than `1.0` scale the image down
+    so that a scale of `0.5` will halve the image size on
+    load.
+
+  * `:page` indicates the first page to be loaded. The
+    value is in the range `0..100_000` with a default
+    value of `0`. This parameter is useful on animated images.
+
+  * `:pages` indicates the number of pages to load.
+    The value must be between `-1` and `100_000`. The default
+    value is `1`.  A value of `-1` would load all the available
+    pages which is useful if you want to keep the animation of
+    the input image. The atom `:all` can be used in place of
+    `-1` to indicate all pages should be loaded.
+
+  #### TIFF options
+
+  * `:autorotate` is a boolean value indicating if
+    the image should be rotated according to the orientation
+    data stored in the image metadata. The default is
+    `false`.
+
+  * `:page` indicates the first page to be loaded. The
+    value is in the range `0..100_000` with a default
+    value of `0`. This parameter is useful on animated images.
+
+  * `:pages` indicates the number of pages to load.
+    The value must be between `-1` and `100_000`. The default
+    value is `1`.  A value of `-1` would load all the available
+    pages which is useful if you want to keep the animation of
+    the input image. The atom `:all` can be used in place of
+    `-1` to indicate all pages should be loaded.
+
+  #### GIF options
+
+  * `:page` indicates the first page to be loaded. The
+    value is in the range `0..100_000` with a default
+    value of `0`. This parameter is useful on animated images.
+
+  * `:pages` indicates the number of pages to load.
+    The value must be between `-1` and `100_000`. The default
+    value is `1`.  A value of `-1` would load all the available
+    pages which is useful if you want to keep the animation of
+    the input image. The atom `:all` can be used in place of
+    `-1` to indicate all pages should be loaded.
+
+  #### PNG options
+
+  * There are no PNG-specific image loading
+    options.
 
   ### Returns
 

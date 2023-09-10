@@ -17,6 +17,7 @@ defmodule Image.Options.Open do
           | png_open_options()
           | tiff_open_options()
           | webp_open_options()
+          | gif_open_options()
           | other_open_options()
 
   @type jpeg_open_options :: [
@@ -35,7 +36,7 @@ defmodule Image.Options.Open do
           {:autorotate, boolean()}
           | {:access, file_access()}
           | {:fail_on, fail_on()}
-          | {:pages, number()}
+          | {:pages, pages()}
           | {:page, 1..100_000}
         ]
 
@@ -43,9 +44,17 @@ defmodule Image.Options.Open do
           {:autorotate, boolean()}
           | {:access, file_access()}
           | {:fail_on, fail_on()}
-          | {:pages, number()}
+          | {:pages, pages()}
           | {:page, 0..100_000}
           | {:scale, non_neg_integer() | float()}
+        ]
+
+  @type gif_open_options :: [
+          {:autorotate, boolean()}
+          | {:access, file_access()}
+          | {:fail_on, fail_on()}
+          | {:pages, pages()}
+          | {:page, 0..100_000}
         ]
 
   @type other_open_options :: [
@@ -53,6 +62,7 @@ defmodule Image.Options.Open do
           | {:fail_on, fail_on()}
         ]
 
+  @type pages :: -1 | pos_integer() | :all
   @typedoc """
   The file access mode when opening
   image files. The default in `:sequential`.
@@ -103,6 +113,15 @@ defmodule Image.Options.Open do
   end
 
   def validate_option({:page, n}, options) when is_integer(n) and n in 0..100_000 do
+    {:cont, options}
+  end
+
+  def validate_option({:pages, :all}, options) do
+    options =
+      options
+      |> Keyword.delete(:pages)
+      |> Keyword.put(:n, -1)
+
     {:cont, options}
   end
 
