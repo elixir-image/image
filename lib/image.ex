@@ -9050,9 +9050,10 @@ defmodule Image do
       # the first page of an image is loaded.
       iex> image_2 = Image.open!("./test/support/images/animated.webp")
       iex> Image.map_pages image_2, &Image.crop(&1, 0, 150, 200, 200)
-      {:error,
-        "Image does not have a page-height header. Perhaps the image wasn't opened with the `pages: :all` option " <>
-        "or libvips wasn't built with libwebp-dev/libgif-dev configured?"}
+      {:error, "Image does not have a page-height header. " <>
+        "Perhaps the image wasn't opened with the `pages: :all` option or " <>
+        "libvips wasn't built with libwebp-dev/libgif-dev configured? " <>
+        "Run `vips --vips-config` from the command line to check."}
 
   """
   @doc since: "0.38.0", subject: "Operation"
@@ -9109,7 +9110,8 @@ defmodule Image do
       {:error, _reason} ->
         {:error, "Image does not have a page-height header. " <>
           "Perhaps the image wasn't opened with the `pages: :all` option or " <>
-          "libvips wasn't built with libwebp-dev/libgif-dev configured?"}
+          "libvips wasn't built with libwebp-dev/libgif-dev configured? " <>
+          "Run `vips --vips-config` from the command line to check."}
     end
   end
 
