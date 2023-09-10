@@ -8930,7 +8930,8 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0` in `.gif`
+     or `.png` multi-page format.
 
   * `fun` is any 1-arity function that takes a
     page as a `t:Vix.Vips.Image.t/0` as its argument
@@ -8949,6 +8950,10 @@ defmodule Image do
       # The option `pages: -1` means load all the pages of a multi-page image.
       iex> image = Image.open!("./test/support/images/animated.webp", pages: -1)
       iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.crop(&1, 0, 100, 200, 200))
+
+      # Also works for .gif images
+      iex> image = Image.open!("./test/support/images/animated.gif", pages: -1)
+      iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.crop(&1, 0, 50, 100, 100))
 
       # If an image isn't opened with `pages: -1` then only
       # the first page of an image is loaded.
