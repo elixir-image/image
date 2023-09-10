@@ -8971,7 +8971,7 @@ defmodule Image do
   # `page-height` of the new image.
 
   defp map_pages(image, fun, pages) do
-    with {:ok, page_height} <- page_height(image, pages),
+    with {:ok, page_height} <- page_height(image),
          {:ok, new_pages} <- reduce_pages(image, pages, page_height, fun),
          {:ok, new_image} <- join(Enum.reverse(new_pages)) do
        new_page_height = Image.height(hd(new_pages))
@@ -8990,7 +8990,7 @@ defmodule Image do
     end
   end
 
-  defp page_height(image, pages) do
+  defp page_height(image) do
     IO.inspect Vix.Vips.Image.headers(image), label: "Image headers"
     IO.inspect Vix.Vips.Image.header_value(image, "page-height"), label: "Page height"
     IO.inspect Vix.Vips.Image.header_value(image, "n-pages"), label: "N-pages"
