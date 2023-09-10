@@ -8991,17 +8991,15 @@ defmodule Image do
   end
 
   defp page_height(image) do
-    IO.inspect Vix.Vips.Image.headers(image), label: "Image headers"
-    IO.inspect Vix.Vips.Image.header_value(image, "page-height"), label: "Page height"
-    IO.inspect Vix.Vips.Image.header_value(image, "n-pages"), label: "N-pages"
-
-
     case Vix.Vips.Image.header_value(image, "page-height") do
       {:ok, page_height} ->
         {:ok, page_height}
 
       {:error, reason} ->
-        {:error, "Image does not define a page height. Perhaps it's not a multipage image? Reason: #{inspect reason}"}
+        {:error, "Image does not define a page height. " <>
+          "Perhaps the installed libvips was not built with libwebp configured? " <>
+          "Reason: #{inspect reason}"
+        }
     end
   end
 
