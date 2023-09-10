@@ -8997,6 +8997,7 @@ defmodule Image do
 
       {:error, _reason} ->
         # No page height metadata so calculate it
+        IO.inspect div(Image.height(image), pages), label: "Calculated page height"
         {:ok, div(Image.height(image), pages)}
     end
   end
