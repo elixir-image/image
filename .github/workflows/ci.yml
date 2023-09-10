@@ -85,38 +85,38 @@ jobs:
           ${{ runner.os }}-mix-
 
     # Step: Install the dependencies for libvips
-    # - name: Install libvips build dependencies
-    #   run: sudo apt-get install build-essential meson libwebp-dev libheif-dev libavif-dev libcgif0 libcgif-dev libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgirepository1.0-dev libgsf-1-dev libglib2.0-dev liborc-0.4-dev libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 curl xz-utils
+    - name: Install libvips build dependencies
+      run: sudo apt-get install build-essential meson libwebp-dev libheif-dev libavif-dev libcgif0 libcgif-dev libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgirepository1.0-dev libgsf-1-dev libglib2.0-dev liborc-0.4-dev libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 curl xz-utils
 
     # Install latest libvips
-    # - name: Get latest version of libvips
-    #   run: |
-    #     VIPS_LATEST_RELEASE="https://github.com/libvips/libvips/releases/download/v8.14.4/vips-8.14.4.tar.xz"
-    #     echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
-    #
-    # - name: Cache libvips artifacts
-    #   uses: actions/cache@v3
-    #   id: vips-cache
-    #   with:
-    #     path: vips
-    #     key: ${{ runner.os }}-vips-${{ env.VIPS_LATEST_RELEASE }}
-    #
-    # - name: Compile libvips from source
-    #   if: steps.vips-cache.outputs.cache-hit != 'true'
-    #   run: |
-    #     mkdir vips
-    #     curl -s -L "${VIPS_LATEST_RELEASE}" | unxz | tar x -C ./vips --strip-components=1
-    #     cd vips
-    #     meson setup build -Ddebug=false -Dcgif=enabled -Ddeprecated=false -Dexamples=false
-    #     cd build
-    #     meson compile
-    #
-    # - name: Install libvips
-    #   run: |
-    #     cd vips/build
-    #     sudo meson install
-    #     sudo ldconfig -v
-    #     vips --vips-config
+    - name: Get latest version of libvips
+      run: |
+        VIPS_LATEST_RELEASE="https://github.com/libvips/libvips/releases/download/v8.14.4/vips-8.14.4.tar.xz"
+        echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
+
+    - name: Cache libvips artifacts
+      uses: actions/cache@v3
+      id: vips-cache
+      with:
+        path: vips
+        key: ${{ runner.os }}-vips-${{ env.VIPS_LATEST_RELEASE }}
+
+    - name: Compile libvips from source
+      if: steps.vips-cache.outputs.cache-hit != 'true'
+      run: |
+        mkdir vips
+        curl -s -L "${VIPS_LATEST_RELEASE}" | unxz | tar x -C ./vips --strip-components=1
+        cd vips
+        meson setup build -Ddebug=false -Dcgif=enabled -Ddeprecated=false -Dexamples=false
+        cd build
+        meson compile
+
+    - name: Install libvips
+      run: |
+        cd vips/build
+        sudo meson install
+        sudo ldconfig -v
+        vips --vips-config
 
     # Step: Download project dependencies. If unchanged, uses
     # the cached version.
