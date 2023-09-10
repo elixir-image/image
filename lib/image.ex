@@ -8944,10 +8944,19 @@ defmodule Image do
 
   * `{:error, reason}`.
 
-  ### Example
+  ### Examples
 
+      # The option `pages: -1` means load all the pages of a multi-page image.
       iex> image = Image.open!("./test/support/images/animated.webp", pages: -1)
       iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.crop(&1, 0, 100, 200, 200))
+
+      # If an image isn't opened with `pages: -1` then only
+      # the first page of an image is loaded.
+      iex> image_2 = Image.open!("./test/support/images/animated.webp")
+      iex> Image.map_pages image_2, &Image.crop(&1, 0, 150, 200, 200)
+      {:error,
+        "Image does not have a page-height header. Perhaps the image wasn't opened with the `pages: -1` option " <>
+        "or libvips wasn't built with libwebp-dev configured?"}
 
   """
   @doc since: "0.38.0", subject: "Operation"
@@ -8977,16 +8986,22 @@ defmodule Image do
        new_page_height = Image.height(hd(new_pages))
 
        case Image.mutate(new_image, &Vix.Vips.MutableImage.set(&1, "page-height", :gint, new_page_height)) do
-         {:ok, updated_image} -> {:ok, updated_image}
-         {:error, reason} -> {:error, "Could not set page height. Reason: #{inspect reason}"}
+         {:ok, updated_image} ->
+           {:ok, updated_image}
+
+         {:error, reason} ->
+           {:error, "Could not set the page-height header. Reason: #{inspect reason}"}
        end
     end
   end
 
   defp join(pages) do
     case Vix.Vips.Operation.arrayjoin(pages, across: 1) do
-      {:ok, image} -> {:ok, image}
-      {:error, reason} -> {:error, "Could not join the pages into a new image. Reason: #{inspect reason}"}
+      {:ok, image} ->
+        {:ok, image}
+
+      {:error, reason} ->
+        {:error, "Could not join the pages into a new image. Reason: #{inspect reason}"}
     end
   end
 
@@ -8995,11 +9010,10 @@ defmodule Image do
       {:ok, page_height} ->
         {:ok, page_height}
 
-      {:error, reason} ->
-        {:error, "Image does not define a page height. " <>
-          "Perhaps the installed libvips was not built with libwebp configured? " <>
-          "Reason: #{inspect reason}"
-        }
+      {:error, _reason} ->
+        {:error, "Image does not have a page-height header. " <>
+          "Perhaps the image wasn't opened with the `pages: -1` option or " <>
+          "libvips wasn't built with libwebp-dev configured?"}
     end
   end
 
