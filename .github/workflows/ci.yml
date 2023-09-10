@@ -85,7 +85,7 @@ jobs:
 
     # Step: Install the dependencies for libvips
     - name: Install libvips build dependencies
-      run: sudo apt-get install build-essential meson libwebp-dev libheif-dev libavif-dev libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgirepository1.0-dev libgsf-1-dev libglib2.0-dev liborc-0.4-dev libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 curl xz-utils
+      run: sudo apt-get install build-essential meson libwebp-dev libheif-dev libavif-dev libgif-dev libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgirepository1.0-dev libgsf-1-dev libglib2.0-dev liborc-0.4-dev libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 curl xz-utils
 
     # Install latest libvips
     - name: Get latest version of libvips
