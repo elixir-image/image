@@ -68,4 +68,40 @@ defmodule Image.Crop.Test do
              {:error,
               "height must be a percentage expressed as a float greater than 0.0 and less than or equal to 1.0. Found -0.6"}
   end
+
+  test "Cropping a multipage webp image" do
+    image_path = image_path("animated.webp")
+    validate_path = validate_path("crop/animated_cropped.webp")
+
+    {:ok, image} = Image.open(image_path, pages: :all)
+    {:ok, cropped} = Image.crop(image, 0, 100, 150, 150)
+
+    # {:ok, _} = Image.write(cropped, validate_path)
+    {:ok, validate_image} = Image.open(validate_path, pages: :all)
+    assert_images_equal(cropped, validate_image, 160)
+  end
+
+  test "Cropping a multipage webp image via Image.map_pages/2" do
+    image_path = image_path("animated.webp")
+    validate_path = validate_path("crop/animated_cropped.webp")
+
+    {:ok, image} = Image.open(image_path, pages: :all)
+    {:ok, cropped} = Image.map_pages(image, &Image.crop(&1, 0, 100, 150, 150))
+
+    # {:ok, _} = Image.write(cropped, validate_path)
+    {:ok, validate_image} = Image.open(validate_path, pages: :all)
+    assert_images_equal(cropped, validate_image, 160)
+  end
+
+  test "Cropping a multipage gif image" do
+    image_path = image_path("animated.gif")
+    validate_path = validate_path("crop/animated_cropped.gif")
+
+    {:ok, image} = Image.open(image_path, pages: :all)
+    {:ok, cropped} = Image.crop(image, 0, 100, 150, 150)
+
+    {:ok, _} = Image.write(cropped, validate_path)
+    {:ok, validate_image} = Image.open(validate_path, pages: :all)
+    assert_images_equal(cropped, validate_image)
+  end
 end

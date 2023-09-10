@@ -726,16 +726,16 @@ defmodule Image.Shape do
   @doc """
   Creates an image of a line.
 
-  * `x1`` Defines the x-axis coordinate of the line
+  * `x1` Defines the x-axis coordinate of the line
     starting point in pixels.
 
-  * `y1`` Defines the y-axis coordinate of the line
+  * `y1` Defines the y-axis coordinate of the line
     starting point in pixels.
 
-  * `x2`` Defines the x-axis coordinate of the line
+  * `x2` Defines the x-axis coordinate of the line
     ending point in pixels.
 
-  * `y2`` Defines the y-axis coordinate of the line
+  * `y2` Defines the y-axis coordinate of the line
     ending point in pixels.
 
   * `options` is a `t:Keyword.t/0` list of options.
@@ -801,16 +801,16 @@ defmodule Image.Shape do
   @doc """
   Creates a image of a line or raises an exception.
 
-  * `x1`` Defines the x-axis coordinate of the line
+  * `x1` Defines the x-axis coordinate of the line
     starting point in pixels.
 
-  * `y1`` Defines the y-axis coordinate of the line
+  * `y1` Defines the y-axis coordinate of the line
     starting point in pixels.
 
-  * `x2`` Defines the x-axis coordinate of the line
+  * `x2` Defines the x-axis coordinate of the line
     ending point in pixels.
 
-  * `y2`` Defines the y-axis coordinate of the line
+  * `y2` Defines the y-axis coordinate of the line
     ending point in pixels.
 
   * `options` is a `t:Keyword.t/0` list of options.

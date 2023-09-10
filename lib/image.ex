@@ -4268,9 +4268,9 @@ defmodule Image do
   * `left` is the top edge of crop area as an
     integer or a float in the range `-1.0..1.0`.
     If `left` is an integer it is the absolute number
-    of pixels. If `left` a float is fraction of the width
+    of pixels. If `left` is a float it's a fraction of the width
     of the image. If `left` is positive it is relative to
-    the left edge of the image. If it is negative it is
+    the left edge of the image. If it's negative it's
     relative to the right edge of the image. `left` may
     also be one of `:left`, `:center` and `:right`
     indicating the crop is relative to the left, center
@@ -4279,9 +4279,9 @@ defmodule Image do
   * `top` is the top edge of crop area as an
     integer or a float in the range `-1.0..1.0`.
     If `top` is an integer it is the absolute number of
-    pixels. If `top` is a float is fraction of the height
+    pixels. If `top` is a float it's a fraction of the height
     of the image. If `top` is positive it is relative to
-    the top edge of the image. If it is negative it is
+    the top edge of the image. If it's negative it's
     relative to the bottom edge of the image. `top` may
     also be one of `:top`, `:middle` and `:bottom`
     indicating the crop is relative to the top, middle
@@ -4290,13 +4290,13 @@ defmodule Image do
   * `width` is the width of area remaining as a
     positive integer or float in the range `0.0..1.0`.
     If `width` is an integer it is the absolute number
-    of pixels. If `width` is a float it is the fraction
+    of pixels. If `width` is a float it's the fraction
     of the original image width.
 
   * `height` is the width of area remaining as a
     positive integer or float in the range `0.0..1.0`.
-    If `height` is an integer it is the absolute number
-    of pixels. If `height` is a float it is the fraction
+    If `height` is an integer it's the absolute number
+    of pixels. If `height` is a float it's the fraction
     of the original image height.
 
   ### Notes
@@ -4307,6 +4307,10 @@ defmodule Image do
   * `top` is 0-indexed. That is, the topmost
     edge of the image starts at `0`.
 
+  * If the image has multiple pages, like an animated
+    `.gif` or `.webp` then each page is extracted,
+    cropped and then the image reassembled.
+
   ### Returns
 
   * `{:ok, cropped_image}` or
@@ -4314,44 +4318,34 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+
+  # The shenanigans below is to avoid infinite recursion or
+  # hard-to-explain errors if `Image.map_pages/2` is called with
+  # `Image.crop/5` as its function argument.
+
   @doc subject: "Crop"
 
   @spec crop(Vimage.t(), x_location(), y_location(), pos_integer(), pos_integer()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def crop(%Vimage{} = image, left, top, width, height)
-      when is_box(left, top, width, height) and left >= 0 and top >= 0 do
-    Operation.extract_area(image, left, top, width, height)
-  end
-
-  def crop(%Vimage{} = image, left, top, width, height)
-      when is_box(left, top, width, height) and left < 0 and top >= 0 do
-    left = width(image) + left - width
-    Operation.extract_area(image, left, top, width, height)
-  end
-
-  def crop(%Vimage{} = image, left, top, width, height)
-      when is_box(left, top, width, height) and left >= 0 and top < 0 do
-    top = height(image) + top - height
-    Operation.extract_area(image, left, top, width, height)
-  end
-
-  def crop(%Vimage{} = image, left, top, width, height)
-      when is_box(left, top, width, height) and left < 0 and top < 0 do
-    left = width(image) + left - width
-    top = height(image) + top - height
-    Operation.extract_area(image, left, top, width, height)
-  end
-
   def crop(%Vimage{} = image, left, top, width, height) do
-    with {left, top, width, height} <-
-           Options.Crop.normalize_box(dims(image), left, top, width, height) do
-      crop(image, left, top, width, height)
-    end
-  end
+    total_height = height(image)
+    dims = {width(image), total_height}
 
-  defp dims(%Vimage{} = image) do
-    {width(image), height(image)}
+    with {left, top, width, height} <- Options.Crop.normalize_box(dims, left, top, width, height) do
+      case page_height(image) do
+        {:ok, page_height} ->
+          if total_height == page_height do
+            Operation.extract_area(image, left, top, width, height)
+          else
+            pages = pages(image)
+            map_pages(image, &Operation.extract_area(&1, left, top, width, height), pages)
+          end
+
+        {:error, _} ->
+          Operation.extract_area(image, left, top, width, height)
+      end
+    end
   end
 
   @doc """
@@ -4630,7 +4624,7 @@ defmodule Image do
   * `:background_transparency` defines the transparency of the
     `:background` pixels when `image` has an alpha band.
     The default is `:opaque`. The values are an integer in the
-    range `0..255` where `0` is transparent and `255` is opaque`.
+    range `0..255` where `0` is transparent and `255` is opaque.
     The number can also be a float in the range `0.0` to `1.0`.
     In this case the float is converted to an integer in the range
     `0..255`. Lastly, the atoms `:transparent` and `:opaque` can
@@ -9042,16 +9036,16 @@ defmodule Image do
 
       # The option `pages: -1` means load all the pages of a multi-page image.
       iex> image = Image.open!("./test/support/images/animated.webp", pages: :all)
-      iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.crop(&1, 0, 100, 200, 200))
+      iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.equalize/1)
 
       # Also works for .gif images
       iex> image = Image.open!("./test/support/images/animated.gif", pages: :all)
-      iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.crop(&1, 0, 50, 100, 100))
+      iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.equalize/1)
 
       # If an image isn't opened with `pages: :all` then only
       # the first page of an image is loaded.
       iex> image_2 = Image.open!("./test/support/images/animated.webp")
-      iex> Image.map_pages image_2, &Image.crop(&1, 0, 150, 200, 200)
+      iex> Image.map_pages(image_2, &Image.equalize/1)
       {:error, "Image does not have a page-height header. " <>
         "Perhaps the image wasn't opened with the `pages: :all` option or " <>
         "libvips wasn't built with libwebp-dev/libgif-dev configured? " <>
@@ -9121,7 +9115,7 @@ defmodule Image do
     width = width(image)
 
     Enum.reduce_while(1..pages, {:ok, []}, fn n, {:ok, acc} ->
-      {:ok, page_n} = crop(image, 0, page_height * (n - 1), width, page_height)
+      {:ok, page_n} = Operation.extract_area(image, 0, page_height * (n - 1), width, page_height)
 
       case fun.(page_n) do
         {:ok, new_page_n} -> {:cont, {:ok, [new_page_n | acc]}}

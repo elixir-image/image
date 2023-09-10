@@ -106,6 +106,7 @@ defmodule Image.Options.Crop do
   end
 
   @doc false
+
   def normalize_box({w, _h} = dims, left, top, width, height) when is_percent(left) do
     normalize_box(dims, round(left * w), top, width, height)
   end
@@ -124,7 +125,6 @@ defmodule Image.Options.Crop do
 
   def normalize_box({w, h}, :center, top, width, height) when is_size(width) and is_size(height) do
     left = round((w - width) / 2)
-
     normalize_box({w, h}, left, top, width, height)
   end
 
@@ -138,7 +138,6 @@ defmodule Image.Options.Crop do
 
   def normalize_box({w, h}, left, :middle, width, height) when is_size(width) and is_size(height) do
     top = round((h - height) / 2)
-
     normalize_box({w, h}, left, top, width, height)
   end
 
@@ -148,6 +147,25 @@ defmodule Image.Options.Crop do
 
   def normalize_box({w, h}, left, :bottom, width, height) when is_size(width) and is_size(height) do
     normalize_box({w, h}, left, h - height, width, height)
+  end
+
+  def normalize_box({w, _h} = dims, left, top, width, height)
+      when is_integer(left) and is_integer(top) and left < 0 and top >= 0 do
+    left = w + left - width
+    normalize_box(dims, left, top, width, height)
+  end
+
+  def normalize_box({_w, h} = dims, left, top, width, height)
+      when is_integer(left) and is_integer(top) and left >= 0 and top < 0 do
+    top = h + top - height
+    normalize_box(dims, left, top, width, height)
+  end
+
+  def normalize_box({w, h} = dims, left, top, width, height)
+      when is_integer(left) and is_integer(top) and left < 0 and top < 0 do
+    left = w + left - width
+    top = h + top - height
+    normalize_box(dims, left, top, width, height)
   end
 
   def normalize_box(_dims, left, top, width, height) when is_box(left, top, width, height) do
