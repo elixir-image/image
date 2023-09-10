@@ -116,6 +116,7 @@ jobs:
         cd vips/build
         sudo meson install
         sudo ldconfig -v
+        vips --vips-config
 
     # Step: Download project dependencies. If unchanged, uses
     # the cached version.
