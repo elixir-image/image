@@ -62,7 +62,13 @@ defmodule Image.Options.Open do
           | {:fail_on, fail_on()}
         ]
 
-  @type pages :: -1 | pos_integer() | :all
+  @typedoc """
+  The number of pages to open. Either
+  a positive integer or one of `-1` or `:all`
+  meaning all pages.
+
+  """
+  @type pages :: pos_integer() | -1 | :all
 
   @typedoc """
   The file access mode when opening

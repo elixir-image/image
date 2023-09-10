@@ -8373,6 +8373,7 @@ defmodule Image do
 
   # Mean square error
   # mse = ((a - b) ** 2).avg()
+
   defp compare_by_metric(_image_1, _image_2, difference, :mse) do
     difference
     |> Math.pow!(2)
@@ -8396,6 +8397,7 @@ defmodule Image do
   # Absolute error. Count the number of pixels that are
   # different between the two images forced into a 0,0 to
   # 1.0 range
+
   defp compare_by_metric(image_1, image_2, difference, :ae) do
     with {:ok, non_zero} <- Image.Math.not_equal(difference, 0),
          {:ok, binary} <- Vimage.write_to_binary(non_zero[0]),
