@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.38.1
+
+This is the changelog for Image version 0.38.1 released on September 23rd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix `t:Image.Options.Avatar.avatar_options/0`. Thanks to @jarrodmoldrich. Closes #113.
+
 ## Image 0.38.0
 
 This is the changelog for Image version 0.38.0 released on September 11th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

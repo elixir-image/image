@@ -5,7 +5,12 @@ defmodule Image.Options.Avatar do
   """
   alias Image.Options.Crop
 
-  @type avatar_options :: Crop.crop_options()
+  @type avatar_option ::
+    {:size, pos_integer()}
+    | {:shape, :circle | :square | :squircle}
+    | {:crop, Crop.crop_focus()}
+
+  @type avatar_options :: [avatar_option()]
 
   @valid_shapes [:circle, :square, :squircle]
 

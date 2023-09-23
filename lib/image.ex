@@ -4106,35 +4106,38 @@ defmodule Image do
   end
 
   @doc """
-  Make a circular or square image intended to be used
+  Make a circular, squircular or square image intended to be used
   as an avatar image.
 
   The image is resized and all metadata is removed
-  from the image. Depending on the `:shape` option
-  the image may be center cropped to a square and
-  may have a circular mask applied.
+  from the image. The image will be cropped to a square
+  shape and then depending on the `:shape` option
+  a circular or squirclar mask may be applied.
 
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `options` is a keyword list of options. The
-    default is `[shape: :cirlce, crop: :none]`.
+    default is `[shape: :circle, crop: :none, size: #{Image.Options.Avatar.default_avatar_size()}]`.
 
   ### Options
 
   * `:size` is the diameter (in the case of `shape: :circle`
-    or width/height in the case of `shape: :square` of the
-    resulting image after resizing. The default value
-    is `#{Image.Options.Avatar.default_avatar_size()}`.
+    or `shape; :squircle`. It is the width/height in the case
+    of `shape: :square` of the resulting image after resizing.
+    The default value is `#{Image.Options.Avatar.default_avatar_size()}`.
 
-  * `:shape` defines shape of the avator
-    which can be either `:circle` (the default) or
-    `:square`.  In both cases the image is first
+  * `:shape` defines shape of the avatar
+    which can be either `:circle` (the default), `:squircle`
+    or `:square`.  In each case the image is first
     center cropped to a square shape. Then if the
-    format is `:circle` a circular image mask is applied.
+    format is `:circle` or `:squircle` an appropriate image
+    mask is applied.
 
-  * For other options see `Image.thumbnail/3`.
+  * `:crop_focus` is one of `:none`, `:center`, `:entropy`,
+    `:attention`, `:low`, `:high`. The default is `:none`.
+    For details see `t:Image.Options.Crop.crop_focus/0`.
 
   ### Returns
 
@@ -4168,35 +4171,38 @@ defmodule Image do
   end
 
   @doc """
-  Make a circular or square image intended to be used
+  Make a circular, squircular or square image intended to be used
   as an avatar image or raise an exception.
 
   The image is resized and all metadata is removed
-  from the image. Depending on the `:shape` option
-  the image may be center cropped to a square and
-  may have a circular mask applied.
+  from the image. The image will be cropped to a square
+  shape and then depending on the `:shape` option
+  a circular or squirclar mask may be applied.
 
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `options` is a keyword list of options. The
-    default is `[shape: :cirlce, crop: :none]`.
+    default is `[shape: :circle, crop: :none, size: #{Image.Options.Avatar.default_avatar_size()}]`.
 
   ### Options
 
   * `:size` is the diameter (in the case of `shape: :circle`
-    or width/height in the case of `shape: :square` of the
-    resulting image after resizing. The default value
-    is `#{Image.Options.Avatar.default_avatar_size()}`.
+    or `shape; :squircle`. It is the width/height in the case
+    of `shape: :square` of the resulting image after resizing.
+    The default value is `#{Image.Options.Avatar.default_avatar_size()}`.
 
-  * `:shape` defines shape of the avator
-    which can be either `:circle` (the default) or
-    `:square`.  In both cases the image is first
-    center cropped  to a square shape. Then if the
-    format is `:circle` a circular image mask is applied.
+  * `:shape` defines shape of the avatar
+    which can be either `:circle` (the default), `:squircle`
+    or `:square`.  In each case the image is first
+    cropped to a square shape. Then if the
+    format is `:circle` or `:squircle` an appropriate image
+    mask is applied.
 
-  * For other options see `Image.thumbnail/3`.
+  * `:crop_focus` is one of `:none`, `:center`, `:entropy`,
+    `:attention`, `:low`, `:high`. The default is `:none`.
+    For details see `t:Image.Options.Crop.crop_focus/0`.
 
   ### Returns
 

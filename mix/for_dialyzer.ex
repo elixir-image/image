@@ -28,4 +28,9 @@ defmodule ForDialyzer do
     Image.open! "./test/support/images/animated.gif", pages: -1
     Image.open! "./test/support/images/animated.gif", pages: :all
   end
+
+  def avatar do
+    small_kip = Image.open!("./test/support/images/Kip_small.jpg")
+    Image.avatar(small_kip, size: 256)
+  end
 end
