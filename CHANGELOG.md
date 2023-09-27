@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.38.2
+
+This is the changelog for Image version 0.38.2 released on September 27th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix `Image.dominant_color/2` for images with an alpha band.  Thanks to @mayel for the report. Closes #114.
+
 ## Image 0.38.1
 
 This is the changelog for Image version 0.38.1 released on September 23rd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

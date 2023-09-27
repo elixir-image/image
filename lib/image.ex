@@ -6219,6 +6219,12 @@ defmodule Image do
 
   * `[r, g, b]`
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/image_with_alpha2.png")
+      iex> Image.dominant_color(image)
+      [90, 90, 90]
+
   """
   @max_band_value 256
 
@@ -6230,7 +6236,7 @@ defmodule Image do
     bin_size = @max_band_value / bins
     midpoint = bin_size / 2
 
-    {:ok, histogram} = Operation.hist_find_ndim(image, bins: bins)
+    {:ok, histogram} = Operation.hist_find_ndim(flatten!(image), bins: bins)
     {v, x, y} = Image.Math.maxpos(histogram)
     {:ok, pixel} = Operation.getpoint(histogram, x, y)
     z = Enum.find_index(pixel, &(&1 == v))
