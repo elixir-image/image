@@ -6199,7 +6199,7 @@ defmodule Image do
 
   @doc """
   Returns the dominant color of an image
-  as an RBG triplet value in an integer
+  as an RGB triplet value in an integer
   list.
 
   ### Arguments
@@ -7530,13 +7530,12 @@ defmodule Image do
     * `:shape` determines how the tensor is shaped. The valid
       values are:
 
-      * `:whb` or `:whc` which leaves the tensor unchanged with
-        the underlying data in `width, height, bands` shape.
+      * `:hwb` or `:hwc` which leaves the tensor unchanged with
+        the underlying data in `{height, width, bands}` shape.
         This is the default action.
 
-      * `:hwc` or `:hwb` which reshapes the tensor to
-        `height, width, channels` which is commonly used
-        for machine learning models.
+      * `:whc` or `:whb` which reshapes the tensor to
+        `width, height, bands`.
 
     ### Returns
 
@@ -7551,7 +7550,7 @@ defmodule Image do
         iex> Image.to_nx(image, backend: Nx.BinaryBackend)
         {:ok,
           Nx.tensor([[[0], [0], [0]], [[0], [0], [0]], [[0], [0], [0]]],
-            type: {:u, 8}, names: [:width, :height, :bands], backend: Nx.BinaryBackend)}
+            type: {:u, 8}, names: [:height, :width, :bands], backend: Nx.BinaryBackend)}
 
     """
 
@@ -7560,7 +7559,7 @@ defmodule Image do
     @dialyzer {:nowarn_function, {:to_nx, 1}}
     @dialyzer {:nowarn_function, {:to_nx, 2}}
 
-    @default_shape :whb
+    @default_shape :hwb
 
     @doc subject: "Matrix", since: "0.5.0"
 
@@ -7585,17 +7584,21 @@ defmodule Image do
     # thinks this function won't be called.
     @dialyzer {:nowarn_function, {:maybe_reshape_tensor, 2}}
 
-    defp maybe_reshape_tensor(%Vix.Tensor{shape: shape, names: names}, :whb),
-      do: {:ok, shape, names}
+    # write_to_tensor writes in height, widght, bands format. No reshape
+    # is required.
+    defp maybe_reshape_tensor(%Vix.Tensor{shape: shape}, :hwc),
+      do: {:ok, shape, [:height, :width, :bands]}
 
-    defp maybe_reshape_tensor(%Vix.Tensor{shape: shape, names: names}, :whc),
-      do: {:ok, shape, names}
+    defp maybe_reshape_tensor(%Vix.Tensor{shape: shape}, :hwb),
+      do: {:ok, shape, [:height, :width, :bands]}
 
-    defp maybe_reshape_tensor(%Vix.Tensor{} = tensor, :hwb),
-      do: maybe_reshape_tensor(tensor, :hwc)
+    defp maybe_reshape_tensor(%Vix.Tensor{} = tensor, :whb),
+      do: maybe_reshape_tensor(tensor, :whc)
 
-    defp maybe_reshape_tensor(%Vix.Tensor{shape: {width, height, bands}}, :hwc),
-      do: {:ok, {height, width, bands}, [:height, :width, :channels]}
+    # We need to reshape the tensor since the default is
+    # :hwc
+    defp maybe_reshape_tensor(%Vix.Tensor{shape: {x, y, bands}}, :whc),
+      do: {:ok, {y, x, bands}, [:width, :height, :bands]}
 
     defp maybe_reshape_tensor(_tensor, shape) do
       {:error,
@@ -7617,13 +7620,12 @@ defmodule Image do
     * `:shape` determines how the tensor is shaped. The valid
       values are:
 
-      * `:whb` or `:whc` which leaves the tensor unchanged with
-        the underlying data in `width, height, bands` shape.
+      * `:hwb` or `:hwc` which leaves the tensor unchanged with
+        the underlying data in `{height, width, bands}` shape.
         This is the default action.
 
-      * `:hwc` or `:hwb` which reshapes the tensor to
-        `height, width, channels` which is commonly used
-        for machine learning models.
+      * `:whc` or `:whb` which reshapes the tensor to
+        `width, height, bands`.
 
     ### Returns
 
@@ -7637,7 +7639,7 @@ defmodule Image do
         iex> {:ok, image} = Vix.Vips.Operation.black(3, 3)
         iex> Image.to_nx!(image, backend: Nx.BinaryBackend)
         Nx.tensor([[[0], [0], [0]], [[0], [0], [0]], [[0], [0], [0]]],
-          type: {:u, 8}, names: [:width, :height, :bands], backend: Nx.BinaryBackend)
+          type: {:u, 8}, names: [:height, :width, :bands], backend: Nx.BinaryBackend)
 
     """
     @doc subject: "Matrix", since: "0.27.0"

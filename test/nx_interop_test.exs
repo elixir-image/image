@@ -50,6 +50,11 @@ if Code.ensure_loaded?(Nx) do
       {:ok, image2} = Image.from_nx(tensor)
 
       assert_images_equal image, image2
+
+      {:ok, tensor} = Image.to_nx(image, shape: :whc)
+      {:ok, image2} = Image.from_nx(tensor)
+
+      assert_images_equal image, image2
     end
   end
 end

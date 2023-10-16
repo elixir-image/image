@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.38.3
+
+This is the changelog for Image version 0.38.3 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Due to [the fix](https://github.com/akash-akya/vix/pull/129) for [this issue](https://github.com/akash-akya/vix/issues/126) in [vix](https://github.com/akash-akya/vix), a fix is applied in `Image.nx/2` to ensure correct operation. There should be no change to user code other than the requirement for the versions of `image` and `vix` to correctly match.  This release of `image` requires `vix` version `0.23` to ensure compatibility.
+
 ## Image 0.38.2
 
 This is the changelog for Image version 0.38.2 released on September 27th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

@@ -683,7 +683,7 @@ defmodule Image.Math do
 
   @spec boolean_lshift!(Vimage.t(), Vimage.t()) :: Vimage.t() | no_return()
   def boolean_lshift!(%Vimage{} = image_1, %Vimage{} = image_2) do
-    case boolean_xor(image_1, image_2) do
+    case boolean_lshift(image_1, image_2) do
       {:ok, image} -> image
       {:error, reason} -> raise ArgumentError, reason
     end
@@ -697,7 +697,7 @@ defmodule Image.Math do
 
   @spec boolean_rshift!(Vimage.t(), Vimage.t()) :: Vimage.t() | no_return()
   def boolean_rshift!(%Vimage{} = image_1, %Vimage{} = image_2) do
-    case boolean_xor(image_1, image_2) do
+    case boolean_rshift(image_1, image_2) do
       {:ok, image} -> image
       {:error, reason} -> raise ArgumentError, reason
     end
@@ -708,9 +708,9 @@ defmodule Image.Math do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `options` is a keyword list of options
+  * `options` is a keyword list of options.
 
   ### Options
 
@@ -737,9 +737,9 @@ defmodule Image.Math do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `options` is a keyword list of options
+  * `options` is a keyword list of options.
 
   ### Options
 
