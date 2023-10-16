@@ -2,7 +2,7 @@
 
 ## Image 0.38.3
 
-This is the changelog for Image version 0.38.3 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.38.3 released on October 17th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
