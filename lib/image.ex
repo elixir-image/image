@@ -7544,6 +7544,13 @@ defmodule Image do
 
     * `{:error, reason}`.
 
+    ### Note
+
+    * The image type, `t:Vix.Vips.Image.t/0` stores data in
+      `{width, height, band}` format. However when the data is conerted
+      into an `t:Nx.Tensor.t/0` the data is written in `{height, width, band}`
+      format.
+
     ### Example
 
         iex> {:ok, image} = Vix.Vips.Operation.black(3, 3)
@@ -7633,6 +7640,13 @@ defmodule Image do
       suitable for use in the `Nx` library or
 
     * raises an exception.
+
+    ### Note
+
+    * The image type, `t:Vix.Vips.Image.t/0` stores data in
+      `{width, height, band}` format. However when the data is conerted
+      into an `t:Nx.Tensor.t/0` the data is written in `{height, width, band}`
+      format.
 
     ### Example
 
