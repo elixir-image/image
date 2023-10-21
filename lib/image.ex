@@ -939,13 +939,12 @@ defmodule Image do
   """
   @doc subject: "Load and save"
 
-  @spec open!(image_path :: Path.t(), options :: Options.Open.image_open_options()) ::
+  @spec open!(path_or_stream_or_binary :: image_data(), options :: Open.image_open_options()) :: 
           Vimage.t() | no_return()
-
-  def open!(image_path, options \\ []) do
-    case open(image_path, options) do
+  def open!(path_or_stream_or_binary, options \\ []) do
+    case open(path_or_stream_or_binary, options) do
       {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, {reason, image_path}
+      {:error, reason} -> raise Image.Error, {reason, path_or_stream_or_binary}
     end
   end
 
