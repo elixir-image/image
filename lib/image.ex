@@ -939,7 +939,7 @@ defmodule Image do
   """
   @doc subject: "Load and save"
 
-  @spec open!(path_or_stream_or_binary :: image_data(), options :: Open.image_open_options()) :: 
+  @spec open!(path_or_stream_or_binary :: image_data(), options :: Open.image_open_options()) ::
           Vimage.t() | no_return()
   def open!(path_or_stream_or_binary, options \\ []) do
     case open(path_or_stream_or_binary, options) do
@@ -8492,9 +8492,9 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `hash_size` is the size in bits of the returned hash.
+  * `hash_size_bits` is the size in bits of the returned hash.
     The default is `64`. The returned binary is only
-    guaranteed to be the provided size if `sqrt(hash_size)` is
+    guaranteed to be the provided size if `sqrt(hash_size_bits)` is
     an integer.
 
   ### Returns
@@ -8503,19 +8503,24 @@ defmodule Image do
 
   * `{:error, reason}`
 
-  """
-  @dialyzer {:nowarn_function, {:dhash, 1}}
-  @dialyzer {:nowarn_function, {:dhash, 2}}
+  ### Example
 
+        iex> {:ok, image} = Image.open("./test/support/images/Kamchatka-2019-8754.jpg")
+        iex> Image.dhash(image)
+        {:ok, <<227, 127, 61, 34, 206, 143, 156, 122>>}
+
+  """
   @doc subject: "Metadata", since: "0.6.0"
 
-  @spec dhash(image :: Vimage.t(), hash_size :: pos_integer()) :: image_hash()
-  def dhash(%Vimage{} = image, hash_size \\ 64) when is_integer(hash_size) and hash_size > 0 do
-    alias Image.Math
+  @spec dhash(image :: Vimage.t(), hash_size :: pos_integer()) ::
+    {:ok, image_hash()} | {:error, error_message()}
 
-    hash_size = round(:math.sqrt(hash_size))
+  def dhash(%Vimage{} = image, hash_size_bits \\ 64)
+      when is_integer(hash_size_bits) and hash_size_bits > 0 do
 
-    with {:ok, convolution} <- Image.Matrix.image_from_matrix([[1, -1]]),
+    hash_size = round(:math.sqrt(hash_size_bits))
+
+    with {:ok, convolution} <- Image.Matrix.image_from_matrix([[1.0, -1.0]]),
          {:ok, pixels} <- dhash_pixels(image, convolution, hash_size) do
       dhash = for <<_::7, v::1 <- pixels>>, into: <<>>, do: <<v::1>>
       {:ok, dhash}
@@ -8529,7 +8534,7 @@ defmodule Image do
     |> Operation.conv!(convolution)
     |> crop!(1, 0, hash_size, hash_size)
     |> Math.greater_than!(0)
-    |> Math.divide!(255)
+    |> Math.divide!(255.0)
     |> Operation.cast!(:VIPS_FORMAT_UCHAR)
     |> Vimage.write_to_binary()
   end
@@ -8537,7 +8542,7 @@ defmodule Image do
   defp pixelate_for_hash(%Vimage{} = image, hash_size) do
     image
     |> thumbnail!(hash_size + 1, height: hash_size, resize: :force)
-    |> Operation.flatten!()
+    |> flatten!()
     |> to_colorspace!(:bw)
     |> Operation.extract_band!(0)
   end

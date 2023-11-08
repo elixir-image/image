@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.38.4
+
+This is the changelog for Image version 0.38.4 released on November 9th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fixes `Image.dhash/2`. Thanks to @jhonathas for the report. Closes #118.
+
+* Fixes compiler warnings for Elixir 1.16.
+
 ## Image 0.38.3
 
 This is the changelog for Image version 0.38.3 released on October 17th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

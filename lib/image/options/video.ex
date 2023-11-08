@@ -119,7 +119,7 @@ if Image.evision_configured?() do
     end
 
     # Its a video stream, no options may be provided
-    def validate_stream_options(%Evision.VideoCapture{frame_count: 0.0}, []) do
+    def validate_stream_options(%Evision.VideoCapture{frame_count: frame}, []) when frame == 0.0 do
       {:ok, {nil, nil, nil, nil}}
     end
 
