@@ -51,6 +51,7 @@ defmodule Image.Options.Embed do
           options
           |> Map.new()
           |> adjust_transparency(Image.bands(image), Image.has_alpha?(image))
+          |> adjust_extend_mode()
 
         {:ok, options}
     end
@@ -179,6 +180,14 @@ defmodule Image.Options.Embed do
 
   defp adjust_transparency(options, _bands, _has_alpha?) do
     options
+  end
+
+  defp adjust_extend_mode(options) do
+    if options.background_color != [0, 0, 0] do
+      Map.put(options, :extend_mode, :VIPS_EXTEND_BACKGROUND)
+    else
+      options
+    end
   end
 
   @doc false

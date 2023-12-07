@@ -4638,8 +4638,8 @@ defmodule Image do
   * `:extend_mode` determines how any additional pixels
     are generated. The values are:
 
-    * `:black` (the default) meaning the generated pixels are
-      black.
+    * `:black` (the default if no `background_color` is specified)
+      meaning the generated pixels are black.
     * `:white` meaning the generated pixels are white.
     * `:copy` means the generated pixels take the value of the
       nearest edge pixel of the base image.
@@ -4647,8 +4647,9 @@ defmodule Image do
       base image.
     * `:mirror` means the generated pixels are reflected tiles of
       the base image.
-    * `:background` means the generated pixels are the `:background`
-      color set in `options`.
+    * `:background` means the generated pixels are the `:background_color`
+      color set in `options`. This is the default is a `background_color`
+      is specified.
 
   ### Returns
 
