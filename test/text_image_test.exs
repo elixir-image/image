@@ -269,7 +269,7 @@ defmodule TextImage.Test do
     image = Image.open!(image_path)
     {:ok, padded} = Image.Text.add_background_padding(image, background_fill_color: :blue, padding: 50)
 
-    {:ok, _image} = Image.write(padded, validate_path)
+    # {:ok, _image} = Image.write(padded, validate_path)
     assert_images_equal(padded, validate_path)
   end
 end
