@@ -14,6 +14,8 @@ This is the changelog for Image version 0.38.5 released on December 7th, 2023.  
 
 * Fix `Image.embed/4` to default to `x: :center, y: :center` as stated in the documentation.
 
+* Fix `Image.embed/4` to set `extend_mode: :background` if `:background_color` is specified.
+
 ## Image 0.38.4
 
 This is the changelog for Image version 0.38.4 released on November 9th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
