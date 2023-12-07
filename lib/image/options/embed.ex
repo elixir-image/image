@@ -10,7 +10,7 @@ defmodule Image.Options.Embed do
 
   """
   @type embed_option ::
-          {:background, Color.t() | :average}
+          {:background_color, Color.t() | :average}
           | {:background_transparency, Color.transparency()}
           | {:extend_mode, extend_mode()}
           | {:x, non_neg_integer() | :center}
@@ -34,7 +34,7 @@ defmodule Image.Options.Embed do
 
   """
   @type embed_options :: [embed_option()]
-          
+
   @doc """
   Validate the options for `Image.embed/4`.
 
@@ -60,10 +60,10 @@ defmodule Image.Options.Embed do
     {:ok, options}
   end
 
-  defp validate_option({:background, :average}, image, _width, _height, options) do
+  defp validate_option({:background_color, :average}, image, _width, _height, options) do
     case Image.average(image) do
       color when is_list(color) ->
-        options = Keyword.put(options, :background, color)
+        options = Keyword.put(options, :background_color, color)
         {:cont, options}
 
       {:error, reason} ->
@@ -71,10 +71,10 @@ defmodule Image.Options.Embed do
     end
   end
 
-  defp validate_option({:background, color} = option, _image, _width, _height, options) do
+  defp validate_option({:background_color, color} = option, _image, _width, _height, options) do
     case Color.validate_color(color) do
       {:ok, color} ->
-        {:cont, Keyword.put(options, :background, color)}
+        {:cont, Keyword.put(options, :background_color, color)}
 
       _other ->
         {:halt, invalid_option(option)}
@@ -145,14 +145,14 @@ defmodule Image.Options.Embed do
   defp adjust_transparency(%{extend_mode: :VIPS_EXTEND_BLACK} = options, _bands, true = _has_alpha?) do
     options
     |> Map.put(:extend_mode, :VIPS_EXTEND_BACKGROUND)
-    |> Map.put(:background, [0, 0, 0, options.background_transparency])
+    |> Map.put(:background_color, [0, 0, 0, options.background_transparency])
     |> Map.delete(:background_transparency)
   end
 
   defp adjust_transparency(%{extend_mode: :VIPS_EXTEND_WHITE} = options, _bands, true = _has_alpha?) do
     options
     |> Map.put(:extend_mode, :VIPS_EXTEND_BACKGROUND)
-    |> Map.put(:background, [255, 255, 255, options.background_transparency])
+    |> Map.put(:background_color, [255, 255, 255, options.background_transparency])
     |> Map.delete(:background_transparency)
   end
 
@@ -161,7 +161,7 @@ defmodule Image.Options.Embed do
       options
     else
       options
-      |> Map.put(:background, List.insert_at(options.background, -1, options.background_transparency))
+      |> Map.put(:background_color, List.insert_at(options.background, -1, options.background_transparency))
     end
     |> Map.delete(:background_transparency)
   end
@@ -173,7 +173,7 @@ defmodule Image.Options.Embed do
       |> List.wrap()
 
     options
-    |> Map.put(:background, background_color)
+    |> Map.put(:background_color, background_color)
     |> Map.delete(:background_transparency)
   end
 
@@ -187,10 +187,10 @@ defmodule Image.Options.Embed do
 
   defp default_options do
     [
-      x: 0,
-      y: 0,
+      x: :center,
+      y: :center,
       extend_mode: :black,
-      background: :black,
+      background_color: :black,
       background_transparency: :opaque
     ]
   end

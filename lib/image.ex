@@ -4615,7 +4615,7 @@ defmodule Image do
     It may also be `:center` (the default) in which case the
     image will be centered vertically within the canvas.
 
-  * `:background` defines the color of the generated background
+  * `:background_color` defines the color of the generated background
     pixels. This can be specified as a single integer which will
     be applied to all bands, or a list of integers representing
     the color for each band. The color can also be supplied as a
@@ -4664,7 +4664,7 @@ defmodule Image do
 
   def embed(image, width, height, options \\ []) do
     with {:ok, options} <- Options.Embed.validate_options(image, width, height, options) do
-      embed_options = [background: options.background, extend: options.extend_mode]
+      embed_options = [background: options.background_color, extend: options.extend_mode]
       Operation.embed(image, options.x, options.y, width, height, embed_options)
     end
   end

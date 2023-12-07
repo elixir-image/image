@@ -4,9 +4,15 @@
 
 This is the changelog for Image version 0.38.5 released on December 7th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
+### Breaking change
+
+* The `Image.embed/4` option `:background` is renamed to `:background_color` to better align with other functions.
+
 ### Bug Fixes
 
 * Fix `Image.Text.add_background_padding/2` when the base image doesn't already have an alpha band. Thanks to @tielur for the report. Closes #120.
+
+* Fix `Image.embed/4` to default to `x: :center, y: :center` as stated in the documentation.
 
 ## Image 0.38.4
 
