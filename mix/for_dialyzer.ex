@@ -20,7 +20,7 @@ defmodule ForDialyzer do
     {:ok, _embed_1} = Image.embed(penguin, width, height + 50, extend_mode: :black)
     {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, extend_mode: :black, background_transparency: :transparent)
     {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, extend_mode: :black, background_transparency: :opaque)
-    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, extend_mode: :background, background: :green)
+    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, extend_mode: :background, background_color: :green)
 
   end
 
