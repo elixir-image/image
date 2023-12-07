@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.38.5
+
+This is the changelog for Image version 0.38.5 released on December 7th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix `Image.Text.add_background_padding/2` when the base image doesn't already have an alpha band. Thanks to @tielur for the report. Closes #120.
+
 ## Image 0.38.4
 
 This is the changelog for Image version 0.38.4 released on November 9th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

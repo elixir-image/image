@@ -258,4 +258,18 @@ defmodule TextImage.Test do
              text_fill_color: "#A15B35"
            )
   end
+
+  test "Adding background padding to an image that has no alpha" do
+    image_file = "jose.png"
+    validate_file = "jose_with_border.png"
+
+    image_path = image_path(image_file)
+    validate_path = validate_path(validate_file)
+
+    image = Image.open!(image_path)
+    {:ok, padded} = Image.Text.add_background_padding(image, background_fill_color: :blue, padding: 50)
+
+    {:ok, _image} = Image.write(padded, validate_path)
+    assert_images_equal(padded, validate_path)
+  end
 end

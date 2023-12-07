@@ -689,6 +689,9 @@ defmodule Image.Text do
       |> Map.get(:background_fill_color)
       |> Image.Color.rgba_color!(opacity)
 
+    image =
+      if Image.has_alpha?(image), do: image, else: Image.add_alpha!(image, :transparent)
+
     Operation.embed(image, padding_left, padding_top, width, height,
       background: background_fill_color
     )
