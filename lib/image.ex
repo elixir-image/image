@@ -6220,6 +6220,10 @@ defmodule Image do
       iex> Image.dominant_color(image)
       [13, 64, 115]
 
+      iex> image = Image.open!("./test/support/images/image_with_alpha2.png")
+      iex> Image.dominant_color(image)
+      [90, 90, 90]
+
   """
 
   # FIXME Assumes images are RGB which is smelly
@@ -6230,10 +6234,12 @@ defmodule Image do
 
   @spec dominant_color(Vimage.t(), Keyword.t()) :: Color.rgb_color()
   def dominant_color(%Vimage{} = image, options \\ []) do
+    bins = Keyword.get(options, :bins, @dominant_bins)
+
     if has_alpha?(image) do
-      dominant_color_alpha(image, options)
+      dominant_color_alpha(image, bins)
     else
-      dominant_color_no_alpha(image, options)
+      dominant_color_no_alpha(image, bins)
     end
   end
 
@@ -6247,9 +6253,7 @@ defmodule Image do
   # So (for example) the first number from the five at (0, 0) is the number of pixels w
   # here R, G and B are all between 0 and 51, so blackish pixels.
 
-  defp dominant_color_no_alpha(image, options) do
-    bins = Keyword.get(options, :bins, @dominant_bins)
-
+  defp dominant_color_no_alpha(image, bins) do
     {:ok, histogram} = Operation.hist_find_ndim(image, bins: bins)
     find_maximum(histogram, bins)
   end
@@ -6258,19 +6262,23 @@ defmodule Image do
   # Take just the alpha and count the number of 0 pixels.
   # Flatten the RGBA image with 0 as the background colour and count significant colours as before
   # Subtract the number of alpha zeros from the bin at (0, 0, 0), since all the alpha 0 pixels will have gone into that bin
-  # Find the max position
+  # Find the max position.  Thanks to @akash-akya for the assist.
 
-  defp dominant_color_alpha(image, options) do
-    bins = Keyword.get(options, :bins, 10)
-
-    {:ok, _alpha_black_pixel_count} =
+  defp dominant_color_alpha(image, bins) do
+    alpha_black_pixel_count =
       alpha_black_pixel_count(image[-1])
 
     {:ok, histogram} =
       Operation.hist_find_ndim(flatten!(image), bins: bins)
 
-    # Subtract the number of alpha zeros from the bin at (0, 0, 0), since
-    # all the alpha 0 pixels will have gone into that bin
+    [black | remaining_pixels] =
+      Operation.getpoint!(histogram, 0, 0)
+
+    {:ok, histogram} =
+      Image.mutate(histogram, fn img ->
+        pixel = [min(black - alpha_black_pixel_count, 0) | remaining_pixels]
+        Vix.Vips.MutableOperation.draw_rect!(img, pixel, 0, 0, 1, 1)
+      end)
 
     find_maximum(histogram, bins)
   end
@@ -6279,20 +6287,24 @@ defmodule Image do
     bin_size = @max_band_value / bins
     midpoint = bin_size / 2
 
-    {v, x, y} = Image.Math.maxpos(histogram)
-    {:ok, pixel} = Operation.getpoint(histogram, x, y)
+    {v, %{x: x, y: y}} = Operation.max!(histogram)
+    pixel = Operation.getpoint!(histogram, x, y)
     z = Enum.find_index(pixel, &(&1 == v))
 
     r = x * bin_size + midpoint
     g = y * bin_size + midpoint
     b = z * bin_size + midpoint
-
     [round(r), round(g), round(b)]
   end
 
   defp alpha_black_pixel_count(alpha) do
-    {:ok, histogram} = Vix.Vips.Operation.hist_find_ndim(alpha, bins: 256)
-    Image.get_pixel(histogram, 0, 0)
+    {count, _} =
+      alpha
+      |> Operation.relational_const!(:VIPS_OPERATION_RELATIONAL_EQUAL, [0.0])
+      |> Operation.hist_find!()
+      |> Operation.max!()
+
+    round(count)
   end
 
   @doc """
