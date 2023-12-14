@@ -6263,7 +6263,7 @@ defmodule Image do
   defp dominant_color_alpha(image, options) do
     bins = Keyword.get(options, :bins, 10)
 
-    {:ok, alpha_black_pixel_count} =
+    {:ok, _alpha_black_pixel_count} =
       alpha_black_pixel_count(image[-1])
 
     {:ok, histogram} =
