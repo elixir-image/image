@@ -22,7 +22,6 @@ defmodule Image.Options.Open do
 
   @type jpeg_open_options :: [
           {:shrink, 1..16}
-          | {:autorotate, boolean()}
           | {:access, file_access()}
           | {:fail_on, fail_on()}
         ]
@@ -33,16 +32,14 @@ defmodule Image.Options.Open do
         ]
 
   @type tiff_open_options :: [
-          {:autorotate, boolean()}
-          | {:access, file_access()}
+          {:access, file_access()}
           | {:fail_on, fail_on()}
           | {:pages, pages()}
           | {:page, 1..100_000}
         ]
 
   @type webp_open_options :: [
-          {:autorotate, boolean()}
-          | {:access, file_access()}
+          {:access, file_access()}
           | {:fail_on, fail_on()}
           | {:pages, pages()}
           | {:page, 0..100_000}
@@ -50,8 +47,7 @@ defmodule Image.Options.Open do
         ]
 
   @type gif_open_options :: [
-          {:autorotate, boolean()}
-          | {:access, file_access()}
+          {:access, file_access()}
           | {:fail_on, fail_on()}
           | {:pages, pages()}
           | {:page, 0..100_000}
@@ -115,8 +111,8 @@ defmodule Image.Options.Open do
     {:cont, options}
   end
 
-  def validate_option({:autorotate, rotate}, options) when rotate in [true, false] do
-    {:cont, options}
+  def validate_option({:autorotate, rotate}, _options) do
+    {:halt, {:error, invalid_autorotate_option(rotate)}}
   end
 
   def validate_option({:page, n}, options) when is_integer(n) and n in 0..100_000 do
@@ -171,5 +167,9 @@ defmodule Image.Options.Open do
 
   defp invalid_option(option) do
     "Invalid option or option value: #{inspect(option)}"
+  end
+
+  defp invalid_autorotate_option(_option) do
+    "Autorotate is no longer a supported option. Call `Image.autorotate/1` after opening the image instead."
   end
 end

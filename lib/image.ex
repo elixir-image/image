@@ -226,6 +226,11 @@ defmodule Image do
   # Representing a transparent alpha band
   @transparent 255
 
+  # How many bins to use to calculate an approximate
+  # dominant color. The maximum is 256. Larger numbers
+  # significantly slow calculation.
+  @dominant_bins 10
+
   @doc """
   Guards whether the given struct is an image type
   either `Vix.Vips.Image` or `Vix.Vips.MutableImage`.
@@ -647,11 +652,6 @@ defmodule Image do
     with the intent to resize it to smaller dimensions. The
     default value is `1` meaning no shrink-on-load.
 
-  * `:autorotate` is a boolean value indicating if
-    the image should be rotated according to the orientation
-    data stored in the image metadata. The default is
-    `false`.
-
   #### WEBP options
 
   * `:scale` will scale the image on load. The value is
@@ -673,11 +673,6 @@ defmodule Image do
     `-1` to indicate all pages should be loaded.
 
   #### TIFF options
-
-  * `:autorotate` is a boolean value indicating if
-    the image should be rotated according to the orientation
-    data stored in the image metadata. The default is
-    `false`.
 
   * `:page` indicates the first page to be loaded. The
     value is in the range `0..100_000` with a default
@@ -5397,8 +5392,8 @@ defmodule Image do
 
   ### Flags
 
-  Two flags are returned indicating what action
-  was taken:
+  A two-entry `Keyword.t` is returned indicating what actions
+  were taken:
 
   * `:flip` which is a boolean indicating if the image
     was flipped or not and
@@ -6221,22 +6216,69 @@ defmodule Image do
 
   ### Example
 
-      iex> image = Image.open!("./test/support/images/image_with_alpha2.png")
+      iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
       iex> Image.dominant_color(image)
-      [90, 90, 90]
+      [13, 64, 115]
 
   """
+
+  # FIXME Assumes images are RGB which is smelly
+  # TODO before 1.0
   @max_band_value 256
 
   @doc subject: "Image info", since: "0.3.0"
 
   @spec dominant_color(Vimage.t(), Keyword.t()) :: Color.rgb_color()
   def dominant_color(%Vimage{} = image, options \\ []) do
+    if has_alpha?(image) do
+      dominant_color_alpha(image, options)
+    else
+      dominant_color_no_alpha(image, options)
+    end
+  end
+
+  # hist_find_ndim returns the folllowing per https://github.com/libvips/libvips/discussions/3537
+  # It's just a 5 x 5 x 5 matrix, so a cube. Maybe imagine a Rubik's cube, except 5x5x5, not 3x3x3?
+
+  # If you hold the cube with one face towards you, you'll see a 5x5 grid. That's the (x, y) you pass
+  # to get_pixel(). The five numbers you get back are the five tiny cubes behind the one you picked at (x, y).
+
+  # Each cube holds a number, and that's the number of pixels which fell into that RGB bucket.
+  # So (for example) the first number from the five at (0, 0) is the number of pixels w
+  # here R, G and B are all between 0 and 51, so blackish pixels.
+
+  defp dominant_color_no_alpha(image, options) do
+    bins = Keyword.get(options, :bins, @dominant_bins)
+
+    {:ok, histogram} = Operation.hist_find_ndim(image, bins: bins)
+    find_maximum(histogram, bins)
+  end
+
+  # Suggestion by @jcupitt from https://github.com/libvips/libvips/discussions/3692
+  # Take just the alpha and count the number of 0 pixels.
+  # Flatten the RGBA image with 0 as the background colour and count significant colours as before
+  # Subtract the number of alpha zeros from the bin at (0, 0, 0), since all the alpha 0 pixels will have gone into that bin
+  # Find the max position
+
+  defp dominant_color_alpha(image, options) do
     bins = Keyword.get(options, :bins, 10)
+
+    {:ok, alpha_black_pixel_count} =
+      alpha_black_pixel_count(image[-1])
+
+    {:ok, histogram} =
+      Operation.hist_find_ndim(flatten!(image), bins: bins)
+
+    # Subtract the number of alpha zeros from the bin at (0, 0, 0), since
+    # all the alpha 0 pixels will have gone into that bin
+
+    find_maximum(histogram, bins)
+  end
+
+  defp find_maximum(histogram, bins) do
     bin_size = @max_band_value / bins
     midpoint = bin_size / 2
 
-    {:ok, histogram} = Operation.hist_find_ndim(flatten!(image), bins: bins)
     {v, x, y} = Image.Math.maxpos(histogram)
     {:ok, pixel} = Operation.getpoint(histogram, x, y)
     z = Enum.find_index(pixel, &(&1 == v))
@@ -6246,6 +6288,11 @@ defmodule Image do
     b = z * bin_size + midpoint
 
     [round(r), round(g), round(b)]
+  end
+
+  defp alpha_black_pixel_count(alpha) do
+    {:ok, histogram} = Vix.Vips.Operation.hist_find_ndim(alpha, bins: 256)
+    Image.get_pixel(histogram, 0, 0)
   end
 
   @doc """

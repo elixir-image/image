@@ -1,5 +1,20 @@
 # Changelog
 
+## Image 0.39.0
+
+This is the changelog for Image version 0.38.6 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Breaking change
+
+* `Image.open/2` no longer supports the `:autorotate` option. Instead, call `Image.autorotate/1` after opening the image. There reasons are:
+  * `:autorotate` is only supported by `libvips` for a few image types, *not* including `png` images. Hence the option cannot be used in a generalised way.
+  * No signalling is done to indicate whether the image was actually rotated whereas `Image.autorotate/1` does return this information.
+  * Using `autorotate: true` does not appear to remove the `orientation` EXIF tag and therefore calling `Image.autorotate/1` would result in a second rotation.
+  
+### Bug Fixes
+  
+* Fix finding the dominant color for images with an alpha band. Thansk to @mayel for the report. Closes #114.
+
 ## Image 0.38.5
 
 This is the changelog for Image version 0.38.5 released on December 7th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
