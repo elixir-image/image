@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.39.1
+
+This is the changelog for Image version 0.39.0 released on December 15th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Change
+
+Adds support for `phoenix_html` 4.0
+
 ## Image 0.39.0
 
 This is the changelog for Image version 0.39.0 released on December 15th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
