@@ -59,7 +59,7 @@ defmodule Image.MixProject do
       {:sweet_xml, "~> 0.7"},
 
       # For SVG text generation (HTML safety)
-      {:phoenix_html, "~> 4.0 or ~> 3.2 or ~> 2.14"},
+      {:phoenix_html, "~> 4.0 or ~> 3.2 or ~> 2.1"},
 
       # For streaming writes
       {:plug, "~> 1.13", optional: true},
