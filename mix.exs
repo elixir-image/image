@@ -107,7 +107,8 @@ defmodule Image.MixProject do
       links: links(),
       files: [
         "lib",
-        "priv",
+        "priv/color",
+        "priv/fonts",
         "mix.exs",
         "README*",
         "CHANGELOG*",
