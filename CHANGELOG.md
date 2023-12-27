@@ -8,6 +8,8 @@ This is the changelog for Image version 0.39.1 released on December 28th, 2023. 
 
 * Adds support for `phoenix_html` ~4.0 in addition to ~3.2 and ~2.1. Thanks to @tapickell for the PR.
 
+* Don't include `priv/models` in the hex package.
+
 ## Image 0.39.0
 
 This is the changelog for Image version 0.39.0 released on December 15th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
