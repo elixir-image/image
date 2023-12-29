@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.39.1
+
+This is the changelog for Image version 0.39.1 released on December 28th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fix
+
+* Adds support for `phoenix_html` ~4.0 in addition to ~3.2 and ~2.1. Thanks to @tapickell for the PR.
+
+* Don't include `priv/models` in the hex package.
+
 ## Image 0.39.0
 
 This is the changelog for Image version 0.39.0 released on December 15th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
@@ -10,9 +20,9 @@ This is the changelog for Image version 0.39.0 released on December 15th, 2023. 
   * `:autorotate` is only supported by `libvips` for a few image types, *not* including `png` images. Hence the option cannot be used in a generalised way.
   * No signalling is done to indicate whether the image was actually rotated whereas `Image.autorotate/1` does return this information.
   * Using `autorotate: true` does not appear to remove the `orientation` EXIF tag and therefore calling `Image.autorotate/1` would result in a second rotation.
-  
+
 ### Bug Fixes
-  
+
 * Fix finding the dominant color for images with an alpha band. Thansk to @mayel for the report. Closes #114.
 
 ## Image 0.38.5

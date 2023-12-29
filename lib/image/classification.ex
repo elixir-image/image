@@ -200,8 +200,8 @@ if Image.bumblebee_configured?() do
     * `:backend` is any valid `Nx` backend. The default is
       `Nx.default_backend/0`.
 
-    * `:min_score` is the minimum score, a float between `0`
-      and `1`, which a label must match in order to be
+    * `:min_score` is the minimum score, a float between `0.0`
+      and `1.0`, which a label must match in order to be
       returned.
 
     ### Returns
