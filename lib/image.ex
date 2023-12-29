@@ -4106,7 +4106,7 @@ defmodule Image do
   The image is resized and all metadata is removed
   from the image. The image will be cropped to a square
   shape and then depending on the `:shape` option
-  a circular or squirclar mask may be applied.
+  a circular or squircular mask may be applied.
 
   ### Arguments
 
@@ -4256,6 +4256,7 @@ defmodule Image do
     |> Keyword.delete(:crop)
     |> Keyword.delete(:shape)
     |> Keyword.delete(:size)
+    |> Keyword.put(:resize, :force)
   end
 
   @doc """

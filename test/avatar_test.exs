@@ -20,7 +20,13 @@ defmodule Image.Avatar.Test do
     validate_path = validate_path("Kip_small_avatar.png")
 
     assert {:ok, _image} = Image.write(avatar, out_path, quality: 50)
+
     # Image.write!(avatar, validate_path)
+
+    # IO.inspect Image.shape(avatar), label: "Avatar shape"
+    # Image.preview avatar
+    # Image.preview Image.open!(validate_path)
+
     assert_images_equal(out_path, validate_path)
   end
 
@@ -34,7 +40,13 @@ defmodule Image.Avatar.Test do
     validate_path = validate_path("Kip_small_avatar_squircle.png")
 
     assert {:ok, _image} = Image.write(avatar, out_path)
+
     # Image.write!(avatar, validate_path)
+
+    # IO.inspect Image.shape(avatar), label: "Avatar shape"
+    # Image.preview avatar
+    # Image.preview Image.open!(validate_path)
+
     assert_images_equal(out_path, validate_path)
   end
 
@@ -46,9 +58,12 @@ defmodule Image.Avatar.Test do
       Image.Text.text!("KC", background_fill_color: :cyan, font_size: 200, padding: 80)
       |> Image.avatar(shape: :circle)
 
-    # |> Image.preview
+    # Image.write!(avatar, validate_path)
 
-    # Image.write(avatar, validate_path)
+    # IO.inspect Image.shape(avatar), label: "Avatar shape"
+    # Image.preview avatar
+    # Image.preview Image.open!(validate_path)
+
     assert_images_equal(avatar, validate_path)
   end
 
@@ -60,9 +75,12 @@ defmodule Image.Avatar.Test do
       Image.Text.text!("KC", background_fill_color: :cyan, font_size: 200, padding: 80)
       |> Image.avatar(shape: :square)
 
-    # |> Image.preview
-
     # Image.write!(avatar, validate_path)
+
+    # IO.inspect Image.shape(avatar), label: "Avatar shape"
+    # Image.preview avatar
+    # Image.preview Image.open!(validate_path)
+
     assert_images_equal(avatar, validate_path)
   end
 end
