@@ -53,7 +53,7 @@ defmodule Image.Options.Avatar do
   defp default_options do
     [
       shape: :circle,
-      crop: :none,
+      crop: :center,
       size: @default_avatar_size
     ]
   end

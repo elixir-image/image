@@ -30,6 +30,26 @@ defmodule Image.Avatar.Test do
     assert_images_equal(out_path, validate_path)
   end
 
+  test "Create avatar from small image", %{dir: dir} do
+    image = image_path("jose.png")
+    {:ok, jose} = Vimage.new_from_file(image)
+
+    {:ok, avatar} = Image.avatar(jose, size: 300)
+
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    validate_path = validate_path("jose_avatar.png")
+
+    assert {:ok, _image} = Image.write(avatar, out_path, quality: 50)
+
+    # Image.write!(avatar, validate_path)
+    #
+    # IO.inspect Image.shape(avatar), label: "Avatar shape"
+    # Image.preview avatar
+    # Image.preview Image.open!(validate_path)
+
+    assert_images_equal(out_path, validate_path)
+  end
+
   test "Squircle avatar", %{dir: dir} do
     image = image_path("Kip_small.jpg")
     {:ok, kip} = Vimage.new_from_file(image)
@@ -43,6 +63,7 @@ defmodule Image.Avatar.Test do
 
     # Image.write!(avatar, validate_path)
 
+    # IO.inspect Image.shape(kip), label: "Image shape"
     # IO.inspect Image.shape(avatar), label: "Avatar shape"
     # Image.preview avatar
     # Image.preview Image.open!(validate_path)

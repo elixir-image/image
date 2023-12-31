@@ -4117,20 +4117,20 @@ defmodule Image do
 
   ### Options
 
-  * `:size` is the diameter (in the case of `shape: :circle`
-    or `shape; :squircle`. It is the width/height in the case
-    of `shape: :square` of the resulting image after resizing.
+  * `:size` is the diameter in pixels of the avatar (in the case of
+    `shape: :circle` or `shape; :squircle`. It is the width/height in
+    pixels in the case of a `shape: :square` avatar.
     The default value is `#{Image.Options.Avatar.default_avatar_size()}`.
 
   * `:shape` defines shape of the avatar
     which can be either `:circle` (the default), `:squircle`
     or `:square`.  In each case the image is first
-    center cropped to a square shape. Then if the
+    cropped to a square shape. Then if the
     format is `:circle` or `:squircle` an appropriate image
     mask is applied.
 
-  * `:crop_focus` is one of `:none`, `:center`, `:entropy`,
-    `:attention`, `:low`, `:high`. The default is `:none`.
+  * `:crop_focus` is one of `:center`, `:entropy`,
+    `:attention`, `:low`, `:high`. The default is `:center`.
     For details see `t:Image.Options.Crop.crop_focus/0`.
 
   ### Returns
@@ -4149,18 +4149,20 @@ defmodule Image do
 
   def avatar(%Vimage{} = image, options) do
     with {:ok, options} <- Options.Avatar.validate_options(options),
-         {:ok, image} <- thumbnail(image, options[:size], thumbnail_options(options)),
+         {:ok, size} <- calculate_size_from_option(image, options[:size]),
+         {:ok, image} <- thumbnail(image, size, thumbnail_options(options)),
          {:ok, flattened} <- flatten(image) do
-      do_avatar(flattened, options[:shape])
+      do_avatar(flattened, size, options[:shape])
     end
   end
 
   def avatar(image_path, options) when is_binary(image_path) do
     with {:ok, options} <- Options.Avatar.validate_options(options),
-         {:ok, image_path} = file_exists?(image_path),
-         {:ok, image} = thumbnail(image_path, options[:size], thumbnail_options(options)),
-         {:ok, flattened} = flatten(image) do
-      do_avatar(flattened, options[:shape])
+         {:ok, image_path} <- file_exists?(image_path),
+         {:ok, thumbnail} <- thumbnail(image_path, options[:size], thumbnail_options(options)),
+         {:ok, image} <- maybe_resize(thumbnail, options[:size]),
+         {:ok, flattened} <- flatten(image) do
+      do_avatar(flattened, options[:size], options[:shape])
     end
   end
 
@@ -4182,9 +4184,9 @@ defmodule Image do
 
   ### Options
 
-  * `:size` is the diameter (in the case of `shape: :circle`
-    or `shape; :squircle`. It is the width/height in the case
-    of `shape: :square` of the resulting image after resizing.
+  * `:size` is the diameter in pixels of the avatar (in the case of
+    `shape: :circle` or `shape; :squircle`. It is the width/height in
+    pixels in the case of a `shape: :square` avatar.
     The default value is `#{Image.Options.Avatar.default_avatar_size()}`.
 
   * `:shape` defines shape of the avatar
@@ -4194,8 +4196,8 @@ defmodule Image do
     format is `:circle` or `:squircle` an appropriate image
     mask is applied.
 
-  * `:crop_focus` is one of `:none`, `:center`, `:entropy`,
-    `:attention`, `:low`, `:high`. The default is `:none`.
+  * `:crop_focus` is one of `:center`, `:entropy`,
+    `:attention`, `:low`, `:high`. The default is `:center`.
     For details see `t:Image.Options.Crop.crop_focus/0`.
 
   ### Returns
@@ -4217,46 +4219,61 @@ defmodule Image do
     end
   end
 
-  defp do_avatar(image, :square) do
-    square(image)
+  # All avatars start out square then a mask is
+  # applied to form the final shape.
+
+  defp do_avatar(image, size, :square) do
+    {:ok, squared} = center_crop(image, size, size)
+    remove_metadata(squared)
   end
 
-  defp do_avatar(image, :squircle) do
-    {:ok, image} = square(image)
-    {:ok, image} = squircle(image)
+  defp do_avatar(image, size, :squircle) do
+    {:ok, squared} = center_crop(image, size, size)
+    {:ok, image} = squircle(squared)
     remove_metadata(image)
   end
 
-  defp do_avatar(image, :circle) do
-    {:ok, squared} = square(image)
-    circular_mask_and_remove_meta(squared)
+  defp do_avatar(image, size, :circle) do
+    {:ok, squared} = center_crop(image, size, size)
+    {:ok, image} = circle(squared)
+    remove_metadata(image)
   end
 
-  defp square(image) do
-    {width, height, _bands} = Image.shape(image)
+  # thumbnail/2 takes a size argument but its to establish the
+  # length of the *maxixum** side. We need the size of the *minimum*
+  # size
 
-    if width > height do
-      x = round((width - height) / 2)
-      y = 0
-      crop(image, x, y, height, height)
+  defp calculate_size_from_option(image, size) do
+    width = Image.width(image)
+    height = Image.height(image)
+
+    if width < size || height < size do
+      {:ok, round(size * max(width, height) / min(width, height))}
     else
-      x = 0
-      y = round((height - width) / 2)
-      crop(image, x, y, width, width)
+      {:ok, size}
     end
   end
 
-  defp circular_mask_and_remove_meta(image) do
-    {:ok, image} = circle(image)
-    remove_metadata(image)
+  # when thumnailing an image froma a file path we cannot
+  # know the length of the small size so we have to potentially
+  # resize the image after thumbnailing.
+
+  defp maybe_resize(image, size) do
+    width = Image.width(image)
+    height = Image.height(image)
+
+    if width < size || height < size do
+      scale = max(width, height) / min(width, height)
+      resize(image, scale)
+    else
+      {:ok, image}
+    end
   end
 
   defp thumbnail_options(options) do
     options
-    |> Keyword.delete(:crop)
     |> Keyword.delete(:shape)
     |> Keyword.delete(:size)
-    |> Keyword.put(:resize, :force)
   end
 
   @doc """
