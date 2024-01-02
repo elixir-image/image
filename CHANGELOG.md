@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.39.2
+
+This is the changelog for Image version 0.39.2 released on January 2nd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fix
+
+* Fix `Image.avatar/2` to correctly resize and maintain aspect ratio. Thanks to @samullen for the report and patience. Closes #123.
+
 ## Image 0.39.1
 
 This is the changelog for Image version 0.39.1 released on December 28th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
