@@ -33,4 +33,9 @@ defmodule ForDialyzer do
     small_kip = Image.open!("./test/support/images/Kip_small.jpg")
     Image.avatar(small_kip, size: 256)
   end
+
+  def write do
+    small_kip = Image.open!("./test/support/images/Kip_small.jpg")
+    _ = Image.write!(small_kip, :memory)
+  end
 end

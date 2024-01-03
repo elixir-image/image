@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.39.3
+
+This is the changelog for Image version 0.39.3 released on January 4th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fix
+
+* Fix typespec of `Image.write!/3` to include `:memory` as a valid destination.  Thanks to @LostKobrakai for the PR. Closes #124.
+
 ## Image 0.39.2
 
 This is the changelog for Image version 0.39.2 released on January 2nd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

@@ -1367,7 +1367,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` (or `{:ok, binary}` is the destination is
+  * `{:ok, image}` (or `{:ok, binary}` if the destination is
     `:memory`) or
 
   * `{:error, reason}`
@@ -1495,19 +1495,28 @@ defmodule Image do
 
   ### Returns
 
-  * `image` (or a binary is the destination is `:memory`) or
+  * `image` (or a binary if the destination is `:memory`) or
 
   * raises an exception.
 
   """
   @doc subject: "Load and save"
 
-  @spec write!(
-          image :: Vimage.t(),
-          image_path_or_stream :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t() | :memory,
-          options :: Options.Write.image_write_options()
-        ) ::
-          Vimage.t() | binary() | no_return()
+  if match?({:module, _module}, Code.ensure_compiled(Plug)) do
+    @spec write!(
+            image :: Vimage.t(),
+            image_path :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t() | :memory,
+            options :: Options.Write.image_write_options()
+          ) ::
+            Vimage.t() | binary() | no_return()
+  else
+    @spec write!(
+            image :: Vimage.t(),
+            image_path :: Path.t() | Enumerable.t() | File.Stream.t() | :memory,
+            options :: Options.Write.image_write_options()
+          ) ::
+            Vimage.t() | binary() | no_return()
+  end
 
   def write!(%Vimage{} = image, image_path, options \\ []) do
     case write(image, image_path, options) do
