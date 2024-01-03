@@ -1504,7 +1504,7 @@ defmodule Image do
 
   @spec write!(
           image :: Vimage.t(),
-          image_path_or_stream :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t(),
+          image_path_or_stream :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t() | :memory,
           options :: Options.Write.image_write_options()
         ) ::
           Vimage.t() | binary() | no_return()
