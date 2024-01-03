@@ -2712,7 +2712,8 @@ defmodule Image do
   end
 
   @doc """
-  Compose two images together to form a new image.
+  Compose two images together, or an image and a list of
+  images compositions, to form a new image.
 
   ### Arguments
 
