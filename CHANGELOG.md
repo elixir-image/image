@@ -1,5 +1,17 @@
 # Changelog
 
+## Image 0.40.0
+
+This is the changelog for Image version 0.40.0 released on January 6th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fix
+
+* Fix docs for `Image.new/1` (the docs for `Image.new/{2, 3}` are correct).
+
+### Enhancements
+
+* Adds `Image.join/2` which takes a list of images and joins them into a grid.
+
 ## Image 0.39.3
 
 This is the changelog for Image version 0.39.3 released on January 4th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
