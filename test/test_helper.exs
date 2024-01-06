@@ -1,4 +1,4 @@
-paths = Path.wildcard("test/support/did_not_match/**/*.{png,tif,jpg}")
+paths = Path.wildcard("test/support/did_not_match/**/*.{png,tif,jpg,webp,gif}")
 Enum.each(paths, &File.rm/1)
 
 Application.ensure_all_started(:telemetry)

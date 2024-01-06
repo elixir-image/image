@@ -3074,6 +3074,164 @@ defmodule Image do
   end
 
   @doc """
+  Join a list of images into a single image.
+
+  ### Arguments
+
+  * `image_list` is a non-empty list of `t:Vimage.t/0`
+    images.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:across` is an integer number of images in the
+    horizontal direction of the grid. The default is `1`.
+
+  * `:vertical_spacing` determines the height in pixels of
+    each image row. The default, `0`, means that the row
+    height is the maximum height of the
+    images in `image_list`.
+
+  * `:horizontal_spacing` determines the width in pixels of
+    each image in a row. The default, `0`, means
+    that the width is the maximum width of the
+    images in `image_list`.
+
+  * :vertical_align` is `:bottom`, `:middle` or `:top`.
+    The default is `:bottom`.
+
+  * `:horizontal_align` is `:left`, `:center` or `:right`.
+    The default is `:left`.
+
+  * `:background_color` is the color of any pixels generated
+    between images. This can be specified as a single integer
+    which will be applied to all bands, or a list of
+    integers representing the color for each
+    band. The default is `0`, meaning black. The color
+    can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `:shim` is the number of pixels of spacing between
+    images in the grid. The default is `0`.
+
+  ### Returns
+
+  * `{:ok, joined_image}` or
+
+  * `{:error, reason}`
+
+  ### Notes
+
+  `Image.join/2`Lay out the list of images in a grid.
+  The grid is `:across` images across and however high
+  is necessary to use up all of `image_list`.  Images are
+  set down left-to-right and top-to-bottom.
+
+  Each input image is placed with a box of size `:horizontal_spacing`
+  by `:vertical_spacing` pixels and cropped. These default
+  to the largest width and largest height of the input images.
+
+  Space between images is filled with `:background_color` .
+  This defaults to black.
+
+  Images are positioned within their `:horizontal_spacing` by
+  `:vertical_spacing` box at `:vertical_align` of `:bottom`,
+  `:middle` or `:top``and by `:horizontal_align` of `:left`,
+  `:center` or `:righ`. The defaults are `:bottom`, `:left.
+
+  """
+  @spec join(image_list :: list(Vimage.t()), options :: Options.Join.join_options()) ::
+    {:ok, joined_image :: Vimage.t()} | {:error, error_message()}
+
+  def join(image_list, options \\ []) when is_list(image_list) do
+    with {:ok, options} <- Options.Join.validate_options(options) do
+      Operation.arrayjoin(image_list, options)
+    end
+  end
+
+  @doc """
+  Join a list of images into a single image or raises
+  an exception.
+
+  ### Arguments
+
+  * `image_list` is a non-empty list of `t:Vimage.t/0`
+    images.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:across` is an integer number of images in the
+    horizontal direction of the grid. The default is `1`.
+
+  * `:vertical_spacing` determines the height in pixels of
+    each image row. The default, `0`, means that the row
+    height is the maximum height of the
+    images in `image_list`.
+
+  * `:horizontal_spacing` determines the width in pixels of
+    each image in a row. The default, `0`, means
+    that the width is the maximum width of the
+    images in `image_list`.
+
+  * :vertical_align` is `:bottom`, `:middle` or `:top`.
+    The default is `:bottom`.
+
+  * `:horizontal_align` is `:left`, `:center` or `:right`.
+    The default is `:left`.
+
+  * `:background_color` is the color of any pixels generated
+    between images. This can be specified as a single integer
+    which will be applied to all bands, or a list of
+    integers representing the color for each
+    band. The default is `0`, meaning black. The color
+    can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `:shim` is the number of pixels of spacing between
+    images in the grid. The default is `0`.
+
+  ### Returns
+
+  * `{:ok, joined_image}` or
+
+  * `{:error, reason}`
+
+  ### Notes
+
+  `Image.join/2`Lay out the list of images in a grid.
+  The grid is `:across` images across and however high
+  is necessary to use up all of `image_list`.  Images are
+  set down left-to-right and top-to-bottom.
+
+  Each input image is placed with a box of size `:horizontal_spacing`
+  by `:vertical_spacing` pixels and cropped. These default
+  to the largest width and largest height of the input images.
+
+  Space between images is filled with `:background_color` .
+  This defaults to black.
+
+  Images are positioned within their `:horizontal_spacing` by
+  `:vertical_spacing` box at `:vertical_align` of `:bottom`,
+  `:middle` or `:top``and by `:horizontal_align` of `:left`,
+  `:center` or `:righ`. The defaults are `:bottom`, `:left.
+
+  """
+  @spec join!(image_list :: list(Vimage.t()), options :: Options.Join.join_options()) ::
+    joined_image :: Vimage.t() | no_return()
+
+  def join!(image_list, options \\ []) when is_list(image_list) do
+    case join(image_list, options) do
+      {:ok, joined_image} -> joined_image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Create a meme image from a base image and
   one or two lines of text.
 
@@ -9195,7 +9353,7 @@ defmodule Image do
   defp map_pages(image, fun, pages) do
     with {:ok, page_height} <- page_height(image),
          {:ok, new_pages} <- reduce_pages(image, pages, page_height, fun),
-         {:ok, new_image} <- join(Enum.reverse(new_pages)) do
+         {:ok, new_image} <- join(Enum.reverse(new_pages), across: 1) do
        new_page_height = Image.height(hd(new_pages))
 
        case Image.mutate(new_image, &MutableImage.set(&1, "page-height", :gint, new_page_height)) do
@@ -9205,16 +9363,6 @@ defmodule Image do
          {:error, reason} ->
            {:error, "Could not set the page-height header. Reason: #{inspect reason}"}
        end
-    end
-  end
-
-  defp join(pages) do
-    case Operation.arrayjoin(pages, across: 1) do
-      {:ok, image} ->
-        {:ok, image}
-
-      {:error, reason} ->
-        {:error, "Could not join the pages into a new image. Reason: #{inspect reason}"}
     end
   end
 

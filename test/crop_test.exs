@@ -90,6 +90,7 @@ defmodule Image.Crop.Test do
 
     # {:ok, _} = Image.write(cropped, validate_path)
     {:ok, validate_image} = Image.open(validate_path, pages: :all)
+
     assert_images_equal(cropped, validate_image, 160)
   end
 
