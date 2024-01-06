@@ -3076,7 +3076,7 @@ defmodule Image do
     that the width is the maximum width of the
     images in `image_list`.
 
-  * :vertical_align` is `:bottom`, `:middle` or `:top`.
+  * `:vertical_align` is `:bottom`, `:middle` or `:top`.
     The default is `:bottom`.
 
   * `:horizontal_align` is `:left`, `:center` or `:right`.
@@ -3155,7 +3155,7 @@ defmodule Image do
     that the width is the maximum width of the
     images in `image_list`.
 
-  * :vertical_align` is `:bottom`, `:middle` or `:top`.
+  * `:vertical_align` is `:bottom`, `:middle` or `:top`.
     The default is `:bottom`.
 
   * `:horizontal_align` is `:left`, `:center` or `:right`.
