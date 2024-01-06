@@ -511,36 +511,14 @@ defmodule Image do
   provided image.
 
   The function creates a new image with the same
-  width, height and bands as the image argument.
+  width, height and bands as the image argument and
+  a color of `:black`.
 
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0` from
     which the new images `width` and `height` and
   ` bands` will be derived.
-
-  * `options` is a keyword list of options.
-
-  ### Options
-
-  * `:bands` defines the number of bands (channels)
-    to be created. The default is the number of bands
-    in `image`.
-
-  * `:color` defines the color of the image. This
-    can be specified as a single integer which will
-    be applied to all bands, or a list of
-    integers representing the color for each
-    band. The default is `0`, meaning black. The color
-    can also be supplied as a CSS color name as a
-    string or atom. For example: `:misty_rose`. See
-    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
-
-  * `:format` defines the format of the image. The
-    default is `{:u, 8}`.
-
-  * `:interpretation` defines the interpretation of
-    the image. The default is `:srgb`.
 
   ### Returns
 
