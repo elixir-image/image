@@ -13,6 +13,7 @@ defmodule Image.Options.Resize do
   @type resize_options :: [
           {:center, boolean()}
           | {:interpolate, Image.Kernel.t()}
+          | {:vertical_scale, float()}
         ]
 
   @doc """
@@ -39,6 +40,15 @@ defmodule Image.Options.Resize do
 
   defp validate_option({:interpolate, interpolate}, options) do
     Kernel.validate_kernel(interpolate, options)
+  end
+
+  defp validate_option({:vertical_scale, vertical_scale}, options) when is_float(vertical_scale) do
+    options =
+      options
+      |> Keyword.delete(:vertical_scale)
+      |> Keyword.put(:vscale, vertical_scale)
+
+    {:cont, options}
   end
 
   defp validate_option(option, _options) do

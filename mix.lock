@@ -59,5 +59,6 @@
   "unzip": {:hex, :unzip, "0.8.0", "ee21d87c21b01567317387dab4228ac570ca15b41cfc221a067354cbf8e68c4d", [:mix], [], "hexpm", "ffa67a483efcedcb5876971a50947222e104d5f8fea2c4a0441e6f7967854827"},
   "vix": {:hex, :vix, "0.26.0", "027f10b6969b759318be84bd0bd8c88af877445e4e41cf96a0460392cea5399c", [:make, :mix], [{:castore, "~> 0.1 or ~> 1.0", [hex: :castore, repo: "hexpm", optional: false]}, {:cc_precompiler, "~> 0.1.4 or ~> 0.2", [hex: :cc_precompiler, repo: "hexpm", optional: false]}, {:elixir_make, "~> 0.7.3 or ~> 0.8", [hex: :elixir_make, repo: "hexpm", optional: false]}, {:kino, "~> 0.7", [hex: :kino, repo: "hexpm", optional: true]}], "hexpm", "71b0a79ae7f199cacfc8e679b0e4ba25ee47dc02e182c5b9097efb29fbe14efd"},
   "xla": {:hex, :xla, "0.5.1", "8ba4c2c51c1a708ff54e9d4f88158c1a75b7f2cb3e5db02bf222b5b3852afffd", [:make, :mix], [{:elixir_make, "~> 0.4", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm", "82a2490f6e9a76c8a29d1aedb47f07c59e3d5081095eac5a74db34d46c8212bc"},
+  "y4m": {:hex, :y4m, "0.3.5", "40dc491c6934327b21cdb3b47b0f43179970c66d41751375e830c1d717907a94", [:mix], [], "hexpm", "81a4566c4a3c0312250271f4a1efff34fd7e328f0ec0b1bc2fbbface623c1567"},
   "yolo": {:git, "https://github.com/elixir-image/yolov8_elixir.git", "4216a1cb87edbc2d2fa41fbf851554bd70e3f5ef", []},
 }

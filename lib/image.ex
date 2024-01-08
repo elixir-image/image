@@ -3900,6 +3900,10 @@ defmodule Image do
     The options are `:nearest`, `:linear`, `:cubic`,
     `:mitchell`, `:lanczos2` or `:lanczos3` (the default).
 
+  * `:vertical_scale` is a float indicating the scaling
+    factor of the vertical axis. In specified, then `scale`
+    is applied only to the horizontal axis.
+
   ### Returns
 
   * `{:ok, resized_image}` or
@@ -3960,6 +3964,10 @@ defmodule Image do
   * `:interpolate` defines which resampling kernel to apply.
     The options are `:nearest`, `:linear`, `:cubic`,
     `:mitchell`, `:lanczos2` or `:lanczos3` (the default).
+
+  * `:vertical_scale` is a float indicating the scaling
+    factor of the vertical axis. In specified, then `scale`
+    is applied only to the horizontal axis.
 
   ### Returns
 
