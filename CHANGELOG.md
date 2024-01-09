@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.41.0
+
+This is the changelog for Image version 0.41.0 released on ______, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds `Image.YUV` module that provides functions to convert between YUV and RGB image data. Thanks very much to @mat-hek for the collaboration. This module makes it easier to work with video image data which is typically in YUV encoded. The module supports [4:4:4, 4:2:2 and 4:2:0](https://en.wikipedia.org/wiki/Chroma_subsampling) encoding in either of the [BT601](https://en.wikipedia.org/wiki/Rec._601) or [BT709](https://en.wikipedia.org/wiki/Rec._709) colorspaces.
+
 ## Image 0.40.0
 
 This is the changelog for Image version 0.40.0 released on January 6th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
