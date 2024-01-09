@@ -67,7 +67,7 @@ defmodule Image.YUV do
     bt708: @bt709_to_rgb
   }
 
-  @yuv_to_rgb_offsets [16, 128, 128]
+  @yuv_to_rgb_offsets [16.0, 128.0, 128.0]
   @valid_encodings [:C444, :C422, :C420]
   @valid_colorspace [:bt601, :bt709]
 
@@ -332,13 +332,12 @@ defmodule Image.YUV do
 
   def to_yuv(%Vimage{} = image, encoding, colorspace)
       when encoding in @valid_encodings and colorspace in @valid_colorspace do
-    use Image.Math
-
     with {:ok, image} <- Image.flatten(image),
          {:ok, transform} <- Vimage.new_from_list(@to_yuv[colorspace]),
          {:ok, divided} <- Image.Math.divide(transform, 256.0),
-         {:ok, float} <- Operation.recomb(image, divided),
-         {:ok, yuv} <- Image.cast(float + @yuv_to_rgb_offsets, {:u, 8}) do
+         {:ok, recombed} <- Operation.recomb(image, divided),
+         {:ok, offset} <- Image.Math.add(recombed, @yuv_to_rgb_offsets),
+         {:ok, yuv} <- Image.cast(offset, {:u, 8}) do
       encode(yuv, encoding)
     end
   end

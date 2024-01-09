@@ -278,7 +278,7 @@ defmodule Image.Math do
     add(image, [value])
   end
 
-  @spec add(Vimage.t(), [number()]) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec add(Vimage.t(), [number(), ...]) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
   def add(%Vimage{} = image, value) when is_list(value) do
     Operation.linear(image, [1.0], value)
   end
