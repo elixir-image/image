@@ -278,7 +278,8 @@ defmodule Image.YUV do
   def to_yuv(%Vimage{} = image, encoding, :bt601) when encoding in @valid_encodings do
     use Image.Math
 
-    with {:ok, transform} <- Vimage.new_from_list(@rgb_to_bt601),
+    with {:ok, image} <- Image.flatten(image),
+         {:ok, transform} <- Vimage.new_from_list(@rgb_to_bt601),
          {:ok, divided} <- Image.Math.divide(transform, 256.0),
          {:ok, float} <- Operation.recomb(image, divided),
          {:ok, yuv} <- Image.cast(float + @yuv_to_rgb_offsets, {:u, 8}) do
@@ -289,7 +290,8 @@ defmodule Image.YUV do
   def to_yuv(%Vimage{} = image, encoding, :bt709) when encoding in @valid_encodings do
     use Image.Math
 
-    with {:ok, transform} <- Vimage.new_from_list(@rgb_to_bt709),
+    with {:ok, image} <- Image.flatten(image),
+         {:ok, transform} <- Vimage.new_from_list(@rgb_to_bt709),
          {:ok, divided} <- Image.Math.divide(transform, 256.0),
          {:ok, float} <- Operation.recomb(image, divided),
          {:ok, yuv} <- Image.cast(float + @yuv_to_rgb_offsets, {:u, 8}) do
