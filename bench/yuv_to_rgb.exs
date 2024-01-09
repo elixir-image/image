@@ -17,10 +17,6 @@ Benchee.run(
 
     "Encode an RGB image as YUV 4:2:2" => fn ->
       Image.YUV.encode(image, :C420)
-    end,
-
-    "Scale a plane to 1/2 size for 4:2:0" => fn ->
-      Image.YUV.new_scaled_plane(red, 0.5, 0.5)
     end
   },
   time: 20,

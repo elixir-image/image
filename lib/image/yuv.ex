@@ -5,17 +5,25 @@ defmodule Image.YUV do
 
   """
 
+  @typedoc "YUV encoding"
+  @type yuv_encoding :: :C444 | :C422 | :C420
+
+  @typedoc "YUV colorspace"
+  @type yuv_colorspace :: :bt601 | :bt709
+
+  @typedoc "YUV data as a three-element list of binaries"
+  @type yuv_list :: [binary()]
+
   # See:
   #  https://support.medialooks.com/hc/en-us/articles/360030737152-Color-correction-with-matrix-transformation
-  #. https://mymusing.co/bt-709-yuv-to-rgb-conversion-color/
-
-  alias Vix.Vips.Image, as: Vimage
-  alias Vix.Vips.Operation
-
-  # See:
+  #  https://mymusing.co/bt-709-yuv-to-rgb-conversion-color/
   #  https://mymusing.co/bt601-yuv-to-rgb-conversion-color/
   #  https://github.com/libvips/libvips/discussions/2561
   #  https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.2020_conversion
+  #  https://wiki.multimedia.cx/index.php/YUV4MPEG2#Frame_data
+
+  alias Vix.Vips.Image, as: Vimage
+  alias Vix.Vips.Operation
 
   @bt601_to_rgb [
     [1.0,  0.0,       1.402   ],
@@ -95,7 +103,7 @@ defmodule Image.YUV do
   * `{:error, reason}`.
 
   """
-  @spec new_from_file(path :: Path.t, width :: pos_integer(), height :: pos_integer(), encoding :: atom(), colorspace :: atom()) ::
+  @spec new_from_file(path :: Path.t, width :: pos_integer(), height :: pos_integer(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
     {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def new_from_file(path, width, height, encoding, colorspace \\ :bt601)
@@ -136,7 +144,7 @@ defmodule Image.YUV do
   * `{:error, reason}`.
 
   """
-  @spec new_from_binary(binary :: binary(), width :: pos_integer(), height :: pos_integer(), encoding :: atom(), colorspace :: atom()) ::
+  @spec new_from_binary(binary :: binary(), width :: pos_integer(), height :: pos_integer(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
     {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def new_from_binary(binary, width, height, encoding, colorspace \\ :bt601)
@@ -169,6 +177,9 @@ defmodule Image.YUV do
   * `{:error, reason}`.
 
   """
+  @spec write_to_file(image :: Vimage.t(), path :: Path.t(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
+    :ok | {:error, Image.error_message()}
+
   def write_to_file(%Vimage{} = image, path, encoding, colorspace \\ :bt601) do
     with {:ok, binary} <- write_to_binary(image, encoding, colorspace) do
       File.write(path, binary)
@@ -195,6 +206,9 @@ defmodule Image.YUV do
   * `{:error, reason}`.
 
   """
+  @spec write_to_binary(image :: Vimage.t(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
+    {:ok, binary()} | {:error, Image.error_message()}
+
   def write_to_binary(%Vimage{} = image, encoding, colorspace \\ :bt601) do
     with {:ok, [y, u, v]} <- to_yuv(image, encoding, colorspace) do
       {:ok, :erlang.iolist_to_binary([y, u, v])}
@@ -202,11 +216,24 @@ defmodule Image.YUV do
   end
 
   @doc """
-  Take an image in a YUV colorspace (which libvips does not
-  understand) and convert it to RGB.
+  Convert an image in an YUV colorspace and convert it to RGB
+  colorspace.
+
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0` that is in a YUV
+    colorspace such as that returned from `Image.YUV.new_from_file/5`
+    or `Image.YUV.new_from_binary/5`.
+
+  * `colorspace is one of `:bt601` (the default) or
+    `:bt709` that represents the colorspace of `image` before
+    conversion.
 
   """
   # See https://github.com/libvips/libvips/discussions/2561
+
+  @spec to_rgb(image :: Vimage.t(), colorspace :: yuv_colorspace()) ::
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def to_rgb(%Vimage{} = image, colorspace) when colorspace in @valid_colorspace do
     with {:ok, transform} <- Vimage.new_from_list(@to_rgb[colorspace]),
@@ -220,7 +247,33 @@ defmodule Image.YUV do
   Takes the `[y, u, v]` planes and converts them to
   an RGB image.
 
+  ### Arguments
+
+  * `yuv` is a list of three binaries representing the `Y`,
+    `U` and `V` planes. Such a list is returned from
+    `Image.YUV.to_yuv/3` and from `Image.YUV.encode/2`.
+
+  * `width` is the width of the image encoded in `yuv`.
+
+  * `height` is the height of the image encoded in `yuv`.
+
+  * `encoding` is one of `:C444`, `:C422` or
+    `:C420` representing how `yuv` is encoded.
+
+  * `colorspace is one of `:bt601` (the default) or
+    `:bt709` that represents the colorspace of `image` before
+    conversion.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`.
+
   """
+  @spec to_rgb(yuv :: yuv_list(), width :: pos_integer(), height :: pos_integer(), encoding :: yuv_encoding, colorspace :: yuv_colorspace()) ::
+    {:ok, Vimage.t()} | {:error, Image.error_message()}
+
   def to_rgb([y, u, v], width, height, :C444, colorspace) do
     use Image.Math
 
@@ -291,13 +344,31 @@ defmodule Image.YUV do
   end
 
   @doc """
-  Take an image in a YUV colorspace and converts it to
-  raw YUV data a list of the three planes, each in
-  binary format.
+  Encodes an image that is in a YUV colorspace to
+  raw YUV data that is a list of the three planes, each a
+  binary.
 
-  The data is always writeen in a planar format.
+  The data is always written in a planar format.
+
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0` that is in a YUV
+    colorspace such as that returned from `Image.YUV.new_from_file/5`
+    or `Image.YUV.new_from_binary/5`.
+
+  * `encoding` is one of `:C444`, `:C422` or
+    `:C420` representing how `yuv` is to be encoded.
+
+  ### Returns
+
+  * `{:ok, [y, u, v]}` or
+
+  * `{:error, Image.error_message()}`.
 
   """
+  @spec encode(image :: Vimage.t(), encoding :: yuv_encoding()) ::
+    {:ok, yuv_list()} | {:errpr, Image.error_message()}
+
   def encode(%Vimage{} = image, :C444) do
     with [r, g, b] <- Image.split_bands(image),
          {:ok, y} <- new_scaled_plane(r, 1.0, 1.0),
@@ -326,7 +397,25 @@ defmodule Image.YUV do
   end
 
   @doc """
-  Takes a raw YUV binary and decodes to the `[y, u, v]` planes.
+  Deocdes a raw YUV binary into `[y, u, v]` planes
+  where each plane is a binary.
+
+  ### Arguments
+
+  * `binary` is a binary representation of a YUV image.
+
+  * `width` is the width of the image encoded in `yuv`.
+
+  * `height` is the height of the image encoded in `yuv`.
+
+  * `encoding` is one of `:C444`, `:C422` or
+    `:C420` representing how `yuv` is encoded.
+
+  ### Returns
+
+  * `{:ok, [y, u, v]}` or
+
+  * `{:error, reason}`.
 
   """
   def decode(binary, width, height, :C444) do
@@ -389,11 +478,11 @@ defmodule Image.YUV do
   # take about 15ms on an M1 Max Pro. So this is the slowest part
   # of the subsampling process.
 
-  def new_scaled_plane(image, 1.0, 1.0) do
+  defp new_scaled_plane(image, 1.0, 1.0) do
     Vimage.write_to_binary(image)
   end
 
-  def new_scaled_plane(image, x_scale, y_scale) do
+  defp new_scaled_plane(image, x_scale, y_scale) do
     with {:ok, resized} <- Image.resize(image, x_scale, vertical_scale: y_scale) do
       Vimage.write_to_binary(resized)
     end
