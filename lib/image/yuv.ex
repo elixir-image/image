@@ -49,6 +49,16 @@ defmodule Image.YUV do
     [112.439, -102.129, -10.31],
   ]
 
+  @to_yuv %{
+    bt601: @rgb_to_bt601,
+    bt708: @rgb_to_bt709
+  }
+
+  @to_rgb %{
+    bt601: @bt601_to_rgb,
+    bt708: @bt709_to_rgb
+  }
+
   @yuv_to_rgb_offsets [16, 128, 128]
   @valid_encodings [:C444, :C422, :C420]
   @valid_colorspace [:bt601, :bt709]
@@ -198,18 +208,10 @@ defmodule Image.YUV do
   """
   # See https://github.com/libvips/libvips/discussions/2561
 
-  def to_rgb(%Vimage{} = image, :bt601) do
-    with {:ok, transform} <- Vimage.new_from_list(@bt601_to_rgb),
+  def to_rgb(%Vimage{} = image, colorspace) when colorspace in @valid_colorspace do
+    with {:ok, transform} <- Vimage.new_from_list(@to_rgb[colorspace]),
          {:ok, recombed} <- Operation.recomb(image, transform),
          {:ok, rgb} <- Image.cast(recombed, {:u, 8}) do
-      Operation.copy(rgb, interpretation: :VIPS_INTERPRETATION_sRGB)
-    end
-  end
-
-  def to_rgb(%Vimage{} = image, :bt709) do
-    with {:ok, transform} <- Vimage.new_from_list(@bt709_to_rgb),
-         {:ok, float} <- Operation.recomb(image, transform),
-         {:ok, rgb} <- Image.cast(float, {:u, 8}) do
       Operation.copy(rgb, interpretation: :VIPS_INTERPRETATION_sRGB)
     end
   end
@@ -275,23 +277,12 @@ defmodule Image.YUV do
   """
   def to_yuv(image, encoding, colorspace \\ :bt601)
 
-  def to_yuv(%Vimage{} = image, encoding, :bt601) when encoding in @valid_encodings do
+  def to_yuv(%Vimage{} = image, encoding, colorspace)
+      when encoding in @valid_encodings and colorspace in @valid_colorspace do
     use Image.Math
 
     with {:ok, image} <- Image.flatten(image),
-         {:ok, transform} <- Vimage.new_from_list(@rgb_to_bt601),
-         {:ok, divided} <- Image.Math.divide(transform, 256.0),
-         {:ok, float} <- Operation.recomb(image, divided),
-         {:ok, yuv} <- Image.cast(float + @yuv_to_rgb_offsets, {:u, 8}) do
-      encode(yuv, encoding)
-    end
-  end
-
-  def to_yuv(%Vimage{} = image, encoding, :bt709) when encoding in @valid_encodings do
-    use Image.Math
-
-    with {:ok, image} <- Image.flatten(image),
-         {:ok, transform} <- Vimage.new_from_list(@rgb_to_bt709),
+         {:ok, transform} <- Vimage.new_from_list(@to_yuv[colorspace]),
          {:ok, divided} <- Image.Math.divide(transform, 256.0),
          {:ok, float} <- Operation.recomb(image, divided),
          {:ok, yuv} <- Image.cast(float + @yuv_to_rgb_offsets, {:u, 8}) do
