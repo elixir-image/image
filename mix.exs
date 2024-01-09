@@ -80,9 +80,6 @@ defmodule Image.MixProject do
         ]
       ),
 
-      # For YUV (video) images
-      {:image_yuv, path: "../image_yuv"},
-
       # For testing and benchmarking
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
       {:benchee, "~> 1.0", only: :dev, runtime: false, optional: true},

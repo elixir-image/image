@@ -273,7 +273,7 @@ defmodule Image.YUV do
     use Image.Math
 
     with {:ok, transform} <- Vimage.new_from_list(@rgb_to_bt601),
-         {:ok, divided} <- Image.Math.divide(transform, 256),
+         {:ok, divided} <- Image.Math.divide(transform, 256.0),
          {:ok, float} <- Operation.recomb(image, divided),
          {:ok, yuv} <- Image.cast(float + @yuv_to_rgb_offsets, {:u, 8}) do
       encode(yuv, encoding)
@@ -284,7 +284,7 @@ defmodule Image.YUV do
     use Image.Math
 
     with {:ok, transform} <- Vimage.new_from_list(@rgb_to_bt709),
-         {:ok, divided} <- Image.Math.divide(transform, 256),
+         {:ok, divided} <- Image.Math.divide(transform, 256.0),
          {:ok, float} <- Operation.recomb(image, divided),
          {:ok, yuv} <- Image.cast(float + @yuv_to_rgb_offsets, {:u, 8}) do
       encode(yuv, encoding)
