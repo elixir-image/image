@@ -5,11 +5,17 @@ defmodule Image.YUV do
 
   """
 
+  # See:
+  #  https://support.medialooks.com/hc/en-us/articles/360030737152-Color-correction-with-matrix-transformation
+  #. https://mymusing.co/bt-709-yuv-to-rgb-conversion-color/
+
   alias Vix.Vips.Image, as: Vimage
   alias Vix.Vips.Operation
 
-  # See https://mymusing.co/bt601-yuv-to-rgb-conversion-color/
-  # And https://github.com/libvips/libvips/discussions/2561
+  # See:
+  #  https://mymusing.co/bt601-yuv-to-rgb-conversion-color/
+  #  https://github.com/libvips/libvips/discussions/2561
+  #  https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.2020_conversion
 
   @bt601_to_rgb [
     [1.0,  0.0,       1.402   ],
@@ -181,7 +187,7 @@ defmodule Image.YUV do
   """
   def write_to_binary(%Vimage{} = image, encoding, colorspace \\ :bt601) do
     with {:ok, [y, u, v]} <- to_yuv(image, encoding, colorspace) do
-      {:ok, y <> u <> v}
+      {:ok, :erlang.iolist_to_binary([y, u, v])}
     end
   end
 
@@ -300,25 +306,28 @@ defmodule Image.YUV do
 
   """
   def encode(%Vimage{} = image, :C444) do
-    with {:ok, y} <- new_scaled_plane(image[0], 1.0, 1.0),
-         {:ok, u} <- new_scaled_plane(image[1], 1.0, 1.0),
-         {:ok, v} <- new_scaled_plane(image[2], 1.0, 1.0) do
+    with [r, g, b] <- Image.split_bands(image),
+         {:ok, y} <- new_scaled_plane(r, 1.0, 1.0),
+         {:ok, u} <- new_scaled_plane(g, 1.0, 1.0),
+         {:ok, v} <- new_scaled_plane(b, 1.0, 1.0) do
       {:ok, [y, u, v]}
     end
   end
 
   def encode(%Vimage{} = image, :C422) do
-    with {:ok, y} <- new_scaled_plane(image[0], 1.0, 1.0),
-         {:ok, u} <- new_scaled_plane(image[1], 0.5, 1.0),
-         {:ok, v} <- new_scaled_plane(image[2], 0.5, 1.0) do
+    with [r, g, b] <- Image.split_bands(image),
+         {:ok, y} <- new_scaled_plane(r, 1.0, 1.0),
+         {:ok, u} <- new_scaled_plane(g, 0.5, 1.0),
+         {:ok, v} <- new_scaled_plane(b, 0.5, 1.0) do
       {:ok, [y, u, v]}
     end
   end
 
   def encode(%Vimage{} = image, :C420) do
-    with {:ok, y} <- new_scaled_plane(image[0], 1.0, 1.0),
-         {:ok, u} <- new_scaled_plane(image[1], 0.5, 0.5),
-         {:ok, v} <- new_scaled_plane(image[2], 0.5, 0.5) do
+    with [r, g, b] <- Image.split_bands(image),
+         {:ok, y} <- new_scaled_plane(r, 1.0, 1.0),
+         {:ok, u} <- new_scaled_plane(g, 0.5, 0.5),
+         {:ok, v} <- new_scaled_plane(b, 0.5, 0.5) do
       {:ok, [y, u, v]}
     end
   end
@@ -339,19 +348,6 @@ defmodule Image.YUV do
     end
   end
 
-  def decode(binary, width, height, :C420) do
-    y_bytes = width * height
-    uv_bytes = div(y_bytes, 4)
-
-    case binary do
-      <<y::bytes-size(y_bytes), u::bytes-size(uv_bytes), v::bytes-size(uv_bytes)>> ->
-        {:ok, [y, u, v]}
-
-      _other ->
-        {:error, "Could not decode raw YUV data as 4:2:0"}
-    end
-  end
-
   def decode(binary, width, height, :C422) do
     y_bytes = width * height
     uv_bytes = div(y_bytes, 2)
@@ -362,6 +358,19 @@ defmodule Image.YUV do
 
       _other ->
         {:error, "Could not decode raw YUV data as 4:2:2"}
+    end
+  end
+
+  def decode(binary, width, height, :C420) do
+    y_bytes = width * height
+    uv_bytes = div(y_bytes, 4)
+
+    case binary do
+      <<y::bytes-size(y_bytes), u::bytes-size(uv_bytes), v::bytes-size(uv_bytes)>> ->
+        {:ok, [y, u, v]}
+
+      _other ->
+        {:error, "Could not decode raw YUV data as 4:2:0"}
     end
   end
 
@@ -383,6 +392,9 @@ defmodule Image.YUV do
   end
 
   # Subsample one YUV plane and write it to a binary
+  # Scaling a 1920x1080 band to 4:2:2 (1/2 size in both dimensions)
+  # take about 15ms on an M1 Max Pro. So this is the slowest part
+  # of the subsampling process.
 
   def new_scaled_plane(image, 1.0, 1.0) do
     Vimage.write_to_binary(image)
