@@ -17,6 +17,15 @@ defmodule Image.YUV do
     [1.0,  1.772,     0.0     ],
   ]
 
+  # This are the "Computer RGB to YCbCr"
+  # coefficients
+
+  @rgb_to_bt601 [
+    [65.738, 129.057, 25.064  ],
+    [-37.945, -74.494, 112.439],
+    [112.439, -94.154, -18.285],
+  ]
+
   # See https://mymusing.co/bt-709-yuv-to-rgb-conversion-color/
 
   @bt709_to_rgb [
@@ -25,6 +34,16 @@ defmodule Image.YUV do
     [1.0,  1.8556,    0.0     ],
   ]
 
+  # This are the "Computer RGB to YCbCr"
+  # coefficients
+
+  @rgb_to_bt709 [
+    [46.7428, 157.243, 15.873 ],
+    [-25.765, -86.674, 112.439],
+    [112.439, -102.129, -10.31],
+  ]
+
+  @yuv_to_rgb_offsets [16, 128, 128]
   @valid_encodings [:C444, :C422, :C420]
   @valid_colorspace [:bt601, :bt709]
 
@@ -32,9 +51,14 @@ defmodule Image.YUV do
   Converts the raw YUV data in a `.yuv` file
   into an RGB image.
 
+  The data is assumed, and required to be in:
+
+  * Planar format
+  * 8-bit color depth
+
   ### Arguments
 
-  * `path` is any accessible file system path
+  * `path` is any accessible file system path.
 
   * `width` is the width of the image encoded in
     the YUV data.
@@ -68,6 +92,11 @@ defmodule Image.YUV do
   @doc """
   Converts raw YUV data into an RGB image.
 
+  The data is assumed, and required to be in:
+
+  * Planar format
+  * 8-bit color depth
+
   ### Arguments
 
   * `binary` is raw YUV data as a binary.
@@ -98,6 +127,61 @@ defmodule Image.YUV do
       when encoding in @valid_encodings and colorspace in @valid_colorspace do
     with {:ok, decoded} = decode(binary, width, height, encoding) do
       to_rgb(decoded, width, height, encoding, colorspace)
+    end
+  end
+
+  @doc """
+  Writes an image to a YUV file as raw YUV data.
+
+  It is recommeneded, but not required, that the path
+  name use a `.yuv` suffix.
+
+  ### Arguments
+
+  * `path` is any accessible file system path.
+
+  * `encoding` is one of `:C444`, `:C422` or
+    `:C420`.
+
+  * `colorspace is one of `:bt601` (the default) or
+    `:bt709`.
+
+  ### Returns
+
+  * `:ok` or
+
+  * `{:error, reason}`.
+
+  """
+  def write_to_file(%Vimage{} = image, path, encoding, colorspace \\ :bt601) do
+    with {:ok, binary} <- write_to_binary(image, encoding, colorspace) do
+      File.write(path, binary)
+    end
+  end
+
+  @doc """
+  Writes an image to a YUV raw binary.
+
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0`.
+
+  * `encoding` is one of `:C444`, `:C422` or
+    `:C420`.
+
+  * `colorspace is one of `:bt601` (the default) or
+    `:bt709`.
+
+  ### Returns
+
+  * `{:ok, yuv_binary}` or
+
+  * `{:error, reason}`.
+
+  """
+  def write_to_binary(%Vimage{} = image, encoding, colorspace \\ :bt601) do
+    with {:ok, [y, u, v]} <- to_yuv(image, encoding, colorspace) do
+      {:ok, y <> u <> v}
     end
   end
 
@@ -136,7 +220,7 @@ defmodule Image.YUV do
          {:ok, u} <- new_scaled_image(u, width, height, 1.0, 1.0),
          {:ok, v} <- new_scaled_image(v, width, height, 1.0, 1.0),
          {:ok, image_444} <- Operation.bandjoin([y, u, v]) do
-      to_rgb(image_444 - [16, 128, 128], colorspace)
+      to_rgb(image_444 - @yuv_to_rgb_offsets, colorspace)
     end
   end
 
@@ -147,7 +231,7 @@ defmodule Image.YUV do
          {:ok, u} <- new_scaled_image(u, width, height, 2.0, 1.0),
          {:ok, v} <- new_scaled_image(v, width, height, 2.0, 1.0),
          {:ok, image_444} <- Operation.bandjoin([y, u, v]) do
-      to_rgb(image_444 - [16, 128, 128], colorspace)
+      to_rgb(image_444 - @yuv_to_rgb_offsets, colorspace)
     end
   end
 
@@ -158,7 +242,84 @@ defmodule Image.YUV do
          {:ok, u} <- new_scaled_image(u, width, height, 2.0, 2.0),
          {:ok, v} <- new_scaled_image(v, width, height, 2.0, 2.0),
          {:ok, image_444} <- Operation.bandjoin([y, u, v]) do
-      to_rgb(image_444 - [16, 128, 128], colorspace)
+      to_rgb(image_444 - @yuv_to_rgb_offsets, colorspace)
+    end
+  end
+
+  @doc """
+  Converts an image to raw YUV data as
+  a binary.
+
+  ### Arguments
+
+  * `image` is any `t:Vimage.t/0`.
+
+  * `encoding` is one of `:C444`, `:C422` or
+    `:C420`.
+
+  * `colorspace is one of `:bt601` (the default) or
+    `:bt709`.
+
+  ### Returns
+
+  * `{:ok, [y, u, v]}` or
+
+  * `{:error, reason}`.
+
+  """
+  def to_yuv(image, encoding, colorspace \\ :bt601)
+
+  def to_yuv(%Vimage{} = image, encoding, :bt601) when encoding in @valid_encodings do
+    use Image.Math
+
+    with {:ok, transform} <- Vimage.new_from_list(@rgb_to_bt601),
+         {:ok, divided} <- Image.Math.divide(transform, 256),
+         {:ok, float} <- Operation.recomb(image, divided),
+         {:ok, yuv} <- Image.cast(float + @yuv_to_rgb_offsets, {:u, 8}) do
+      encode(yuv, encoding)
+    end
+  end
+
+  def to_yuv(%Vimage{} = image, encoding, :bt709) when encoding in @valid_encodings do
+    use Image.Math
+
+    with {:ok, transform} <- Vimage.new_from_list(@rgb_to_bt709),
+         {:ok, divided} <- Image.Math.divide(transform, 256),
+         {:ok, float} <- Operation.recomb(image, divided),
+         {:ok, yuv} <- Image.cast(float + @yuv_to_rgb_offsets, {:u, 8}) do
+      encode(yuv, encoding)
+    end
+  end
+
+  @doc """
+  Take an image in a YUV colorspace and converts it to
+  raw YUV data a list of the three planes, each in
+  binary format.
+
+  The data is always writeen in a planar format.
+
+  """
+  def encode(%Vimage{} = image, :C444) do
+    with {:ok, y} <- new_scaled_plane(image[0], 1.0, 1.0),
+         {:ok, u} <- new_scaled_plane(image[1], 1.0, 1.0),
+         {:ok, v} <- new_scaled_plane(image[2], 1.0, 1.0) do
+      {:ok, [y, u, v]}
+    end
+  end
+
+  def encode(%Vimage{} = image, :C422) do
+    with {:ok, y} <- new_scaled_plane(image[0], 1.0, 1.0),
+         {:ok, u} <- new_scaled_plane(image[1], 0.5, 1.0),
+         {:ok, v} <- new_scaled_plane(image[2], 0.5, 1.0) do
+      {:ok, [y, u, v]}
+    end
+  end
+
+  def encode(%Vimage{} = image, :C420) do
+    with {:ok, y} <- new_scaled_plane(image[0], 1.0, 1.0),
+         {:ok, u} <- new_scaled_plane(image[1], 0.5, 0.5),
+         {:ok, v} <- new_scaled_plane(image[2], 0.5, 0.5) do
+      {:ok, [y, u, v]}
     end
   end
 
@@ -218,6 +379,18 @@ defmodule Image.YUV do
 
     with {:ok, image} <- Vimage.new_from_binary(data, width, height, 1, :VIPS_FORMAT_UCHAR) do
       Operation.resize(image, x_scale, vscale: y_scale, kernel: :VIPS_KERNEL_LINEAR)
+    end
+  end
+
+  # Subsample one YUV plane and write it to a binary
+
+  def new_scaled_plane(image, 1.0, 1.0) do
+    Vimage.write_to_binary(image)
+  end
+
+  def new_scaled_plane(image, x_scale, y_scale) do
+    with {:ok, resized} <- Image.resize(image, x_scale, vertical_scale: y_scale) do
+      Vimage.write_to_binary(resized)
     end
   end
 end
