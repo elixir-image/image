@@ -57,6 +57,8 @@ defmodule Image.YUV do
     [112.439, -102.129, -10.31],
   ]
 
+  # Lookup maps
+
   @to_yuv %{
     bt601: @rgb_to_bt601,
     bt708: @rgb_to_bt709
@@ -369,28 +371,27 @@ defmodule Image.YUV do
     {:ok, yuv_list()} | {:errpr, Image.error_message()}
 
   def encode(%Vimage{} = image, :C444) do
-    with [r, g, b] <- Image.split_bands(image),
-         {:ok, y} <- new_scaled_plane(r, 1.0, 1.0),
-         {:ok, u} <- new_scaled_plane(g, 1.0, 1.0),
-         {:ok, v} <- new_scaled_plane(b, 1.0, 1.0) do
+    with {:ok, y} = Vimage.write_to_binary(image[0]),
+         {:ok, u} = Vimage.write_to_binary(image[1]),
+         {:ok, v} = Vimage.write_to_binary(image[2]) do
       {:ok, [y, u, v]}
     end
   end
 
   def encode(%Vimage{} = image, :C422) do
-    with [r, g, b] <- Image.split_bands(image),
-         {:ok, y} <- new_scaled_plane(r, 1.0, 1.0),
-         {:ok, u} <- new_scaled_plane(g, 0.5, 1.0),
-         {:ok, v} <- new_scaled_plane(b, 0.5, 1.0) do
+    with {:ok, subsampled} <- Operation.subsample(image, 2, 1) do
+      {:ok, y} = Vimage.write_to_binary(image[0])
+      {:ok, u} = Vimage.write_to_binary(subsampled[1])
+      {:ok, v} = Vimage.write_to_binary(subsampled[2])
       {:ok, [y, u, v]}
     end
   end
 
   def encode(%Vimage{} = image, :C420) do
-    with [r, g, b] <- Image.split_bands(image),
-         {:ok, y} <- new_scaled_plane(r, 1.0, 1.0),
-         {:ok, u} <- new_scaled_plane(g, 0.5, 0.5),
-         {:ok, v} <- new_scaled_plane(b, 0.5, 0.5) do
+    with {:ok, subsampled} <- Operation.subsample(image, 2, 2) do
+      {:ok, y} = Vimage.write_to_binary(image[0])
+      {:ok, u} = Vimage.write_to_binary(subsampled[1])
+      {:ok, v} = Vimage.write_to_binary(subsampled[2])
       {:ok, [y, u, v]}
     end
   end
@@ -472,18 +473,9 @@ defmodule Image.YUV do
     end
   end
 
-  # Subsample one YUV plane and write it to a binary
-  # Scaling a 1920x1080 band to 4:2:2 (1/2 size in both dimensions)
-  # take about 15ms on an M1 Max Pro. So this is the slowest part
-  # of the subsampling process.
-
-  defp new_scaled_plane(image, 1.0, 1.0) do
-    Vimage.write_to_binary(image)
-  end
-
-  defp new_scaled_plane(image, x_scale, y_scale) do
-    with {:ok, resized} <- Image.resize(image, x_scale, vertical_scale: y_scale) do
-      Vimage.write_to_binary(resized)
-    end
-  end
+  # B = A.copy() # 4:2:0
+  # B[1::2, :] = B[::2, :]
+  # # Vertically, every second element equals to element above itself.
+  # B[:, 1::2] = B[:, ::2]
+  # # Horizontally, every second element equals to the element on its left side.
 end

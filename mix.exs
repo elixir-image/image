@@ -74,6 +74,7 @@ defmodule Image.MixProject do
       if(otp_release() >= 24,
         do: [
           {:nx, "~> 0.5", optional: true},
+          {:nx_image, "~> 0.1", optional: true},
           {:bumblebee, "~> 0.3", optional: true},
           {:exla, "~> 0.5", optional: true},
           {:rustler, "> 0.0.0", optional: true}
