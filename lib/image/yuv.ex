@@ -340,7 +340,8 @@ defmodule Image.YUV do
          {:ok, recombed} <- Operation.recomb(image, divided),
          {:ok, offset} <- Image.Math.add(recombed, @yuv_to_rgb_offsets),
          {:ok, yuv} <- Image.cast(offset, {:u, 8}) do
-      encode(yuv, encoding)
+           Vix.Vips.Image.write_to_binary(yuv)
+      #encode(yuv, encoding)
     end
   end
 
