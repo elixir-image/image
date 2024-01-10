@@ -4,6 +4,9 @@ raw_yuv_file = Path.expand("./test/support/images/image.yuv")
 {:ok, image} = Image.YUV.new_from_binary(binary, 1920, 1080, :C420, :bt601)
 one_band = image[0]
 
+# Red image
+{:ok, red} = Image.new(1920, 1080, color: :red)
+
 Benchee.run(
   %{
     "Write full image to binary" => fn ->
@@ -11,8 +14,13 @@ Benchee.run(
     end,
 
     "Write one band to binary" => fn ->
-      {:ok, _} = Vix.Vips.Image.write_to_binary(image)
+      {:ok, _} = Vix.Vips.Image.write_to_binary(one_band)
+    end,
+
+    "Write a generated image" => fn ->
+      {:ok, _} = Vix.Vips.Image.write_to_binary(red)
     end
+
   },
   time: 20,
   memory_time: 2
