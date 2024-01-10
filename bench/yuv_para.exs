@@ -3,13 +3,13 @@ raw_yuv_file = Path.expand("./test/support/images/image.yuv")
 
 fun = fn ->
   {:ok, rgb} = Image.YUV.new_from_binary(yuv, 1920, 1080, :C420)
-  {:ok, yuv} = Image.YUV.write_to_binary(rgb, :C420)
+  {:ok, _yuv} = Image.YUV.write_to_binary(rgb, :C420)
 end
 
 Benchee.run(%{
     convert: fn ->
       {:ok, rgb} = Image.YUV.new_from_binary(yuv, 1920, 1080, :C420)
-      {:ok, yuv} = Image.YUV.write_to_binary(rgb, :C420)
+      {:ok, _yuv} = Image.YUV.write_to_binary(rgb, :C420)
     end,
     convert_20: fn ->
       [
