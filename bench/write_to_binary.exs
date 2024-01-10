@@ -7,6 +7,11 @@ one_band = image[0]
 # Red image
 {:ok, red} = Image.new(1920, 1080, color: :red)
 
+# Cache results
+ {:ok, _} = Vix.Vips.Image.write_to_binary(image)
+ {:ok, _} = Vix.Vips.Image.write_to_binary(one_band)
+ {:ok, _} = Vix.Vips.Image.write_to_binary(red)
+
 Benchee.run(
   %{
     "Write full image to binary" => fn ->
