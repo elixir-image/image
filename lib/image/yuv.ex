@@ -340,8 +340,7 @@ defmodule Image.YUV do
          {:ok, recombed} <- Operation.recomb(image, divided),
          {:ok, offset} <- Image.Math.add(recombed, @yuv_to_rgb_offsets),
          {:ok, yuv} <- Image.cast(offset, {:u, 8}) do
-           Vix.Vips.Image.write_to_binary(yuv)
-      #encode(yuv, encoding)
+      encode(yuv, encoding)
     end
   end
 
@@ -473,10 +472,4 @@ defmodule Image.YUV do
       Operation.resize(image, x_scale, vscale: y_scale, kernel: :VIPS_KERNEL_LINEAR)
     end
   end
-
-  # B = A.copy() # 4:2:0
-  # B[1::2, :] = B[::2, :]
-  # # Vertically, every second element equals to element above itself.
-  # B[:, 1::2] = B[:, ::2]
-  # # Horizontally, every second element equals to the element on its left side.
 end

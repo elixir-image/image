@@ -1,29 +1,37 @@
 # THis is a 1920 x 1080 image
-raw_yuv_file = Path.expand("./test/support/images/image.yuv")
-{:ok, binary} = File.read(raw_yuv_file)
-{:ok, image} = Image.YUV.new_from_binary(binary, 1920, 1080, :C420, :bt601)
-one_band = image[0]
+video_image_tif = Image.open!(Path.expand("./test/support/images/video_image.tif"))
 
-# Red image
-{:ok, red} = Image.new(1920, 1080, color: :red)
+video_image_jpg = Image.open!(Path.expand("./test/support/images/video_image.jpg"))
 
-# Cache results
- {:ok, _} = Vix.Vips.Image.write_to_binary(image)
- {:ok, _} = Vix.Vips.Image.write_to_binary(one_band)
- {:ok, _} = Vix.Vips.Image.write_to_binary(red)
+{:ok, video_image_yuv} =
+  Image.YUV.new_from_file(Path.expand("./test/support/images/image.yuv"), 1920, 1080, :C420, :bt601)
+
+one_band = video_image_tif[0]
+
+# Black image
+{:ok, black} = Vix.Vips.Operation.black(1920, 1080, bands: 3)
+
 
 Benchee.run(
   %{
-    "Write full image to binary" => fn ->
-      {:ok, _} = Vix.Vips.Image.write_to_binary(image)
+    "Write full TIF image to binary" => fn ->
+      {:ok, _} = Vix.Vips.Image.write_to_binary(video_image_tif)
+    end,
+
+    "Write full JPG image to binary" => fn ->
+      {:ok, _} = Vix.Vips.Image.write_to_binary(video_image_jpg)
+    end,
+
+    "Write full YUV image to binary" => fn ->
+      {:ok, _} = Vix.Vips.Image.write_to_binary(video_image_yuv)
     end,
 
     "Write one band to binary" => fn ->
       {:ok, _} = Vix.Vips.Image.write_to_binary(one_band)
     end,
 
-    "Write a generated image" => fn ->
-      {:ok, _} = Vix.Vips.Image.write_to_binary(red)
+    "Write a generated black image" => fn ->
+      {:ok, _} = Vix.Vips.Image.write_to_binary(black)
     end
 
   },
