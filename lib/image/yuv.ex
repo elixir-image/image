@@ -108,7 +108,7 @@ defmodule Image.YUV do
   * `encoding` is one of `:C444`, `:C422` or
     `:C420`.
 
-  * `colorspace is one of `:bt601` (the default) or
+  * `colorspace` is one of `:bt601` (the default) or
     `:bt709`.
 
   ### Returns
@@ -151,7 +151,7 @@ defmodule Image.YUV do
   * `encoding` is one of `:C444`, `:C422` or
     `:C420`.
 
-  * `colorspace is one of `:bt601` (the default) or
+  * `colorspace` is one of `:bt601` (the default) or
     `:bt709`.
 
   ### Returns
@@ -186,7 +186,7 @@ defmodule Image.YUV do
   * `encoding` is one of `:C444`, `:C422` or
     `:C420`.
 
-  * `colorspace is one of `:bt601` (the default) or
+  * `colorspace` is one of `:bt601` (the default) or
     `:bt709`.
 
   ### Returns
@@ -217,7 +217,7 @@ defmodule Image.YUV do
   * `encoding` is one of `:C444`, `:C422` or
     `:C420`.
 
-  * `colorspace is one of `:bt601` (the default) or
+  * `colorspace` is one of `:bt601` (the default) or
     `:bt709`.
 
   ### Returns
@@ -248,7 +248,7 @@ defmodule Image.YUV do
     colorspace such as that returned from `Image.YUV.new_from_file/5`
     or `Image.YUV.new_from_binary/5`.
 
-  * `colorspace is one of `:bt601` (the default) or
+  * `colorspace` is one of `:bt601` (the default) or
     `:bt709` that represents the colorspace of `image` before
     conversion.
 
@@ -284,7 +284,7 @@ defmodule Image.YUV do
   * `encoding` is one of `:C444`, `:C422` or
     `:C420` representing how `yuv` is encoded.
 
-  * `colorspace is one of `:bt601` (the default) or
+  * `colorspace` is one of `:bt601` (the default) or
     `:bt709` that represents the colorspace of `image` before
     conversion.
 
@@ -344,7 +344,7 @@ defmodule Image.YUV do
   * `encoding` is one of `:C444`, `:C422` or
     `:C420`.
 
-  * `colorspace is one of `:bt601` (the default) or
+  * `colorspace` is one of `:bt601` (the default) or
     `:bt709`.
 
   ### Returns
