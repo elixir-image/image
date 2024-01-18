@@ -1,7 +1,20 @@
 defmodule Image.YUV do
   @moduledoc """
-  Functions to convert from/to YUV encoding and colorspaces
-  to RGB images.
+  Functions to convert from/to YUV (YCbCr) encoding and BT.601/BT.709
+  colorspaces and sRGB images.
+
+  The following YUV ([YCbCr](https://en.wikipedia.org/wiki/YCbCr)) binary
+  formats are supported:
+
+  * Planar frame types only (not packed frames).
+
+  * `4:4:4`, `4:2:2` and `4:2:0` encodings.
+
+  * [BT.601](https://en.wikipedia.org/wiki/Rec._601) and
+    [BT.709](https://en.wikipedia.org/wiki/Rec._709) colorspaces.
+
+  Performance profiling indicates this implementation is not suitable
+  for real time frame processing of YUV images.
 
   """
 
@@ -61,12 +74,12 @@ defmodule Image.YUV do
 
   @to_yuv %{
     bt601: @rgb_to_bt601,
-    bt708: @rgb_to_bt709
+    bt709: @rgb_to_bt709
   }
 
   @to_rgb %{
     bt601: @bt601_to_rgb,
-    bt708: @bt709_to_rgb
+    bt709: @bt709_to_rgb
   }
 
   @yuv_to_rgb_offsets [16.0, 128.0, 128.0]
@@ -105,6 +118,8 @@ defmodule Image.YUV do
   * `{:error, reason}`.
 
   """
+  @doc since: "0.41.0"
+
   @spec new_from_file(path :: Path.t, width :: pos_integer(), height :: pos_integer(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
     {:ok, Vimage.t()} | {:error, Image.error_message()}
 
@@ -146,6 +161,8 @@ defmodule Image.YUV do
   * `{:error, reason}`.
 
   """
+  @doc since: "0.41.0"
+
   @spec new_from_binary(binary :: binary(), width :: pos_integer(), height :: pos_integer(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
     {:ok, Vimage.t()} | {:error, Image.error_message()}
 
@@ -179,6 +196,8 @@ defmodule Image.YUV do
   * `{:error, reason}`.
 
   """
+  @doc since: "0.41.0"
+
   @spec write_to_file(image :: Vimage.t(), path :: Path.t(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
     :ok | {:error, Image.error_message()}
 
@@ -208,6 +227,8 @@ defmodule Image.YUV do
   * `{:error, reason}`.
 
   """
+  @doc since: "0.41.0"
+
   @spec write_to_binary(image :: Vimage.t(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
     {:ok, binary()} | {:error, Image.error_message()}
 
@@ -233,6 +254,7 @@ defmodule Image.YUV do
 
   """
   # See https://github.com/libvips/libvips/discussions/2561
+  @doc since: "0.41.0"
 
   @spec to_rgb(image :: Vimage.t(), colorspace :: yuv_colorspace()) ::
     {:ok, Vimage.t()} | {:error, Image.error_message()}
@@ -273,6 +295,8 @@ defmodule Image.YUV do
   * `{:error, reason}`.
 
   """
+  @doc since: "0.41.0"
+
   @spec to_rgb(yuv :: yuv_list(), width :: pos_integer(), height :: pos_integer(), encoding :: yuv_encoding, colorspace :: yuv_colorspace()) ::
     {:ok, Vimage.t()} | {:error, Image.error_message()}
 
@@ -330,6 +354,11 @@ defmodule Image.YUV do
   * `{:error, reason}`.
 
   """
+  @doc since: "0.41.0"
+
+  @spec to_yuv(image :: Vimage.t(), encoding :: yuv_encoding(), colorspace: yuv_colorspace()) ::
+    {:ok, yuv_list()} | {:error, Image.error_mesasge()}
+
   def to_yuv(image, encoding, colorspace \\ :bt601)
 
   def to_yuv(%Vimage{} = image, encoding, colorspace)
@@ -367,6 +396,8 @@ defmodule Image.YUV do
   * `{:error, Image.error_message()}`.
 
   """
+  @doc since: "0.41.0"
+
   @spec encode(image :: Vimage.t(), encoding :: yuv_encoding()) ::
     {:ok, yuv_list()} | {:errpr, Image.error_message()}
 
@@ -418,6 +449,8 @@ defmodule Image.YUV do
   * `{:error, reason}`.
 
   """
+  @doc since: "0.41.0"
+
   def decode(binary, width, height, :C444) do
     y_bytes = width * height
 
