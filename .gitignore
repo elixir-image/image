@@ -25,6 +25,9 @@ image-*.tar
 # Temporary files, for example, from tests.
 /tmp/
 
+# Validation error images
+/test/support/images/did_not_match
+
 # Mac metadata
 .DS_Store
 

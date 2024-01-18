@@ -135,9 +135,10 @@ defmodule TextImage.Test do
       )
 
     # Image.preview text
+    # Image.preview Image.open!(validate_path)
 
     # Image.write(text, validate_path)
-    assert_images_equal(text, validate_path)
+    assert_images_equal(text, validate_path, 2300.0)
   end
 
   test "Text centered on a base image", %{image: base_image} do

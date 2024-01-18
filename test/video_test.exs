@@ -9,9 +9,7 @@ defmodule Image.VideoTest do
   test "Extract a frame from a video" do
     validate_path = validate_path("video/video_sample_frame_0.png")
 
-    # :avfoundation is only on Mac OS so this test isn't appropriate
-    # across operating systems
-    {:ok, video} = Image.Video.open("./test/support/video/video_sample.mp4", backend: :avfoundation)
+    {:ok, video} = Image.Video.open("./test/support/video/video_sample.mp4")
     {:ok, image} = Image.Video.image_from_video(video, millisecond: 0)
 
     # Image.write(image, validate_path)

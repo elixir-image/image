@@ -356,8 +356,8 @@ defmodule Image.YUV do
   """
   @doc since: "0.41.0"
 
-  @spec to_yuv(image :: Vimage.t(), encoding :: yuv_encoding(), colorspace: yuv_colorspace()) ::
-    {:ok, yuv_list()} | {:error, Image.error_mesasge()}
+  @spec to_yuv(image :: Vimage.t(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
+    {:ok, yuv_list()} | {:error, Image.error_message()}
 
   def to_yuv(image, encoding, colorspace \\ :bt601)
 
