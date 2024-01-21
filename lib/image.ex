@@ -5290,6 +5290,12 @@ defmodule Image do
   * `{:error, reason}`
 
   """
+
+  # See also the discussions at:
+  #  https://github.com/libvips/libvips/discussions/3108
+  #  https://github.com/libvips/libvips/discussions/2123
+  #  https://github.com/libvips/ruby-vips/issues/159
+
   @doc subject: "Operation", since: "0.23.0"
 
   @spec dilate(image :: Vimage.t(), pixels :: pos_integer) ::
