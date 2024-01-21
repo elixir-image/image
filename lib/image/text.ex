@@ -390,7 +390,7 @@ defmodule Image.Text do
       {:ok, text_layer} = render_text(string, options)
 
       if transparent_text?(options) do
-        Image.convert_to_mask(text_layer)
+        Image.convert_alpha_to_mask(text_layer)
       else
         {:ok, text_layer}
       end

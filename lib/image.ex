@@ -8971,11 +8971,11 @@ defmodule Image do
   end
 
   @doc """
-  Convert an image into a mask.
+  Convert an image alpha band into a mask.
 
-  Takes an image, extracts its alpha channel
+  Takes an image, extracts its alpha band
   which holds the opacity information and
-  inverts the content.
+  inverts the content to produce a mask.
 
   ### Arguments
 
@@ -8990,8 +8990,8 @@ defmodule Image do
   """
   @doc subject: "Mask"
 
-  @spec convert_to_mask(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def convert_to_mask(%Vimage{} = image) do
+  @spec convert_alpha_to_mask(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def convert_alpha_to_mask(%Vimage{} = image) do
     if alpha_band = alpha_band(image) do
       {:ok, mask} = Operation.extract_band(image, alpha_band)
       Operation.invert(mask)
@@ -9000,13 +9000,18 @@ defmodule Image do
     end
   end
 
+  @deprecated "Use convert_alpha_to_mask/1 instead"
+  def convert_to_mask(%Vimage{} = image) do
+    convert_alpha_to_mask(image)
+  end
+
   @doc """
-  Convert an image into a mask returning
+  Convert an image alpha band into a mask returning
   an image or raising an exception.
 
-  Takes an image, extracts its alpha channel
+  Takes an image, extracts its alpha band
   which holds the opacity information and
-  inverts the content.
+  inverts the content to produce a mask.
 
   ### Arguments
 
@@ -9021,12 +9026,17 @@ defmodule Image do
   """
   @doc subject: "Mask"
 
-  @spec convert_to_mask!(Vimage.t()) :: Vimage.t() | no_return()
-  def convert_to_mask!(%Vimage{} = image) do
-    case convert_to_mask(image) do
+  @spec convert_alpha_to_mask!(Vimage.t()) :: Vimage.t() | no_return()
+  def convert_alpha_to_mask!(%Vimage{} = image) do
+    case convert_alpha_to_mask(image) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
+  end
+
+  @deprecated "Use convert_alpha_to_mask!/1 instead"
+  def convert_to_mask!(%Vimage{} = image) do
+    convert_alpha_to_mask!(image)
   end
 
   @doc """
