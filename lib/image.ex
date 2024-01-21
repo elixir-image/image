@@ -9001,6 +9001,7 @@ defmodule Image do
   end
 
   @deprecated "Use convert_alpha_to_mask/1 instead"
+  @doc false
   def convert_to_mask(%Vimage{} = image) do
     convert_alpha_to_mask(image)
   end
@@ -9035,6 +9036,7 @@ defmodule Image do
   end
 
   @deprecated "Use convert_alpha_to_mask!/1 instead"
+  @doc false
   def convert_to_mask!(%Vimage{} = image) do
     convert_alpha_to_mask!(image)
   end
