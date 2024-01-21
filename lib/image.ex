@@ -5259,8 +5259,8 @@ defmodule Image do
   Dilate an image mask, adding a pixels to the
   edge of the mask.
 
-  Mask is used in the sense of an image
-  on a transparent background. The results on
+  Mask is used in the sense of an image, potentially
+  wuth an alpha band. The results on
   other image types is undefined.
 
   The added pixels are the same color as the edge
@@ -5278,7 +5278,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
   * `pixels` is a positive integer number of
     pixels to dilate. The default is `1`.
@@ -5289,9 +5289,31 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Notes
+
+  * Dilate works for any non-complex image type, with any
+    number of bands. The input is dilated by copying
+    edge pixels before performing the operation so that
+    the output image has the same size as the input.
+
+  * Edge pixels in the output image are only
+    approximate.
+
+  * The dilation is implemented as a [rank filter](https://www.sciencedirect.com/science/article/abs/pii/S0031320301000474?via%3Dihub).
+    The image mask is dilated one pixel at a time. Therefore
+    execution with large value of `pixels` is expected to
+    be slow.
+
   """
 
+  # A rank filter is used since it will operate on a
+  # greyscale image such as a mask.
+
+  # The libvips morphological operators work on binary
+  # images only (pixel is either black or white).
+
   # See also the discussions at:
+  #  https://github.com/libvips/libvips/discussions/2345
   #  https://github.com/libvips/libvips/discussions/3108
   #  https://github.com/libvips/libvips/discussions/2123
   #  https://github.com/libvips/ruby-vips/issues/159
@@ -5314,8 +5336,8 @@ defmodule Image do
   Dilate an image mask, adding a pixels to the
   edge of the mask or raising an exception.
 
-  Mask is used in the sense of an image
-  on a transparent background. The results on
+  Mask is used in the sense of an image, potentially
+  wuth an alpha band. The results on
   other image types is undefined.
 
   The added pixels are the same color as the edge
@@ -5333,7 +5355,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
   * `pixels` is a positive integer number of
     pixels to dilate. The default is `1`.
@@ -5342,7 +5364,22 @@ defmodule Image do
 
   * `dilated_mask` or
 
-  * raises an exception
+  * raises an exception.
+
+  ### Notes
+
+  * Dilate works for any non-complex image type, with any
+    number of bands. The input is dilated by copying
+    edge pixels before performing the operation so that
+    the output image has the same size as the input.
+
+  * Edge pixels in the output image are only
+    approximate.
+
+  * The dilation is implemented as a [rank filter](https://www.sciencedirect.com/science/article/abs/pii/S0031320301000474?via%3Dihub).
+    The image mask is dilated one pixel at a time. Therefore
+    execution with large value of `pixels` is expected to
+    be slow.
 
   """
   @doc subject: "Operation", since: "0.23.0"
@@ -5359,23 +5396,13 @@ defmodule Image do
   Erode an image mask, removing pixels from the
   edge of the mask.
 
-  Mask is used in the sense of an image
-  on a transparent background. The results on
+  Mask is used in the sense of an image, potentially
+  wuth an alpha band. The results on
   other image types is undefined.
-
-  ### Note
-
-  Erode works for any non-complex image type, with any
-  number of bands. The input is expanded by copying
-  edge pixels before performing the operation so that
-  the output image has the same size as the input.
-
-  Edge pixels in the output image are therefore only
-  approximate.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
   * `pixels` is a positive integer number of
     pixels to dilate. The default is `1`.
@@ -5385,6 +5412,21 @@ defmodule Image do
   * `{:ok, eroded_mask}` or
 
   * `{:error, reason}`
+
+  ### Notes
+
+  * Erode works for any non-complex image type, with any
+    number of bands. The input is eroded by copying
+    edge pixels before performing the operation so that
+    the output image has the same size as the input.
+
+  * Edge pixels in the output image are only
+    approximate.
+
+  * The erosion is implemented as a [rank filter](https://www.sciencedirect.com/science/article/abs/pii/S0031320301000474?via%3Dihub).
+    The image mask is eroded one pixel at a time. Therefore
+    execution with large value of `pixels` is expected to
+    be slow.
 
   """
   @doc subject: "Operation", since: "0.23.0"
@@ -5405,23 +5447,13 @@ defmodule Image do
   Erode an image mask, removing pixels from the
   edge of the mask or raising an exception.
 
-  Mask is used in the sense of an image
-  on a transparent background. The results on
+  Mask is used in the sense of an image, potentially
+  wuth an alpha band. The results on
   other image types is undefined.
-
-  ### Note
-
-  Erode works for any non-complex image type, with any
-  number of bands. The input is expanded by copying
-  edge pixels before performing the operation so that
-  the output image has the same size as the input.
-
-  Edge pixels in the output image are therefore only
-  approximate.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
   * `pixels` is a positive integer number of
     pixels to dilate. The default is `1`.
@@ -5431,6 +5463,21 @@ defmodule Image do
   * `eroded_mask` or
 
   * raises an exception
+
+  ### Notes
+
+  * Erode works for any non-complex image type, with any
+    number of bands. The input is eroded by copying
+    edge pixels before performing the operation so that
+    the output image has the same size as the input.
+
+  * Edge pixels in the output image are only
+    approximate.
+
+  * The erosion is implemented as a [rank filter](https://www.sciencedirect.com/science/article/abs/pii/S0031320301000474?via%3Dihub).
+    The image mask is eroded one pixel at a time. Therefore
+    execution with large value of `pixels` is expected to
+    be slow.
 
   """
   @doc subject: "Operation", since: "0.23.0"
