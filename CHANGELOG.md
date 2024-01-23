@@ -2,7 +2,7 @@
 
 ## Image 0.42.0
 
-This is the changelog for Image version 0.42.0 released on ____, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.42.0 released on January 23rd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Deprecations
 
