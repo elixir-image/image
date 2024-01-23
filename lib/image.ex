@@ -7053,6 +7053,75 @@ defmodule Image do
   end
 
   @doc """
+  Inverts an image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, inverted_image}` or
+
+  * `{:error, reason}`.
+
+  ### Notes
+
+  * For unsigned formats, this operation calculates
+    `(max_value - pixel_value)`, eg. `(255 - pixel_value)` for
+    typical 8-bit sRGB images.
+
+  * For signed and float formats, this operation calculates
+    `(-1 * pixel_value)`.
+
+  * For complex images, only the real part is inverted.
+
+  """
+  @doc since: "0.42.0"
+  @doc subject: "operation"
+
+  @spec invert(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def invert(%Vimage{} = image) do
+    Vix.Vips.Operation.invert(image)
+  end
+
+  @doc """
+  Inverts an image or raises an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `inverted_image` or
+
+  * raises an exception.
+
+  ### Notes
+
+  * For unsigned formats, this operation calculates
+    `(max_value - pixel_value)`, eg. `(255 - pixel_value)` for
+    typical 8-bit sRGB images.
+
+  * For signed and float formats, this operation calculates
+    `(-1 * pixel_value)`.
+
+  * For complex images, only the real part is inverted.
+
+  """
+  @doc since: "0.42.0"
+  @doc subject: "operation"
+
+  @spec invert!(image :: Vimage.t()) :: Vimage.t() | no_return()
+  def invert!(%Vimage{} = image) do
+    case invert(image) do
+      {:ok, inverted} -> inverted
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Transforms an image using brightness, saturation,
   hue rotation, and lightness.
 
