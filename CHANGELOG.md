@@ -4,21 +4,25 @@
 
 This is the changelog for Image version 0.42.0 released on ____, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
-### Breaking changes
+### Deprecations
 
 * `Image.interpretation/0` deprecated in favour of `Image.colorspace/0`. This is more orthogonal to the `Image.to_colorspace/2` call and more in line with common image lexicons.
 
 * `Image.convert_to_mask/1` is deprecated in favour of `Image.covert_alpha_to_mask/1` which is more descriptive of the functions purpose.
 
+* `Image.type/1` is deprecated in favour of `Image.band_format/1`. This function name expresses clearer intent.
+
 ### Bug Fixes
 
-* Fix `:rbg` colorspace to the correct name `:rgb`.
+* Fix `:rbg` colorspace to be the correct name of `:rgb`.
 
 ### Enhancements
 
 * Documentation updates for `Image.dilate/2` and `Image.erode/2`.
 
 * Add `Image.cast!/2` to mirror `Image.cast/2`.
+
+* Add `Image.invert/1` and `Image.invert!/2` to invert an image.
 
 ## Image 0.41.0
 

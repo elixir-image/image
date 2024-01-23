@@ -3788,33 +3788,12 @@ defmodule Image do
     colorspace(image)
   end
 
-  @doc """
-  Returns the data type of the image pixels.
-
-  ### Arguments
-
-  * `image` is any `t:Vix.Vips.Image.t/0`.
-
-  ### Returns
-
-  * The image type as a tuple in the same
-    format as `t:Nx.Type.t/0`. For example
-    `{:u, 8}` for a common `:srgb` image.
-
-  ### Example
-
-      iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
-      iex> Image.type(image)
-      {:ok, {:u, 8}}
-
-  """
-  @dialyzer {:nowarn_function, {:type, 1}}
-
-  @doc subject: "Image info", since: "0.9.0"
+  @deprecated "Use Image.band_format/1"
+  @doc false
 
   @spec type(image :: Vimage.t()) :: Image.BandFormat.t()
   def type(%Vimage{} = image) do
-    Image.BandFormat.nx_format(image)
+    band_format(image)
   end
 
   @doc """
