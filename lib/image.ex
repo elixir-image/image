@@ -3744,22 +3744,22 @@ defmodule Image do
   end
 
   @doc """
-  Returns the image interpretation.
+  Returns the image colorspace.
 
-  The interpretation is how `Image` understands
-  the image date. For example, `:srgb`, `:cmyk` or
+  The colorspace is how `Image` understands
+  the image data. For example, `:srgb`, `:cmyk` or
   `:bw`.
 
   For most common web applications, the
-  interpretation will be `:srgb`.
+  colorspace will be `:srgb`.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
-  * The image interpretation as an atom.
+  * The image colorspace as an atom.
 
   ### Notes
 
@@ -3768,17 +3768,24 @@ defmodule Image do
   ### Example
 
       iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
-      iex> Image.interpretation(image)
+      iex> Image.colorspace(image)
       :srgb
 
   """
   @doc subject: "Image info", since: "0.9.0"
 
-  @spec interpretation(image :: Vimage.t()) :: Image.Interpretation.t()
-  def interpretation(%Vimage{} = image) do
+  @spec colorspace(image :: Vimage.t()) :: Image.Interpretation.t()
+  def colorspace(%Vimage{} = image) do
     image
     |> Vix.Vips.Image.interpretation()
     |> Image.Interpretation.decode_interpretation()
+  end
+
+  @deprecated "Use Image.colorspace/0 instead"
+  @doc false
+
+  def interpretation(%Vimage{} = image) do
+    colorspace(image)
   end
 
   @doc """
@@ -3786,7 +3793,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
@@ -4815,7 +4822,7 @@ defmodule Image do
     * `:mirror` means the generated pixels are reflected tiles of
       the base image.
     * `:background` means the generated pixels are the `:background_color`
-      color set in `options`. This is the default is a `background_color`
+      color set in `options`. This is the default if a `background_color`
       is specified.
 
   ### Returns
@@ -5266,16 +5273,6 @@ defmodule Image do
   The added pixels are the same color as the edge
   pixels in the mask.
 
-  ### Note
-
-  Dilate works for any non-complex image type, with any
-  number of bands. The input is expanded by copying
-  edge pixels before performing the operation so that
-  the output image has the same size as the input.
-
-  Edge pixels in the output image are therefore only
-  approximate.
-
   ### Arguments
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
@@ -5342,16 +5339,6 @@ defmodule Image do
 
   The added pixels are the same color as the edge
   pixels in the mask.
-
-  ### Note
-
-  Dilate works for any non-complex image type, with any
-  number of bands. The input is expanded by copying
-  edge pixels before performing the operation so that
-  the output image has the same size as the input.
-
-  Edge pixels in the output image are therefore only
-  approximate.
 
   ### Arguments
 
@@ -9202,6 +9189,38 @@ defmodule Image do
   def cast(%Vimage{} = image, band_format) do
     with {:ok, band_format} <- BandFormat.validate(band_format) do
       Operation.cast(image, band_format)
+    end
+  end
+
+  @doc """
+  Casts an image from one band format to another or
+  raises an exception.
+
+  The band format is the numeric type of each pixel.
+  In the common case of `sRGB` images, the format is
+  `{:u, 8}` meaning unsigned 8-bit values.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `band_format` is any known band format. See
+    `Image.BandFormat.known_band_formats/0`.
+
+  ### Returns
+
+  * `cast_image` or
+
+  * raises an exception.
+
+  """
+  @doc since: "0.42.0", subject: "Operation"
+
+  @spec cast!(Vimage.t(), BandFormat.t()) :: Vimage.t() | no_return()
+  def cast!(%Vimage{} = image, band_format) do
+    case cast(image, band_format) do
+      {:ok, casted} -> casted
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 

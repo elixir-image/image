@@ -1,5 +1,25 @@
 # Changelog
 
+## Image 0.42.0
+
+This is the changelog for Image version 0.42.0 released on ____, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Breaking changes
+
+* `Image.interpretation/0` deprecated in favour of `Image.colorspace/0`. This is more orthogonal to the `Image.to_colorspace/2` call and more in line with common image lexicons.
+
+* `Image.convert_to_mask/1` is deprecated in favour of `Image.covert_alpha_to_mask/1` which is more descriptive of the functions purpose.
+
+### Bug Fixes
+
+* Fix `:rbg` colorspace to the correct name `:rgb`.
+
+### Enhancements
+
+* Documentation updates for `Image.dilate/2` and `Image.erode/2`.
+
+* Add `Image.cast!/2` to mirror `Image.cast/2`.
+
 ## Image 0.41.0
 
 This is the changelog for Image version 0.41.0 released on January 18th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
