@@ -139,7 +139,8 @@ defmodule Image.MixProject do
         "README.md",
         "LICENSE.md",
         "CHANGELOG.md",
-        "guides/examples.md"
+        "guides/thumbnailing.md",
+        "livebook/image_edge_masking.livemd"
       ],
       formatters: ["html"],
       groups_for_modules: groups_for_modules(),

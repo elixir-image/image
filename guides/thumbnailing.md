@@ -1,4 +1,4 @@
-# Example Usage
+# Thumbnailing
 
 <style>
   .column {

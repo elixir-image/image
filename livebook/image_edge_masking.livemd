@@ -4,7 +4,7 @@
 
 ```elixir
 Mix.install([
-  {:image, "~> 0.37"},
+  {:image, "~> 0.42"},
   {:req, "> 0.0.0"},
   {:kino, "> 0.0.0"}
 ])
@@ -86,10 +86,10 @@ You'll see that we are using only the 0th band of the mask image since the we ju
 Image.add_alpha!(green_outline, mask[0])
 ```
 
-Oh no - what happened! The image has become all white!  That because our mask image is actually the inverse of how masking works. For an alpha mask, black is transparent and white is opaque. We can invert the mask with `Vix.Vips.Operation.invert!/1` (there's no `Image` wrapper function for that in the current release - but its coming in the next release).
+Oh no - what happened! The image has become all white!  That because our mask image is actually the inverse of how masking works. For an alpha mask, black is transparent and white is opaque. We can invert the mask with `Image.invert!/1`.
 
 ```elixir
-inverted_mask = Vix.Vips.Operation.invert!(mask[0])
+inverted_mask = Image.invert!(mask[0])
 final_image = Image.add_alpha!(green_outline, inverted_mask)
 ```
 
