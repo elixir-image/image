@@ -24,6 +24,8 @@ This is the changelog for Image version 0.42.0 released on ____, 2024.  For olde
 
 * Add `Image.invert/1` and `Image.invert!/2` to invert an image.
 
+* Add livebook tutorial for edge masking. [![Run in Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fraw.githubusercontent.com%2Felixir-image%2Fimage%2Fmain%2Flivebook%2Fimage_edge_masking.livemd)
+
 ## Image 0.41.0
 
 This is the changelog for Image version 0.41.0 released on January 18th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
