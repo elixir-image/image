@@ -1,6 +1,6 @@
 <!-- livebook:{"persist_outputs":true} -->
 
-# Image Edge Masking
+# Edge Masking
 
 ```elixir
 Mix.install([
