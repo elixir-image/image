@@ -137,10 +137,10 @@ defmodule Image.MixProject do
       extra_section: "Guides",
       extras: [
         "README.md",
-        "LICENSE.md",
-        "CHANGELOG.md",
         "guides/thumbnailing.md",
-        "livebook/image_edge_masking.livemd"
+        "livebook/image_edge_masking.livemd",
+        "LICENSE.md",
+        "CHANGELOG.md"
       ],
       formatters: ["html"],
       groups_for_modules: groups_for_modules(),
