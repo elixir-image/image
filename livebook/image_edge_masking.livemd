@@ -1,0 +1,112 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Image Edge Masking
+
+```elixir
+Mix.install([
+  {:image, "~> 0.37"},
+  {:req, "> 0.0.0"},
+  {:kino, "> 0.0.0"}
+])
+```
+
+## Introduction
+
+Image edge masking is used to create an alpha mask from the edges of an image. The mask can then be used to add transparency to a base image or to perform transformations to a region of an image.
+
+## Open the base image
+
+Our base image is a jigsaw piece. It has a dark border around an orange fill on a white background. We'll source it from github.
+
+```elixir
+{:ok, response} =
+  Req.get(
+    "https://raw.githubusercontent.com/elixir-image/image/main/test/support/images/jigsaw.png"
+  )
+
+jigsaw = Image.open!(response.body)
+```
+
+## Edge Detection
+
+There are several ways to do edge detection. [Vix](https://hex.pm/packages/vix), which powers the `Image` library and which is itself based upon the amazing [libvips](https://libvips.org), provides both [canny](https://en.wikipedia.org/wiki/Canny_edge_detector) and [sobel](https://en.wikipedia.org/wiki/Sobel_operator) edge detection functions.
+For this example, we can use the uniformity of the image colors to simplify the edge detection by converting the image to greyscale and multipling all the pixels in the image by 3.  This will result in all but the dark edge pixels becoming white. Why 3?  Its just a number found by empirical means to deliver the required result.
+
+<!-- livebook:{"break_markdown":true} -->
+
+`Image` provides several basic math functions in the `Image.Math` module. For clarity and in alignment with the goals of Elixir to be explicit, those functions are to be preferred. However there are cases where being explicit also introduces confusion. In these cases we can `use Image.Math` to override the basic arithmetic operators. We'll `use Image.Math` for some of this tutorial.
+
+```elixir
+# `using` Image.Math means the `*` operator is overriden and will call 
+# `Image.Math.multiply(jigsaw, 3)`.
+use Image.Math
+{ok, grey_jigsaw} = Image.to_colorspace(jigsaw, :bw)
+edges = grey_jigsaw * 3
+```
+
+## Refining the selection
+
+Now we have the edge (that was easy!) on a white background. But the edge is quite faint, in the final image, a slightly thicker edge would be easier to visualise. We use the concept of [dilation and erosion](https://www.scaler.com/topics/erosion-and-dilation-in-image-processing/) to increase the thickness of the edge.  `Image.dilate/2` and `Image.erode/2` support those functions.
+
+Note that dilation is the process of increasing the volume of light areas and erosion is the idea of increasing the volume of dark areas. Therefore `Image.erode/2` is the tool we want.
+
+```elixir
+thick_edges = Image.erode!(edges, 3)[0]
+```
+
+Notice that we used `Image.erode!(edges, 3)[0]`. The `[0]` uses the [Access Behaviour](https://hexdocs.pm/elixir/1.16.0/Access.html) to return just the 0th band of the image (band is the term used in `libvips`, you might know it as a channel in `OpenCV`).
+
+<!-- livebook:{"break_markdown":true} -->
+
+Now we have strong edges, but we can now see there are varying greyscale values and we would much prefer uniform black for the edge mask. Here we can use the handy `Image.if_then_else/3` function. In this example, if the pixel value is > 200 in the `thick_edges` image, then set the corresponding pixel to `255` (white) and if not, set it to `0` (black).
+
+```elixir
+mask = Image.if_then_else!(thick_edges > 200, 255, 0)
+```
+
+Thats it for creating our mask. We'll use this image as the alpha mask on our final image to define transparency.
+
+## Creating an image outline
+
+In our example we want to produce a coloured outline of the jigsaw set on a transparent background. We've now created the mask that will manage the transparency part. How do we create the green outline?
+
+We can use our old friend `Image.if_then_else/3` for that.
+
+```elixir
+green_outline = Image.if_then_else!(mask < 100, :green, :white)
+```
+
+## Compositing the outline and the mask
+
+Now we have our mask image in `mask` and our green outline in `green_outline`. How do we apply the mask to the green outline?  We can use the `Image.add_alpha/2` function to use `mask` as our alpha layer for the `green_outline` image.
+
+You'll see that we are using only the 0th band of the mask image since the we just need one band for the alpha - and in our mask image all three bands are the same since its a black and white image.
+
+```elixir
+Image.add_alpha!(green_outline, mask[0])
+```
+
+Oh no - what happened! The image has become all white!  That because our mask image is actually the inverse of how masking works. For an alpha mask, black is transparent and white is opaque. We can invert the mask with `Vix.Vips.Operation.invert!/1` (there's no `Image` wrapper function for that in the current release - but its coming in the next release).
+
+```elixir
+inverted_mask = Vix.Vips.Operation.invert!(mask[0])
+final_image = Image.add_alpha!(green_outline, inverted_mask)
+```
+
+And there we have it. A green outline on a transparent background.  Liveview and Kino don't yet have a way to show the transparency for visual checking but you can use the code block below to same the image somewhere and check in your favourite imaging app. The file preview function on MacOS works well for that.
+
+Make sure you save the image to a `.png` file, or other image format that supports transparency. Note that JPEG does not support transparency.
+
+```elixir
+# Image.write(final_image, "some/path/to/final_image.png")
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok, %Vix.Vips.Image{ref: #Reference<0.4180048996.1535508509.233750>}}
+```
+
+## Summary
+
+If you got this far then well done and congratulations on your patience. You'll have worked out that most of the process described here can be collapsed into a couple of short pipelines - thats certainly what I would do.
