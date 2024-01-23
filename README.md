@@ -1,4 +1,4 @@
-# Image
+# Image Install & Configure
 
 `Image` is an image processing library for Elixir. It is based upon the fabulous [vix](https://hex.pm/packages/vix) library that provides a [libvips](https://www.libvips.org) wrapper for Elixir.
 
