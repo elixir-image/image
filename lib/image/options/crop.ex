@@ -107,6 +107,10 @@ defmodule Image.Options.Crop do
 
   @doc false
 
+  def normalize_box({w, h}, _left, _top, width, height) when w < width or h < height do
+    {:error, "Cannot normalize a box that is larger than the image"}
+  end
+
   def normalize_box({w, _h} = dims, left, top, width, height) when is_percent(left) do
     normalize_box(dims, round(left * w), top, width, height)
   end

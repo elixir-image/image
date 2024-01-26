@@ -6188,29 +6188,47 @@ defmodule Image do
     MutableImage.remove(image, field)
   end
 
-  @y_band 1
-
   @doc """
-  Create an image gradient of the same size as
-  the given image.
+  Create an image gradient the size of a given
+  image, or the size of the given dimenssion.
 
-  The gradient will interpolate from the `start`
-  value to the `finish` value. The default `start`
-  value is black with 100% transparency. The
-  default `finish` value is black with 100% opacity.
+  The gradient will be interpolated from the `start_color`
+  value to the `finish_color` value.
 
-  `start` and `finish` are given as an `rgb` triplet
-  or quadruplet list of integers between `0` and `255`.
+  ### Arguments using a template image
 
-  ### Arguments
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `options` is a keyword list of options.
 
-  * `:start is an `rgb` triplet or quadruplet
-    list of numbers between `0` and `255`.
+  ### Arguments supplying a width and height
 
-  * `:finish is an `rgb` triplet or quadruplet
-    list of numbers between `0` and `255`.
+  * `width` is the width in pixels of the gradient image.
+
+  * `height` is the height in pixels of the gradient image.
+
+  * `options` is a keyword list of options. See
+    `t:Image.Options.LinearGradient.linear_gradient_option/0`.
+
+  ### Options
+
+  * `:start_color` is an RGB color which represents the starting
+    color of the gradient. The color can be an
+    integer between `0..255`, a three-or-four-element list of
+    integers representing an RGB color, or an atom
+    representing a CSS color name. The default is `:black`
+    with 100% transparency.
+
+  * `:finish_color` is an RGB color which represents the the
+    chroma key to be selected. The color can be an
+    integer between `0..255`, a three-or-four-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name. The default is
+    `:black` with 100% opacity.
+
+  * `:angle` is a float or integer number of degrees of
+    clockwise rotation applied to the gradient. The default
+    is `0.0`. The number is normalized into the range `0..360`.
 
   ### Returns
 
@@ -6222,28 +6240,54 @@ defmodule Image do
 
       # transparent_black and opaque_black are the default
       # start and finish values
-      transparent_black = [0, 0, 0, 0]
-      opaque_black = [0, 0, 0, 255]
-      {:ok, gradient} = Image.linear_gradient(image, transparent_black, opaque_black)
+      iex> transparent_black = [0, 0, 0, 0]
+      iex> opaque_black = [0, 0, 0, 255]
+      iex> Image.linear_gradient(100, 100, start_color: transparent_black, finish_color: opaque_black)
+      iex> Image.linear_gradient(100, 100, start_color: :red, finish_color: :blue, angle: 42)
 
   """
-  # @dialyzer {:nowarn_function, {:linear_gradient, 1}}
-  # @dialyzer {:nowarn_function, {:linear_gradient, 2}}
-  # @dialyzer {:nowarn_function, {:linear_gradient, 3}}
 
-  @start_color [0.0, 0.0, 0.0, 0.0]
-  @finish_color [0.0, 0.0, 0.0, 255.0]
+  @y_band 1
+  @x_band 0
 
   @doc subject: "Generator"
 
-  @spec linear_gradient(Vimage.t(), start :: Color.rgb_color(), finish :: Color.rgb_color()) ::
+  @spec linear_gradient(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+
+  def linear_gradient(%Vimage{} = image) do
+    linear_gradient(image, [])
+  end
+
+  @spec linear_gradient(Vimage.t(), options :: Keyword.t()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def linear_gradient(%Vimage{} = image, start \\ @start_color, finish \\ @finish_color) do
-    use Image.Math
+  def linear_gradient(%Vimage{} = image, options) do
+    width = Image.width(image)
+    height = Image.height(image)
 
-    width = width(image)
-    height = height(image)
+    linear_gradient(width, height, options)
+  end
+
+  @spec linear_gradient(width :: pos_integer(), height :: pos_integer()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def linear_gradient(width, height) do
+    linear_gradient(width, height, [])
+  end
+
+  @spec linear_gradient(width :: pos_integer(), height :: pos_integer(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def linear_gradient(width, height, options)
+      when is_number(width) and width > 0 and is_number(height) and height > 0 do
+    with {:ok, options} <- Image.Options.LinearGradient.validate_options(options) do
+      linear_gradient(width, height, options.start_color, options.finish_color, options.angle)
+    end
+  end
+
+  # Vertical gradient
+  defp linear_gradient(width, height, start, finish, angle) when angle == 0 or angle == 360 do
+    use Image.Math
 
     {:ok, xyz} = Operation.xyz(width, height)
     {:ok, y} = Operation.extract_band(xyz, @y_band)
@@ -6257,28 +6301,103 @@ defmodule Image do
     |> Operation.copy(interpretation: :VIPS_INTERPRETATION_sRGB)
   end
 
+  # Horizontal gradient
+  defp linear_gradient(width, height, start, finish, angle) when angle == 90 do
+    use Image.Math
+
+    {:ok, xyz} = Operation.xyz(width, height)
+    {:ok, x} = Operation.extract_band(xyz, @x_band)
+
+    # the distance image: 0 - 1 for the start to the end of the gradient
+    d = x / width
+
+    # and use it to fade the quads ... we need to tag the result as an RGB
+    # image
+    (d * start + (1 - d) * finish)
+    |> Operation.copy(interpretation: :VIPS_INTERPRETATION_sRGB)
+  end
+
+  # 180 degree rotation is a synomym for a vertical gradient from finish to start
+  defp linear_gradient(width, height, start, finish, angle) when angle == 180 do
+    linear_gradient(width, height, finish, start, 0.0)
+  end
+
+  # 180 degree rotation is a synomym for a horizontal gradient from finish to start
+  defp linear_gradient(width, height, start, finish, angle) when angle == 270 do
+    linear_gradient(width, height, finish, start, 90.0)
+  end
+
+  # When creating a linear gradient on an angle we create the linear
+  # vertical grdient and then rotate it. Since rotation will result in
+  # the effective image area being smaller than the original image (and
+  # will also be surrounded by black space pixels) we need to size the
+  # gradient to be that size which, when center cropped, returns a gradient
+  # of the required size.
+  #
+  # See: https://blog.webp.se/govips-gradient-en/
+
+  defp linear_gradient(width, height, start, finish, angle) when angle < 360 do
+    {angle, base_rotation} = adjust_angle(angle)
+
+    r = angle / 180 * :math.pi
+    r2 = (90.0 - angle) / 180 * :math.pi
+
+    gradient_height = ceil(width * :math.cos(r2) + height * :math.cos(r))
+    gradient_width = ceil(width * :math.sin(r2) + height * :math.sin(r))
+
+    with {:ok, gradient} <- linear_gradient(gradient_width, gradient_height, start, finish, base_rotation),
+         {:ok, rotated} = rotate(gradient, angle) do
+      crop(rotated, :center, :middle, width, height)
+    end
+  end
+
+  defp adjust_angle(angle) when angle < 90, do: {angle, 0.0}
+  defp adjust_angle(angle) when angle < 180, do: {angle - 90.0, 90.0}
+  defp adjust_angle(angle) when angle < 270, do: {angle - 180.0, 180.0}
+  defp adjust_angle(angle) when angle < 360, do: {angle - 270.0, 270.0}
+
   @doc """
-  Create an image gradient of the same size as
-  the given image. Returns the gradient image
-  or raises and exception.
+  Create an image gradient the size of a given
+  image, or the size of the given dimenssion or
+  raises an exception.
 
-  The gradient will interpolate from the `start`
-  value to the `finish` value. The default `start`
-  value is black with 100% transparency. The
-  default `finish` value is black with 100% opacity.
+  The gradient will be interpolated from the `start_color`
+  value to the `finish_color` value.
 
-  `start` and `finish` are given as an `rgb` triplet
-  or quadruplet list of integers between `0` and `255`.
+  ### Arguments using a template image
 
-  ### Arguments
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `options` is a keyword list of options.
 
-  * `:start is an `rgb` triplet or quadruplet
-    list of numbers between `0` and `255`.
+  ### Arguments supplying a width and height
 
-  * `:finish is an `rgb` triplet or quadruplet
-    list of numbers between `0` and `255`.
+  * `width` is the width in pixels of the gradient image.
+
+  * `height` is the height in pixels of the gradient image.
+
+  * `options` is a keyword list of options. See
+    `t:Image.Options.LinearGradient.linear_gradient_option/0`.
+
+  ### Options
+
+  * `:start_color` is an RGB color which represents the starting
+    color of the gradient. The color can be an
+    integer between `0..255`, a three-or-four-element list of
+    integers representing an RGB color, or an atom
+    representing a CSS color name. The default is `:black`
+    with 100% transparency.
+
+  * `:finish_color` is an RGB color which represents the the
+    chroma key to be selected. The color can be an
+    integer between `0..255`, a three-or-four-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name. The default is
+    `:black` with 100% opacity.
+
+  * `:angle` is a float or integer number of degrees of
+    clockwise rotation applied to the gradient. The default
+    is `0.0`. The number is normalized into the range `0..360`.
 
   ### Returns
 
@@ -6290,19 +6409,36 @@ defmodule Image do
 
       # transparent_black and opaque_black are the default
       # start and finish values
-      transparent_black = [0, 0, 0, 0]
-      opaque_black = [0, 0, 0, 255]
-      gradient = Image.linear_gradient!(image, transparent_black, opaque_black)
+      iex> transparent_black = [0, 0, 0, 0]
+      iex> opaque_black = [0, 0, 0, 255]
+      iex> Image.linear_gradient!(100, 100, start_color: transparent_black, finish_color: opaque_black)
 
   """
 
   @doc subject: "Generator"
 
-  @spec linear_gradient!(Vimage.t(), start :: Color.rgb_color(), finish :: Color.rgb_color()) ::
+  @spec linear_gradient!(Vimage.t(), options :: Keyword.t()) ::
           Vimage.t() | no_return()
 
-  def linear_gradient!(%Vimage{} = image, start \\ @start_color, finish \\ @finish_color) do
-    case linear_gradient(image, start, finish) do
+  def linear_gradient!(%Vimage{} = image) do
+    linear_gradient!(image, [])
+  end
+
+  def linear_gradient!(%Vimage{} = image, options) do
+    case linear_gradient(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  def linear_gradient!(width, height)
+      when is_number(width) and is_number(height) and width > 0 and height > 0 do
+    linear_gradient!(width, height, [])
+  end
+
+  def linear_gradient!(width, height, options \\ [])
+      when is_number(width) and is_number(height) and width > 0 and height > 0 do
+    case linear_gradient(width, height, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end

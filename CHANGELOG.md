@@ -1,5 +1,19 @@
 # Changelog
 
+## Image 0.43.0
+
+This is the changelog for Image version 0.43.0 released on ______, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Breaking Change
+
+* The signature for `Image.linear_gradient/{1..3}` has changed.  The function now takes:
+  * An image and an optional keyword list of options
+  * A width and height as numbers and a keyword list of options
+  
+### Enhancements
+
+* `Image.linear_gradient/{1..3}` now takes an `:angle` option which determines the angle of the gradient in degrees. Thanks to @severian1778 for considerable patience. Closes #67.
+
 ## Image 0.42.0
 
 This is the changelog for Image version 0.42.0 released on January 23rd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
