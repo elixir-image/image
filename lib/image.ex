@@ -5297,7 +5297,8 @@ defmodule Image do
   @doc subject: "Operation", since: "0.23.0"
 
   @spec dilate(image :: Vimage.t(), pixels :: pos_integer) ::
-          {:ok, Vimage.t()} | {:error, error_message}
+      {:ok, Vimage.t()} | {:error, error_message}
+
   def dilate(image, pixels \\ 1) when is_integer(pixels) and pixels > 0 do
     Enum.reduce_while(1..pixels, {:ok, image}, fn
       _pixel, {:ok, image} ->
@@ -6226,12 +6227,12 @@ defmodule Image do
       {:ok, gradient} = Image.linear_gradient(image, transparent_black, opaque_black)
 
   """
-  @dialyzer {:nowarn_function, {:linear_gradient, 1}}
-  @dialyzer {:nowarn_function, {:linear_gradient, 2}}
-  @dialyzer {:nowarn_function, {:linear_gradient, 3}}
+  # @dialyzer {:nowarn_function, {:linear_gradient, 1}}
+  # @dialyzer {:nowarn_function, {:linear_gradient, 2}}
+  # @dialyzer {:nowarn_function, {:linear_gradient, 3}}
 
-  @start_color [0, 0, 0, 0]
-  @finish_color [0, 0, 0, 255]
+  @start_color [0.0, 0.0, 0.0, 0.0]
+  @finish_color [0.0, 0.0, 0.0, 255.0]
 
   @doc subject: "Generator"
 
@@ -6294,9 +6295,6 @@ defmodule Image do
       gradient = Image.linear_gradient!(image, transparent_black, opaque_black)
 
   """
-  @dialyzer {:nowarn_function, {:linear_gradient!, 1}}
-  @dialyzer {:nowarn_function, {:linear_gradient!, 2}}
-  @dialyzer {:nowarn_function, {:linear_gradient!, 3}}
 
   @doc subject: "Generator"
 
