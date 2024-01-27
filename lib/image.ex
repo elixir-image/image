@@ -7262,11 +7262,8 @@ defmodule Image do
   def contrast(%Vimage{} = image, contrast) when is_multiplier(contrast) do
     use Image.Math
 
-    source_colorspace = interpretation(image)
-
-    with {:ok, scrgb} <- to_colorspace(image, :scrgb) do
-      contrasted = scrgb * contrast - (0.5 * contrast - 0.5)
-      to_colorspace(contrasted, source_colorspace)
+    with_colorspace image, :scrgb, fn scrgb ->
+      scrgb * contrast - (0.5 * contrast - 0.5)
     end
   end
 
