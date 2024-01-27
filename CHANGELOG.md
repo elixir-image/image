@@ -4,15 +4,23 @@
 
 This is the changelog for Image version 0.43.0 released on ______, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
-### Breaking Change
+### Breaking Changes
 
 * The signature for `Image.linear_gradient/{1..3}` has changed.  The function now takes:
   * An image and an optional keyword list of options
   * A width and height as numbers and a keyword list of options
   
+* `Image.dominant_color/2` now returns an `{:ok, rgb_color}` tuple rather than a `[r, g, b]` list. Use `Image.dominant_color!/2` if only the color value return is required.
+  
 ### Enhancements
 
 * `Image.linear_gradient/{1..3}` now takes an `:angle` option which determines the angle of the gradient in degrees. Thanks to @severian1778 for considerable patience. Closes #67.
+
+* Improve options handling and documentation for `Image.radial_gradient/3`.
+
+* Add `Image.radial_gradient!/3` to mirror `Image.radial_gradient/3`.
+
+* Add `Image.dominant_color!/2` to mirror `Image.dominant_color/2`.
 
 ## Image 0.42.0
 

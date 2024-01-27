@@ -6212,14 +6212,14 @@ defmodule Image do
 
   ### Options
 
-  * `:start_color` is an RGB color which represents the starting
+  * `:start_color` is an sRGB color which represents the starting
     color of the gradient. The color can be an
     integer between `0..255`, a three-or-four-element list of
     integers representing an RGB color, or an atom
     representing a CSS color name. The default is `:black`
     with 100% transparency.
 
-  * `:finish_color` is an RGB color which represents the the
+  * `:finish_color` is an sRGB color which represents the the
     chroma key to be selected. The color can be an
     integer between `0..255`, a three-or-four-element list of
     integers representing an RGB color or an atom
@@ -6284,6 +6284,14 @@ defmodule Image do
       linear_gradient(width, height, options.start_color, options.finish_color, options.angle)
     end
   end
+
+  # Three basic transforms are defined for 90, 180 and 270 degrees
+  # and then a further adjustment with a 90 degree range to make
+  # up the full requested angle.
+
+  # Note that this implementation is a linear interpolation.
+  # In a future release it may be possible to impleement a quadratic
+  # curve fit (see https://www.youtube.com/watch?v=vEvbNG-kRyY)
 
   # Vertical gradient
   defp linear_gradient(width, height, start, finish, angle) when angle == 0 or angle == 360 do
@@ -6381,14 +6389,14 @@ defmodule Image do
 
   ### Options
 
-  * `:start_color` is an RGB color which represents the starting
+  * `:start_color` is an sRGB color which represents the starting
     color of the gradient. The color can be an
     integer between `0..255`, a three-or-four-element list of
     integers representing an RGB color, or an atom
     representing a CSS color name. The default is `:black`
     with 100% transparency.
 
-  * `:finish_color` is an RGB color which represents the the
+  * `:finish_color` is an sRGB color which represents the the
     chroma key to be selected. The color can be an
     integer between `0..255`, a three-or-four-element list of
     integers representing an RGB color or an atom
@@ -6458,23 +6466,35 @@ defmodule Image do
   * `height` is the height of the gradient in
     pixels.
 
-  * `options` is a keyword list of options. The
-    default is `[]`.
+  * `options` is a keyword list of options. See
+    `t:Image.Options.RadialrGradient.radial_gradient_option/0`.
 
   ### Options
 
-  * `:start` is the color from which the gradient
-    starts in the center of the image.
+  * `:start_color` is an sRGB color which represents the starting
+    color of the gradient. The color can be an
+    integer between `0..255`, a three-or-four-element list of
+    integers representing an RGB color, or an atom
+    representing a CSS color name. The default is `:black`
+    with 100% transparency.
 
-  * `:finish` is the color at which the gradient
-    finishes at the end of the gradient.
+  * `:finish_color` is an sRGB color which represents the the
+    chroma key to be selected. The color can be an
+    integer between `0..255`, a three-or-four-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name. The default is
+    `:black` with 100% opacity.
 
-  * `:feather` is the slope of the gradient. That it,
-    how quickly the gradient moves from the `:start`
-    color to the `:finish` color. The valid range is
+  * `:feather` is the slope of the gradient. That is,
+    how quickly the gradient moves from the `:start_color`
+    color to the `:finish_color`. The valid range is
     `1..10` representing the smallest amount of feather
     (harshest transition) to the largest amount of
-    feather (smoothest transition).
+    feather (smoothest transition). The default is `1`.
+
+  * `:radius` is the radius of the gradient in the range `1..5`
+    where `1` fully fills the space and `5` fills a small section
+    of the center of the space.  The default is `2`.
 
   ### Returns
 
@@ -6483,51 +6503,98 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @dialyzer {:nowarn_function, {:radial_gradient, 2}}
-  @dialyzer {:nowarn_function, {:radial_gradient, 3}}
-
   @doc subject: "Generator", since: "0.6.0"
 
-  @spec radial_gradient(width :: pos_integer(), height :: pos_integer(), options :: Keyword.t()) ::
+  @spec radial_gradient(width :: pos_integer(), height :: pos_integer(),
+          options :: Options.RadialGradient.radial_gradient_options) ::
           {:ok, %Vimage{}} | {:error, error_message()}
 
   def radial_gradient(width, height, options \\ []) do
     use Image.Math
 
-    # Lab colors, not RGB
-    # Since rgba 0 for transparency means
-    # transparent, and 1 means opaque we
-    # transition from black to white
-    start = [0, 0, 0]
-    finish = [100, 0, 0]
+    with {:ok, options} <- Options.RadialGradient.validate_options(options) do
+      max = max(width, height)
+      xyz = Operation.xyz!(width, height) - [width / 2, height / 2]
 
-    max = max(width, height)
+      d = (xyz[0] ** 2 + xyz[1] ** 2) ** 0.5 / (2 ** (options.feather * 0.05) * max / options.radius)
+      radial_gradient = d * options.finish_color + (d * -1 + 1) * options.start_color
 
-    # Take a number 1..10
-    feather = Keyword.get(options, :feather, 1)
-
-    # Range of 0.5 to 3 -> probably linear
-    radius = Keyword.get(options, :radius, 2)
-
-    x = Operation.xyz!(width, height) - [width / 2, height / 2]
-
-    d = (x[0] ** 2 + x[1] ** 2) ** 0.5 / (2 ** (feather * 0.05) * max / radius)
-    out = d * finish + (d * -1 + 1) * start
-
-    Operation.copy(out, interpretation: :VIPS_INTERPRETATION_LAB)
+      Operation.copy(radial_gradient, interpretation: :VIPS_INTERPRETATION_sRGB)
+    end
   end
 
   @doc """
-  Returns the dominant color of an image
-  as an RGB triplet value in an integer
-  list.
+  Returns a radial gradient as an image.
+
+  This image might then be composited over
+  another image.
+
+  ### Arguments
+
+  * `width` is the width of the gradient in
+    pixels.
+
+  * `height` is the height of the gradient in
+    pixels.
+
+  * `options` is a keyword list of options. See
+    `t:Image.Options.RadialrGradient.radial_gradient_option/0`.
+
+  ### Options
+
+  * `:start_color` is an sRGB color which represents the starting
+    color of the gradient. The color can be an
+    integer between `0..255`, a three-or-four-element list of
+    integers representing an RGB color, or an atom
+    representing a CSS color name. The default is `:black`
+    with 100% transparency.
+
+  * `:finish_color` is an sRGB color which represents the the
+    chroma key to be selected. The color can be an
+    integer between `0..255`, a three-or-four-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name. The default is
+    `:black` with 100% opacity.
+
+  * `:feather` is the slope of the gradient. That is,
+    how quickly the gradient moves from the `:start_color`
+    color to the `:finish_color`. The valid range is
+    `1..10` representing the smallest amount of feather
+    (harshest transition) to the largest amount of
+    feather (smoothest transition). The default is `1`.
+
+  * `:radius` is the radius of the gradient in the range `1..5`
+    where `1` fully fills the space and `5` fills a small section
+    of the center of the space.  The default is `2`.
+
+  ### Returns
+
+  * `{:ok, gradient_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc subject: "Generator", since: "0.43.0"
+
+  @spec radial_gradient!(width :: pos_integer(), height :: pos_integer(),
+          options :: Options.RadialGradient.radial_gradient_options) ::
+          %Vimage{} | no_return()
+
+  def radial_gradient!(width, height, options \\ []) do
+    case radial_gradient(width, height, options) do
+      {:ok, gradient} -> gradient
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Returns the dominant sRGB color of an image.
 
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `options` is a keyword list of options.
-    The default is `[]`.
 
   ### Options
 
@@ -6537,34 +6604,91 @@ defmodule Image do
 
   ### Returns
 
-  * `[r, g, b]`
+  * `{:ok, [r, g, b]}` or
+
+  * `{:error, reason}`
+
+  ### Notes
+
+  * `image` will be converted to the `:srgb` colorspace
+    and the dominant color will be returned as an sRGB
+    list.
 
   ### Example
 
       iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
       iex> Image.dominant_color(image)
-      [13, 64, 115]
+      {:ok, [13, 64, 115]}
 
       iex> image = Image.open!("./test/support/images/image_with_alpha2.png")
       iex> Image.dominant_color(image)
+      {:ok, [90, 90, 90]}
+
+  """
+  @doc subject: "Image info", since: "0.3.0"
+
+  @spec dominant_color(image :: Vimage.t(), options :: Keyword.t()) ::
+    {:ok, Color.rgb_color()} | {:error, error_message()}
+
+  def dominant_color(%Vimage{} = image, options \\ []) do
+    bins = Keyword.get(options, :bins, @dominant_bins)
+
+    with {:ok, image} <- to_colorspace(image, :srgb) do
+      if has_alpha?(image) do
+        dominant_color_alpha(image, bins)
+      else
+        dominant_color_no_alpha(image, bins)
+      end
+    end
+  end
+
+  @doc """
+  Returns the dominant sRGB color of an image
+  or raises an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:bins` is an integer number of color
+   frequency bins the image is divided into.
+   The default is `10`.
+
+  ### Returns
+
+  * `{:ok, [r, g, b]}` or
+
+  * raises an exception.
+
+  ### Notes
+
+  * `image` will be converted to the `:srgb` colorspace
+    and the dominant color will be returned as an sRGB
+    list.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+      iex> Image.dominant_color!(image)
+      [13, 64, 115]
+
+      iex> image = Image.open!("./test/support/images/image_with_alpha2.png")
+      iex> Image.dominant_color!(image)
       [90, 90, 90]
 
   """
 
-  # FIXME Assumes images are RGB which is smelly
-  # TODO before 1.0
-  @max_band_value 256
+  @doc subject: "Image info", since: "0.43.0"
 
-  @doc subject: "Image info", since: "0.3.0"
-
-  @spec dominant_color(Vimage.t(), Keyword.t()) :: Color.rgb_color()
-  def dominant_color(%Vimage{} = image, options \\ []) do
-    bins = Keyword.get(options, :bins, @dominant_bins)
-
-    if has_alpha?(image) do
-      dominant_color_alpha(image, bins)
-    else
-      dominant_color_no_alpha(image, bins)
+  @spec dominant_color!(image :: Vimage.t(), options :: Keyword.t()) :: Color.rgb_color() | no_return()
+  def dominant_color!(%Vimage{} = image, options \\ []) do
+    case dominant_color(image, options) do
+      {:ok, dominant_color} -> dominant_color
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -6608,6 +6732,9 @@ defmodule Image do
     find_maximum(histogram, bins)
   end
 
+  # Max value for an sRGB image
+  @max_band_value 256
+
   defp find_maximum(histogram, bins) do
     bin_size = @max_band_value / bins
     midpoint = bin_size / 2
@@ -6619,7 +6746,7 @@ defmodule Image do
     r = x * bin_size + midpoint
     g = y * bin_size + midpoint
     b = z * bin_size + midpoint
-    [round(r), round(g), round(b)]
+    {:ok, [round(r), round(g), round(b)]}
   end
 
   defp alpha_black_pixel_count(alpha) do
@@ -9608,7 +9735,7 @@ defmodule Image do
          {:ok, new_image} <- join(Enum.reverse(new_pages), across: 1) do
        new_page_height = Image.height(hd(new_pages))
 
-       case Image.mutate(new_image, &MutableImage.set(&1, "page-height", :gint, new_page_height)) do
+       case mutate(new_image, &MutableImage.set(&1, "page-height", :gint, new_page_height)) do
          {:ok, updated_image} ->
            {:ok, updated_image}
 
