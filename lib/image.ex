@@ -7185,9 +7185,11 @@ defmodule Image do
   @spec brightness(image :: Vimage.t(), brightness :: float()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
   def brightness(%Vimage{} = image, brightness) when is_multiplier(brightness) do
-    with_colorspace(image, :lch, fn i ->
-      Image.Math.multiply(i, [brightness, 1.0, 1.0])
-    end)
+    without_alpha_band image, fn image ->
+      with_colorspace image, :lch, fn i ->
+        Image.Math.multiply(i, [brightness, 1.0, 1.0])
+      end
+    end
   end
 
   @doc """
@@ -7262,8 +7264,10 @@ defmodule Image do
   def contrast(%Vimage{} = image, contrast) when is_multiplier(contrast) do
     use Image.Math
 
-    with_colorspace image, :scrgb, fn scrgb ->
-      scrgb * contrast - (0.5 * contrast - 0.5)
+    without_alpha_band image, fn image ->
+      with_colorspace image, :scrgb, fn scrgb ->
+        scrgb * contrast - (0.5 * contrast - 0.5)
+      end
     end
   end
 
