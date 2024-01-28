@@ -6,6 +6,8 @@ This is the changelog for Image version 0.43.0 released on ______, 2024.  For ol
 
 ### Breaking Changes
 
+* `Image.erode/2` and `Image.dilate/2` now take a `radius` parameter rather than a `pixels` parameter. Both functions have been refactored to allow a radius in the range `1..5` with a default of `1`. The radius represents the dimension of the matrix used in the `Vix.Vips.Operations.range/4` function that underpins dilation and erosion. As such they represent the *approximate* number of pixels eroded or dilated.  In addition, this function now results in a single `libvips` operation. The previous implementation created `n` operations (where `n` was the value of the `pixels` param) that could result in a slow imaging pipeline and in some cases a [segfault of the entire VM due to stack space exhaustion in libvips](https://github.com/elixir-image/image/issues/125).
+
 * The signature for `Image.linear_gradient/{1..3}` has changed.  The function now takes:
   * An image and an optional keyword list of options
   * A width and height as numbers and a keyword list of options

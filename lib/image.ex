@@ -231,6 +231,10 @@ defmodule Image do
   # significantly slow calculation.
   @dominant_bins 10
 
+  # For erode/2 and dilate/2 this is acceptable
+  # range for the radius parameter.
+  @rank_radius_range 1..5
+
   @doc """
   Guards whether the given struct is an image type
   either `Vix.Vips.Image` or `Vix.Vips.MutableImage`.
@@ -5256,7 +5260,8 @@ defmodule Image do
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
-  * `pixels` is a positive integer number of
+  * `radius` is an integer in the range `1..5`
+    representing the approximaete number of
     pixels to dilate. The default is `1`.
 
   ### Returns
@@ -5296,17 +5301,13 @@ defmodule Image do
 
   @doc subject: "Operation", since: "0.23.0"
 
-  @spec dilate(image :: Vimage.t(), pixels :: pos_integer) ::
+  @spec dilate(image :: Vimage.t(), radius :: pos_integer) ::
       {:ok, Vimage.t()} | {:error, error_message}
 
-  def dilate(image, pixels \\ 1) when is_integer(pixels) and pixels > 0 do
-    Enum.reduce_while(1..pixels, {:ok, image}, fn
-      _pixel, {:ok, image} ->
-        {:cont, Vix.Vips.Operation.rank(image, 3, 3, 8)}
-
-      _pixel, {:error, reason} ->
-        {:halt, {:error, reason}}
-    end)
+  def dilate(image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
+    radius = radius + (radius * 2)
+    index = (radius * radius) - 1
+    Vix.Vips.Operation.rank(image, radius, radius, index)
   end
 
   @doc """
@@ -5324,7 +5325,8 @@ defmodule Image do
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
-  * `pixels` is a positive integer number of
+  * `radius` is an integer in the range `1..5`
+    representing the approximaete number of
     pixels to dilate. The default is `1`.
 
   ### Returns
@@ -5344,16 +5346,13 @@ defmodule Image do
     approximate.
 
   * The dilation is implemented as a [rank filter](https://www.sciencedirect.com/science/article/abs/pii/S0031320301000474?via%3Dihub).
-    The image mask is dilated one pixel at a time. Therefore
-    execution with large value of `pixels` is expected to
-    be slow.
 
   """
   @doc subject: "Operation", since: "0.23.0"
 
-  @spec dilate!(image :: Vimage.t(), pixels :: pos_integer) :: Vimage.t() | no_return()
-  def dilate!(%Vimage{} = image, pixels \\ 1) when is_integer(pixels) and pixels > 0 do
-    case dilate(image, pixels) do
+  @spec dilate!(image :: Vimage.t(), radius :: pos_integer) :: Vimage.t() | no_return()
+  def dilate!(%Vimage{} = image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
+    case dilate(image, radius) do
       {:ok, dilated} -> dilated
       {:error, reason} -> raise Image.Error, reason
     end
@@ -5371,8 +5370,9 @@ defmodule Image do
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
-  * `pixels` is a positive integer number of
-    pixels to dilate. The default is `1`.
+  * `radius` is an integer in the range `1..5`
+    representing the approximaete number of
+    pixels to erode. The default is `1`.
 
   ### Returns
 
@@ -5391,23 +5391,16 @@ defmodule Image do
     approximate.
 
   * The erosion is implemented as a [rank filter](https://www.sciencedirect.com/science/article/abs/pii/S0031320301000474?via%3Dihub).
-    The image mask is eroded one pixel at a time. Therefore
-    execution with large value of `pixels` is expected to
-    be slow.
 
   """
   @doc subject: "Operation", since: "0.23.0"
 
-  @spec erode(image :: Vimage.t(), pixels :: pos_integer) ::
+  @spec erode(image :: Vimage.t(), radius :: pos_integer()) ::
           {:ok, Vimage.t()} | {:error, error_message}
-  def erode(image, pixels \\ 1) when is_integer(pixels) and pixels > 0 do
-    Enum.reduce_while(1..pixels, {:ok, image}, fn
-      _pixel, {:ok, image} ->
-        {:cont, Vix.Vips.Operation.rank(image, 3, 3, 0)}
 
-      _pixel, {:error, reason} ->
-        {:halt, {:error, reason}}
-    end)
+  def erode(image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
+    radius = radius + (radius * 2)
+    Vix.Vips.Operation.rank(image, radius, radius, 0)
   end
 
   @doc """
@@ -5422,8 +5415,9 @@ defmodule Image do
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
-  * `pixels` is a positive integer number of
-    pixels to dilate. The default is `1`.
+  * `radius` is an integer in the range `1..5`
+    representing the approximaete number of
+    pixels to erode. The default is `1`.
 
   ### Returns
 
@@ -5442,16 +5436,13 @@ defmodule Image do
     approximate.
 
   * The erosion is implemented as a [rank filter](https://www.sciencedirect.com/science/article/abs/pii/S0031320301000474?via%3Dihub).
-    The image mask is eroded one pixel at a time. Therefore
-    execution with large value of `pixels` is expected to
-    be slow.
 
   """
   @doc subject: "Operation", since: "0.23.0"
 
-  @spec erode!(image :: Vimage.t(), pixels :: pos_integer) :: Vimage.t() | no_return()
-  def erode!(%Vimage{} = image, pixels \\ 1) when is_integer(pixels) and pixels > 0 do
-    case erode(image, pixels) do
+  @spec erode!(image :: Vimage.t(), radius :: pos_integer()) :: Vimage.t() | no_return()
+  def erode!(%Vimage{} = image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
+    case erode(image, radius) do
       {:ok, eroded} -> eroded
       {:error, reason} -> raise Image.Error, reason
     end
