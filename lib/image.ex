@@ -5281,9 +5281,6 @@ defmodule Image do
     approximate.
 
   * The dilation is implemented as a [rank filter](https://www.sciencedirect.com/science/article/abs/pii/S0031320301000474?via%3Dihub).
-    The image mask is dilated one pixel at a time. Therefore
-    execution with large value of `pixels` is expected to
-    be slow.
 
   """
 
