@@ -5261,7 +5261,7 @@ defmodule Image do
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
   * `radius` is an integer in the range `#{inspect @rank_radius_range}`
-    representing the approximaete number of
+    representing the approximate number of
     pixels to dilate. The default is `1`.
 
   ### Returns
@@ -5326,7 +5326,7 @@ defmodule Image do
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
   * `radius` is an integer in the range `#{inspect @rank_radius_range}`
-    representing the approximaete number of
+    representing the approximate number of
     pixels to dilate. The default is `1`.
 
   ### Returns
@@ -5371,7 +5371,7 @@ defmodule Image do
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
   * `radius` is an integer in the range `#{inspect @rank_radius_range}`
-    representing the approximaete number of
+    representing the approximate number of
     pixels to erode. The default is `1`.
 
   ### Returns
@@ -5416,7 +5416,7 @@ defmodule Image do
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
   * `radius` is an integer in the range `#{inspect @rank_radius_range}`
-    representing the approximaete number of
+    representing the approximate number of
     pixels to erode. The default is `1`.
 
   ### Returns
