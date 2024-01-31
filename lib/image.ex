@@ -233,7 +233,7 @@ defmodule Image do
 
   # For erode/2 and dilate/2 this is acceptable
   # range for the radius parameter.
-  @rank_radius_range 1..5
+  @rank_radius_range 1..100
 
   @doc """
   Guards whether the given struct is an image type
@@ -5260,7 +5260,7 @@ defmodule Image do
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
-  * `radius` is an integer in the range `1..5`
+  * `radius` is an integer in the range `#{inspect @rank_radius_range}`
     representing the approximaete number of
     pixels to dilate. The default is `1`.
 
@@ -5325,7 +5325,7 @@ defmodule Image do
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
-  * `radius` is an integer in the range `1..5`
+  * `radius` is an integer in the range `#{inspect @rank_radius_range}`
     representing the approximaete number of
     pixels to dilate. The default is `1`.
 
@@ -5370,7 +5370,7 @@ defmodule Image do
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
-  * `radius` is an integer in the range `1..5`
+  * `radius` is an integer in the range `#{inspect @rank_radius_range}`
     representing the approximaete number of
     pixels to erode. The default is `1`.
 
@@ -5415,7 +5415,7 @@ defmodule Image do
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
-  * `radius` is an integer in the range `1..5`
+  * `radius` is an integer in the range `#{inspect @rank_radius_range}`
     representing the approximaete number of
     pixels to erode. The default is `1`.
 
