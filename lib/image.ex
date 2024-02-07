@@ -1545,12 +1545,11 @@ defmodule Image do
 
   ### Example
 
-  In this example an image is opened, resized
+  In this example an image is resized
   and then streamed into AWS S3:
 
       "some/image.jpg"
-      |> Image.open!()
-      |> Image.resize!(200)
+      |> Image.thumbnail!(200)
       |> Image.stream!(suffix: ".jpg", buffer_size: 5_242_880)
       |> ExAws.S3.upload("images", "some_object_name.jpg")
       |> ExAws.request()
