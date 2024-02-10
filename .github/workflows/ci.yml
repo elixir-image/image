@@ -55,7 +55,7 @@ jobs:
 
     # Step: Check out the code.
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     # Step: Define how to cache deps. Restores existing cache if present.
     - name: Cache deps
