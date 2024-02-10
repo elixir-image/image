@@ -2475,9 +2475,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, blurred_mask_image}` or
+  * `blurred_mask_image` or
 
-  * `{:error, reason}`
+  * raises an exception.
 
   """
   @doc subject: "Operation", since: "0.13.0"
