@@ -2,7 +2,7 @@
 
 ## Image 0.43.0
 
-This is the changelog for Image version 0.43.0 released on ______, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.43.0 released on February 27th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Breaking Changes
 
@@ -11,9 +11,11 @@ This is the changelog for Image version 0.43.0 released on ______, 2024.  For ol
 * The signature for `Image.linear_gradient/{1..3}` has changed.  The function now takes:
   * An image and an optional keyword list of options
   * A width and height as numbers and a keyword list of options
-  
+
 * `Image.dominant_color/2` now returns an `{:ok, rgb_color}` tuple rather than a `[r, g, b]` list. Use `Image.dominant_color!/2` if only the color value return is required.
-  
+
+* `Image.map_pages/2` is deprecated in favour of `Image.map_join_pages/2` to better reflect the intent of the function.
+
 ### Enhancements
 
 * `Image.linear_gradient/{1..3}` now takes an `:angle` option which determines the angle of the gradient in degrees. Thanks to @severian1778 for considerable patience. Closes #67.
@@ -23,6 +25,8 @@ This is the changelog for Image version 0.43.0 released on ______, 2024.  For ol
 * Add `Image.radial_gradient!/3` to mirror `Image.radial_gradient/3`.
 
 * Add `Image.dominant_color!/2` to mirror `Image.dominant_color/2`.
+
+* Add `Image.extract_pages/1` which will extract the pages of a multi-page into a list of separate images.
 
 ## Image 0.42.0
 

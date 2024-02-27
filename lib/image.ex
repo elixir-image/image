@@ -4500,7 +4500,7 @@ defmodule Image do
             Operation.extract_area(image, left, top, width, height)
           else
             pages = pages(image)
-            map_pages(image, &Operation.extract_area(&1, left, top, width, height), pages)
+            map_join_pages(image, &Operation.extract_area(&1, left, top, width, height), pages)
           end
 
         {:error, _} ->
@@ -9672,7 +9672,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, mapped_image}` where all the new pages returned
+  * `{:ok, mapped_joined_image}` where all the new pages returned
     from `fun/1` are assembled into `mapped_image` or
 
   * `{:error, reason}`.
@@ -9681,35 +9681,39 @@ defmodule Image do
 
       # The option `pages: -1` means load all the pages of a multi-page image.
       iex> image = Image.open!("./test/support/images/animated.webp", pages: :all)
-      iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.equalize/1)
+      iex> {:ok, _mapped_image} = Image.map_join_pages(image, &Image.equalize/1)
 
       # Also works for .gif images
       iex> image = Image.open!("./test/support/images/animated.gif", pages: :all)
-      iex> {:ok, _mapped_image} = Image.map_pages(image, &Image.equalize/1)
+      iex> {:ok, _mapped_image} = Image.map_join_pages(image, &Image.equalize/1)
 
       # If an image isn't opened with `pages: :all` then only
       # the first page of an image is loaded.
       iex> image_2 = Image.open!("./test/support/images/animated.webp")
-      iex> Image.map_pages(image_2, &Image.equalize/1)
+      iex> Image.map_join_pages(image_2, &Image.equalize/1)
       {:error, "Image does not have a page-height header. " <>
         "Perhaps the image wasn't opened with the `pages: :all` option or " <>
         "libvips wasn't built with libwebp-dev/libgif-dev configured? " <>
         "Run `vips --vips-config` from the command line to check."}
 
   """
-  @doc since: "0.38.0", subject: "Operation"
+  @doc since: "0.39.0", subject: "Operation"
 
-  @spec map_pages(Vimage.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message()})) ::
+  @spec map_join_pages(Vimage.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message()})) ::
     {:ok, Vimage.t()} | {:error, error_message()}
 
-  def map_pages(%Vimage{} = image, fun) when is_function(fun, 1) do
-    map_pages(image, fun, pages(image))
+  def map_join_pages(%Vimage{} = image, fun) when is_function(fun, 1) do
+    map_join_pages(image, fun, pages(image))
   end
+
+  @doc false
+  @deprecated "Use Image.map_join_pages/2"
+  defdelegate map_pages(image, fun), to: __MODULE__, as: :map_join_pages
 
   # There is only one page - a normal image
   # So just invoke the given function.
 
-  defp map_pages(image, fun, 1) do
+  defp map_join_pages(image, fun, 1) do
     fun.(image)
   end
 
@@ -9717,7 +9721,7 @@ defmodule Image do
   # image, process and reassemble. Then we need to set the
   # `page-height` of the new image.
 
-  defp map_pages(image, fun, pages) do
+  defp map_join_pages(image, fun, pages) do
     with {:ok, page_height} <- page_height(image),
          {:ok, new_pages} <- reduce_pages(image, pages, page_height, fun),
          {:ok, new_image} <- join(Enum.reverse(new_pages), across: 1) do
@@ -9757,6 +9761,59 @@ defmodule Image do
         {:error, reason} -> {:halt, {:error, "Page #{n} returned #{inspect reason}"}}
       end
     end)
+  end
+
+  @doc """
+  Extract each page of a multi-page image into its
+  own image.
+
+  Not all image types support multi-page images.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` in `.gif`
+     or `.png` multi-page format.
+
+  ### Returns
+
+  * `{:ok, list_of_images}` or
+
+  * `{:error, reasom}`
+
+  ### Notes
+
+  The `pages: :all` option should be used when opening the
+  multi-page image.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/animated.gif", pages: :all)
+      iex> {:ok, list_of_images} = Image.extract_pages(image)
+      iex> Enum.count(list_of_images)
+      19
+
+  """
+  @doc since: "0.44.0", subject: "Operation"
+
+  @spec extract_pages(Vimage.t()) :: {:ok, [Vimage.t()]} | {:error, error_message()}
+
+  def extract_pages(%Vimage{} = image) do
+    width = width(image)
+
+    with {:ok, page_height} <- page_height(image) do
+       result =
+         Enum.reduce_while(1..pages(image), {:ok, []}, fn n, {:ok, acc} ->
+           case Operation.extract_area(image, 0, page_height * (n - 1), width, page_height) do
+             {:ok, new_page_n} -> {:cont, {:ok, [new_page_n | acc]}}
+             {:error, reason} -> {:halt, {:error, "Page #{n} returned #{inspect reason}"}}
+           end
+         end)
+
+       case result do
+         {:ok, pages} -> {:ok, Enum.reverse(pages)}
+         error -> error
+       end
+    end
   end
 
   # The iTerm2 Image Preview protocol is:

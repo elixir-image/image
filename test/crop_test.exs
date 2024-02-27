@@ -86,7 +86,7 @@ defmodule Image.Crop.Test do
     validate_path = validate_path("crop/animated_cropped.webp")
 
     {:ok, image} = Image.open(image_path, pages: :all)
-    {:ok, cropped} = Image.map_pages(image, &Image.crop(&1, 0, 100, 150, 150))
+    {:ok, cropped} = Image.map_join_pages(image, &Image.crop(&1, 0, 100, 150, 150))
 
     # {:ok, _} = Image.write(cropped, validate_path)
     {:ok, validate_image} = Image.open(validate_path, pages: :all)
