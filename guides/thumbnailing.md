@@ -43,6 +43,23 @@
   }
 </style>
 
+Basic code:
+
+```elixir
+iex> original_raw = File.read!("/path/to_original.jpg"); nil
+nil
+iex> {:ok, original} = Image.from_binary(original_raw)
+{:ok, %Vix.Vips.Image{ref: #Reference<0.4099923103.164495390.164069>}}
+iex> {:ok, thumbnail} = Image.thumbnail(original, 200)
+{:ok, %Vix.Vips.Image{ref: #Reference<0.4099923103.164495390.164078>}}
+iex> Image.write(thumbnail, "/tmp/thumbnail.png")
+{:ok, %Vix.Vips.Image{ref: #Reference<0.4099923103.164495390.164078>}}
+iex> Image.write(thumbnail, "/path/to_thumbnail.png")
+{:ok, %Vix.Vips.Image{ref: #Reference<0.4099923103.164495390.164078>}}
+```
+
+Examples:
+
 <div class="row">
 <div class="column">
   <figure>
