@@ -29,7 +29,7 @@ defmodule Image do
   THe structure of an image returned from `Kino.Input.read/1`
   when the input field is a `Kino.Input.image/1` type.
   """
-  @type kino_image :: %{data: binary(), width: pos_integer(), height: pos_integer(), format: :rgb}
+  @type kino_image :: %{file_ref: binary(), width: pos_integer(), height: pos_integer(), format: :rgb}
 
   @typedoc """
   A 512 bit binary hash of an image.
