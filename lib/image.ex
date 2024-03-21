@@ -1104,7 +1104,7 @@ defmodule Image do
   * `image` is a a map returned from `Kino.Input.read(image)`
     via a `Kino.Input.image/1` input field. The data will have
     the following fields:
-    * `:data` which contains the raw binary of the image
+    * `:file_ref` which contains a file reference to the image. It can be extraced into a path with `Kino.Input.file_path/1`
     * `:width` which is the width of the image in pixels
     * `:height` which is the height of the image in pixels
     * `:format` which is the image band format which must be `:rgb`
@@ -1134,10 +1134,14 @@ defmodule Image do
   @spec from_kino(image :: kino_image(), options :: Keyword.t()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def from_kino(%{data: binary, width: width, height: height, format: :rgb}, options \\ []) do
+  def from_kino(%{file_ref: ref, width: width, height: height, format: :rgb}, options \\ []) do
+    file_path = apply(Kino.Input, :file_path, [ref])
     bands = Keyword.get(options, :bands, 3)
     image_format = :VIPS_FORMAT_UCHAR
-    Vix.Vips.Image.new_from_binary(binary, width, height, bands, image_format)
+
+    with {:ok, binary} <- File.read(file_path) do
+      Vix.Vips.Image.new_from_binary(binary, width, height, bands, image_format)
+    end
   end
 
   @doc """
@@ -1149,7 +1153,7 @@ defmodule Image do
   * `image` is a a map returned from `Kino.Input.read(image)`
     via a `Kino.Input.image/1` input field. The data will have
     the following fields:
-    * `:data` which contains the raw binary of the image
+    * `:file_ref` which contains a file reference to the image. It can be extraced into a path with `Kino.Input.file_path/1`
     * `:width` which is the width of the image in pixels
     * `:height` which is the height of the image in pixels
     * `:format` which is the image band format which must be `:rgb`
@@ -1179,8 +1183,8 @@ defmodule Image do
   @spec from_kino!(image :: kino_image(), options :: Keyword.t()) ::
           Vimage.t() | no_return()
 
-  def from_kino!(%{data: binary, width: width, height: height, format: :rgb}, options \\ []) do
-    case from_kino(%{data: binary, width: width, height: height, format: :rgb}, options) do
+  def from_kino!(%{file_ref: ref, width: width, height: height, format: :rgb}, options \\ []) do
+    case from_kino(%{file_ref: ref, width: width, height: height, format: :rgb}, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
