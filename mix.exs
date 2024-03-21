@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.43.0"
+  @version "0.43.1"
   @app_name "image"
 
   def project do
@@ -66,7 +66,7 @@ defmodule Image.MixProject do
 
       # Kino for rendering in Livebook
       if(Version.compare(System.version(), "1.13.0") in [:gt, :eq],
-        do: {:kino, "~> 0.7", optional: true}
+        do: {:kino, "~> 0.11", optional: true}
       ),
 
       # For NX interchange testing and

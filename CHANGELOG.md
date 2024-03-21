@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.43.1
+
+This is the changelog for Image version 0.43.1 released on March 22nd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* `Image.from_kino/2` and `Image.from_kino!/2` now use the `:file_ref` field in the Kino input structure to identify the required image. This changed was added in [Kino 0.11](https://github.com/livebook-dev/kino/blob/main/CHANGELOG.md#v0110-2023-10-06) which is therefore now a minimum version requirement. Thanks to @kevinschweikert for the PR. Closes #133.
+
 ## Image 0.43.0
 
 This is the changelog for Image version 0.43.0 released on February 27th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
