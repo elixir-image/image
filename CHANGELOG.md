@@ -1,5 +1,19 @@
 # Changelog
 
+## Image 0.43.2
+
+This is the changelog for Image version 0.43.2 released on April 2nd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix typo in exif `:subsec_time_original`.
+
+* Remove spurious leading space from exif tag description " Standard Output Sensitivity and Recommended Exposure Index"
+
+* Fix decoding exif tags that have an empty string as a value.
+
+THanks to Cam Cook for the issues.
+
 ## Image 0.43.1
 
 This is the changelog for Image version 0.43.1 released on March 22nd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
