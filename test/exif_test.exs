@@ -16,4 +16,12 @@ defmodule Image.ExitTest do
                 y_resolution: 97
               }}
   end
+
+  test "Exif with zero length data for a tag" do
+    image = image_path("kodak-dc210.jpg")
+    {:ok, image} = Image.open(image, access: :random)
+
+    assert {:ok, %{copyright: "", image_description: ""}} = Image.exif(image)
+  end
+
 end

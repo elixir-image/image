@@ -59,7 +59,7 @@ defmodule Image.Exif.Decode do
   def tag(_, 0x927C, value), do: {:maker_note, value}
   def tag(_, 0x9286, value), do: {:user_comment, value}
   def tag(_, 0x9290, value), do: {:subsec_time, value}
-  def tag(_, 0x9291, value), do: {:subsec_time_orginal, value}
+  def tag(_, 0x9291, value), do: {:subsec_time_original, value}
   def tag(_, 0x9292, value), do: {:subsec_time_digitized, value}
   def tag(_, 0xA000, value), do: {:flash_pix_version, version(value)}
   def tag(_, 0xA001, value), do: {:color_space, color_space(value)}
@@ -163,7 +163,7 @@ defmodule Image.Exif.Decode do
   defp sensitivity_type(1), do: "Standard Output Sensitivity"
   defp sensitivity_type(2), do: "Recommended Exposure Index"
   defp sensitivity_type(3), do: "ISO Speed"
-  defp sensitivity_type(4), do: " Standard Output Sensitivity and Recommended Exposure Index"
+  defp sensitivity_type(4), do: "Standard Output Sensitivity and Recommended Exposure Index"
   defp sensitivity_type(5), do: "Standard Output Sensitivity and ISO Speed"
   defp sensitivity_type(6), do: "Recommended Exposure Index and ISO Speed"
 

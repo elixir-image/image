@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.43.1"
+  @version "0.43.2"
   @app_name "image"
 
   def project do
@@ -84,6 +84,7 @@ defmodule Image.MixProject do
       # For testing and benchmarking
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
       {:benchee, "~> 1.0", only: :dev, runtime: false, optional: true},
+      {:req, "~> 0.4", optional: true},
 
       # For release management
       {:ex_doc, "~> 0.18", only: [:release, :dev, :docs]},

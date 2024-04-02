@@ -17,14 +17,19 @@ defmodule Image.Exif.Tag do
     # ignore null-byte at end
     length = count - 1
 
-    if count > 4 do
-      # + offset
-      offset = ru.(value)
-      <<_::binary-size(offset), string::binary-size(length), _::binary>> = exif
-      string
-    else
-      <<string::binary-size(length), _::binary>> = value
-      string
+    cond do
+      count > 4 ->
+        # + offset
+        offset = ru.(value)
+        <<_::binary-size(offset), string::binary-size(length), _::binary>> = exif
+        string
+
+      count == 0 ->
+        ""
+
+      true ->
+        <<string::binary-size(length), _::binary>> = value
+        string
     end
   end
 
