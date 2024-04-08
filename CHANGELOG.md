@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.44.0
+
+This is the changelog for Image version 0.44.0 released on ______, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds `Image.Blurhash.encode/2` and `Image.Blurhash.decode/1` to encode and decode [blurhashes](https://blurha.sh). Based upon a fork of [rinpatch_blurhash](https://github.com/rinpatch/blurhash). Thanks to @stiang for the suggestion.
+
 ## Image 0.43.2
 
 This is the changelog for Image version 0.43.2 released on April 2nd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
