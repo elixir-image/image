@@ -6,6 +6,17 @@ defmodule Image.Blurhash.Decoder do
 
   import Bitwise
 
+  def decode(blurhash, width, height) do
+    with {:ok, {components_x, components_y}, rest} <- size_flag(blurhash),
+         {:ok, max_ac, rest} <- max_ac(rest),
+         {:ok, {average_color, dc}, rest} <- average_color_and_dc(rest),
+         {:ok, matrix} <- construct_matrix(rest, max_ac, components_x, components_y, dc) do
+      pixels = construct_pixel_iodata(width, height, matrix)
+
+      {:ok, pixels, average_color}
+    end
+  end
+
   defp size_flag(blurhash) do
     with {:ok, encoded_flag, rest} <- Base83.decode_number(blurhash, 1) do
       x = rem(encoded_flag, 9) + 1
@@ -58,14 +69,14 @@ defmodule Image.Blurhash.Decoder do
         end)
 
       if rest != "" do
-        {:error, :unexpected_components}
+        {:error, "Unexpected number of blurhash components"}
       else
         {r, g, b} = dc
         matrix = [{{0, 0}, {r, g, b}} | ac_values]
         {:ok, matrix}
       end
     catch
-      error -> error
+      {:error, _} -> {:error, "Invalid blurhash"}
     end
   end
 
@@ -96,14 +107,4 @@ defmodule Image.Blurhash.Decoder do
     end)
   end
 
-  def decode(blurhash, width, height) do
-    with {:ok, {components_x, components_y}, rest} <- size_flag(blurhash),
-         {:ok, max_ac, rest} <- max_ac(rest),
-         {:ok, {average_color, dc}, rest} <- average_color_and_dc(rest),
-         {:ok, matrix} <- construct_matrix(rest, max_ac, components_x, components_y, dc) do
-      pixels = construct_pixel_iodata(width, height, matrix)
-
-      {:ok, pixels, average_color}
-    end
-  end
 end

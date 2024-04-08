@@ -89,4 +89,48 @@ defmodule Image.Blurhash do
       Image.Blurhash.Encoder.encode(binary, width, height, options.x_components, options.y_components)
     end
   end
+
+  @doc """
+  Decodes an blurhash to an image.
+
+  ### Arguments
+
+  * `blurhash` is a blurhash returned by `Image.Blurhash.encode/2`.
+
+  * `width` is the required width of the returned image.
+
+  * `height` is the required height of the returned image.
+
+  ### Returns
+
+  * `{:ok, image}` or
+
+  * `{:error, reason}`
+
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, blurhash} = Image.Blurhash.encode(image)
+      iex> {:ok, _image} = Image.Blurhash.decode(blurhash, 400, 200)
+
+      iex> Image.Blurhash.decode("nonsense", 400, 200)
+      {:error, "Invalid blurhash"}
+
+  """
+
+  @bands_in_blurhash 3
+  @blurhash_band_format :VIPS_FORMAT_UCHAR
+
+  @doc subject: "Operation", since: "0.44.0"
+
+  @spec decode(blurhash :: String.t(), width :: pos_integer(), height :: pos_integer()) ::
+    {:ok, Vimage.t} | {:error, Image.error_message()}
+
+  def decode(blurhash, width, height)
+      when is_binary(blurhash) and is_integer(width) and is_integer(height) and width > 0 and height > 0 do
+    with {:ok, pixel_iodata, _average_color} <- Image.Blurhash.Decoder.decode(blurhash, width, height) do
+      pixel_binary = IO.iodata_to_binary(pixel_iodata)
+      Vix.Vips.Image.new_from_binary(pixel_binary, width, height, @bands_in_blurhash, @blurhash_band_format)
+    end
+  end
 end
