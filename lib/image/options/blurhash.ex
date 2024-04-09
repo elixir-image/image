@@ -24,7 +24,7 @@ defmodule Image.Options.Blurhash do
   @doc """
   Validate the options for `Image.Blurhash.encode/2`.
 
-  See `t:Image.Options.Blurhash.blur_options/0`.
+  See `t:Image.Options.Blurhash.blurhash_options/0`.
 
   """
   def validate_options(image, options) when is_list(options) do
