@@ -49,6 +49,7 @@ defmodule Image.Options.Write do
   @typedoc "Options for writing a heif file with `Image.write/2`."
   @type heif_write_option ::
           {:compression, heif_compression()}
+          | {:lossless, boolean()}
           | {:effort, 1..10}
           | {:minimize_file_size, boolean()}
 
@@ -177,6 +178,10 @@ defmodule Image.Options.Write do
   end
 
   defp validate_option({:compression, compression}, options, image_type) when is_heif(image_type) and compression in [:hevc, :avc, :jpeg, :av1] do
+    {:cont, options}
+  end
+
+  defp validate_option({:lossless, lossless}, options, image_type) when is_heif(image_type) and is_boolean(lossless) do
     {:cont, options}
   end
 
