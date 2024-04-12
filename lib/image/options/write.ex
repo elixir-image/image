@@ -176,6 +176,10 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
+  defp validate_option({:compression, compression}, options, image_type) when is_heif(image_type) and compression in [:hevc, :avc, :jpeg, :av1] do
+    {:cont, options}
+  end
+
   # From: https://www.libvips.org/API/current/VipsForeignSave.html#vips-jpegsave
   # Applies only to jpeg save
   # For maximum compression with mozjpeg, a useful set of options is
