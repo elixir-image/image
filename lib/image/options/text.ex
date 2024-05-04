@@ -20,9 +20,9 @@ defmodule Image.Options.Text do
           | {:background_stroke_opacity, float()}
           | {:background_fill_opacity, float()}
           | {:padding, [non_neg_integer(), ...]}
-          | {:letter_spacing, :normal | integer()}
-          | {:x, :center | :left | :right}
-          | {:y, :middle | :top | :bottom}
+          | {:letter_spacing, :normal | pos_integer()}
+          | {:x, :center | :left | :right | pos_integer()}
+          | {:y, :middle | :top | :bottom | pos_integer()}
           | {:autofit, boolean()}
           | {:width, pos_integer() | nil}
           | {:height, pos_integer() | nil}
@@ -60,7 +60,7 @@ defmodule Image.Options.Text do
 
   """
   def validate_options(options) do
-    options = Keyword.merge(default_options(), options)
+    options = merge(default_options(), options)
 
     options =
       case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
@@ -76,11 +76,24 @@ defmodule Image.Options.Text do
         options
         |> Map.new()
         |> ensure_background_color_if_transparent_text()
-        |> validate_size_if_autofit_true()
+        |> wrap(:ok)
 
       other ->
         other
     end
+  end
+
+  # The default :y is :middle if :height is specified
+  # and :top if it is not. The default for :x is :center
+  # if :width is specified and :left if not.
+  defp merge(defaults, options) do
+    defaults =
+      if options[:height], do: defaults, else: Keyword.put(defaults, :y, :top)
+
+    defaults =
+      if options[:width], do: defaults, else: Keyword.put(defaults, :x, :left)
+
+    Keyword.merge(defaults, options)
   end
 
   defp validate_option({:autofit, autofit}, options) do
@@ -311,18 +324,6 @@ defmodule Image.Options.Text do
     |> round()
     |> Integer.to_string(16)
     |> String.pad_leading(2, "0")
-  end
-
-  defp validate_size_if_autofit_true(%{autofit: false} = options) do
-    wrap(options, :ok)
-  end
-
-  defp validate_size_if_autofit_true(%{autofit: true, height: height, width: width} = options) do
-    if is_integer(height) and is_integer(width) do
-      wrap(options, :ok)
-    else
-      {:error, ":height and :width must be specified when autofit: true"}
-    end
   end
 
   @doc false

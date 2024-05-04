@@ -35,6 +35,20 @@ defmodule Image.Text do
   text and any base image onto which it is later
   composed.  The default no padding.
 
+  ### SVG or pango rendering
+
+  Depending on the option `:autofit`, the text will be rendered
+  either by SVG (when `autofit: false`) or by [pango](https://pango.gnome.org)
+  (when `autofit: true`).
+
+  Each render engine supports different capabilities
+  and comes with different compromises. See the documentation
+  for `Image.simple_text/2` to see the differences.
+
+  In particualar, note that SVG rendering does not support
+  multi-line text. This is a limitation in both the SVG
+  standard and the underlying SVG renderer.
+
   ### Arguments
 
   * `string` is any string. The string will be
@@ -46,6 +60,9 @@ defmodule Image.Text do
   * `options` is a `t:Keyword.t/0` list of options
 
   ### Options
+
+  See also the options for `Image.Text.simple_text/2` which
+  is ultimately called by this function.
 
   * `:font` is any font recognised on the host system.
     The default is"Helvetica".
@@ -106,11 +123,13 @@ defmodule Image.Text do
 
   * `:x` is the horizontal location of the text on its background.
     The value is either a non-negative integer or one of `:left`,
-    `:right` or `:center`. The default is `:center`.
+    `:right` or `:center`. The default is `:center` if `:width` is
+    specified and `:left` if it is not.
 
   * `:y` is the vertical location of the text on its background.
     The value is either a non-negative integer or one of `:top`,
-    `:middle` or `:bottom`. The default is `:middle`.
+    `:middle` or `:bottom`. The default is `:middle` if `:height`
+    is specified and `:top` if it is not.
 
   ### Returns
 
@@ -171,6 +190,20 @@ defmodule Image.Text do
   text and any base image onto which it is later
   composed.  The default no padding.
 
+  ### SVG or pango rendering
+
+  Depending on the option `:autofit`, the text will be rendered
+  either by SVG (when `autofit: false`) or by [pango](https://pango.gnome.org)
+  (when `autofit: true`).
+
+  Each render engine supports different capabilities
+  and comes with different compromises. See the documentation
+  for `Image.simple_text/2` to see the differences.
+
+  In particualar, note that SVG rendering does not support
+  multi-line text. This is a limitation in both the SVG
+  standard and the underlying SVG renderer.
+
   ### Arguments
 
   * `string` is any string. The string will be
@@ -182,6 +215,9 @@ defmodule Image.Text do
   * `options` is a `t:Keyword.t/0` list of options
 
   ### Options
+
+  See also the options for `Image.Text.simple_text/2` which
+  is ultimately called by this function.
 
   * `:font` is any font recognised on the host system.
     The default is"Helvetica".
@@ -242,11 +278,13 @@ defmodule Image.Text do
 
   * `:x` is the horizontal location of the text on its background.
     The value is either a non-negative integer or one of `:left`,
-    `:right` or `:center`. The default is `:center`.
+    `:right` or `:center`. The default is `:center` if `:width` is
+    specified and `:left` if it is not.
 
   * `:y` is the vertical location of the text on its background.
     The value is either a non-negative integer or one of `:top`,
-    `:middle` or `:bottom`. The default is `:middle`.
+    `:middle` or `:bottom`. The default is `:middle` if `:height`
+    is specified and `:top` if it is not.
 
   ### Returns
 
@@ -328,9 +366,13 @@ defmodule Image.Text do
 
   #### Options for when autofit: true
 
-  * `:width` is the width of the generated text image.
+  * `:width` is the width of the generated text image in pixels. The
+    default is calculated by the rendering engine based upon the font
+    and other options.
 
-  * `:height` is the height of the generated text image.
+  * `:height` is the height of the generated text image in pixels. The
+    default is calculated by the rendering engine based upon the font
+    and other options.
 
   * `:font_size` is an integer font size in pixels. The
     default is `50`. If set to `0`, the font size will
@@ -893,20 +935,22 @@ defmodule Image.Text do
 
   @points_to_pixels 1.333
 
-  defp render_text(text, %{autofit: true, width: width, height: height} = options) do
+  defp render_text(text, %{autofit: true} = options) do
     font_size =
       if options.font_size > 0, do: " #{round(options.font_size / @points_to_pixels)}", else: ""
 
     font = options.font <> font_size
+    height = options[:height]
+    width = options[:width]
 
     text_options =
       [
         font: font,
-        width: options.width,
-        height: options.height,
         align: options.align,
         justify: options.justify
       ]
+      |> maybe_add_height(height)
+      |> maybe_add_width(width)
       |> Image.maybe_add_fontfile(options[:fontfile])
 
     with {:ok, text} <- maybe_add_letter_spacing(text, options.letter_spacing),
@@ -915,8 +959,13 @@ defmodule Image.Text do
          {:ok, joined} <- Operation.bandjoin([color_layer, text_mask]),
          {:ok, {x, y}} <- location_from_options(joined, options.x, options.y, width, height) do
       # The text image isn't guaranteed to be the exact dimensions
-      # provided so we embed in an image of the exact size.
-      Operation.embed(joined, x, y, width, height)
+      # provided so we embed in an image of the exact size if height
+      # was specified.
+      if width && height do
+        Operation.embed(joined, x, y, width, height)
+      else
+        {:ok, joined}
+      end
     end
   end
 
@@ -933,6 +982,12 @@ defmodule Image.Text do
     ]
     |> Enum.join("; ")
   end
+
+  defp maybe_add_height(options, nil), do: options
+  defp maybe_add_height(options, height), do: Keyword.put(options, :height, height)
+
+  defp maybe_add_width(options, nil), do: options
+  defp maybe_add_width(options, width), do: Keyword.put(options, :width, width)
 
   defp letter_spacing("normal"), do: "normal"
   defp letter_spacing(other), do: "#{other}px"
@@ -981,12 +1036,12 @@ defmodule Image.Text do
     location_from_options(image, 0, y, width, height)
   end
 
-  defp location_from_options(image, :center, y, width, height) do
+  defp location_from_options(image, :center, y, width, height) when is_integer(width) do
     x = div(width - Image.width(image), 2)
     location_from_options(image, x, y, width, height)
   end
 
-  defp location_from_options(image, :right, y, width, height) do
+  defp location_from_options(image, :right, y, width, height) when is_integer(width) do
     x = width - Image.width(image)
     location_from_options(image, x, y, width, height)
   end
@@ -995,17 +1050,42 @@ defmodule Image.Text do
     location_from_options(image, x, 0, width, height)
   end
 
-  defp location_from_options(image, x, :middle, width, height) do
+  defp location_from_options(image, x, :middle, width, height) when is_integer(height) do
     y = div(height - Image.height(image), 2)
     location_from_options(image, x, y, width, height)
   end
 
-  defp location_from_options(image, x, :bottom, width, height) do
+  defp location_from_options(image, x, :bottom, width, height) when is_integer(height) do
     y = height - Image.height(image)
     location_from_options(image, x, y, width, height)
   end
 
-  defp location_from_options(image, x, y, width, height) do
+  defp location_from_options(_image, _x, _y, nil, nil) do
+    {:ok, {0, 0}}
+  end
+
+  defp location_from_options(_image, x_location, _y, nil, _height)
+      when x_location in [:center, :right] do
+    {:error, ":center and :right cannot be specified unless :width is also specified"}
+  end
+
+  defp location_from_options(_image, _x, y_location, _width, nil)
+      when y_location in [:middle, :bottom] do
+    {:error, ":middle and :bottom cannot be specified unless :height is also specified"}
+  end
+
+  defp location_from_options(image, x, y, width, nil) when is_integer(width) do
+    if Image.width(image) + x <= width do
+      {:ok, {x, y}}
+    else
+      {:error,
+       "Location [#{inspect(x)}, _] would place the text " <>
+         "outside the image bounds specified"}
+    end
+  end
+
+  defp location_from_options(image, x, y, width, height)
+      when is_integer(width) and is_integer(height) do
     if Image.width(image) + x <= width && Image.height(image) + y <= height do
       {:ok, {x, y}}
     else

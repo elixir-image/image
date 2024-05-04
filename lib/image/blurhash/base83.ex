@@ -1,7 +1,9 @@
 defmodule Image.Blurhash.Base83 do
   @moduledoc false
 
-  alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%*+,-.:;=?@[]^_{|}~'
+  alphabet =
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%*+,-.:;=?@[]^_{|}~"
+    |> String.to_charlist()
 
   for {encoded, value} <- Enum.with_index(alphabet) do
     def encode_char(unquote(value)) do

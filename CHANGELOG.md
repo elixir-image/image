@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.44.1
+
+This is the changelog for Image version 0.44.1 released on May 4th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix warnings on upcoming Elixir 1.17.
+
+* For `Image.text/2` the `:width` and `:height` options are no longer required. The documentation states that they are not required, but if using `autofit: true` they have actually been required. The result is that `autofit: true` text can now be constrained to a `:width`, a `:width` and `:height` or have them both determined by the rendering engine.
+
 ## Image 0.44.0
 
 This is the changelog for Image version 0.44.0 released on April 9th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
@@ -20,7 +30,7 @@ This is the changelog for Image version 0.43.2 released on April 2nd, 2024.  For
 
 * Fix decoding exif tags that have an empty string as a value.
 
-THanks to Cam Cook for the issues.
+Thanks to Cam Cook for the issues.
 
 ## Image 0.43.1
 
