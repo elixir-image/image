@@ -79,12 +79,11 @@ defmodule Image.Avatar.Test do
       Image.Text.text!("KC", background_fill_color: :cyan, font_size: 200, padding: 80)
       |> Image.avatar(shape: :circle)
 
-    # Image.write!(avatar, validate_path)
-
     # IO.inspect Image.shape(avatar), label: "Avatar shape"
     # Image.preview avatar
     # Image.preview Image.open!(validate_path)
 
+    # Image.write!(avatar, validate_path)
     assert_images_equal(avatar, validate_path)
   end
 
@@ -96,12 +95,11 @@ defmodule Image.Avatar.Test do
       Image.Text.text!("KC", background_fill_color: :cyan, font_size: 200, padding: 80)
       |> Image.avatar(shape: :square)
 
-    # Image.write!(avatar, validate_path)
-
     # IO.inspect Image.shape(avatar), label: "Avatar shape"
     # Image.preview avatar
     # Image.preview Image.open!(validate_path)
 
+    # Image.write!(avatar, validate_path)
     assert_images_equal(avatar, validate_path)
   end
 end

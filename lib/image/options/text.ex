@@ -11,7 +11,6 @@ defmodule Image.Options.Text do
           {:font, String.t()}
           | {:font_size, pos_integer()}
           | {:text_fill_color, Color.t()}
-          | {:text_stroke_color, Color.t()}
           | {:text_stroke_width, pos_integer()}
           | {:font_weigtht, atom()}
           | {:background_fill_color, Color.t()}
@@ -23,7 +22,6 @@ defmodule Image.Options.Text do
           | {:letter_spacing, :normal | pos_integer()}
           | {:x, :center | :left | :right | pos_integer()}
           | {:y, :middle | :top | :bottom | pos_integer()}
-          | {:autofit, boolean()}
           | {:width, pos_integer() | nil}
           | {:height, pos_integer() | nil}
           | {:fontfile, String.t() | nil}
@@ -36,7 +34,6 @@ defmodule Image.Options.Text do
       font: "Helvetica",
       font_size: 50,
       text_fill_color: :white,
-      text_stroke_color: :none,
       text_stroke_width: 1,
       font_weight: :normal,
       background_fill_color: :none,
@@ -48,7 +45,6 @@ defmodule Image.Options.Text do
       letter_spacing: :normal,
       x: :center,
       y: :middle,
-      autofit: false,
       fontfile: nil,
       align: :left,
       justify: false
@@ -94,12 +90,6 @@ defmodule Image.Options.Text do
       if options[:width], do: defaults, else: Keyword.put(defaults, :x, :left)
 
     Keyword.merge(defaults, options)
-  end
-
-  defp validate_option({:autofit, autofit}, options) do
-    autofit = if autofit, do: true, else: false
-    options = Keyword.put(options, :autofit, autofit)
-    {:cont, options}
   end
 
   defp validate_option({:x, x}, options) when is_integer(x) and x >= 0 do
@@ -162,10 +152,6 @@ defmodule Image.Options.Text do
   end
 
   defp validate_option({:text_fill_color = option, color}, options) do
-    validate_color(option, color, options)
-  end
-
-  defp validate_option({:text_stroke_color = option, color}, options) do
     validate_color(option, color, options)
   end
 

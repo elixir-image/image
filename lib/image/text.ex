@@ -35,19 +35,14 @@ defmodule Image.Text do
   text and any base image onto which it is later
   composed.  The default no padding.
 
-  ### SVG or pango rendering
+  ### The Pango markup language
 
-  Depending on the option `:autofit`, the text will be rendered
-  either by SVG (when `autofit: false`) or by [pango](https://pango.gnome.org)
-  (when `autofit: true`).
-
-  Each render engine supports different capabilities
-  and comes with different compromises. See the documentation
-  for `Image.simple_text/2` to see the differences.
-
-  In particualar, note that SVG rendering does not support
-  multi-line text. This is a limitation in both the SVG
-  standard and the underlying SVG renderer.
+  The text string can take advantage of
+  [Pango markup language](https://docs.gtk.org/Pango/pango_markup.html) that
+  provides some simple HTML-like text transformation
+  capabilities. Note that some of the options to `Image.text/2`,
+  such as `:font_weight` and `:letter_spacing` operate by adding markup
+  to the provided string.
 
   ### Arguments
 
@@ -57,7 +52,7 @@ defmodule Image.Text do
     you can pass it by calling with `Phoenix.HTML.raw/1`
     on the string first.
 
-  * `options` is a `t:Keyword.t/0` list of options
+  * `options` is a `t:Keyword.t/0` list of options.
 
   ### Options
 
@@ -81,13 +76,6 @@ defmodule Image.Text do
     a background. A black background will be forced if a
     `:background_fill_color` is not provided
 
-  * `:text_stroke_color` is the color of the outline
-    of each character in the string. The default is "none".
-
-  * `:text_stroke_width` is the integer width in
-    pixels of the outline of each character in the string.
-    The default is `1`.
-
   * `:background_fill_opacity` is the opacity of the background fill.
     It is a float between `0.0` and `1.0` where `0.0` means transparent
     and `1.0` means opaque. The default is `0.7`.
@@ -103,6 +91,10 @@ defmodule Image.Text do
     to pass a `t:Vimage.t/0` in which case the padding will be derived
     from the image dimensions such that the background covers the
     whole of the impage.  THe default is `[0, 0]`.
+
+  * `:align` indicates how multiple lines of text are aligned.
+    The options are `:left`, `:right` and `:center`. The default
+    is `:left`.
 
   * `:letter_spacing` is the amount of space in pixels between each letter.
     Default is `:normal`.
@@ -121,6 +113,14 @@ defmodule Image.Text do
     string. It is a float between `0.0` and `1.0` where `0.0` means
     transparent and `1.0` means opaque. The default is `0.7`.
 
+  * `:width` is the maximum width of the generated text image in pixels. The
+    default is calculated by the rendering engine based upon the font
+    and other options.
+
+  * `:height` is the maximum height of the generated text image in pixels. The
+    default is calculated by the rendering engine based upon the font
+    and other options.
+
   * `:x` is the horizontal location of the text on its background.
     The value is either a non-negative integer or one of `:left`,
     `:right` or `:center`. The default is `:center` if `:width` is
@@ -138,11 +138,6 @@ defmodule Image.Text do
   * `{:error, reason}`
 
   ### Notes
-
-  * There is no text wrapping, justification or kerning
-    applied. This means this function is not a general
-    purpose text layout function and is suitable mostly
-    for overlaying text for emphasis over another image.
 
   * Colors may be any valid
     [CSS color name](https://www.w3.org/wiki/CSS/Properties/color/keywords) or
@@ -190,19 +185,14 @@ defmodule Image.Text do
   text and any base image onto which it is later
   composed.  The default no padding.
 
-  ### SVG or pango rendering
+  ### The Pango markup language
 
-  Depending on the option `:autofit`, the text will be rendered
-  either by SVG (when `autofit: false`) or by [pango](https://pango.gnome.org)
-  (when `autofit: true`).
-
-  Each render engine supports different capabilities
-  and comes with different compromises. See the documentation
-  for `Image.simple_text/2` to see the differences.
-
-  In particualar, note that SVG rendering does not support
-  multi-line text. This is a limitation in both the SVG
-  standard and the underlying SVG renderer.
+  The text string can take advantage of
+  [Pango markup language](https://docs.gtk.org/Pango/pango_markup.html) that
+  provides some simple HTML-like text transformation
+  capabilities. Note that some of the options to `Image.text/2`,
+  such as `:font_weight` and `:letter_spacing` operate by adding markup
+  to the provided string.
 
   ### Arguments
 
@@ -236,13 +226,6 @@ defmodule Image.Text do
     a background. A black background will be forced if a
     `:background_fill_color` is not provided
 
-  * `:text_stroke_color` is the color of the outline
-    of each character in the string. The default is "none".
-
-  * `:text_stroke_width` is the integer width in
-    pixels of the outline of each character in the string.
-    The default is `1`.
-
   * `:background_fill_opacity` is the opacity of the background fill.
     It is a float between `0.0` and `1.0` where `0.0` means transparent
     and `1.0` means opaque. The default is `0.7`.
@@ -258,6 +241,10 @@ defmodule Image.Text do
     to pass a `t:Vimage.t/0` in which case the padding will be derived
     from the image dimensions such that the background covers the
     whole of the impage.  THe default is `[0, 0]`.
+
+  * `:align` indicates how multiple lines of text are aligned.
+    The options are `:left`, `:right` and `:center`. The default
+    is `:left`.
 
   * `:letter_spacing` is the amount of space in pixels between each letter.
     Default is `:normal`.
@@ -276,6 +263,14 @@ defmodule Image.Text do
     string. It is a float between `0.0` and `1.0` where `0.0` means
     transparent and `1.0` means opaque. The default is `0.7`.
 
+  * `:width` is the maximum width of the generated text image in pixels. The
+    default is calculated by the rendering engine based upon the font
+    and other options.
+
+  * `:height` is the maximum height of the generated text image in pixels. The
+    default is calculated by the rendering engine based upon the font
+    and other options.
+
   * `:x` is the horizontal location of the text on its background.
     The value is either a non-negative integer or one of `:left`,
     `:right` or `:center`. The default is `:center` if `:width` is
@@ -293,11 +288,6 @@ defmodule Image.Text do
   * raises an exception
 
   ### Notes
-
-  * There is no text wrapping, justification or kerning
-    applied. This means this function is not a general
-    purpose text layout function and is suitable mostly
-    for overlaying text for emphasis over another image.
 
   * Colors may be any valid
     [CSS color name](https://www.w3.org/wiki/CSS/Properties/color/keywords) or
@@ -331,46 +321,20 @@ defmodule Image.Text do
 
   ### Options
 
-  The applicable options vary slightly depending on
-  whether `:autofit` is set to `true` or `false`.
-
-  When `false` (the default), the text is rendered using
-  `svg` and therefore separate text stroke color, text
-  fill colour, text stroke width and font weight can be
-  specified.  However the size of the text box will be
-  determined by the combination of the font size and
-  text length - there is no line wrapping.
-
-  If `true` the text is formatted to fit within the options
-  `:width` and `:height` and the text is sized to fit
-  within the box. `:height` can be ommitted and it will
-  expand to fit the text of the specified size.
-
-  #### Options for when autofit: false
-
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
     a background. A black background will be forced if a
     `:background_fill_color` is not provided
 
-  * `:text_stroke_color` is the color of the outline
-    of each character in the string. The default is "none".
-
-  * `:text_stroke_width` is the integer width in
-    pixels of the outline of each character in the string.
-    The default is `1`
-
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
 
-  #### Options for when autofit: true
-
-  * `:width` is the width of the generated text image in pixels. The
+  * `:width` is the maximum width of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
     and other options.
 
-  * `:height` is the height of the generated text image in pixels. The
+  * `:height` is the maximum height of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
     and other options.
 
@@ -389,8 +353,6 @@ defmodule Image.Text do
   * `:letter_spacing` is the amount of space in pixels between each letter.
     Default is `:normal`.
 
-  #### Options applicable in all cases
-
   * `:font` is any font recognised on the host system.
     The default is "Helvetica".
 
@@ -406,11 +368,6 @@ defmodule Image.Text do
   * `{:error, reason}`
 
   ### Notes
-
-  * There is no text wrapping, justification or kerning
-    applied. This means this function is not a general
-    purpose text layout function and is suitable mostly
-    for overlaying text for emphasis over another image.
 
   * Colors may be any valid
     [CSS color name](https://www.w3.org/wiki/CSS/Properties/color/keywords) or
@@ -481,17 +438,8 @@ defmodule Image.Text do
     a background. A black background will be forced if a
     `:background_fill_color` is not provided
 
-  * `:text_stroke_color` is the color of the outline
-    of each character in the string. The default is "none".
-
-  * `:text_stroke_width` is the integer width in
-    pixels of the outline of each character in the string.
-    The default is `1`
-
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
-
-  #### Options for when autofit: true
 
   * `:width` is the width of the generated text image.
 
@@ -505,14 +453,8 @@ defmodule Image.Text do
   * `:justify` is a boolean indicating whether to justify text.
     The default is `false`.
 
-  * `:align` indicates how multiple lines of text are aligned.
-    The options are `:left`, `:right` and `:center`. The default
-    is `:left`.
-
   * `:letter_spacing` is the amount of space in pixels between each letter.
     Default is `:normal`.
-
-  #### Options applicable in all cases
 
   * `:font` is any font recognised on the host system.
     The default is"Helvetica".
@@ -908,36 +850,9 @@ defmodule Image.Text do
     render_text(text, Map.put(options, :text_fill_color, :white))
   end
 
-  defp render_text(text, %{autofit: false} = options) do
-    spacing = if options.letter_spacing == :normal, do: 1, else: options.letter_spacing
-    length = String.length(text)
-    height = round(options.font_size * 2.0)
-    width = round(length * (options.font_size + spacing))
-
-    svg = """
-    <svg viewBox="0 0 #{width} #{height}" xmlns="http://www.w3.org/2000/svg">
-      <style type="text/css">
-        svg text {
-          #{svg_options(options)}
-        }
-      </style>
-      <text x="1" y="50%">#{text}</text>
-    </svg>
-    """
-
-    with {:ok, {image, _flags}} <- Operation.svgload_buffer(svg),
-         {:ok, trim_color} <- find_trim_color(image, options),
-         {:ok, {x, y, width, height}} <-
-           Operation.find_trim(image, background: trim_color, threshold: 0) do
-      Image.crop(image, x, y, width, height)
-    end
-  end
-
-  @points_to_pixels 1.333
-
-  defp render_text(text, %{autofit: true} = options) do
+  defp render_text(text, options) do
     font_size =
-      if options.font_size > 0, do: " #{round(options.font_size / @points_to_pixels)}", else: ""
+      if options.font_size > 0, do: " #{inspect(options.font_size)}", else: ""
 
     font = options.font <> font_size
     height = options[:height]
@@ -958,9 +873,6 @@ defmodule Image.Text do
          {:ok, color_layer} <- Image.new(text_mask, color: options.text_fill_color),
          {:ok, joined} <- Operation.bandjoin([color_layer, text_mask]),
          {:ok, {x, y}} <- location_from_options(joined, options.x, options.y, width, height) do
-      # The text image isn't guaranteed to be the exact dimensions
-      # provided so we embed in an image of the exact size if height
-      # was specified.
       if width && height do
         Operation.embed(joined, x, y, width, height)
       else
@@ -969,28 +881,11 @@ defmodule Image.Text do
     end
   end
 
-  defp svg_options(options) do
-    [
-      "font-family: #{options.font}",
-      "font-size: #{options.font_size}px",
-      "font-weight: #{options.font_weight}",
-      "fill: #{options.text_fill_color}",
-      "stroke: #{options.text_stroke_color}",
-      "stroke-width: #{options.text_stroke_width}",
-      "letter-spacing: #{letter_spacing(options.letter_spacing)}",
-      "text-anchor: left"
-    ]
-    |> Enum.join("; ")
-  end
-
   defp maybe_add_height(options, nil), do: options
   defp maybe_add_height(options, height), do: Keyword.put(options, :height, height)
 
   defp maybe_add_width(options, nil), do: options
   defp maybe_add_width(options, width), do: Keyword.put(options, :width, width)
-
-  defp letter_spacing("normal"), do: "normal"
-  defp letter_spacing(other), do: "#{other}px"
 
   # If the text starts with a span then we assume the user is
   # determining the text format
@@ -1006,30 +901,8 @@ defmodule Image.Text do
   # pango letter_spacing is in 1/1024 of a point.
   # We need to convert pixels to this unit.
   defp maybe_add_letter_spacing(text, letter_spacing) do
-    letter_spacing = round(letter_spacing / @points_to_pixels * 1024)
+    letter_spacing = round(letter_spacing * 1024)
     {:ok, "<span letter_spacing=\"#{letter_spacing}\">#{text}</span>"}
-  end
-
-  # If the text is black, use white as the trim color
-  defp find_trim_color(_image, %{text_stroke_color: :black}) do
-    Image.Color.validate_color(:white)
-  end
-
-  defp find_trim_color(_image, %{text_stroke_color: "#000000"}) do
-    Image.Color.validate_color(:white)
-  end
-
-  defp find_trim_color(_image, %{text_stroke_color: :transparent, text_fill_color: :black}) do
-    Image.Color.validate_color(:white)
-  end
-
-  defp find_trim_color(_image, %{text_stroke_color: :transparent, text_fill_color: "#000000"}) do
-    Image.Color.validate_color(:white)
-  end
-
-  defp find_trim_color(image, _options) do
-    image = Image.flatten!(image)
-    Image.get_pixel(image, Image.width(image) - 1, Image.height(image) - 1)
   end
 
   defp location_from_options(image, :left, y, width, height) do

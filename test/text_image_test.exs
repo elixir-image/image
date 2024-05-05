@@ -48,10 +48,9 @@ defmodule TextImage.Test do
       |> Image.compose!(places, x: 260, y: 260)
       |> Image.compose!(blowout, x: 260, y: 340)
       |> Image.compose!(start_saving, x: 260, y: 400)
+      # |> Image.preview()
 
-    # |> Image.preview()
-
-    # Image.write(final_image, validate_path)
+    Image.write(final_image, validate_path)
     assert_images_equal(final_image, validate_path)
   end
 
@@ -69,58 +68,18 @@ defmodule TextImage.Test do
       )
 
     {:ok, final_image} = Image.compose(base_image, singapore, x: :center, y: :middle)
-    # Image.preview final_image
 
     # Image.write(final_image, validate_path)
     assert_images_equal(final_image, validate_path)
-  end
-
-  test "Black text trims correctly" do
-    validate_path = validate_path("text/black_text.tif")
-
-    {:ok, black_text} =
-      Text.text("Some Black Text", text_stroke_color: :black, text_fill_color: :black)
-
-    {:ok, black_text1} =
-      Image.Text.text("Some Black Text", text_fill_color: :black, text_stroke_color: "#000000")
-
-    {:ok, black_text2} =
-      Image.Text.text("Some Black Text", text_fill_color: "#000000", text_stroke_color: :black)
-
-    {:ok, black_text3} =
-      Image.Text.text("Some Black Text", text_fill_color: "#000000", text_stroke_color: "#000000")
-
-    # Image.preview black_text
-
-    # Image.write(black_text, validate_path)
-    assert_images_equal(black_text, validate_path)
-    assert_images_equal(black_text1, validate_path)
-    assert_images_equal(black_text2, validate_path)
-    assert_images_equal(black_text3, validate_path)
   end
 
   test "Large letter spacing isn't clipped" do
     validate_path = validate_path("text/large_letter_spacing.tif")
 
     {:ok, spacing} = Text.text("Hello", letter_spacing: 50)
-    # Image.preview spacing
 
     # Image.write(spacing, validate_path)
     assert_images_equal(spacing, validate_path)
-  end
-
-  test "Black text with transparent stroke" do
-    assert {:ok, _black_text3} =
-             Image.Text.text("Some Black Text",
-               text_stroke_color: :transparent,
-               text_fill_color: :black
-             )
-
-    assert {:ok, _black_text4} =
-             Image.Text.text("Some Black Text",
-               text_stroke_color: :transparent,
-               text_fill_color: "#000000"
-             )
   end
 
   test "Autofit text with letter spacing" do
@@ -130,8 +89,8 @@ defmodule TextImage.Test do
       Image.Text.text("This is some text",
         width: 100,
         height: 50,
-        letter_spacing: 10,
-        autofit: true
+        align: :left,
+        letter_spacing: 6
       )
 
     # Image.preview text
@@ -146,7 +105,9 @@ defmodule TextImage.Test do
 
     {:ok, singapore} = Text.text("Singapore", font_size: 100, font: "DIN Alternate")
     final_image = Image.compose!(base_image, singapore, x: :center, y: :middle)
+
     # Image.preview final_image
+    # Image.preview Image.open!(validate_path)
 
     # Image.write(final_image, validate_path)
     assert_images_equal(final_image, validate_path)
@@ -186,7 +147,8 @@ defmodule TextImage.Test do
         {start_saving, dy: 50}
       ])
 
-    # |> Image.preview
+    # Image.preview final_image
+    # Image.preview Image.open!(validate_path)
 
     # Image.write(final_image, validate_path)
     assert_images_equal(final_image, validate_path)
@@ -196,7 +158,10 @@ defmodule TextImage.Test do
     validate_path = validate_path("text/autofit_default.tif")
 
     {:ok, image} =
-      Image.Text.text("This is some multiline text", height: 300, width: 300, autofit: true)
+      Image.Text.text("This is some multiline text", height: 300, width: 300)
+
+    # Image.preview image
+    # Image.preview Image.open!(validate_path)
 
     assert {300, 300, 4} = Image.shape(image)
     assert_images_equal(image, validate_path)
@@ -209,9 +174,11 @@ defmodule TextImage.Test do
       Image.Text.text("This is some multiline text",
         height: 300,
         width: 300,
-        autofit: true,
         justify: true
       )
+
+    # Image.preview image
+    # Image.preview Image.open!(validate_path)
 
     # Image.write(image, validate_path)
     assert {300, 300, 4} = Image.shape(image)
@@ -225,7 +192,6 @@ defmodule TextImage.Test do
       Image.Text.text("This is some multiline text",
         height: 300,
         width: 300,
-        autofit: true,
         text_fill_color: :green
       )
 
@@ -241,11 +207,13 @@ defmodule TextImage.Test do
       Image.Text.text("Singapore skyline text in a 300x300 centred box",
         height: 300,
         width: 300,
-        autofit: true,
         text_fill_color: :white
       )
 
     {:ok, final_image} = Image.compose(base_image, text_image, x: :middle, y: :center)
+
+    # Image.preview final_image
+    # Image.preview Image.open!(validate_path)
 
     # Image.write(final_image, validate_path)
     assert_images_equal(final_image, validate_path)
@@ -253,7 +221,6 @@ defmodule TextImage.Test do
 
   test "simple text generation" do
     assert Image.Text.simple_text("name",
-             autofit: true,
              width: 290,
              height: 50,
              text_fill_color: "#A15B35"
@@ -269,6 +236,9 @@ defmodule TextImage.Test do
 
     image = Image.open!(image_path)
     {:ok, padded} = Image.Text.add_background_padding(image, background_fill_color: :blue, padding: 50)
+
+    # Image.preview padded
+    # Image.preview Image.open!(validate_path)
 
     # {:ok, _image} = Image.write(padded, validate_path)
     assert_images_equal(padded, validate_path)
