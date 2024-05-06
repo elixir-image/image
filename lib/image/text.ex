@@ -40,7 +40,7 @@ defmodule Image.Text do
   The text string can take advantage of
   [Pango markup language](https://docs.gtk.org/Pango/pango_markup.html) that
   provides some simple HTML-like text transformation
-  capabilities. Note that some of the options to `Image.text/2`,
+  capabilities. Note that some of the options to `Image.Text.text/2`,
   such as `:font_weight` and `:letter_spacing` operate by adding markup
   to the provided string.
 
@@ -190,7 +190,7 @@ defmodule Image.Text do
   The text string can take advantage of
   [Pango markup language](https://docs.gtk.org/Pango/pango_markup.html) that
   provides some simple HTML-like text transformation
-  capabilities. Note that some of the options to `Image.text/2`,
+  capabilities. Note that some of the options to `Image.Text.text/2`,
   such as `:font_weight` and `:letter_spacing` operate by adding markup
   to the provided string.
 
