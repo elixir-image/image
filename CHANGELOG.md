@@ -24,7 +24,7 @@ The implementations of `Image.text/2` and `Image.simple_text/2` have been simpli
 
 * Fix warnings on upcoming Elixir 1.17.
 
-* A bug resulting in incorrect font sizing with using the Pango renderer has been fixed. Font sizing is now very similar to the sizing of the previously used SVG rendere.
+* A bug resulting in incorrect font sizing with using the Pango renderer has been fixed. Font sizing is now very similar to the sizing of the previously used SVG renderer.
 
 ## Image 0.44.0
 
