@@ -44,3 +44,6 @@ test/perf/*.jpeg
 # ML model
 *.pt
 *.onnx
+
+# ASDF
+.tool-versions
