@@ -10,6 +10,7 @@ defmodule Image.Options.Text do
   @type t :: [
           {:font, String.t()}
           | {:font_size, pos_integer()}
+          | {:dpi, pos_integer()}
           | {:text_fill_color, Color.t()}
           | {:text_stroke_width, pos_integer()}
           | {:font_weigtht, atom()}
@@ -140,6 +141,11 @@ defmodule Image.Options.Text do
 
   defp validate_option({:font_size, font_size}, options)
        when is_integer(font_size) and font_size >= 0 do
+    {:cont, options}
+  end
+
+  defp validate_option({:dpi, dpi}, options)
+       when is_integer(dpi) and dpi >= 0 do
     {:cont, options}
   end
 

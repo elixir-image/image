@@ -65,6 +65,10 @@ defmodule Image.Text do
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
 
+  * `:dpi` sets the resolution of the text generation. The
+    default `72` which is suitable for screen output. `300`
+    may be more appropriate for printed output.
+
   * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
     The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
     or an integer between `1` and `1_000`. The default is `:normal`
@@ -215,6 +219,10 @@ defmodule Image.Text do
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
 
+  * `:dpi` sets the resolution of the text generation. The
+    default `72` which is suitable for screen output. `300`
+    may be more appropriate for printed output.
+
   * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
     The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
     or an integer between `1` and `1_000`. The default is `:normal`
@@ -327,16 +335,13 @@ defmodule Image.Text do
     a background. A black background will be forced if a
     `:background_fill_color` is not provided
 
-  * `:font_size` is an integer font size in pixels. The
-    default is `50`.
+  * `:dpi` sets the resolution of the text generation. The
+    default `72` which is suitable for screen output. `300`
+    may be more appropriate for printed output.
 
-  * `:width` is the maximum width of the generated text image in pixels. The
-    default is calculated by the rendering engine based upon the font
-    and other options.
+  * `:width` is the width of the generated text image.
 
-  * `:height` is the maximum height of the generated text image in pixels. The
-    default is calculated by the rendering engine based upon the font
-    and other options.
+  * `:height` is the height of the generated text image.
 
   * `:font_size` is an integer font size in pixels. The
     default is `50`. If set to `0`, the font size will
@@ -346,15 +351,12 @@ defmodule Image.Text do
   * `:justify` is a boolean indicating whether to justify text.
     The default is `false`.
 
-  * `:align` indicates how multiple lines of text are aligned.
-    The options are `:left`, `:right` and `:center`. The default
-    is `:left`.
-
   * `:letter_spacing` is the amount of space in pixels between each letter.
     Default is `:normal`.
 
   * `:font` is any font recognised on the host system.
-    The default is "Helvetica".
+    The default is "Helvetica". The system command `fc-list`
+    can be used to see what fonts are available.
 
   * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
     The alternatives are `:normal`, `:bold`, `:lighter`, `:bolder`,
@@ -415,23 +417,6 @@ defmodule Image.Text do
 
   ### Options
 
-  The applicable options vary slightly depending on
-  whether `:autofit` is set to `true` or `false`.
-
-  When `false` (the default), the text is rendered using
-  svg and therefore separate text stroke color, text
-  fill colour, text stroke width cand font weight an be
-  specified.  However the size of the text box will be
-  determined by the combination of the font size and
-  text length - there is no line wrapping.
-
-  If `true` the text is formatted to fit within the options
-  `:width` and `:height` and the text is sized to fit
-  within the box. `:height` can be ommitted and it will
-  expand to fit the text of the specified size.
-
-  #### Options for when autofit: false
-
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
@@ -440,6 +425,10 @@ defmodule Image.Text do
 
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
+
+  * `:dpi` sets the resolution of the text generation. The
+    default `72` which is suitable for screen output. `300`
+    may be more appropriate for printed output.
 
   * `:width` is the width of the generated text image.
 
@@ -457,7 +446,8 @@ defmodule Image.Text do
     Default is `:normal`.
 
   * `:font` is any font recognised on the host system.
-    The default is"Helvetica".
+    The default is "Helvetica". The system command `fc-list`
+    can be used to see what fonts are available.
 
   * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
     The alternatives are `:normal`, `:bold`, `:lighter`, `:bolder`,
@@ -866,6 +856,7 @@ defmodule Image.Text do
       ]
       |> maybe_add_height(height)
       |> maybe_add_width(width)
+      |> maybe_add_dpi(options[:dpi])
       |> Image.maybe_add_fontfile(options[:fontfile])
 
     with {:ok, text} <- maybe_add_letter_spacing(text, options.letter_spacing),
@@ -886,6 +877,9 @@ defmodule Image.Text do
 
   defp maybe_add_width(options, nil), do: options
   defp maybe_add_width(options, width), do: Keyword.put(options, :width, width)
+
+  defp maybe_add_dpi(options, nil), do: options
+  defp maybe_add_dpi(options, dpi), do: Keyword.put(options, :dpi, dpi)
 
   # If the text starts with a span then we assume the user is
   # determining the text format

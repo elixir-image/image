@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.46.0
+
+This is the changelog for Image version 0.46.0 released on May 11th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds `:dpi` as an option to `Image.Text.text/2` and `Image.Text.simple_text/2`.
+
 ## Image 0.45.0
 
 This is the changelog for Image version 0.45.0 released on May 6th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
@@ -11,15 +19,15 @@ The implementations of `Image.text/2` and `Image.simple_text/2` have been simpli
 * `Image.text/2` now uses only the built-in [Pango](https://docs.gtk.org/Pango/pango_markup.html) renderer for all use cases. SVG is not nhow used for any rendering in `Image.text/2` or `Image.simple_text/2`. This gives a more consistent output and less ambiguity. However as a result, a small number of options are no longer available since they cannot be honoured by Pango:
 
   * `:text_stroke_color`
-  
+
   * `:text_stroke_width`
-  
+
 * The `:autofit` option to `Image.text/2` is also removed. The autofit capability is now controlled by whether the `:width` and/or `:height` options are provided.
 
 * Some other options are now treated differently in `Image.text/2`:
 
   * `:width` and `:height` are now truly optional. If ommitted, the renderer will calculate the required image size based upon the other options. It is acceptable to specify `:width` and omit `:height` in which case the maximum width is fixed and the height is variable.
-  
+
 ### Bug Fixes
 
 * Fix warnings on upcoming Elixir 1.17.
