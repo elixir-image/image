@@ -5,7 +5,7 @@
 ```elixir
 Mix.install([
   {:ortex, "~> 0.1.9"},
-  {:image, path: "/Users/kip/Development/image"},
+  {:image, "~> 0.47"},
   {:nx_image, "~> 0.1.2"},
   {:exla, "~> 0.7.2"},
   {:kino, "~> 0.12.3"},
@@ -15,18 +15,11 @@ Mix.install([
 
 ## Recap
 
-This is my attempt into running [Segment Anything Model](https://github.com/facebookresearch/segment-anything) (SAM) from facebook research using the [Ortex](https://github.com/elixir-nx/ortex) library to run ONNX models.
+This is an implementation by @herisson of the [Segment Anything Model](https://github.com/facebookresearch/segment-anything) (SAM) from facebook research using the [Ortex](https://github.com/elixir-nx/ortex) library to run ONNX models.
 
-Please note that this is my first time using Nx/Ortex/Onnx.
+It is approximately a port this jupyter notebook example to livebook: https://colab.research.google.com/drive/1wmjHHcrZ_s8iFuVFh9iHo6GbUS_xH5xq
 
-I'm more or less trying to port this jupyter notebook example to livebook: https://colab.research.google.com/drive/1wmjHHcrZ_s8iFuVFh9iHo6GbUS_xH5xq
-I'm using onnx "mobile" models found [here](https://huggingface.co/vietanhdev/segment-anything-onnx-models/tree/main) as they are running fast enough on my mac.
-
-<!-- livebook:{"break_markdown":true} -->
-
-### Issues
-
-No more issues ! Just need to clean the image processing steps
+It uses the onnx "mobile" models found [here](https://huggingface.co/vietanhdev/segment-anything-onnx-models/tree/main).
 
 ```elixir
 Nx.global_default_backend(EXLA.Backend)
@@ -36,15 +29,27 @@ Nx.default_backend()
 ## Loading the models
 
 ```elixir
-model =
-  "/Users/kip/Development/segment-anything/vision_encoder_quantized.onnx"
-  |> Ortex.load()
+encoder_url =
+  "https://huggingface.co/ginkgoo/SegmentAnythingModel-Elixir-Ortex/resolve/main/vision_encoder_quantized.onnx"
+
+encoder_path = "/tmp/vision_encoder_quantized.onnx"
+
+%{body: body} = Req.get!(encoder_url)
+File.write!(encoder_path, body)
+
+model = Ortex.load(encoder_path)
 ```
 
 ```elixir
-decoder =
-  "/Users/kip/Development/segment-anything/vit_b_decoder.onnx"
-  |> Ortex.load()
+decoder_url =
+  "https://huggingface.co/ginkgoo/SegmentAnythingModel-Elixir-Ortex/resolve/main/vit_b_decoder.onnx"
+
+decoder_path = "/tmp/vit_b_decoder.onnx"
+
+%{body: body} = Req.get!(decoder_url)
+File.write!(decoder_path, body)
+
+decoder = Ortex.load(decoder_path)
 ```
 
 ## Getting the image
@@ -59,6 +64,8 @@ image =
   Kino.Input.read(image_input)
   |> Image.from_kino!()
 
+# The demo image is already these dimensions
+# but other images may not be.
 resized =
   Image.thumbnail!(image, "1024x1024")
 
@@ -75,6 +82,9 @@ Kino.Layout.grid(
 ```
 
 ```elixir
+# Send the image to Nx. This is a zero-copy
+# operation - basically just give the pointer
+# to a memory area to Nx.
 tensor =
   resized
   |> Image.to_nx!()
@@ -175,4 +185,4 @@ Kino.Layout.grid(
 )
 ```
 
-<!-- livebook:{"offset":5633,"stamp":{"token":"XCP._GBWydgwCU4wRsudZWgT0OIy7C5f5RvRt86jc9daGuULYQuVu4MDfITsBWSm39aoOqNrg7f89SDOf7qyvWVYQxoYx4E--6Fw4h4ufb9_z65yOEhYTL_UGVRDL-c5VVW_Eww7rCAxUcwfAL6JFAT0R8DR8T7HcfpjlAORM192HCRq3ng3c1nuMaX_gp9LZQ","version":2}} -->
+<!-- livebook:{"offset":5945,"stamp":{"token":"XCP.gTD1Ek0FTMYRBAVlGrzKnqpjwGMRtcel41K4P2h_iObPzyJErUfmScHej1HFwZz-sbUZhbT2uv7_QmT7jjwdQlFfIp2O9k4Nw0sKTtSGF0gpbRwFIGtLhKOalaDwEmzriMfPwY5cTs1hrOAoHC8_01RfsEcUg0e8E0xQp_JKKSkcLuAsbQD5GutNupFqmA","version":2}} -->
