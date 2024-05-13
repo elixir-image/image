@@ -8308,6 +8308,54 @@ defmodule Image do
       end
     end
 
+    @doc """
+    Converts an [Nx](https://hex.pm/packages/nx) tensor
+    into an image or raises an exception.
+
+    ### Arguments
+
+    * `tensor` is any three dimensional `t:Nx.Tensor.t/0`.
+
+    * `options` is a keyword list of options. For valid
+      options see `Nx.from_binary/2`.
+
+    ### Returns
+
+    * `image` or
+
+    * `{:error, reason}`
+
+    ### Notes
+
+    In order to convert a tensor into an image it must
+    satisfy these constraints:
+
+    * It must have three dimensions.
+
+    * It must have a tensor type that is compatible
+      with `libvips` (most tensors will satisfy this
+      requirement other than tensors whose type is complex).
+
+    * The names of the axes must be `[:width, :height, any_other]`
+      or `[:height, :width, any_other]`.
+
+    ### Example
+
+        iex> {:ok, image} = Vix.Vips.Operation.black(3, 3)
+        iex> {:ok, tensor} = Image.to_nx(image)
+        iex> _image_2 = Image.from_nx(tensor)
+
+    """
+    @doc subject: "Matrix", since: "0.47.0"
+
+    @spec from_nx!(tensor :: Nx.Tensor.t()) :: Vimage.t() | no_return()
+    def from_nx!(tensor) when is_struct(tensor, Nx.Tensor) do
+      case from_nx(tensor) do
+        {:ok, image} -> image
+        {:error, reason} -> raise Image.Error, reason
+      end
+    end
+
     defp dimensions_from_tensor(tensor, x, y) do
       case Nx.names(tensor) do
         [:height, _, _] -> {y, x}

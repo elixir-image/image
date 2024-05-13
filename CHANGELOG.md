@@ -1,5 +1,17 @@
 # Changelog
 
+## Image 0.47.0
+
+This is the changelog for Image version 0.47.0 released on May 14th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix warnings for Elixir 1.17
+
+### Enhancements
+
+* Add `Image.from_nx!/2`
+
 ## Image 0.46.0
 
 This is the changelog for Image version 0.46.0 released on May 11th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

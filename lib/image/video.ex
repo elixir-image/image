@@ -39,13 +39,13 @@ if Image.evision_configured?() do
     @doc subject: "Guard"
     @doc "Guards that a frame offset is valid for a video"
     defguard is_frame(frame, frame_count)
-             when (is_integer(frame) and frame in 0..(trunc(frame_count) - 1)) or
+             when (is_integer(frame) and frame >= 0 and frame <= (trunc(frame_count) - 1)) or
                     (is_integer(frame) and frame_count == 0.0)
 
     @doc subject: "Guard"
     @doc "Guards that a millisecond count is valid for a video"
     defguard is_valid_millis(millis, frames, fps)
-             when is_integer(millis) and millis in 0..(trunc(fps * frames * 1000) - 1)
+             when is_integer(millis) and millis >= 0 and millis <= (trunc(fps * frames * 1000) - 1)
 
     @doc "Guards that a stream id is valid for a video stream"
     @doc subject: "Guard"
