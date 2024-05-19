@@ -94,7 +94,7 @@ defmodule Image.Text do
     for the top and bottom of the image.  Another alternative is
     to pass a `t:Vimage.t/0` in which case the padding will be derived
     from the image dimensions such that the background covers the
-    whole of the impage.  THe default is `[0, 0]`.
+    whole of the image.  The default is `[0, 0]`.
 
   * `:align` indicates how multiple lines of text are aligned.
     The options are `:left`, `:right` and `:center`. The default
@@ -248,7 +248,7 @@ defmodule Image.Text do
     for the top and bottom of the image.  Another alternative is
     to pass a `t:Vimage.t/0` in which case the padding will be derived
     from the image dimensions such that the background covers the
-    whole of the impage.  THe default is `[0, 0]`.
+    whole of the image.  The default is `[0, 0]`.
 
   * `:align` indicates how multiple lines of text are aligned.
     The options are `:left`, `:right` and `:center`. The default
@@ -619,7 +619,7 @@ defmodule Image.Text do
     for the top and bottom of the image.  Another alternative is
     to pass a `t:Vimage.t/0` in which case the padding will be derived
     from the image dimensions such that the background covers the
-    whole of the impage.  THe default is `[0, 0]`.
+    whole of the image.  The default is `[0, 0]`.
 
   ### Returns
 
@@ -702,7 +702,7 @@ defmodule Image.Text do
     for the top and bottom of the image.  Another alternative is
     to pass a `t:Vimage.t/0` in which case the padding will be derived
     from the image dimensions such that the background covers the
-    whole of the impage.  THe default is `[0, 0]`.
+    whole of the image.  The default is `[0, 0]`.
 
   ### Returns
 
