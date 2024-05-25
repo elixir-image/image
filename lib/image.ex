@@ -6980,7 +6980,7 @@ defmodule Image do
   end
 
   @doc """
-  Converts an impage to the given colorspace returning
+  Converts an image to the given colorspace returning
   an image or raising an exception.
 
   Available colorspaces are returned from
