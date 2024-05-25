@@ -4,8 +4,8 @@ config :ex_aws,
   region: "local"
 
 config :ex_aws, :s3,
-  access_key_id: {:system, "MINIO_ACCESS_KEY"},
-  secret_access_key: {:system, "MINIO_SECRET_KEY"},
+  access_key_id: {:system, "MINIO_ROOT_USER"},
+  secret_access_key: {:system, "MINIO_ROOT_PASSWORD"},
   region: "local",
   scheme: "http://",
   host: "127.0.0.1",
