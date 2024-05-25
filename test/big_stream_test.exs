@@ -5,6 +5,10 @@ defmodule Image.BigStream.Test do
   alias Vix.Vips.Image, as: Vimage
 
   @s3_buffer_size 5 * 1024 * 1024
+
+  # This factor will cause an excepton when
+  # streaming the specific test image to AWS.
+  # Changing the factor to 7.838 will not.
   @resize 7.839
 
   @spec stream!(Vimage.t(), options :: Options.Write.image_write_options()) :: Enumerable.t()
@@ -46,6 +50,9 @@ defmodule Image.BigStream.Test do
     Stream.chunk_while(stream, [], chunker, final)
   end
 
+  # This test fails when @resize is 7.839, but not when its
+  # 7.838.
+
   test "Streaming from file then into streamed minio with HUGE resize" do
     out_path = "test/huge_streaming_test.jpg"
     in_path = "./test/support/images/Hong-Kong-2015-07-1998.jpg"
@@ -61,6 +68,10 @@ defmodule Image.BigStream.Test do
     |> ExAws.S3.upload("images", out_path)
     |> ExAws.request()
   end
+
+  # This test seems to work no matter what the resize is. That
+  # suggests the issue lies with ex_aws. However the exception comes
+  # from libvips.
 
   test "Streaming from file then into memory with HUGE resize" do
     in_path = "./test/support/images/Hong-Kong-2015-07-1998.jpg"
