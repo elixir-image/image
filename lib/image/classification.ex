@@ -94,6 +94,13 @@ if Image.bumblebee_configured?() do
     * `:featurizer` is any supported machine learning model for image
       featurization supported by Bumblebee.
 
+    * `:featurizer_module` is the module name of a featurizer known
+      to Bumblee. Bumblebee will attempt to infer the featurizer module
+      name but it may not always be able to do so. Specify only if
+      Bumblebee is unable to resolve a featurizer module name.
+      [Bumblebee.Vision.VitFeaturizer](https://hexdocs.pm/bumblebee/Bumblebee.Vision.VitFeaturizer.html)
+      may be an appropriate choice when a featurizer module is required.
+
     * `:name` is the name given to the classification process when
       it is started.
 
@@ -114,7 +121,11 @@ if Image.bumblebee_configured?() do
       Application.ensure_all_started(:exla)
       classifier = Keyword.merge(@default_classifier, classifier)
 
-      case Image.Classification.serving(classifier[:model], classifier[:featurizer]) do
+      model = classifier[:model]
+      featurizer = classifier[:featurizer]
+      featurizer_module = classifier[:featurizer_module]
+
+      case Image.Classification.serving(model, featurizer, featurizer_module) do
         {:error, error} ->
           {:error, error}
 
@@ -124,14 +135,22 @@ if Image.bumblebee_configured?() do
     end
 
     @doc false
-    def serving(model, featurizer) do
+    def serving(model, featurizer, featurizer_module) do
       with {:ok, model_info} <- Bumblebee.load_model(model),
-           {:ok, featurizer} = Bumblebee.load_featurizer(featurizer) do
+           {:ok, featurizer} = load_featurizer(featurizer, featurizer_module) do
         Bumblebee.Vision.image_classification(model_info, featurizer,
           compile: [batch_size: 10],
           defn_options: [compiler: EXLA]
         )
       end
+    end
+
+    defp load_featurizer(featurizer, nil = _featurizer_module) do
+       Bumblebee.load_featurizer(featurizer)
+    end
+
+    defp load_featurizer(featurizer, featurizer_module) do
+       Bumblebee.load_featurizer(featurizer, module: featurizer_module)
     end
 
     @doc """

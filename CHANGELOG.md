@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.48.0
+
+This is the changelog for Image version 0.48.0 released on ______, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Add a `:featurizer_module` configuration key for `Image.Classifier`. This is useful when Bumblebee can't resolve the featurizer module name from the model itself.
+
 ## Image 0.47.0
 
 This is the changelog for Image version 0.47.0 released on May 14th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
