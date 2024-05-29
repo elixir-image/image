@@ -2,11 +2,13 @@
 
 ## Image 0.48.0
 
-This is the changelog for Image version 0.48.0 released on ______, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.48.0 released on May 29th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
-* Add a `:model_options` and `:featurizer_options` configuration keys for `Image.Classifier`. These options are expected to be the options passed to `Bumblebee.load_model/2` and `Bumblebee.load_featurizer/2` respectively.
+* Add `:model_options` and `:featurizer_options` configuration keys for `Image.Classifier`. These options are expected to be the options passed to `Bumblebee.load_model/2` and `Bumblebee.load_featurizer/2` respectively.
+
+* Add `:batch_size` as a configuration option. The value is passed to `Bumblebee.Vision.image_classification/4`. The default value is `10`.
 
 ## Image 0.47.0
 
