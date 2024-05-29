@@ -12,8 +12,10 @@ if Image.bumblebee_configured?() do
     ### Configuration
 
     The machine learning model to be used is configurable.
-    The `:model` and `:featurizer` may be any model supported by Bumblebee. The
-    `:name` is the name given to the classification service process.
+    The `:model` and `:featurizer` may be any model supported by Bumblebee. Any
+    additional options can be supplied as keyword lists under the `:model_options`
+    and `:featureizer_options` keys. The `:name` is the name given to the classification
+    service process.
 
     The default configuration is:
 
@@ -21,6 +23,9 @@ if Image.bumblebee_configured?() do
         config :image, :classifier,
           model: {:hf, "microsoft/resnet-50"},
           featurizer:  {:hf, "microsoft/resnet-50"},
+          model_options: [],
+          featurizer_options: [],
+          batch_size: 10,
           name: Image.Classification.Server,
           autostart: true
 
@@ -56,6 +61,15 @@ if Image.bumblebee_configured?() do
           )
         end
 
+    ### Limitations
+
+    This module is provided as a convenience to make it easy
+    and idiomatic to perform simple classification tasks
+    while still managing CPU capacity.
+
+    For more complex classification requirements it is recommended
+    to use [Bumblebee](https://hex.pm/packages/bumblebee) directly.
+
     ### Note
 
     This module is only available if the optional dependency
@@ -74,6 +88,7 @@ if Image.bumblebee_configured?() do
       model_options: [],
       featurizer_options: [],
       name: Image.Classification.Server,
+      batch_size: 10,
       autostart: true
     ]
 
@@ -105,17 +120,22 @@ if Image.bumblebee_configured?() do
     * `:name` is the name given to the classification process when
       it is started.
 
+    * `:batch_size` is the batch size passed to
+      `Bumblebee.Vision.image_classification/3`,
+
     ### Default configuration
 
     The default configuration is:
+
     ```elixir
-    [
+    config :image, :classifier,
       model: {:hf, "microsoft/resnet-50"},
-      featurizer: {:hf, "microsoft/resnet-50"},
+      featurizer:  {:hf, "microsoft/resnet-50"},
       model_options: [],
       featurizer_options: [],
-      name: Image.Classification.Server
-    ]
+      batch_size: 10,
+      name: Image.Classification.Server,
+      autostart: true
     ```
 
     """
@@ -130,7 +150,9 @@ if Image.bumblebee_configured?() do
       featurizer = Keyword.fetch!(classifier, :featurizer)
       featurizer_options = Keyword.fetch!(classifier, :featurizer_options)
 
-      case Image.Classification.serving(model, model_options, featurizer, featurizer_options) do
+      batch_size = Keyword.fetch!(classifier, :batch_size)
+
+      case Image.Classification.serving(model, model_options, featurizer, featurizer_options, batch_size) do
         {:error, error} ->
           {:error, error}
 
@@ -140,11 +162,11 @@ if Image.bumblebee_configured?() do
     end
 
     @doc false
-    def serving(model, model_options, featurizer, featurizer_options) do
+    def serving(model, model_options, featurizer, featurizer_options, batch_size) do
       with {:ok, model_info} <- Bumblebee.load_model(model, model_options),
            {:ok, featurizer} = Bumblebee.load_featurizer(featurizer, featurizer_options) do
         Bumblebee.Vision.image_classification(model_info, featurizer,
-          compile: [batch_size: 10],
+          compile: [batch_size: batch_size],
           defn_options: [compiler: EXLA]
         )
       end
