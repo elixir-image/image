@@ -22,6 +22,11 @@ config :nx,
 config :logger,
   level: :warning
 
-config :image, :classifier, autostart: true
+config :image, :classifier,
+  model: {:hf, "Falconsai/nsfw_image_detection"},
+  featurizer: {:hf, "Falconsai/nsfw_image_detection"},
+  featurizer_options: [module: Bumblebee.Vision.VitFeaturizer],
+  name: Image.Classification.Server,
+  autostart: true
 
 config :image, :generator, autostart: false

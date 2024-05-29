@@ -6,7 +6,7 @@ This is the changelog for Image version 0.48.0 released on ______, 2024.  For ol
 
 ### Enhancements
 
-* Add a `:featurizer_module` configuration key for `Image.Classifier`. This is useful when Bumblebee can't resolve the featurizer module name from the model itself.
+* Add a `:model_options` and `:featurizer_options` configuration keys for `Image.Classifier`. These options are expected to be the options passed to `Bumblebee.load_model/2` and `Bumblebee.load_featurizer/2` respectively.
 
 ## Image 0.47.0
 
