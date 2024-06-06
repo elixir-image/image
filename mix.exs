@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.48.0"
+  @version "0.48.1"
   @app_name "image"
 
   def project do
@@ -53,7 +53,7 @@ defmodule Image.MixProject do
       # {:vix, path: "../vix"},
 
       # eVision OpenCV bindings
-      {:evision, "~> 0.1.33", optional: true},
+      {:evision, "~> 0.1.33 or ~> 0.2", optional: true},
 
       # For XMP metadata parsing
       {:sweet_xml, "~> 0.7"},

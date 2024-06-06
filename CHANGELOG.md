@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.48.1
+
+This is the changelog for Image version 0.48.1 released on June 6th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Relax `evision` dependency to allow the `0.2` chain as well as the `0.1` chain. Thanks to @davydog187 for the report. Closes #140.
+
+* Fix `Evision.resize/3` parameter to be `:interpolation` rather than `:interpolate`.
+
 ## Image 0.48.0
 
 This is the changelog for Image version 0.48.0 released on May 30th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

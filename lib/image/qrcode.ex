@@ -123,7 +123,7 @@ if Image.evision_configured?() do
     def decode(%Evision.Mat{shape: {height, width, _}} = evision)
         when height < @minumum_dimension or width < @minumum_dimension do
       resized =
-        Evision.resize(evision, @dimensions, interpolate: Evision.Constant.cv_INTER_NEAREST())
+        Evision.resize(evision, @dimensions, interpolation: Evision.Constant.cv_INTER_NEAREST())
 
       decode(resized)
     end
