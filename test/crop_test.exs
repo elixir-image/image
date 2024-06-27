@@ -53,12 +53,10 @@ defmodule Image.Crop.Test do
 
   test "Crop using invalid percentages", %{image: image} do
     assert {:error, "operation build:" <> _other} =
-      Image.crop(image, 0.5, 0.5, 0.6, 0.5)
-
+             Image.crop(image, 0.5, 0.5, 0.6, 0.5)
 
     assert {:error, "operation build:" <> _other} =
-      Image.crop(image, 0.5, 0.5, 0.5, 0.6)
-
+             Image.crop(image, 0.5, 0.5, 0.5, 0.6)
 
     assert Image.crop(image, 0.5, 0.5, -0.5, 0.6) ==
              {:error,

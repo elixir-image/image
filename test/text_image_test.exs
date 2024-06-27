@@ -48,7 +48,8 @@ defmodule TextImage.Test do
       |> Image.compose!(places, x: 260, y: 260)
       |> Image.compose!(blowout, x: 260, y: 340)
       |> Image.compose!(start_saving, x: 260, y: 400)
-      # |> Image.preview()
+
+    # |> Image.preview()
 
     Image.write(final_image, validate_path)
     assert_images_equal(final_image, validate_path)
@@ -235,7 +236,9 @@ defmodule TextImage.Test do
     validate_path = validate_path(validate_file)
 
     image = Image.open!(image_path)
-    {:ok, padded} = Image.Text.add_background_padding(image, background_fill_color: :blue, padding: 50)
+
+    {:ok, padded} =
+      Image.Text.add_background_padding(image, background_fill_color: :blue, padding: 50)
 
     # Image.preview padded
     # Image.preview Image.open!(validate_path)

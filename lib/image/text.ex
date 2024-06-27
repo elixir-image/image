@@ -932,12 +932,12 @@ defmodule Image.Text do
   end
 
   defp location_from_options(_image, x_location, _y, nil, _height)
-      when x_location in [:center, :right] do
+       when x_location in [:center, :right] do
     {:error, ":center and :right cannot be specified unless :width is also specified"}
   end
 
   defp location_from_options(_image, _x, y_location, _width, nil)
-      when y_location in [:middle, :bottom] do
+       when y_location in [:middle, :bottom] do
     {:error, ":middle and :bottom cannot be specified unless :height is also specified"}
   end
 
@@ -952,7 +952,7 @@ defmodule Image.Text do
   end
 
   defp location_from_options(image, x, y, width, height)
-      when is_integer(width) and is_integer(height) do
+       when is_integer(width) and is_integer(height) do
     if Image.width(image) + x <= width && Image.height(image) + y <= height do
       {:ok, {x, y}}
     else

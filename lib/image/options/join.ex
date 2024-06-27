@@ -76,33 +76,35 @@ defmodule Image.Options.Join do
   # Docs say default vertical spacing is 1 but that produces
   # incorrect results. So we delete the option instead.
   defp validate_option({:vertical_spacing, 0}, options) do
-     {:cont, Keyword.delete(options, :vertical_spacing)}
+    {:cont, Keyword.delete(options, :vertical_spacing)}
   end
 
   defp validate_option({:vertical_spacing, vertical_spacing}, options)
-      when is_integer(vertical_spacing) and vertical_spacing > 0 do
-     {:cont, replace_option(options, :vertical_spacing, :vspacing, vertical_spacing)}
+       when is_integer(vertical_spacing) and vertical_spacing > 0 do
+    {:cont, replace_option(options, :vertical_spacing, :vspacing, vertical_spacing)}
   end
 
   # Docs say default horizontal spacing is 1 but that produces
   # incorrect results. So we delete the option instead.
   defp validate_option({:horizontal_spacing, 0}, options) do
-     {:cont, Keyword.delete(options, :horizontal_spacing)}
+    {:cont, Keyword.delete(options, :horizontal_spacing)}
   end
 
   defp validate_option({:horizontal_spacing, horizontal_spacing}, options)
-      when is_integer(horizontal_spacing) and horizontal_spacing > 0 do
+       when is_integer(horizontal_spacing) and horizontal_spacing > 0 do
     {:cont, replace_option(options, :horizontal_spacing, :hspacing, horizontal_spacing)}
   end
 
   defp validate_option({:vertical_align, vertical_align}, options)
-      when vertical_align in [:bottom, :middle, :high] do
-     {:cont, replace_option(options, :vertical_align, :valign, Map.get(@alignment_map, vertical_align))}
+       when vertical_align in [:bottom, :middle, :high] do
+    {:cont,
+     replace_option(options, :vertical_align, :valign, Map.get(@alignment_map, vertical_align))}
   end
 
   defp validate_option({:horizontal_align, horizontal_align}, options)
-      when horizontal_align in [:left, :centre, :right] do
-    {:cont, replace_option(options, :horizontal_align, :halign, Map.get(@alignment_map, horizontal_align))}
+       when horizontal_align in [:left, :centre, :right] do
+    {:cont,
+     replace_option(options, :horizontal_align, :halign, Map.get(@alignment_map, horizontal_align))}
   end
 
   defp validate_option({:background_color, nil}, options) do
@@ -111,19 +113,24 @@ defmodule Image.Options.Join do
 
   defp validate_option({:background_color, color} = option, options) do
     case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color} -> {:cont, replace_option(options, :background_color, :background, color)}
-      {:ok, color} -> {:cont, replace_option(options, :background_color, :background, color)}
-      _other -> {:halt, invalid_option(option)}
+      {:ok, hex: _hex, rgb: color} ->
+        {:cont, replace_option(options, :background_color, :background, color)}
+
+      {:ok, color} ->
+        {:cont, replace_option(options, :background_color, :background, color)}
+
+      _other ->
+        {:halt, invalid_option(option)}
     end
   end
 
   defp validate_option({:shim, shim}, options)
-      when is_integer(shim) and shim >= 0 do
+       when is_integer(shim) and shim >= 0 do
     {:cont, options}
   end
 
   defp validate_option({:across, across}, options)
-      when is_integer(across) and across > 0 do
+       when is_integer(across) and across > 0 do
     {:cont, options}
   end
 

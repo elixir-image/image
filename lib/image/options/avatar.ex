@@ -6,9 +6,9 @@ defmodule Image.Options.Avatar do
   alias Image.Options.Crop
 
   @type avatar_option ::
-    {:size, pos_integer()}
-    | {:shape, :circle | :square | :squircle}
-    | {:crop, Crop.crop_focus()}
+          {:size, pos_integer()}
+          | {:shape, :circle | :square | :squircle}
+          | {:crop, Crop.crop_focus()}
 
   @type avatar_options :: [avatar_option()]
 

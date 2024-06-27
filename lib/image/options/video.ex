@@ -127,7 +127,9 @@ if Image.evision_configured?() do
       {:ok, {:frame, 0, trunc(frame_count) - 1, 1}}
     end
 
-    def validate_stream_options(%Evision.VideoCapture{} = video, frame: %Range{first: first, last: last} = range)
+    def validate_stream_options(%Evision.VideoCapture{} = video,
+          frame: %Range{first: first, last: last} = range
+        )
         when first >= 0 and last > first do
       %{frame_count: frame_count} = video
       max_frame = trunc(frame_count) - 1
@@ -141,7 +143,9 @@ if Image.evision_configured?() do
       end
     end
 
-    def validate_stream_options(%Evision.VideoCapture{} = video, millisecond: %Range{first: first, last: last} = range)
+    def validate_stream_options(%Evision.VideoCapture{} = video,
+          millisecond: %Range{first: first, last: last} = range
+        )
         when first >= 0 and last > first do
       %{frame_count: frame_count, fps: fps} = video
       max_millis = trunc(frame_count * fps * 1_000) - 1
@@ -155,7 +159,9 @@ if Image.evision_configured?() do
       end
     end
 
-    def validate_stream_options(%Evision.VideoCapture{} = video, frame: %Range{first: first, last: last} = range) do
+    def validate_stream_options(%Evision.VideoCapture{} = video,
+          frame: %Range{first: first, last: last} = range
+        ) do
       %{frame_count: frame_count} = video
       step = abs(Map.get(range, :step, 1))
       first = if first < 0, do: trunc(frame_count + first), else: first
@@ -164,7 +170,9 @@ if Image.evision_configured?() do
       validate_stream_options(video, frame: Range.new(first, last, step))
     end
 
-    def validate_stream_options(%Evision.VideoCapture{} = video, millisecond: %Range{first: first, last: last} = range)
+    def validate_stream_options(%Evision.VideoCapture{} = video,
+          millisecond: %Range{first: first, last: last} = range
+        )
         when first < 0 and last < 0 and last > first do
       %{frame_count: frame_count, fps: fps} = video
       max_millis = trunc(frame_count * fps * 1_000)

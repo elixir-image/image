@@ -27,13 +27,13 @@ defmodule Image.Color do
              |> Map.new()
 
   @css_color Map.keys(@color_map)
-  |> Enum.map(&String.to_atom/1)
+             |> Enum.map(&String.to_atom/1)
 
   @greyscale_color_map @color_map
-  |> Enum.filter(fn {_name, [hex: _hex, rgb: [r, g, b]]} ->
-    if r == b && r == g, do: true, else: false
-  end)
-  |> Map.new()
+                       |> Enum.filter(fn {_name, [hex: _hex, rgb: [r, g, b]]} ->
+                         if r == b && r == g, do: true, else: false
+                       end)
+                       |> Map.new()
 
   # TODO Put back when we validate greyscale colors
   # @greyscale_color Map.keys(@greyscale_color_map)
@@ -59,7 +59,6 @@ defmodule Image.Color do
 
   """
   @type t :: rgb_color | atom() | String.t()
-
 
   @typedoc """
   A transparency value which is one of the atoms `:none`,
@@ -263,7 +262,9 @@ defmodule Image.Color do
   def validate_transparency(:transparent), do: {:ok, @min_opacity}
   def validate_transparency(:none), do: {:ok, @min_opacity}
   def validate_transparency(:opaque), do: {:ok, @max_opacity}
-  def validate_transparency(other), do: {:error, "Invalid transparency value. Found #{inspect other}"}
+
+  def validate_transparency(other),
+    do: {:error, "Invalid transparency value. Found #{inspect(other)}"}
 
   def rgb_color(color) when is_binary(color) or is_atom(color) do
     case color do

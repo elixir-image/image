@@ -42,7 +42,9 @@ defmodule Image.Options.Blurhash do
   end
 
   defp validate_image_bands(3), do: :ok
-  defp validate_image_bands(n), do: {:error, "Image must have 3 bands. Found #{inspect n} bands in the image"}
+
+  defp validate_image_bands(n),
+    do: {:error, "Image must have 3 bands. Found #{inspect(n)} bands in the image"}
 
   defp validate_option({:x_components, x_components}, options) when x_components in 1..9 do
     {:cont, options}

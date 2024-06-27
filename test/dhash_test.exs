@@ -22,5 +22,4 @@ defmodule Image.Dhash.Test do
     assert {:ok, <<227, 111, 13, 78, 206, 151, 148, 122>>} == Image.dhash(i2)
     assert {:ok, 10} == Image.hamming_distance(i1, i2)
   end
-
 end

@@ -10,7 +10,7 @@ defmodule Image.Embed.Test do
     validate_path = validate_path(validate_file)
 
     image = Image.open!(image_path, access: :random)
-    {width, height, _bands} = Image.shape image
+    {width, height, _bands} = Image.shape(image)
     {:ok, embedded} = Image.embed(image, width, height + 50, x: 0, y: 0, extend_mode: :black)
 
     # {:ok, _image} = Image.write(embedded, validate_path)
@@ -25,8 +25,15 @@ defmodule Image.Embed.Test do
     validate_path = validate_path(validate_file)
 
     image = Image.open!(image_path, access: :random)
-    {width, height, _bands} = Image.shape image
-    {:ok, embedded} = Image.embed(image, width, height + 50, x: 0, y: 0, extend_mode: :black, background_transparency: :transparent)
+    {width, height, _bands} = Image.shape(image)
+
+    {:ok, embedded} =
+      Image.embed(image, width, height + 50,
+        x: 0,
+        y: 0,
+        extend_mode: :black,
+        background_transparency: :transparent
+      )
 
     # {:ok, _image} = Image.write(embedded, validate_path)
     assert_images_equal(embedded, validate_path)
@@ -41,7 +48,7 @@ defmodule Image.Embed.Test do
 
     image = Image.open!(image_path, access: :random)
 
-    {width, height, _bands} = Image.shape image
+    {width, height, _bands} = Image.shape(image)
     {:ok, embedded} = Image.embed(image, width, height + 50, background_color: :blue)
 
     # {:ok, _image} = Image.write(embedded, validate_path)

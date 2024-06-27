@@ -29,7 +29,12 @@ defmodule Image do
   THe structure of an image returned from `Kino.Input.read/1`
   when the input field is a `Kino.Input.image/1` type.
   """
-  @type kino_image :: %{file_ref: binary(), width: pos_integer(), height: pos_integer(), format: :rgb}
+  @type kino_image :: %{
+          file_ref: binary(),
+          width: pos_integer(),
+          height: pos_integer(),
+          format: :rgb
+        }
 
   @typedoc """
   A 512 bit binary hash of an image.
@@ -3136,7 +3141,7 @@ defmodule Image do
 
   """
   @spec join(image_list :: list(Vimage.t()), options :: Options.Join.join_options()) ::
-    {:ok, joined_image :: Vimage.t()} | {:error, error_message()}
+          {:ok, joined_image :: Vimage.t()} | {:error, error_message()}
 
   def join(image_list, options \\ []) when is_list(image_list) do
     with {:ok, options} <- Options.Join.validate_options(options) do
@@ -3215,7 +3220,7 @@ defmodule Image do
 
   """
   @spec join!(image_list :: list(Vimage.t()), options :: Options.Join.join_options()) ::
-    joined_image :: Vimage.t() | no_return()
+          joined_image :: Vimage.t() | no_return()
 
   def join!(image_list, options \\ []) when is_list(image_list) do
     case join(image_list, options) do
@@ -4828,7 +4833,12 @@ defmodule Image do
   """
   @doc subject: "Resize", since: "0.27.0"
 
-  @spec embed(image :: Vimage.t(), width :: non_neg_integer(), height :: non_neg_integer(), options :: Options.Embed.embed_options()) ::
+  @spec embed(
+          image :: Vimage.t(),
+          width :: non_neg_integer(),
+          height :: non_neg_integer(),
+          options :: Options.Embed.embed_options()
+        ) ::
           {:ok, Vimage.t()} | {:error, error_message}
 
   def embed(image, width, height, options \\ []) do
@@ -5271,7 +5281,7 @@ defmodule Image do
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
-  * `radius` is an integer in the range `#{inspect @rank_radius_range}`
+  * `radius` is an integer in the range `#{inspect(@rank_radius_range)}`
     representing the approximate number of
     pixels to dilate. The default is `1`.
 
@@ -5310,11 +5320,11 @@ defmodule Image do
   @doc subject: "Operation", since: "0.23.0"
 
   @spec dilate(image :: Vimage.t(), radius :: pos_integer) ::
-      {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error_message}
 
   def dilate(image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
-    radius = radius + (radius * 2)
-    index = (radius * radius) - 1
+    radius = radius + radius * 2
+    index = radius * radius - 1
     Vix.Vips.Operation.rank(image, radius, radius, index)
   end
 
@@ -5333,7 +5343,7 @@ defmodule Image do
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
-  * `radius` is an integer in the range `#{inspect @rank_radius_range}`
+  * `radius` is an integer in the range `#{inspect(@rank_radius_range)}`
     representing the approximate number of
     pixels to dilate. The default is `1`.
 
@@ -5359,7 +5369,8 @@ defmodule Image do
   @doc subject: "Operation", since: "0.23.0"
 
   @spec dilate!(image :: Vimage.t(), radius :: pos_integer) :: Vimage.t() | no_return()
-  def dilate!(%Vimage{} = image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
+  def dilate!(%Vimage{} = image, radius \\ 1)
+      when is_integer(radius) and radius in @rank_radius_range do
     case dilate(image, radius) do
       {:ok, dilated} -> dilated
       {:error, reason} -> raise Image.Error, reason
@@ -5378,7 +5389,7 @@ defmodule Image do
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
-  * `radius` is an integer in the range `#{inspect @rank_radius_range}`
+  * `radius` is an integer in the range `#{inspect(@rank_radius_range)}`
     representing the approximate number of
     pixels to erode. The default is `1`.
 
@@ -5407,7 +5418,7 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error_message}
 
   def erode(image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
-    radius = radius + (radius * 2)
+    radius = radius + radius * 2
     Vix.Vips.Operation.rank(image, radius, radius, 0)
   end
 
@@ -5423,7 +5434,7 @@ defmodule Image do
 
   * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
 
-  * `radius` is an integer in the range `#{inspect @rank_radius_range}`
+  * `radius` is an integer in the range `#{inspect(@rank_radius_range)}`
     representing the approximate number of
     pixels to erode. The default is `1`.
 
@@ -5449,7 +5460,8 @@ defmodule Image do
   @doc subject: "Operation", since: "0.23.0"
 
   @spec erode!(image :: Vimage.t(), radius :: pos_integer()) :: Vimage.t() | no_return()
-  def erode!(%Vimage{} = image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
+  def erode!(%Vimage{} = image, radius \\ 1)
+      when is_integer(radius) and radius in @rank_radius_range do
     case erode(image, radius) do
       {:ok, eroded} -> eroded
       {:error, reason} -> raise Image.Error, reason
@@ -6346,13 +6358,14 @@ defmodule Image do
   defp linear_gradient(width, height, start, finish, angle) when angle < 360 do
     {angle, base_rotation} = adjust_angle(angle)
 
-    r = angle / 180 * :math.pi
-    r2 = (90.0 - angle) / 180 * :math.pi
+    r = angle / 180 * :math.pi()
+    r2 = (90.0 - angle) / 180 * :math.pi()
 
     gradient_height = ceil(width * :math.cos(r2) + height * :math.cos(r))
     gradient_width = ceil(width * :math.sin(r2) + height * :math.sin(r))
 
-    with {:ok, gradient} <- linear_gradient(gradient_width, gradient_height, start, finish, base_rotation),
+    with {:ok, gradient} <-
+           linear_gradient(gradient_width, gradient_height, start, finish, base_rotation),
          {:ok, rotated} = rotate(gradient, angle) do
       crop(rotated, :center, :middle, width, height)
     end
@@ -6504,8 +6517,11 @@ defmodule Image do
   """
   @doc subject: "Generator", since: "0.6.0"
 
-  @spec radial_gradient(width :: pos_integer(), height :: pos_integer(),
-          options :: Options.RadialGradient.radial_gradient_options) ::
+  @spec radial_gradient(
+          width :: pos_integer(),
+          height :: pos_integer(),
+          options :: Options.RadialGradient.radial_gradient_options()
+        ) ::
           {:ok, %Vimage{}} | {:error, error_message()}
 
   def radial_gradient(width, height, options \\ []) do
@@ -6515,7 +6531,9 @@ defmodule Image do
       max = max(width, height)
       xyz = Operation.xyz!(width, height) - [width / 2, height / 2]
 
-      d = (xyz[0] ** 2 + xyz[1] ** 2) ** 0.5 / (2 ** (options.feather * 0.05) * max / options.radius)
+      d =
+        (xyz[0] ** 2 + xyz[1] ** 2) ** 0.5 / (2 ** (options.feather * 0.05) * max / options.radius)
+
       radial_gradient = d * options.finish_color + (d * -1 + 1) * options.start_color
 
       Operation.copy(radial_gradient, interpretation: :VIPS_INTERPRETATION_sRGB)
@@ -6575,8 +6593,11 @@ defmodule Image do
   """
   @doc subject: "Generator", since: "0.43.0"
 
-  @spec radial_gradient!(width :: pos_integer(), height :: pos_integer(),
-          options :: Options.RadialGradient.radial_gradient_options) ::
+  @spec radial_gradient!(
+          width :: pos_integer(),
+          height :: pos_integer(),
+          options :: Options.RadialGradient.radial_gradient_options()
+        ) ::
           %Vimage{} | no_return()
 
   def radial_gradient!(width, height, options \\ []) do
@@ -6627,7 +6648,7 @@ defmodule Image do
   @doc subject: "Image info", since: "0.3.0"
 
   @spec dominant_color(image :: Vimage.t(), options :: Keyword.t()) ::
-    {:ok, Color.rgb_color()} | {:error, error_message()}
+          {:ok, Color.rgb_color()} | {:error, error_message()}
 
   def dominant_color(%Vimage{} = image, options \\ []) do
     bins = Keyword.get(options, :bins, @dominant_bins)
@@ -6683,7 +6704,8 @@ defmodule Image do
 
   @doc subject: "Image info", since: "0.43.0"
 
-  @spec dominant_color!(image :: Vimage.t(), options :: Keyword.t()) :: Color.rgb_color() | no_return()
+  @spec dominant_color!(image :: Vimage.t(), options :: Keyword.t()) ::
+          Color.rgb_color() | no_return()
   def dominant_color!(%Vimage{} = image, options \\ []) do
     case dominant_color(image, options) do
       {:ok, dominant_color} -> dominant_color
@@ -6819,6 +6841,11 @@ defmodule Image do
 
     ### Notes
 
+    * The current implementation is targetted towards
+      sRGB images Results for images in other colorspaces
+      is undefined. It is planned this limitation be
+      removed in a future release.
+
     * The option is `:num_clusters` determines the
       number of clusters into which image colors are
       partioned. The default is `num_clusters: #{@default_clusters}`.
@@ -6870,14 +6897,27 @@ defmodule Image do
 
     """
 
-    @spec kmeans(image :: Vimage.t(), options :: Keyword.t()) :: list(Color.t())
+    @spec kmeans(image :: Vimage.t(), options :: Keyword.t()) ::
+      {:ok, list(Color.t())} | {:error, error_message()}
+
     def kmeans(%Vimage{} = image, options \\ [num_clusters: @default_clusters]) do
-      image
-      |> Image.Scholar.kmeans(options)
-      |> Map.fetch!(:clusters)
-      |> Nx.to_list()
-      |> Enum.sort()
-      |> Enum.map(fn [r, g, b] -> [round(r), round(g), round(b)] end)
+      with {:ok, rgb_image} <- Image.to_colorspace(image, :srgb) do
+        kmeans =
+          rgb_image
+          |> Image.Scholar.kmeans(options)
+          |> Map.fetch!(:clusters)
+          |> Nx.to_list()
+          |> Enum.sort()
+          |> Enum.map(fn
+            [r, g, b] ->
+              [round(r), round(g), round(b)]
+
+            [r, g, b, a] ->
+              [round(r), round(g), round(b), round(a)]
+          end)
+
+        {:ok, kmeans}
+      end
     end
   end
 
@@ -7269,11 +7309,11 @@ defmodule Image do
   @spec brightness(image :: Vimage.t(), brightness :: float()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
   def brightness(%Vimage{} = image, brightness) when is_multiplier(brightness) do
-    without_alpha_band image, fn image ->
-      with_colorspace image, :lch, fn i ->
+    without_alpha_band(image, fn image ->
+      with_colorspace(image, :lch, fn i ->
         Image.Math.multiply(i, [brightness, 1.0, 1.0])
-      end
-    end
+      end)
+    end)
   end
 
   @doc """
@@ -7348,11 +7388,11 @@ defmodule Image do
   def contrast(%Vimage{} = image, contrast) when is_multiplier(contrast) do
     use Image.Math
 
-    without_alpha_band image, fn image ->
-      with_colorspace image, :scrgb, fn scrgb ->
+    without_alpha_band(image, fn image ->
+      with_colorspace(image, :scrgb, fn scrgb ->
         scrgb * contrast - (0.5 * contrast - 0.5)
-      end
-    end
+      end)
+    end)
   end
 
   def contrast(%Vimage{} = _image, contrast) do
@@ -7518,13 +7558,13 @@ defmodule Image do
 
   def modulate(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Modulate.validate_options(options) do
-      without_alpha_band image, fn image ->
-        with_colorspace image, :lch, fn image ->
+      without_alpha_band(image, fn image ->
+        with_colorspace(image, :lch, fn image ->
           multipliers = [options.brightness, options.saturation, 1.0]
           addends = [options.lightness, 0.0, options.hue]
           Operation.linear(image, multipliers, addends)
-        end
-      end
+        end)
+      end)
     end
   end
 
@@ -9227,11 +9267,10 @@ defmodule Image do
   @doc subject: "Metadata", since: "0.6.0"
 
   @spec dhash(image :: Vimage.t(), hash_size :: pos_integer()) ::
-    {:ok, image_hash()} | {:error, error_message()}
+          {:ok, image_hash()} | {:error, error_message()}
 
   def dhash(%Vimage{} = image, hash_size_bits \\ 64)
       when is_integer(hash_size_bits) and hash_size_bits > 0 do
-
     hash_size = round(:math.sqrt(hash_size_bits))
 
     with {:ok, convolution} <- Image.Matrix.image_from_matrix([[1.0, -1.0]]),
@@ -9845,7 +9884,7 @@ defmodule Image do
   @doc since: "0.39.0", subject: "Operation"
 
   @spec map_join_pages(Vimage.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message()})) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def map_join_pages(%Vimage{} = image, fun) when is_function(fun, 1) do
     map_join_pages(image, fun, pages(image))
@@ -9870,15 +9909,15 @@ defmodule Image do
     with {:ok, page_height} <- page_height(image),
          {:ok, new_pages} <- reduce_pages(image, pages, page_height, fun),
          {:ok, new_image} <- join(Enum.reverse(new_pages), across: 1) do
-       new_page_height = Image.height(hd(new_pages))
+      new_page_height = Image.height(hd(new_pages))
 
-       case mutate(new_image, &MutableImage.set(&1, "page-height", :gint, new_page_height)) do
-         {:ok, updated_image} ->
-           {:ok, updated_image}
+      case mutate(new_image, &MutableImage.set(&1, "page-height", :gint, new_page_height)) do
+        {:ok, updated_image} ->
+          {:ok, updated_image}
 
-         {:error, reason} ->
-           {:error, "Could not set the page-height header. Reason: #{inspect reason}"}
-       end
+        {:error, reason} ->
+          {:error, "Could not set the page-height header. Reason: #{inspect(reason)}"}
+      end
     end
   end
 
@@ -9888,10 +9927,11 @@ defmodule Image do
         {:ok, page_height}
 
       {:error, _reason} ->
-        {:error, "Image does not have a page-height header. " <>
-          "Perhaps the image wasn't opened with the `pages: :all` option or " <>
-          "libvips wasn't built with libwebp-dev/libgif-dev configured? " <>
-          "Run `vips --vips-config` from the command line to check."}
+        {:error,
+         "Image does not have a page-height header. " <>
+           "Perhaps the image wasn't opened with the `pages: :all` option or " <>
+           "libvips wasn't built with libwebp-dev/libgif-dev configured? " <>
+           "Run `vips --vips-config` from the command line to check."}
     end
   end
 
@@ -9903,7 +9943,7 @@ defmodule Image do
 
       case fun.(page_n) do
         {:ok, new_page_n} -> {:cont, {:ok, [new_page_n | acc]}}
-        {:error, reason} -> {:halt, {:error, "Page #{n} returned #{inspect reason}"}}
+        {:error, reason} -> {:halt, {:error, "Page #{n} returned #{inspect(reason)}"}}
       end
     end)
   end
@@ -9946,18 +9986,18 @@ defmodule Image do
     width = width(image)
 
     with {:ok, page_height} <- page_height(image) do
-       result =
-         Enum.reduce_while(1..pages(image), {:ok, []}, fn n, {:ok, acc} ->
-           case Operation.extract_area(image, 0, page_height * (n - 1), width, page_height) do
-             {:ok, new_page_n} -> {:cont, {:ok, [new_page_n | acc]}}
-             {:error, reason} -> {:halt, {:error, "Page #{n} returned #{inspect reason}"}}
-           end
-         end)
+      result =
+        Enum.reduce_while(1..pages(image), {:ok, []}, fn n, {:ok, acc} ->
+          case Operation.extract_area(image, 0, page_height * (n - 1), width, page_height) do
+            {:ok, new_page_n} -> {:cont, {:ok, [new_page_n | acc]}}
+            {:error, reason} -> {:halt, {:error, "Page #{n} returned #{inspect(reason)}"}}
+          end
+        end)
 
-       case result do
-         {:ok, pages} -> {:ok, Enum.reverse(pages)}
-         error -> error
-       end
+      case result do
+        {:ok, pages} -> {:ok, Enum.reverse(pages)}
+        error -> error
+      end
     end
   end
 

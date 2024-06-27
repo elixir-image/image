@@ -1,6 +1,6 @@
 defmodule ForDialyzer do
   # Juse to exorcise dialyzer errors. This module is not included
-  # in the library.
+  # in the library published to hex.pm.
 
   def compose do
     small_kip = Image.open!("./test/support/images/Kip_small.jpg")
@@ -37,5 +37,10 @@ defmodule ForDialyzer do
   def write do
     small_kip = Image.open!("./test/support/images/Kip_small.jpg")
     _ = Image.write!(small_kip, :memory)
+  end
+
+  def kmeans do
+    small_kip = Image.open!("./test/support/images/Kip_small.jpg")
+    _ = Image.kmeans(small_kip)
   end
 end

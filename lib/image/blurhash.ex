@@ -80,13 +80,20 @@ defmodule Image.Blurhash do
   @doc subject: "Operation", since: "0.44.0"
 
   @spec encode(image :: Vimage.t(), options :: Keyword.t()) ::
-    {:ok, String.t} | {:error, Image.error_message()}
+          {:ok, String.t()} | {:error, Image.error_message()}
 
   def encode(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Image.Options.Blurhash.validate_options(image, options),
          {:ok, binary} <- Vimage.write_to_binary(image) do
       {width, height, _bands} = Image.shape(image)
-      Image.Blurhash.Encoder.encode(binary, width, height, options.x_components, options.y_components)
+
+      Image.Blurhash.Encoder.encode(
+        binary,
+        width,
+        height,
+        options.x_components,
+        options.y_components
+      )
     end
   end
 
@@ -124,13 +131,22 @@ defmodule Image.Blurhash do
   @doc subject: "Operation", since: "0.44.0"
 
   @spec decode(blurhash :: String.t(), width :: pos_integer(), height :: pos_integer()) ::
-    {:ok, Vimage.t} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def decode(blurhash, width, height)
-      when is_binary(blurhash) and is_integer(width) and is_integer(height) and width > 0 and height > 0 do
-    with {:ok, pixel_iodata, _average_color} <- Image.Blurhash.Decoder.decode(blurhash, width, height) do
+      when is_binary(blurhash) and is_integer(width) and is_integer(height) and width > 0 and
+             height > 0 do
+    with {:ok, pixel_iodata, _average_color} <-
+           Image.Blurhash.Decoder.decode(blurhash, width, height) do
       pixel_binary = IO.iodata_to_binary(pixel_iodata)
-      Vix.Vips.Image.new_from_binary(pixel_binary, width, height, @bands_in_blurhash, @blurhash_band_format)
+
+      Vix.Vips.Image.new_from_binary(
+        pixel_binary,
+        width,
+        height,
+        @bands_in_blurhash,
+        @blurhash_band_format
+      )
     end
   end
 end

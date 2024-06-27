@@ -152,7 +152,13 @@ if Image.bumblebee_configured?() do
 
       batch_size = Keyword.fetch!(classifier, :batch_size)
 
-      case Image.Classification.serving(model, model_options, featurizer, featurizer_options, batch_size) do
+      case Image.Classification.serving(
+             model,
+             model_options,
+             featurizer,
+             featurizer_options,
+             batch_size
+           ) do
         {:error, error} ->
           {:error, error}
 

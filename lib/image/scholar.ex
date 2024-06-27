@@ -9,9 +9,11 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) do
 
     def unique_colors(%Vimage{} = image) do
       with {:ok, tensor} <- Image.to_nx(image) do
+        bands = Image.bands(image)
+
         colors_base256 =
           tensor
-          |> encode_colors()
+          |> encode_colors(bands)
           |> Nx.flatten()
           |> Nx.sort()
 
@@ -30,11 +32,13 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) do
         unique_indices =
           marked_unique_indices
           |> Nx.sort()
-          |> Nx.slice_along_axis(repeated_count, Nx.size(marked_unique_indices) - repeated_count, axis: 0)
+          |> Nx.slice_along_axis(repeated_count, Nx.size(marked_unique_indices) - repeated_count,
+            axis: 0
+          )
 
         unique_colors =
           Nx.take(colors_base256, unique_indices)
-          |> decode_colors()
+          |> decode_colors(bands)
 
         count = div(Nx.size(colors_base256), @bands)
         max = Nx.to_number(Nx.reduce_max(unique_indices))
@@ -50,13 +54,19 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) do
       end
     end
 
-    defp encode_colors(colors) do
+    defp encode_colors(colors, 3) do
       colors
       |> Nx.multiply(Nx.tensor([[1, 256, @square_256]]))
       |> Nx.sum(axes: [2])
     end
 
-    defp decode_colors(encoded_colors) do
+    defp encode_colors(colors, 4) do
+      colors
+      |> Nx.multiply(Nx.tensor([[1, 256, @square_256, 256 * @square_256]]))
+      |> Nx.sum(axes: [2])
+    end
+
+    defp decode_colors(encoded_colors, 3) do
       b = Nx.quotient(encoded_colors, @square_256)
       rem = Nx.remainder(encoded_colors, @square_256)
       g = Nx.quotient(rem, 256)
@@ -64,6 +74,16 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) do
 
       Nx.stack([r, g, b], axis: 1)
     end
+
+    defp decode_colors(encoded_colors, 4) do
+      a = Nx.quotient(encoded_colors, 256 * @square_256)
+      rem = Nx.remainder(encoded_colors, 256 * @square_256)
+      b = Nx.quotient(rem, @square_256)
+      rem = Nx.remainder(rem, @square_256)
+      g = Nx.quotient(rem, 256)
+      r = Nx.remainder(rem, 256)
+
+      Nx.stack([r, g, b, a], axis: 1)
+    end
   end
 end
-

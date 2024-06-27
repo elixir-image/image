@@ -50,7 +50,7 @@ defmodule Image.Options.LinearGradient do
   # Angle is conformed to be between 0 and 360 degrees
   defp validate_option({:angle, angle}, options)
        when is_number(angle) do
-    angle = angle - (trunc(angle / 360.0) * 360.0)
+    angle = angle - trunc(angle / 360.0) * 360.0
     {:cont, Keyword.put(options, :angle, angle)}
   end
 

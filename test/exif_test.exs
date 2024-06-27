@@ -23,5 +23,4 @@ defmodule Image.ExitTest do
 
     assert {:ok, %{copyright: "", image_description: ""}} = Image.exif(image)
   end
-
 end

@@ -82,7 +82,13 @@ defmodule Image.Options.Embed do
     end
   end
 
-  defp validate_option({:background_transparency, transparency} = option, _image, _width, _height, options) do
+  defp validate_option(
+         {:background_transparency, transparency} = option,
+         _image,
+         _width,
+         _height,
+         options
+       ) do
     case Color.validate_transparency(transparency) do
       {:ok, transparency} ->
         {:cont, Keyword.put(options, :background_transparency, transparency)}
@@ -157,12 +163,19 @@ defmodule Image.Options.Embed do
     |> Map.delete(:background_transparency)
   end
 
-  defp adjust_transparency(%{extend_mode: :VIPS_EXTEND_BACKGROUND} = options, bands, true = _has_alpha?) do
+  defp adjust_transparency(
+         %{extend_mode: :VIPS_EXTEND_BACKGROUND} = options,
+         bands,
+         true = _has_alpha?
+       ) do
     if length(options.background) == bands do
       options
     else
       options
-      |> Map.put(:background_color, List.insert_at(options.background, -1, options.background_transparency))
+      |> Map.put(
+        :background_color,
+        List.insert_at(options.background, -1, options.background_transparency)
+      )
     end
     |> Map.delete(:background_transparency)
   end

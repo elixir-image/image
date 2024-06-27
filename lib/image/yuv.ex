@@ -39,35 +39,35 @@ defmodule Image.YUV do
   alias Vix.Vips.Operation
 
   @bt601_to_rgb [
-    [1.0,  0.0,       1.402   ],
+    [1.0, 0.0, 1.402],
     [1.0, -0.344136, -0.714136],
-    [1.0,  1.772,     0.0     ],
+    [1.0, 1.772, 0.0]
   ]
 
   # This are the "Computer RGB to YCbCr"
   # coefficients
 
   @rgb_to_bt601 [
-    [65.738, 129.057, 25.064  ],
+    [65.738, 129.057, 25.064],
     [-37.945, -74.494, 112.439],
-    [112.439, -94.154, -18.285],
+    [112.439, -94.154, -18.285]
   ]
 
   # See https://mymusing.co/bt-709-yuv-to-rgb-conversion-color/
 
   @bt709_to_rgb [
-    [1.0,  0.0,       1.5748  ],
+    [1.0, 0.0, 1.5748],
     [1.0, -0.187324, -0.468124],
-    [1.0,  1.8556,    0.0     ],
+    [1.0, 1.8556, 0.0]
   ]
 
   # This are the "Computer RGB to YCbCr"
   # coefficients
 
   @rgb_to_bt709 [
-    [46.7428, 157.243, 15.873 ],
+    [46.7428, 157.243, 15.873],
     [-25.765, -86.674, 112.439],
-    [112.439, -102.129, -10.31],
+    [112.439, -102.129, -10.31]
   ]
 
   # Lookup maps
@@ -120,8 +120,14 @@ defmodule Image.YUV do
   """
   @doc since: "0.41.0"
 
-  @spec new_from_file(path :: Path.t, width :: pos_integer(), height :: pos_integer(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec new_from_file(
+          path :: Path.t(),
+          width :: pos_integer(),
+          height :: pos_integer(),
+          encoding :: yuv_encoding(),
+          colorspace :: yuv_colorspace()
+        ) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def new_from_file(path, width, height, encoding, colorspace \\ :bt601)
       when encoding in @valid_encodings and colorspace in @valid_colorspace do
@@ -163,8 +169,14 @@ defmodule Image.YUV do
   """
   @doc since: "0.41.0"
 
-  @spec new_from_binary(binary :: binary(), width :: pos_integer(), height :: pos_integer(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec new_from_binary(
+          binary :: binary(),
+          width :: pos_integer(),
+          height :: pos_integer(),
+          encoding :: yuv_encoding(),
+          colorspace :: yuv_colorspace()
+        ) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def new_from_binary(binary, width, height, encoding, colorspace \\ :bt601)
       when encoding in @valid_encodings and colorspace in @valid_colorspace do
@@ -198,8 +210,13 @@ defmodule Image.YUV do
   """
   @doc since: "0.41.0"
 
-  @spec write_to_file(image :: Vimage.t(), path :: Path.t(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
-    :ok | {:error, Image.error_message()}
+  @spec write_to_file(
+          image :: Vimage.t(),
+          path :: Path.t(),
+          encoding :: yuv_encoding(),
+          colorspace :: yuv_colorspace()
+        ) ::
+          :ok | {:error, Image.error_message()}
 
   def write_to_file(%Vimage{} = image, path, encoding, colorspace \\ :bt601) do
     with {:ok, binary} <- write_to_binary(image, encoding, colorspace) do
@@ -229,8 +246,12 @@ defmodule Image.YUV do
   """
   @doc since: "0.41.0"
 
-  @spec write_to_binary(image :: Vimage.t(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
-    {:ok, binary()} | {:error, Image.error_message()}
+  @spec write_to_binary(
+          image :: Vimage.t(),
+          encoding :: yuv_encoding(),
+          colorspace :: yuv_colorspace()
+        ) ::
+          {:ok, binary()} | {:error, Image.error_message()}
 
   def write_to_binary(%Vimage{} = image, encoding, colorspace \\ :bt601) do
     with {:ok, [y, u, v]} <- to_yuv(image, encoding, colorspace) do
@@ -257,7 +278,7 @@ defmodule Image.YUV do
   @doc since: "0.41.0"
 
   @spec to_rgb(image :: Vimage.t(), colorspace :: yuv_colorspace()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def to_rgb(%Vimage{} = image, colorspace) when colorspace in @valid_colorspace do
     with {:ok, transform} <- Vimage.new_from_list(@to_rgb[colorspace]),
@@ -297,8 +318,14 @@ defmodule Image.YUV do
   """
   @doc since: "0.41.0"
 
-  @spec to_rgb(yuv :: yuv_list(), width :: pos_integer(), height :: pos_integer(), encoding :: yuv_encoding, colorspace :: yuv_colorspace()) ::
-    {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec to_rgb(
+          yuv :: yuv_list(),
+          width :: pos_integer(),
+          height :: pos_integer(),
+          encoding :: yuv_encoding,
+          colorspace :: yuv_colorspace()
+        ) ::
+          {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def to_rgb([y, u, v], width, height, :C444, colorspace) do
     use Image.Math
@@ -357,7 +384,7 @@ defmodule Image.YUV do
   @doc since: "0.41.0"
 
   @spec to_yuv(image :: Vimage.t(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
-    {:ok, yuv_list()} | {:error, Image.error_message()}
+          {:ok, yuv_list()} | {:error, Image.error_message()}
 
   def to_yuv(image, encoding, colorspace \\ :bt601)
 
@@ -399,7 +426,7 @@ defmodule Image.YUV do
   @doc since: "0.41.0"
 
   @spec encode(image :: Vimage.t(), encoding :: yuv_encoding()) ::
-    {:ok, yuv_list()} | {:errpr, Image.error_message()}
+          {:ok, yuv_list()} | {:errpr, Image.error_message()}
 
   def encode(%Vimage{} = image, :C444) do
     with {:ok, y} = Vimage.write_to_binary(image[0]),
@@ -493,7 +520,7 @@ defmodule Image.YUV do
   # plane.
 
   defp new_scaled_image(data, width, height, x_scale, y_scale)
-      when x_scale == 1.0 and y_scale == 1.0 do
+       when x_scale == 1.0 and y_scale == 1.0 do
     Vimage.new_from_binary(data, width, height, 1, :VIPS_FORMAT_UCHAR)
   end
 

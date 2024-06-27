@@ -106,5 +106,4 @@ defmodule Image.Blurhash.Decoder do
       [pixel_row | acc]
     end)
   end
-
 end

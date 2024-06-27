@@ -768,11 +768,18 @@ defmodule Image.Shape do
   """
   @doc since: "1.38.0"
 
-  @spec line(x1 :: pos_integer(), y1 :: pos_integer(), x2 :: pos_integer(), y2 :: pos_integer(), options :: Keyword.t()) ::
+  @spec line(
+          x1 :: pos_integer(),
+          y1 :: pos_integer(),
+          x2 :: pos_integer(),
+          y2 :: pos_integer(),
+          options :: Keyword.t()
+        ) ::
           {:ok, Vimage.t()} | {:error, Image.error_message()}
 
   def line(x1, y1, x2, y2, options \\ [])
-      when is_integer(x1) and x1 >= 0 and is_integer(y1) and y1 >= 0 and is_integer(x2) and x2 >= 0 and is_integer(y2) and y2 >= 0 do
+      when is_integer(x1) and x1 >= 0 and is_integer(y1) and y1 >= 0 and is_integer(x2) and x2 >= 0 and
+             is_integer(y2) and y2 >= 0 do
     with {:ok, options} <- Image.Options.Shape.validate_polygon_options(options) do
       width = max(x1, x2) + div(options.stroke_width, 2)
       height = max(y1, y2) + div(options.stroke_width, 2)
@@ -840,11 +847,18 @@ defmodule Image.Shape do
   """
   @doc since: "1.38.0"
 
-  @spec line!(x1 :: pos_integer(), y1 :: pos_integer(), x2 :: pos_integer(), y2 :: pos_integer(), options :: Keyword.t()) ::
-          Vimage.t()| no_return()
+  @spec line!(
+          x1 :: pos_integer(),
+          y1 :: pos_integer(),
+          x2 :: pos_integer(),
+          y2 :: pos_integer(),
+          options :: Keyword.t()
+        ) ::
+          Vimage.t() | no_return()
 
   def line!(x1, y1, x2, y2, options \\ [])
-      when is_integer(x1) and x1 >= 0 and is_integer(y1) and y1 >= 0 and is_integer(x2) and x2 >= 0 and is_integer(y2) and y2 >= 0 do
+      when is_integer(x1) and x1 >= 0 and is_integer(y1) and y1 >= 0 and is_integer(x2) and x2 >= 0 and
+             is_integer(y2) and y2 >= 0 do
     case line(x1, y1, x2, y2, options) do
       {:ok, line} -> line
       {:error, reason} -> raise Image.Error, reason
