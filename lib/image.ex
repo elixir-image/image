@@ -6827,6 +6827,24 @@ defmodule Image do
       not deterministic. Different calls to `Image.kmeans/2`
       can return different - but equally valid - results.
 
+    * Performance is very correlated with image size.
+      Where possible, resize the image to be under a 1_000_000
+      pixels or even less before invoking `Image.kmeans/2`.
+
+    * Performance is primarily determined by the vector
+      performance of the system and specifically by the
+      GPU configuration and EXLAs support of that GPU.
+      In most cases it is recommended that the following
+      be added to `config.exs`:
+
+    ```elixir
+    config :nx,
+      default_backend: EXLA.Backend
+
+    config :nx, :default_defn_options,
+      compiler: EXLA
+    ```
+
     ### Example
 
         image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
