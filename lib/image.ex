@@ -6852,7 +6852,7 @@ defmodule Image do
 
     """
 
-    @spec kmeans(image :: Vimage.t(), options :: Keyword.t()) :: list(Image.Color.color())
+    @spec kmeans(image :: Vimage.t(), options :: Keyword.t()) :: list(Color.t())
     def kmeans(%Vimage{} = image, options \\ [num_clusters: @default_clusters]) do
       image
       |> Image.Scholar.kmeans(options)
