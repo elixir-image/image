@@ -6927,6 +6927,98 @@ defmodule Image do
         {:ok, kmeans}
       end
     end
+
+    @doc """
+    Applies the [K-means](https://en.wikipedia.org/wiki/K-means_clustering) clustering
+    algorithm to an image using the [scholar](https://hex.pm/packages/scholar)
+    library. The returned result is a list of colors resulting from
+    partioning the colors in an image. This can be thought of
+    as a reduced image palette.
+
+    ### Arguments
+
+    * `image` is any `t:Vix.Vips.Image.t/0`.
+
+    * `options` is a keyword list of options.
+
+    ### Options
+
+    * See `Scholar.Cluster.KMeans.fit/2` for the
+      available options.
+
+    ### Returns
+
+    * `{:ok, list_of_colors}` or
+
+    * `{:error, reason}`
+
+    ### Notes
+
+    * The current implementation is targetted towards
+      sRGB images Results for images in other colorspaces
+      is undefined. It is planned this limitation be
+      removed in a future release.
+
+    * The option is `:num_clusters` determines the
+      number of clusters into which image colors are
+      partioned. The default is `num_clusters: #{@default_clusters}`.
+
+    * The default options mean that the results are
+      not deterministic. Different calls to `Image.kmeans/2`
+      can return different - but equally valid - results.
+
+    * Performance is very correlated with image size.
+      Where possible, resize the image to be under a 1_000_000
+      pixels or even less before invoking `Image.kmeans/2`.
+
+    * Performance is primarily determined by the vector
+      performance of the system and specifically by the
+      GPU configuration and EXLAs support of that GPU.
+      In most cases it is recommended that the following
+      be added to `config.exs`:
+
+    ```elixir
+    config :nx,
+      default_backend: EXLA.Backend
+
+    config :nx, :default_defn_options,
+      compiler: EXLA
+    ```
+
+    ### Example
+
+        image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+        Image.kmeans!(image)
+        [
+          [31, 77, 104],
+          [37, 39, 38],
+          [38, 123, 160],
+          [41, 188, 57],
+          [94, 82, 84],
+          [107, 109, 138],
+          [109, 68, 29],
+          [110, 156, 185],
+          [154, 120, 99],
+          [167, 150, 155],
+          [176, 112, 39],
+          [178, 189, 205],
+          [217, 130, 131],
+          [223, 163, 79],
+          [229, 224, 221],
+          [230, 195, 151]
+        ]
+
+    """
+
+    @spec kmeans!(image :: Vimage.t(), options :: Keyword.t()) ::
+      list(Color.t()) | no_return()
+
+    def kmeans!(%Vimage{} = image, options \\ [num_clusters: @default_clusters]) do
+      case kmeans(image, options) do
+        {:ok, kmeans} -> kmeans
+        {:error, reason} -> raise Image.Error, reason
+      end
+    end
   end
 
   @doc """
