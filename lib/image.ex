@@ -6814,14 +6814,14 @@ defmodule Image do
 
     ### Options
 
-    * See [Scholar.Cluster.KMeans.fit/2] for the
+    * See `Scholar.Cluster.KMeans.fit/2` for the
       available options.
 
     ### Notes
 
     * The option is `:num_clusters` determines the
       number of clusters into which image colors are
-      partioned. The default is #{@default_clusters}.
+      partioned. The default is `num_clusters: #{@default_clusters}`.
 
     * The default options mean that the results are
       not deterministic. Different calls to `Image.kmeans/2`
@@ -6874,7 +6874,7 @@ defmodule Image do
     def kmeans(%Vimage{} = image, options \\ [num_clusters: @default_clusters]) do
       image
       |> Image.Scholar.kmeans(options)
-      |> Map.get(:clusters)
+      |> Map.fetch!(:clusters)
       |> Nx.to_list()
       |> Enum.sort()
       |> Enum.map(fn [r, g, b] -> [round(r), round(g), round(b)] end)
