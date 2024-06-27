@@ -6796,6 +6796,73 @@ defmodule Image do
     |> Operation.hist_norm()
   end
 
+  if Code.ensure_loaded?(Scholar.Cluster.KMeans) do
+    @default_clusters 16
+
+    @doc """
+    Applies the [K-means](https://en.wikipedia.org/wiki/K-means_clustering) clustering
+    algorithm to an image using the [scholar](https://hex.pm/packages/scholar)
+    library. The returned result is a list of colors resulting from
+    partioning the colors in an image. This can be thought of
+    as a reduced image palette.
+
+    ### Arguments
+
+    * `image` is any `t:Vix.Vips.Image.t/0`.
+
+    * `options` is a keyword list of options.
+
+    ### Options
+
+    * See [Scholar.Cluster.KMeans.fit/2] for the
+      available options.
+
+    ### Notes
+
+    * The option is `:num_clusters` determines the
+      number of clusters into which image colors are
+      partioned. The default is #{@default_clusters}.
+
+    * The default options mean that the results are
+      not deterministic. Different calls to `Image.kmeans/2`
+      can return different - but equally valid - results.
+
+    ### Example
+
+        image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+        Image.kmeans(image)
+        [
+          [31, 77, 104],
+          [37, 39, 38],
+          [38, 123, 160],
+          [41, 188, 57],
+          [94, 82, 84],
+          [107, 109, 138],
+          [109, 68, 29],
+          [110, 156, 185],
+          [154, 120, 99],
+          [167, 150, 155],
+          [176, 112, 39],
+          [178, 189, 205],
+          [217, 130, 131],
+          [223, 163, 79],
+          [229, 224, 221],
+          [230, 195, 151]
+        ]
+
+    """
+
+    @spec kmeans(image :: Vimage.t(), options :: Keyword.t()) :: list(Image.Color.color())
+    def kmeans(%Vimage{} = image, options \\ [num_clusters: @default_clusters]) do
+      image
+      |> Image.Scholar.kmeans(options)
+      |> Map.get(:clusters)
+      |> Nx.to_list()
+      |> Enum.sort()
+      |> Enum.map(fn [r, g, b] -> [round(r), round(g), round(b)] end)
+    end
+  end
+
   @doc """
   Returns the pixel value at the given image location.
 

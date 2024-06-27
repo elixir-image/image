@@ -15,5 +15,8 @@ config :ex_aws, :s3,
 config :nx,
   default_backend: EXLA.Backend
 
+config :nx, :default_defn_options,
+  compiler: EXLA
+
 config :logger,
   level: :warning

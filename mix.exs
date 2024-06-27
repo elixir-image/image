@@ -66,15 +66,16 @@ defmodule Image.MixProject do
 
       # Kino for rendering in Livebook
       if(Version.compare(System.version(), "1.13.0") in [:gt, :eq],
-        do: {:kino, "~> 0.11", optional: true}
+        do: {:kino, "~> 0.13", optional: true}
       ),
 
       # For NX interchange testing and
       # Bumblebee for image classification
       if(otp_release() >= 24,
         do: [
-          {:nx, "~> 0.5", optional: true},
+          {:nx, "~> 0.7", optional: true},
           {:nx_image, "~> 0.1", optional: true},
+          {:scholar, "~> 0.3", optional: true},
           {:bumblebee, "~> 0.3", optional: true},
           {:exla, "~> 0.5", optional: true},
           {:rustler, "> 0.0.0", optional: true}

@@ -1,5 +1,21 @@
 # Changelog
 
+## Image 0.49.0
+
+This is the changelog for Image version 0.49.0 released on ____, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds `Image.kmeans/2` to cluster image colors into a color palette. This function is only available if [scholar](https://hex.pm/packages/scholar) is configured. As for any [Nx](https://hex.pm/packages/nx) installation, performance is affected by configuration options. It is likely that setting the following in `config.exs` will be a good idea:
+
+```eliir
+config :nx,
+  default_backend: EXLA.Backend
+
+config :nx, :default_defn_options,
+  compiler: EXLA
+```
+
 ## Image 0.48.1
 
 This is the changelog for Image version 0.48.1 released on June 6th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
