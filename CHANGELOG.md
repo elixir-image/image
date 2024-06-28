@@ -6,7 +6,7 @@ This is the changelog for Image version 0.49.0 released on June 28th, 2024.  For
 
 ### Enhancements
 
-* Updates `Image.dominant_color/2` to take an optional `:top_n` which indicates how many of the most dominant colors to return. The default is `1`. In addition, the implementation of `Image.dominant_color/2` has been simplified followed by advice at https://github.com/libvips/libvips/discussions/4016
+* Updates `Image.dominant_color/2` to take an optional `:top_n` which indicates how many of the most dominant colors to return. The default is `1`. In addition, the implementation of `Image.dominant_color/2` has been simplified following the advice at https://github.com/libvips/libvips/discussions/4016
 
 * Adds `Image.delta_e/3` to calculate a difference between two colors using one of the CIE color difference algorithms.
 
