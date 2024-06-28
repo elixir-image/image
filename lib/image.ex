@@ -6726,7 +6726,7 @@ defmodule Image do
     end
   end
 
-  # hist_find_ndim returns the folllowing per https://github.com/libvips/libvips/discussions/3537
+  # hist_find_ndim returns the following per https://github.com/libvips/libvips/discussions/3537
   # It's just a 5 x 5 x 5 matrix, so a cube. Maybe imagine a Rubik's cube, except 5x5x5, not 3x3x3?
 
   # If you hold the cube with one face towards you, you'll see a 5x5 grid. That's the (x, y) you pass
@@ -6771,12 +6771,13 @@ defmodule Image do
   end
 
   # Max value for an sRGB image
-  @max_band_value 256
+  @max_rgb_band_value 256
 
   defp find_maximum(histogram, bins, count) do
-    bin_size = @max_band_value / bins
+    bin_size = @max_rgb_band_value / bins
 
-    {_c, %{"out-array": v, "x-array": x, "y-array": y}} = Operation.max!(histogram, size: count)
+    {_c, %{"out-array": v, "x-array": x, "y-array": y}} =
+      Operation.max!(histogram, size: count)
 
     colors =
       [v, x, y]
@@ -6982,13 +6983,14 @@ defmodule Image do
       is undefined. It is planned this limitation be
       removed in a future release.
 
-    * The option is `:num_clusters` determines the
+    * The option `:num_clusters` determines the
       number of clusters into which image colors are
       partioned. The default is `num_clusters: #{@default_clusters}`.
 
     * The default options mean that the results are
       not deterministic. Different calls to `Image.k_means/2`
-      can return different - but equally valid - results.
+      can return different - but equally valid - results. Use
+      the `:key` option to return deterministic results.
 
     * Performance is very correlated with image size.
       Where possible, resize the image to be under a 1_000_000
@@ -7092,13 +7094,14 @@ defmodule Image do
       is undefined. It is planned this limitation be
       removed in a future release.
 
-    * The option is `:num_clusters` determines the
+    * The option `:num_clusters` determines the
       number of clusters into which image colors are
       partioned. The default is `num_clusters: #{@default_clusters}`.
 
     * The default options mean that the results are
       not deterministic. Different calls to `Image.k_means/2`
-      can return different - but equally valid - results.
+      can return different - but equally valid - results. Use
+      the `:key` option to return deterministic results.
 
     * Performance is very correlated with image size.
       Where possible, resize the image to be under a 1_000_000
@@ -7151,6 +7154,76 @@ defmodule Image do
       case k_means(image, options) do
         {:ok, k_means} -> k_means
         {:error, reason} -> raise Image.Error, reason
+      end
+    end
+
+    @doc """
+    Reduces the number of colors in an image.
+
+    Takes the `k_means/2` of the image and then
+    re-colors the image using the returned cluster
+    colors.
+
+    ### Arguments
+
+    * `image` is any `t:Vix.Vips.Image.t/0`.
+
+    * `options` is a keyword list of options.
+
+    ### Options
+
+    * `:colors` is the number of distinct colors to be
+      used in the returned image. The default is `#{@default_clusters}`.
+
+    * See also `Scholar.Cluster.KMeans.fit/2` for the
+      available options.
+
+    ### Note
+
+    * Note the performance considerations described in
+      `Image.k_means/2` since they also apply to this function.
+
+    * If the intent is to reduce colors in order to
+      reduce the size of an image file it is strongly advised to
+      use the appropriate arguments when calling `Image.write/2`.
+
+    ### Returns
+
+    * `{:ok, reduced_colors_image}` or
+
+    * `{:error, reason}`
+
+    """
+    @doc subject: "Clusters", since: "0.50.0"
+
+    def reduce_colors(%Vimage{} = image, options \\ []) do
+      with {:ok, image} <- to_colorspace(image, :srgb) do
+        kmeans_num_clusters =
+          Keyword.get(options, :colors, @default_clusters)
+
+        options =
+          options
+          |> Keyword.put(:num_clusters, kmeans_num_clusters)
+          |> Keyword.delete(:colors)
+
+        {height, width, bands} = Image.shape(image)
+
+        nx_reshaped =
+          image
+          |> to_nx!()
+          |> Nx.reshape({height * width, bands})
+
+        model =
+          nx_reshaped
+          |> Scholar.Cluster.KMeans.fit(options)
+
+        indicies =
+          Nx.as_type(model.labels, :u8)
+
+        model.clusters
+        |> Nx.take(indicies)
+        |> Nx.reshape({height, width, bands})
+        |> Image.from_nx()
       end
     end
   end

@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.50.0
+
+This is the changelog for Image version 0.50.0 released on June 28th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds `Image.reduce_colors/2` to reduce the number of colors in an image. `Scholar.Cluster.KMeans.fit/2` is used to cluster the colors. The clusters are then used to recolor the image.
+
 ## Image 0.49.0
 
 This is the changelog for Image version 0.49.0 released on June 28th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
