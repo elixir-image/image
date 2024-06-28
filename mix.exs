@@ -141,6 +141,8 @@ defmodule Image.MixProject do
         "README.md",
         "guides/thumbnailing.md",
         "livebook/image_edge_masking.livemd",
+        "livebook/color_clustering.livemd",
+        "livebook/segment_anything.livemd",
         "LICENSE.md",
         "CHANGELOG.md"
       ],
