@@ -9436,7 +9436,7 @@ defmodule Image do
 
       ### Returns
 
-      * a `Kino.Image.t/0`
+      * a Kino image struct.
 
       ### Example
 
