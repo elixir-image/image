@@ -6755,23 +6755,19 @@ defmodule Image do
     {:ok, histogram} =
       Operation.hist_find_ndim(flatten!(image), bins: bins)
 
-    IO.inspect Image.shape(histogram), label: "Histogram shape"
-
-    {:ok, unfolded} =
-      Operation.bandunfold(histogram)
-
-    IO.inspect Image.shape(unfolded), label: "Unfolded shape"
-
     [black | remaining_pixels] =
-      Operation.getpoint!(unfolded, 0, 0)
+      Operation.getpoint!(histogram, 0, 0)
 
     {:ok, histogram} =
-      Image.mutate(unfolded, fn img ->
+      Image.mutate(histogram, fn img ->
         pixel = [min(black - alpha_black_pixel_count, 0) | remaining_pixels]
         Vix.Vips.MutableOperation.draw_rect!(img, pixel, 0, 0, 1, 1)
       end)
 
-    find_maximum(histogram, bins, count)
+    {:ok, unfolded} =
+      Operation.bandunfold(histogram)
+
+    find_maximum(unfolded, bins, count)
   end
 
   # Max value for an sRGB image
