@@ -9450,7 +9450,7 @@ defmodule Image do
 
       def to_kino(%Vimage{} = image) do
         with {:ok, srgb_image} <- Image.to_colorspace(image, :srgb),
-             {:ok, u8_image} <- Image.cast(srgb_image, :u8),
+             {:ok, u8_image} <- Image.cast(srgb_image, {:u, 8}),
              {:ok, nx_image} <- Image.to_nx(u8_image) do
           Kino.Image.new(nx_image)
         end
