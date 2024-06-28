@@ -6624,7 +6624,7 @@ defmodule Image do
 
   * `:bins` is an integer number of color
     frequency bins the image is divided into.
-    The default is `#{@dominant_bins}.
+    The default is `#{@dominant_bins}`.
 
   * `:top_n` returns the top `n` most
     dominant colors in the image. The default
@@ -6684,8 +6684,12 @@ defmodule Image do
   ### Options
 
   * `:bins` is an integer number of color
-   frequency bins the image is divided into.
-   The default is `16`.
+    frequency bins the image is divided into.
+    The default is `#{@dominant_bins}`.
+
+  * `:top_n` returns the top `n` most
+    dominant colors in the image. The default
+    is `#{@dominant_top_n}`.
 
   ### Returns
 
