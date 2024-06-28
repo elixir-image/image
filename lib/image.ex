@@ -234,7 +234,11 @@ defmodule Image do
   # How many bins to use to calculate an approximate
   # dominant color. The maximum is 256. Larger numbers
   # significantly slow calculation.
-  @dominant_bins 10
+  @dominant_bins 16
+
+  # How many of the most common colors
+  # to return in dominant_color/2
+  @dominant_top_n 1
 
   # For erode/2 and dilate/2 this is acceptable
   # range for the radius parameter.
@@ -6619,8 +6623,12 @@ defmodule Image do
   ### Options
 
   * `:bins` is an integer number of color
-   frequency bins the image is divided into.
-   The default is `10`.
+    frequency bins the image is divided into.
+    The default is `#{@dominant_bins}.
+
+  * `:top_n` returns the top `n` most
+    dominant colors in the image. The default
+    is `#{@dominant_top_n}`.
 
   ### Returns
 
@@ -6638,26 +6646,27 @@ defmodule Image do
 
       iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
       iex> Image.dominant_color(image)
-      {:ok, [13, 64, 115]}
+      {:ok, [8, 8, 24]}
 
       iex> image = Image.open!("./test/support/images/image_with_alpha2.png")
       iex> Image.dominant_color(image)
-      {:ok, [90, 90, 90]}
+      {:ok, [88, 88, 88]}
 
   """
   @doc subject: "Image info", since: "0.3.0"
 
   @spec dominant_color(image :: Vimage.t(), options :: Keyword.t()) ::
-          {:ok, Color.rgb_color()} | {:error, error_message()}
+          {:ok, Color.rgb_color() | [Color.rgb_color()]} | {:error, error_message()}
 
   def dominant_color(%Vimage{} = image, options \\ []) do
     bins = Keyword.get(options, :bins, @dominant_bins)
+    count = Keyword.get(options, :top_n, @dominant_top_n)
 
     with {:ok, image} <- to_colorspace(image, :srgb) do
       if has_alpha?(image) do
-        dominant_color_alpha(image, bins)
+        dominant_color_alpha(image, bins, count)
       else
-        dominant_color_no_alpha(image, bins)
+        dominant_color_no_alpha(image, bins, count)
       end
     end
   end
@@ -6676,7 +6685,7 @@ defmodule Image do
 
   * `:bins` is an integer number of color
    frequency bins the image is divided into.
-   The default is `10`.
+   The default is `16`.
 
   ### Returns
 
@@ -6694,11 +6703,11 @@ defmodule Image do
 
       iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
       iex> Image.dominant_color!(image)
-      [13, 64, 115]
+      [8, 8, 24]
 
       iex> image = Image.open!("./test/support/images/image_with_alpha2.png")
       iex> Image.dominant_color!(image)
-      [90, 90, 90]
+      [88, 88, 88]
 
   """
 
@@ -6723,9 +6732,10 @@ defmodule Image do
   # So (for example) the first number from the five at (0, 0) is the number of pixels w
   # here R, G and B are all between 0 and 51, so blackish pixels.
 
-  defp dominant_color_no_alpha(image, bins) do
+  defp dominant_color_no_alpha(image, bins, count) do
     {:ok, histogram} = Operation.hist_find_ndim(image, bins: bins)
-    find_maximum(histogram, bins)
+    {:ok, unfolded} = Operation.bandunfold(histogram)
+    find_maximum(unfolded, bins, count)
   end
 
   # Suggestion by @jcupitt from https://github.com/libvips/libvips/discussions/3692
@@ -6734,40 +6744,57 @@ defmodule Image do
   # Subtract the number of alpha zeros from the bin at (0, 0, 0), since all the alpha 0 pixels will have gone into that bin
   # Find the max position.  Thanks to @akash-akya for the assist.
 
-  defp dominant_color_alpha(image, bins) do
+  defp dominant_color_alpha(image, bins, count) do
     alpha_black_pixel_count =
       alpha_black_pixel_count(image[-1])
 
     {:ok, histogram} =
       Operation.hist_find_ndim(flatten!(image), bins: bins)
 
+    {:ok, unfolded} =
+      Operation.bandunfold(histogram)
+
     [black | remaining_pixels] =
-      Operation.getpoint!(histogram, 0, 0)
+      Operation.getpoint!(unfolded, 0, 0)
 
     {:ok, histogram} =
-      Image.mutate(histogram, fn img ->
+      Image.mutate(unfolded, fn img ->
         pixel = [min(black - alpha_black_pixel_count, 0) | remaining_pixels]
         Vix.Vips.MutableOperation.draw_rect!(img, pixel, 0, 0, 1, 1)
       end)
 
-    find_maximum(histogram, bins)
+    find_maximum(histogram, bins, count)
   end
 
   # Max value for an sRGB image
   @max_band_value 256
 
-  defp find_maximum(histogram, bins) do
+  defp find_maximum(histogram, bins, count) do
     bin_size = @max_band_value / bins
-    midpoint = bin_size / 2
 
-    {v, %{x: x, y: y}} = Operation.max!(histogram)
-    pixel = Operation.getpoint!(histogram, x, y)
-    z = Enum.find_index(pixel, &(&1 == v))
+    {_c, %{"out-array": v, "x-array": x, "y-array": y}} = Operation.max!(histogram, size: count)
 
-    r = x * bin_size + midpoint
-    g = y * bin_size + midpoint
-    b = z * bin_size + midpoint
-    {:ok, [round(r), round(g), round(b)]}
+    colors =
+      [v, x, y]
+      |> Enum.zip()
+      |> Enum.map(fn {v, x, y} ->
+        r = bin_size / 2 + bin_size * Integer.floor_div(x, bins)
+        b = bin_size / 2 + bin_size * Integer.mod(x, bins)
+        g = bin_size / 2 + bin_size * y
+        {v, [round(r), round(g), round(b)]}
+      end)
+
+    if length(colors) == 1 do
+      {:ok, elem(hd(colors), 1)}
+    else
+      sorted_by_descending_frequency =
+        colors
+        |> Enum.sort()
+        |> Enum.map(&elem(&1, 1))
+        |> Enum.reverse()
+
+      {:ok, sorted_by_descending_frequency}
+    end
   end
 
   defp alpha_black_pixel_count(alpha) do
@@ -6809,13 +6836,110 @@ defmodule Image do
   in that 1/256th part of the image.
 
   """
-  @doc subject: "Operation", since: "0.3.0"
+  @doc subject: "Clusters", since: "0.3.0"
 
   @spec histogram(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def histogram(%Vimage{} = image) do
     image
     |> Operation.hist_find!()
     |> Operation.hist_norm()
+  end
+
+  @delta_e_versions [:de76, :de00, :decmc]
+  @default_delta_e_version :de00
+
+  @doc """
+  Returns the [color difference](https://en.wikipedia.org/wiki/Color_difference)
+  between two colors calculated using the
+  [CIE](https://cie.co.at) [ΔE*](https://en.wikipedia.org/wiki/Color_difference#CIELAB_ΔE*)
+  algorithms.
+
+  The available difference algorithms are:
+
+  * [CIDE2000](https://en.wikipedia.org/wiki/Color_difference#CIEDE2000)
+  * [CIE CMC](https://en.wikipedia.org/wiki/Color_difference#CMC_l:c_(1984))
+  * [CIE 1976](https://en.wikipedia.org/wiki/Color_difference#CIE76)
+
+  ### Arguments
+
+  * `color_1` which can be specified as a single integer
+    or a list of integers representing the color.
+    The color can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. Lastly, the
+    color can be supplied as a hex string like `#ffe4e1`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `color_2` which is specified in the same manner as `color_1`.
+
+  * `version` is one of `:de00` (the default), `:decmc` or `:de76`.
+
+  ### Returns
+
+  * `{:ok, int_distance}` where `int_distance` is `0`
+    when the colors are identical and `100` when they are completely
+    different.
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> Image.delta_e([0,0,0], [0,0,0])
+      {:ok, 0}
+
+      iex> Image.delta_e([0,0,0], [255,255,255])
+      {:ok, 100}
+
+      iex> Image.delta_e([0,0,0], :misty_rose)
+      {:ok, 90}
+
+      iex> Image.delta_e(:green, :misty_rose)
+      {:ok, 53}
+
+      iex> Image.delta_e :green, :misty_rose, :de76
+      {:ok, 89}
+
+  """
+  @doc subject: "Color Difference", since: "0.49.0"
+  def delta_e(color_1, color_2, version \\ @default_delta_e_version)
+
+  def delta_e(%Vimage{} = image_1, color_2, version) do
+    color_1 = get_pixel!(image_1, 0, 0)
+    delta_e(color_1, color_2, version)
+  end
+
+  def delta_e(color_1, %Vimage{} = image_2, version) do
+    color_2 = get_pixel!(image_2, 0, 0)
+    delta_e(color_1, color_2, version)
+  end
+
+  def delta_e(color_1, color_2, version)  do
+    with {:ok, version} <- validate_delta_e_version(version),
+         {:ok, color_1} <- Color.validate_color(color_1),
+         {:ok, color_2} <- Color.validate_color(color_2) do
+      color_1_image = new!(1, 1, color: color_1)
+      color_2_image = new!(1, 1, color: color_2)
+
+      delta_e =
+        case version do
+          :de00 -> Operation.de00!(color_1_image, color_2_image)
+          :de76 -> Operation.de76!(color_1_image, color_2_image)
+          :decmc -> Operation.decmc!(color_1_image, color_2_image)
+        end
+        |> get_pixel!(0, 0)
+        |> hd
+
+      {:ok, delta_e}
+    end
+  end
+
+  defp validate_delta_e_version(version) when version in @delta_e_versions,
+    do: {:ok, version}
+
+  defp validate_delta_e_version(version) do
+    {:error,
+        "Invalid delta_e version #{inspect version}. " <>
+        "Version must be one of #{inspect @delta_e_versions}"
+    }
   end
 
   if Code.ensure_loaded?(Scholar.Cluster.KMeans) do
@@ -6825,8 +6949,10 @@ defmodule Image do
     Applies the [K-means](https://en.wikipedia.org/wiki/K-means_clustering) clustering
     algorithm to an image using the [scholar](https://hex.pm/packages/scholar)
     library. The returned result is a list of colors resulting from
-    partioning the colors in an image. This can be thought of
-    as a reduced image palette.
+    partioning the colors in an image.
+
+    This function is only available if [Scholar](https://hex.pm/packages/scholar)
+    is configured.
 
     ### Arguments
 
@@ -6857,12 +6983,12 @@ defmodule Image do
       partioned. The default is `num_clusters: #{@default_clusters}`.
 
     * The default options mean that the results are
-      not deterministic. Different calls to `Image.kmeans/2`
+      not deterministic. Different calls to `Image.k_means/2`
       can return different - but equally valid - results.
 
     * Performance is very correlated with image size.
       Where possible, resize the image to be under a 1_000_000
-      pixels or even less before invoking `Image.kmeans/2`.
+      pixels or even less before invoking `Image.k_means/2`.
 
     * Performance is primarily determined by the vector
       performance of the system and specifically by the
@@ -6881,7 +7007,7 @@ defmodule Image do
     ### Example
 
         image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
-        Image.kmeans(image)
+        Image.k_means(image)
         {:ok,
           [
             [31, 77, 104],
@@ -6904,15 +7030,16 @@ defmodule Image do
         }
 
     """
+    @doc subject: "Clusters", since: "0.49.0"
 
-    @spec kmeans(image :: Vimage.t(), options :: Keyword.t()) ::
+    @spec k_means(image :: Vimage.t(), options :: Keyword.t()) ::
       {:ok, list(Color.t())} | {:error, error_message()}
 
-    def kmeans(%Vimage{} = image, options \\ [num_clusters: @default_clusters]) do
+    def k_means(%Vimage{} = image, options \\ [num_clusters: @default_clusters]) do
       with {:ok, rgb_image} <- Image.to_colorspace(image, :srgb) do
-        kmeans =
+        k_means =
           rgb_image
-          |> Image.Scholar.kmeans(options)
+          |> Image.Scholar.k_means(options)
           |> Map.fetch!(:clusters)
           |> Nx.to_list()
           |> Enum.sort()
@@ -6924,7 +7051,7 @@ defmodule Image do
               [round(r), round(g), round(b), round(a)]
           end)
 
-        {:ok, kmeans}
+        {:ok, k_means}
       end
     end
 
@@ -6932,8 +7059,10 @@ defmodule Image do
     Applies the [K-means](https://en.wikipedia.org/wiki/K-means_clustering) clustering
     algorithm to an image using the [scholar](https://hex.pm/packages/scholar)
     library. The returned result is a list of colors resulting from
-    partioning the colors in an image. This can be thought of
-    as a reduced image palette.
+    partioning the colors in an image.
+
+    This function is only available if [Scholar](https://hex.pm/packages/scholar)
+    is configured.
 
     ### Arguments
 
@@ -6964,12 +7093,12 @@ defmodule Image do
       partioned. The default is `num_clusters: #{@default_clusters}`.
 
     * The default options mean that the results are
-      not deterministic. Different calls to `Image.kmeans/2`
+      not deterministic. Different calls to `Image.k_means/2`
       can return different - but equally valid - results.
 
     * Performance is very correlated with image size.
       Where possible, resize the image to be under a 1_000_000
-      pixels or even less before invoking `Image.kmeans/2`.
+      pixels or even less before invoking `Image.k_means/2`.
 
     * Performance is primarily determined by the vector
       performance of the system and specifically by the
@@ -6988,7 +7117,7 @@ defmodule Image do
     ### Example
 
         image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
-        Image.kmeans!(image)
+        Image.k_means!(image)
         [
           [31, 77, 104],
           [37, 39, 38],
@@ -7009,13 +7138,14 @@ defmodule Image do
         ]
 
     """
+    @doc subject: "Clusters", since: "0.49.0"
 
-    @spec kmeans!(image :: Vimage.t(), options :: Keyword.t()) ::
+    @spec k_means!(image :: Vimage.t(), options :: Keyword.t()) ::
       list(Color.t()) | no_return()
 
-    def kmeans!(%Vimage{} = image, options \\ [num_clusters: @default_clusters]) do
-      case kmeans(image, options) do
-        {:ok, kmeans} -> kmeans
+    def k_means!(%Vimage{} = image, options \\ [num_clusters: @default_clusters]) do
+      case k_means(image, options) do
+        {:ok, k_means} -> k_means
         {:error, reason} -> raise Image.Error, reason
       end
     end

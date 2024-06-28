@@ -48,7 +48,7 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) do
       end
     end
 
-    def kmeans(%Vimage{} = image, options \\ []) do
+    def k_means(%Vimage{} = image, options \\ []) do
       with {:ok, {_count, colors}} <- unique_colors(image) do
         Scholar.Cluster.KMeans.fit(colors, options)
       end

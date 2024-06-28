@@ -4,6 +4,9 @@ defmodule Image.Color do
 
   """
 
+  alias Vix.Vips.Image, as: Vimage
+  alias Vix.Vips.Operation
+
   @priv_dir :code.priv_dir(:image) |> List.to_string()
   @css_color_path Path.join(@priv_dir, "color/css_colors.csv")
   @additional_color_path Path.join(@priv_dir, "color/additional_colors.csv")
@@ -147,11 +150,11 @@ defmodule Image.Color do
 
   ### Arguments
 
-  `color` which can be specified as a single integer
-  which or a list of integers representing the color.
-  The color can also be supplied as a CSS color name as a
-  string or atom. For example: `:misty_rose`. See
-  `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+  * `color` which can be specified as a single integer
+    or a list of integers representing the color.
+    The color can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
 
   ### Returns
 
@@ -224,11 +227,12 @@ defmodule Image.Color do
 
   ### Arguments
 
-  `color` which can be specified as a single integer
-  which or a list of integers representing the color.
-  The color can also be supplied as a CSS color name as a
-  string or atom. For example: `:misty_rose`. See
-  `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+  * `color` which can be specified as a single integer
+    or a list of integers representing the color.
+    The color can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. Lastly, the
+    color can be supplied as a hex string like `"#ffe4e1"`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
 
   ### Returns
 
@@ -347,5 +351,160 @@ defmodule Image.Color do
     |> to_string()
     |> String.downcase()
     |> String.replace(["_", "-", " "], "")
+  end
+
+  @doc """
+  Sorts a list of colors.
+
+  The color sorting is based upon https://www.alanzucconi.com/2015/09/30/colour-sorting/
+
+  ### Arguments
+
+  * `color` which can be specified as a single integer
+    or a list of integers representing the color.
+    The color can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. Lastly, the
+    color can be supplied as a hex string like `#ffe4e1`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  There are currently no defined options.
+
+  ### Returns
+
+  * A sorted list of colors.
+
+  """
+  @doc since: "0.49.0"
+
+  def sort(colors, options \\ []) do
+    Enum.sort(colors, &compare_colors(&1, &2, options))
+  end
+
+  @doc false
+  def compare_colors(color_1, color_2, options) do
+    convert!(color_1, :srgb_to_hlv, options) < convert!(color_2, :srgb_to_hlv, options)
+  end
+
+  @default_repetitions 8
+
+  @doc """
+  Converts an sRGB color to another color space.
+
+  ### Arguments
+
+  * `color` which can be specified as a single integer
+    or a list of integers representing the color.
+    The color can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. Lastly, the
+    color can be supplied as a hex string like `"#ffe4e1"`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `conversion` is the conversion to perform. The valid
+    conversions are:
+
+      * `:srgb_to_hsv`
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  There are currently no defined options.
+
+  ### Returns
+
+  * `{:ok, color}` or
+
+  * `{:error, reason}`
+
+  ### Example
+
+      iex> Image.Color.convert(:misty_rose, :srgb_to_hsv)
+      {:ok, [4, 30, 255]}
+
+      iex> Image.Color.convert([255, 255, 255], :srgb_to_hsv)
+      {:ok, [0, 0, 255]}
+
+  """
+  @doc since: "0.49.0"
+
+  def convert(color, conversion, options \\ [])
+
+  def convert(%Vimage{} = image, conversion, options) do
+    srgb = Image.to_colorspace!(image, :srgb)
+    color = Image.get_pixel!(srgb, 0, 0)
+    convert(color, conversion, options)
+  end
+
+  def convert(color, :srgb_to_hsv, _options) do
+    with {:ok, color} <- validate_color(color) do
+      Image.new!(1, 1, color: color)
+      |> Operation.srgb2hsv!()
+      |> Image.get_pixel(0, 0)
+    end
+  end
+
+  def convert(color, :srgb_to_hlv, options) do
+    with {:ok, [r, g, b]} <- validate_color(color),
+         {:ok, [h, _s, v]} = convert(color, :srgb_to_hsv) do
+      repetitions = Keyword.get(options, :repetitions, @default_repetitions)
+      lum = :math.sqrt(0.241 * r + 0.691 * g + 0.068 * b)
+
+      h2 = trunc(h * repetitions)
+      lum2 = trunc(lum * repetitions)
+      v2 = trunc(v * repetitions)
+
+      {:ok, [h2, lum2, v2]}
+    end
+  end
+
+  @doc """
+  Converts an sRGB color to another color space or
+  raises an exception.
+
+  ### Arguments
+
+  * `color` which can be specified as a single integer
+    which or a list of integers representing the color.
+    The color can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `conversion` is the conversion to perform. The valid
+    conversions are:
+
+      * `:srgb_to_hsv`
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  There are currently no defined options.
+
+  ### Returns
+
+  * `converted_color` or
+
+  * raises an exception.
+
+  ### Example
+
+      iex> Image.Color.convert!(:misty_rose, :srgb_to_hsv)
+      [4, 30, 255]
+
+      iex> Image.Color.convert!([255, 255, 255], :srgb_to_hsv)
+      [0, 0, 255]
+
+  """
+  @doc since: "0.49.0"
+
+  def convert!(color, conversion, options \\ []) do
+    case convert(color, conversion, options) do
+      {:ok, color} -> color
+      {:error, reason} -> raise Image.Error, reason
+    end
   end
 end

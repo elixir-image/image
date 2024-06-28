@@ -2,11 +2,15 @@
 
 ## Image 0.49.0
 
-This is the changelog for Image version 0.49.0 released on ____, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.49.0 released on June 28th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
-* Adds `Image.kmeans/2` to cluster image colors into a color palette. This function is only available if [scholar](https://hex.pm/packages/scholar) is configured. As for any [Nx](https://hex.pm/packages/nx) installation, performance is affected by configuration options. It is likely that setting the following in `config.exs` will be a good idea:
+* Updates `Image.dominant_color/2` to take an optional `:top_n` which indicates how many of the most dominant colors to return. The default is `1`. In addition, the implementation of `Image.dominant_color/2` has been simplified followed by advice at https://github.com/libvips/libvips/discussions/4016
+
+* Adds `Image.delta_e/3` to calculate a difference between two colors using one of the CIE color difference algorithms.
+
+* Adds `Image.k_means/2` to cluster image colors into a color palette. This function is only available if [scholar](https://hex.pm/packages/scholar) is configured. As for any [Nx](https://hex.pm/packages/nx) installation, performance is affected by configuration options. It is likely that setting the following in `config.exs` will be a good idea:
 
 ```eliir
 config :nx,
@@ -15,6 +19,10 @@ config :nx,
 config :nx, :default_defn_options,
   compiler: EXLA
 ```
+
+* Adds `Image.Color.sort/2` to sort colors perceptually.
+
+* Adds `Image.Color.convert/3` to convert a color from one color space to another. Currently only supports `srgb_to_hsv`.
 
 ## Image 0.48.1
 

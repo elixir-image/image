@@ -41,6 +41,6 @@ defmodule ForDialyzer do
 
   def kmeans do
     small_kip = Image.open!("./test/support/images/Kip_small.jpg")
-    _ = Image.kmeans(small_kip)
+    _ = Image.k_means(small_kip)
   end
 end

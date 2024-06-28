@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.48.1"
+  @version "0.49.0"
   @app_name "image"
 
   def project do
@@ -179,8 +179,10 @@ defmodule Image.MixProject do
       Transforms: &(&1[:subject] == "Generator"),
       "Split & Join": &(&1[:subject] == "Split and join"),
       Color: &(&1[:subject] == "Color"),
-      Information: &(&1[:subject] == "Image info"),
+      Introspection: &(&1[:subject] == "Image info"),
       Histogram: &(&1[:subject] == "Histogram"),
+      Clusters: &(&1[:subject] == "Clusters"),
+      "Color Difference": &(&1[:subject] == "Color Difference"),
       Masks: &(&1[:subject] == "Mask"),
       Metadata: &(&1[:subject] == "Metadata"),
       "Nx & Evision": &(&1[:subject] == "Matrix"),
