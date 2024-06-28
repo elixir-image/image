@@ -7,7 +7,7 @@ Mix.install([
   {:scholar, "~> 0.3"},
   {:exla, "~> 0.7"},
   {:kino, "~> 0.13"},
-  {:image, "~> 0.50"}
+  {:image, "~> 0.51"}
 ],
  config: [
     nx: [
@@ -49,8 +49,7 @@ Dominant colors are those colors that appear with the highest frequency in an im
 ```elixir
 image
 |> Image.Histogram.as_image!()
-|> Image.to_nx!()
-|> Kino.Image.new()
+|> Image.to_kino()
 
 ```
 
@@ -68,8 +67,7 @@ OK, great, but thats not a very friendly way to visualize the colors. Lets do so
 dominant_colors
 |> Enum.map(fn color -> 
   Image.new!(50, 50, color: color) 
-  |> Image.to_nx!() 
-  |> Kino.Image.new() 
+  |> Image.to_kino()
 end)
 |> Kino.Layout.grid(columns: 10)
 ```
@@ -84,8 +82,7 @@ sorted_dominant_colors = Image.Color.sort(dominant_colors)
 sorted_dominant_colors  
 |> Enum.map(fn color -> 
   Image.new!(50, 50, color: color) 
-  |> Image.to_nx!() 
-  |> Kino.Image.new() 
+  |> Image.to_kino()
 end)
 |> Kino.Layout.grid(columns: 10)
 ```
@@ -138,8 +135,7 @@ k_means
 |> Image.Color.sort()
 |> Enum.map(fn color -> 
   Image.new!(50, 50, color: color) 
-  |> Image.to_nx!() 
-  |> Kino.Image.new() 
+  |> Image.to_kino()
 end)
 |> Kino.Layout.grid(columns: 10)
 ```
@@ -161,11 +157,8 @@ In this example we'll see what the base image looks like using 2, 4, 8, 16, 32 a
 ```elixir
 Enum.map([2, 4, 8, 16, 32, 64], fn colors ->
   small_image
-  |> Image.reduce_colors(colors: colors)
-  |> elem(1)
-  |> Image.cast!(:u8)
-  |> Image.to_nx!()
-  |> Kino.Image.new()
+  |> Image.reduce_colors!(colors: colors)
+  |> Image.to_kino()
 end)
 |> Kino.Layout.grid(columns: 3)
 
