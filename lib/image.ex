@@ -9323,7 +9323,7 @@ defmodule Image do
           y_a / y_b
         )
 
-      Vix.Vips.Operation.bandjoin!([x, y])
+      Operation.bandjoin!([x, y])
     end
 
     # TODO Needs to respect the image type when doing the
@@ -9332,14 +9332,14 @@ defmodule Image do
 
     if Code.ensure_loaded?(Evision) do
       @doc """
-      Converts an `Image` image to an [Evision]() image.
+      Converts an `Image` image to an `t:Evision.Mat.t/0` image.
 
       Note that only images with 3 bands can be transferred
       to `eVision`.
 
       ### Arguments
 
-      * `image` is any `t:Vimage.t/0`
+      * `image` is any `t:Vimage.t/0`.
 
       * `convert_to_bgr` is a boolean indicating if the
         color order should be converted from `RGB` to `BGR`
@@ -9349,6 +9349,8 @@ defmodule Image do
       ### Returns
 
       * `{:ok, evision_image}`
+
+      * `{:error, reason}`
 
       ### Notes
 
@@ -9380,11 +9382,11 @@ defmodule Image do
       end
 
       @doc """
-      Converts to an `Image` image from an `Evision.Mat` image.
+      Converts to an `Image` image from an `t:Evision.Mat.t/0` image.
 
       ### Arguments
 
-      * `evision_image` is any `Evision.Mat` image.
+      * `evision_image` is any `t:Evision.Mat.t/0` image.
 
       ### Returns
 
