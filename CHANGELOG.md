@@ -12,7 +12,7 @@ This is the changelog for Image version 0.49.0 released on June 28th, 2024.  For
 
 * Adds `Image.k_means/2` to cluster image colors into a color palette. This function is only available if [scholar](https://hex.pm/packages/scholar) is configured. As for any [Nx](https://hex.pm/packages/nx) installation, performance is affected by configuration options. It is likely that setting the following in `config.exs` will be a good idea:
 
-```eliir
+```elixir
 config :nx,
   default_backend: EXLA.Backend
 
