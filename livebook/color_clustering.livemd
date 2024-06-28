@@ -1,0 +1,174 @@
+# Color Clustering and Dominant Colors
+
+```elixir
+Mix.install([
+  {:nx, "~> 0.7"},
+  {:nx_image, "~> 0.1"},
+  {:scholar, "~> 0.3"},
+  {:exla, "~> 0.7"},
+  {:kino, "~> 0.13"},
+  {:image, "~> 0.50"}
+],
+ config: [
+    nx: [
+      default_backend: EXLA.Backend,
+      default_defn_options: [compiler: EXLA]
+    ]
+  ]
+)
+
+previous_inspect = Inspect.Opts.default_inspect_fun()
+
+Inspect.Opts.default_inspect_fun(fn term, opts ->
+  previous_inspect.(term, %Inspect.Opts{opts | charlists: :as_lists})
+end)
+```
+
+## Choose an image
+
+```elixir
+image_input = Kino.Input.image("An image to be uploaded")
+```
+
+`Image.from_kino/1` knows how to take a kino input and open it. We'll resize the image since the k-means algorithm is slow if there isn't a GPU available for Nx (which underpins `Scholar.Cluster.KMeans.fit/2`). The number of colors in the image isn't significantly reduce so the results will be good enough. `Image.shape/1` returns the width, height and number of bands (channels) in the image.
+
+```elixir
+{:ok, image} = 
+  image_input
+  |> Kino.Input.read()
+  |> Image.from_kino!()
+  |> Image.resize(0.5)
+
+Image.shape(image)
+```
+
+## Dominant Colors
+
+Dominant colors are those colors that appear with the highest frequency in an image. The distribution of color in an image can be seen with an [image histogram](https://en.wikipedia.org/wiki/Image_histogram#:~:text=An%20image%20histogram%20is%20a,tonal%20distribution%20at%20a%20glance.). We can use `Image.Histogram.as_image/1` to see that distribution in an image.
+
+```elixir
+image
+|> Image.Histogram.as_image!()
+|> Image.to_nx!()
+|> Kino.Image.new()
+
+```
+
+The histogram image shows the distribution of the three color primaries that consituents of an [sRGB](https://en.wikipedia.org/wiki/SRGB#:~:text=sRGB%20is%20a%20standard%20RGB,and%20the%20World%20Wide%20Web.) image and a white line that shows the luminance distribution.
+
+Now lets get the 32 most dominant colors in the image. Dominant colors is simply those colors that appear most often in the image.
+
+```elixir
+dominant_colors = Image.dominant_color!(image, top_n: 32)
+```
+
+OK, great, but thats not a very friendly way to visualize the colors. Lets do something about that.
+
+```elixir
+dominant_colors
+|> Enum.map(fn color -> 
+  Image.new!(50, 50, color: color) 
+  |> Image.to_nx!() 
+  |> Kino.Image.new() 
+end)
+|> Kino.Layout.grid(columns: 10)
+```
+
+## Color Sorting
+
+Well now we can see the dominant colors, in descending frequency order. Can we see the colors in sorted order? Yes, thats possible. But what does sorting colors even mean? In `Image.Color.sort/2` we use the approach documented [here](https://www.alanzucconi.com/2015/09/30/colour-sorting/). Colors are converted to a weighted [[hue](https://en.wikipedia.org/wiki/Hue), [luminance](https://en.wikipedia.org/wiki/Luminance), value] color space which is one way to perceptually sort colors.
+
+```elixir
+sorted_dominant_colors = Image.Color.sort(dominant_colors)
+
+sorted_dominant_colors  
+|> Enum.map(fn color -> 
+  Image.new!(50, 50, color: color) 
+  |> Image.to_nx!() 
+  |> Kino.Image.new() 
+end)
+|> Kino.Layout.grid(columns: 10)
+```
+
+## Color Difference
+
+Depending on your image, its quite likely the most dominant colors are probably quite similar. In many cases they may well look the same.  Can we describe how close the colors are to each other?
+
+Yes, we can! The approach to [color difference](https://en.wikipedia.org/wiki/Color_difference) is called [ΔE*](https://en.wikipedia.org/wiki/Color_difference#CIELAB_ΔE*), commonly referred to as Delta E. In `Image` the function is `Image.delta_e/2`.
+
+Lets take the colors in sorted order and see the distance (color difference) between adjacent colors.
+
+```elixir
+defmodule ColorDiff do
+  def difference([c1, c2 | rest]), do: [elem(Image.delta_e(c1, c2), 1) | difference([c2 | rest])]
+  def difference([_c1]), do: []
+end
+
+ColorDiff.difference(sorted_dominant_colors)
+```
+
+Depending on the image, some of the differences are likely to be quite small. In fact its quite possible the differences are below the [just noticeable difference (JND)](https://en.wikipedia.org/wiki/Just-noticeable_difference) threshold. Any number below 3 means the two colors are probably indistinguishable to the human eye.
+
+## Color Clustering (K-Means)
+
+While dominant colors are interesting, they don't fully represent the range of colors in an image. In order to do that we need some means of describing a color palette. To do that we use the [K Means](https://stanford.edu/~cpiech/cs221/handouts/kmeans.html#:~:text=K%2DMeans%20is%20one%20of,centroid%20than%20any%20other%20centroid.) clustering algorithm which is implemented in the [scholar](https://hex.pm/packages/scholar) library. When `scholar` is configured, the `Image.k_means/2` function is made available.
+
+Since `scholar` depends on `nx` we know that performance is proportional to image size - and more particularly on whether a GPU is available and supported.
+
+For this section its recommended the image size be under 1_000_000 pixels or even smaller in order to provide reasonable performance without a GPU.
+
+```elixir
+# Reduce the size of the image to a maximum number of 100_000 pixels
+max_pixels = 100_000
+{width, height, _bands} = Image.shape(image)
+pixels = width * height
+small_image = if pixels <= max_pixels, do: image, else: Image.resize!(image, max_pixels / pixels)
+```
+
+Now let call the K-means function to return the clusters into which all the colors of the image are assigned. We can set the number of clusters with the `:num_clusters` option which defaults to `16`.
+
+```elixir
+k_means = Image.k_means!(small_image, num_clusters: 32)
+```
+
+As with our dominant colors example, lets take a look at the centroids as color swatches.
+
+```elixir
+k_means
+|> Image.Color.sort()
+|> Enum.map(fn color -> 
+  Image.new!(50, 50, color: color) 
+  |> Image.to_nx!() 
+  |> Kino.Image.new() 
+end)
+|> Kino.Layout.grid(columns: 10)
+```
+
+We can see that this set of colors covers the full range of colors in the image, not just the dominant colors. Let's see how different these colors are from each other. We should expect a much wider color difference between adjacent colors.
+
+```elixir
+k_means
+|> Image.Color.sort()
+|> ColorDiff.difference()
+```
+
+## Color Reduction
+
+You might be wondering at this point, what would the image look like if it only used the colors returned from `Image.k_means/2`. Well we can do that too by using the `Image.reduce_colors/2` function. This function using `Image.k_means/2` under the hood, then replaces each pixel in the image with the cluster color that is closest to it.
+
+In this example we'll see what the base image looks like using 2, 4, 8, 16, 32 and 64 colors.
+
+```elixir
+Enum.map([2, 4, 8, 16, 32, 64], fn colors ->
+  small_image
+  |> Image.reduce_colors(colors: colors)
+  |> elem(1)
+  |> Image.cast!(:u8)
+  |> Image.to_nx!()
+  |> Kino.Image.new()
+end)
+|> Kino.Layout.grid(columns: 3)
+
+```
+
+Depending on the image, you may well find that the perceived difference of the last 2 or 3 images is quite small. That is why one of the techniques used by different image formats to reduce file sizes is to reduce the number of bits used to represent colors. They may not use K-means but they do color clustering to derive a reduced color palette.

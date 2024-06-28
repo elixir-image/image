@@ -1,5 +1,17 @@
 # Changelog
 
+## Image 0.51.0
+
+This is the changelog for Image version 0.51.0 released on June 29th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds Image.to_kino/1 to convert an image to a Kino image struct. Only available if [Kino](https://hex.pm/packages/kino) is configured.
+
+* Adds `Image.delta_e!/2`
+
+* Adds `Image.reduce_colors!/2`
+
 ## Image 0.50.0
 
 This is the changelog for Image version 0.50.0 released on June 28th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

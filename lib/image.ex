@@ -6900,7 +6900,7 @@ defmodule Image do
       iex> Image.delta_e(:green, :misty_rose)
       {:ok, 53}
 
-      iex> Image.delta_e :green, :misty_rose, :de76
+      iex> Image.delta_e(:green, :misty_rose, :de76)
       {:ok, 89}
 
   """
@@ -6934,6 +6934,65 @@ defmodule Image do
         |> hd
 
       {:ok, delta_e}
+    end
+  end
+
+  @doc """
+  Returns the [color difference](https://en.wikipedia.org/wiki/Color_difference)
+  between two colors calculated using the
+  [CIE](https://cie.co.at) [ΔE*](https://en.wikipedia.org/wiki/Color_difference#CIELAB_ΔE*)
+  algorithms or raises an exception.
+
+  The available difference algorithms are:
+
+  * [CIDE2000](https://en.wikipedia.org/wiki/Color_difference#CIEDE2000)
+  * [CIE CMC](https://en.wikipedia.org/wiki/Color_difference#CMC_l:c_(1984))
+  * [CIE 1976](https://en.wikipedia.org/wiki/Color_difference#CIE76)
+
+  ### Arguments
+
+  * `color_1` which can be specified as a single integer
+    or a list of integers representing the color.
+    The color can also be supplied as a CSS color name as a
+    string or atom. For example: `:misty_rose`. Lastly, the
+    color can be supplied as a hex string like `#ffe4e1`. See
+    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+
+  * `color_2` which is specified in the same manner as `color_1`.
+
+  * `version` is one of `:de00` (the default), `:decmc` or `:de76`.
+
+  ### Returns
+
+  * `{:ok, int_distance}` where `int_distance` is `0`
+    when the colors are identical and `100` when they are completely
+    different.
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> Image.delta_e!([0,0,0], [0,0,0])
+      0
+
+      iex> Image.delta_e!([0,0,0], [255,255,255])
+      100
+
+      iex> Image.delta_e!([0,0,0], :misty_rose)
+      90
+
+      iex> Image.delta_e!(:green, :misty_rose)
+      53
+
+      iex> Image.delta_e!(:green, :misty_rose, :de76)
+      89
+
+  """
+  @doc subject: "Color Difference", since: "0.51.0"
+  def delta_e!(color_1, color_2, version \\ @default_delta_e_version) do
+    case delta_e(color_1, color_2, version) do
+      {:ok, delta_e} -> delta_e
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -7206,7 +7265,8 @@ defmodule Image do
           |> Keyword.put(:num_clusters, kmeans_num_clusters)
           |> Keyword.delete(:colors)
 
-        {height, width, bands} = Image.shape(image)
+        {height, width, bands} =
+          Image.shape(image)
 
         nx_reshaped =
           image
@@ -7214,8 +7274,7 @@ defmodule Image do
           |> Nx.reshape({height * width, bands})
 
         model =
-          nx_reshaped
-          |> Scholar.Cluster.KMeans.fit(options)
+          Scholar.Cluster.KMeans.fit(nx_reshaped, options)
 
         indicies =
           Nx.as_type(model.labels, :u8)
@@ -7224,6 +7283,53 @@ defmodule Image do
         |> Nx.take(indicies)
         |> Nx.reshape({height, width, bands})
         |> Image.from_nx()
+      end
+    end
+
+    @doc """
+    Reduces the number of colors in an image or
+    raises an exception.
+
+    Takes the `k_means/2` of the image and then
+    re-colors the image using the returned cluster
+    colors.
+
+    ### Arguments
+
+    * `image` is any `t:Vix.Vips.Image.t/0`.
+
+    * `options` is a keyword list of options.
+
+    ### Options
+
+    * `:colors` is the number of distinct colors to be
+      used in the returned image. The default is `#{@default_clusters}`.
+
+    * See also `Scholar.Cluster.KMeans.fit/2` for the
+      available options.
+
+    ### Note
+
+    * Note the performance considerations described in
+      `Image.k_means/2` since they also apply to this function.
+
+    * If the intent is to reduce colors in order to
+      reduce the size of an image file it is strongly advised to
+      use the appropriate arguments when calling `Image.write/2`.
+
+    ### Returns
+
+    * `reduced_colors_image` or
+
+    * raises an exception.
+
+    """
+    @doc subject: "Clusters", since: "0.51.0"
+
+    def reduce_colors!(%Vimage{} = image, options \\ []) do
+      case reduce_colors(image, options) do
+        {:ok, image} -> image
+        {:error, reason} -> raise Image.Error, reason
       end
     end
   end
@@ -9315,6 +9421,38 @@ defmodule Image do
             shape ->
               shape_error(shape)
           end
+        end
+      end
+    end
+
+    if Code.ensure_loaded?(Kino) do
+      @doc """
+      Transfers an image to Kino for display
+      in a livebook.
+
+      ### Arguments
+
+      * `image` is any `t:Vimage.t/0`.
+
+      ### Returns
+
+      * a `Kino.Image.t/0`
+
+      ### Example
+
+          iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+          iex> %Kino.Image{} = Image.to_kino(image)
+          iex> match?(%Kino.Image{}, Image.to_kino(image))
+          true
+
+      """
+      @doc subject: "Kino", since: "0.51.0"
+
+      def to_kino(%Vimage{} = image) do
+        with {:ok, srgb_image} <- Image.to_colorspace(image, :srgb),
+             {:ok, u8_image} <- Image.cast(srgb_image, :u8),
+             {:ok, nx_image} <- Image.to_nx(u8_image) do
+          Kino.Image.new(nx_image)
         end
       end
     end
