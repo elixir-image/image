@@ -6755,8 +6755,12 @@ defmodule Image do
     {:ok, histogram} =
       Operation.hist_find_ndim(flatten!(image), bins: bins)
 
+    IO.inspect Image.shape(histogram), label: "Histogram shape"
+
     {:ok, unfolded} =
       Operation.bandunfold(histogram)
+
+    IO.inspect Image.shape(unfolded), label: "Unfolded shape"
 
     [black | remaining_pixels] =
       Operation.getpoint!(unfolded, 0, 0)
