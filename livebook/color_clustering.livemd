@@ -30,7 +30,7 @@ end)
 image_input = Kino.Input.image("An image to be uploaded")
 ```
 
-`Image.from_kino/1` knows how to take a kino input and open it. We'll resize the image since the k-means algorithm is slow if there isn't a GPU available for Nx (which underpins `Scholar.Cluster.KMeans.fit/2`). The number of colors in the image isn't significantly reduce so the results will be good enough. `Image.shape/1` returns the width, height and number of bands (channels) in the image.
+`Image.from_kino/1` knows how to take a kino input and open it. We'll resize the image since the k-means algorithm is slow if there isn't a GPU available for Nx (which underpins `Scholar.Cluster.KMeans.fit/2`). The number of colors in the image isn't significantly reduced so the results will be good enough. `Image.shape/1` returns the width, height and number of bands (channels) in the image.
 
 ```elixir
 {:ok, image} = 
