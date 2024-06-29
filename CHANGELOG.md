@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.51.1
+
+This is the changelog for Image version 0.51.1 released on ______, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix `Image.delta_e/2` to return a float (not an integer)
+
 ## Image 0.51.0
 
 This is the changelog for Image version 0.51.0 released on June 29th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

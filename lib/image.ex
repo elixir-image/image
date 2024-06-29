@@ -6889,19 +6889,19 @@ defmodule Image do
   ### Examples
 
       iex> Image.delta_e([0,0,0], [0,0,0])
-      {:ok, 0}
+      {:ok, 0.0}
 
       iex> Image.delta_e([0,0,0], [255,255,255])
-      {:ok, 100}
+      {:ok, 100.0}
 
       iex> Image.delta_e([0,0,0], :misty_rose)
-      {:ok, 90}
+      {:ok, 90.15503692626953}
 
       iex> Image.delta_e(:green, :misty_rose)
-      {:ok, 53}
+      {:ok, 52.937347412109375}
 
       iex> Image.delta_e(:green, :misty_rose, :de76)
-      {:ok, 89}
+      {:ok, 88.5516128540039}
 
   """
   @doc subject: "Color Difference", since: "0.49.0"
@@ -6930,7 +6930,7 @@ defmodule Image do
           :de76 -> Operation.de76!(color_1_image, color_2_image)
           :decmc -> Operation.decmc!(color_1_image, color_2_image)
         end
-        |> get_pixel!(0, 0)
+        |> Operation.getpoint!(0, 0)
         |> hd
 
       {:ok, delta_e}
@@ -6973,19 +6973,19 @@ defmodule Image do
   ### Examples
 
       iex> Image.delta_e!([0,0,0], [0,0,0])
-      0
+      0.0
 
       iex> Image.delta_e!([0,0,0], [255,255,255])
-      100
+      100.0
 
       iex> Image.delta_e!([0,0,0], :misty_rose)
-      90
+      90.15503692626953
 
       iex> Image.delta_e!(:green, :misty_rose)
-      53
+      52.937347412109375
 
       iex> Image.delta_e!(:green, :misty_rose, :de76)
-      89
+      88.5516128540039
 
   """
   @doc subject: "Color Difference", since: "0.51.0"
