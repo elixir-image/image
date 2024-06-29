@@ -104,7 +104,7 @@ end
 ColorDiff.difference(sorted_dominant_colors)
 ```
 
-Depending on the image, some of the differences are likely to be quite small. In fact its quite possible the differences are below the [just noticeable difference (JND)](https://en.wikipedia.org/wiki/Just-noticeable_difference) threshold. Any number below 3 means the two colors are probably indistinguishable to the human eye.
+Depending on the image, some of the differences are likely to be quite small. In fact it is quite possible the differences are below the [just noticeable difference (JND)](https://en.wikipedia.org/wiki/Just-noticeable_difference) threshold. Any number below 2.3 means the two colors are probably indistinguishable to the human eye.
 
 ## Color Clustering (K-Means)
 
