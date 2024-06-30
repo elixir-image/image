@@ -392,7 +392,7 @@ defmodule Image.Color do
   @default_repetitions 8
 
   @doc """
-  Converts an sRGB color to another color space.
+  Converts a color from one color space to another.
 
   ### Arguments
 
@@ -403,10 +403,9 @@ defmodule Image.Color do
     color can be supplied as a hex string like `"#ffe4e1"`. See
     `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
 
-  * `conversion` is the conversion to perform. The valid
-    conversions are:
+  * `from` is the colorspace from which `color` is converted.
 
-      * `:srgb_to_hsv`
+  * `to` is the colorspace into which the `color` is converted.
 
   * `options` is a keyword list of options.
 
@@ -422,24 +421,26 @@ defmodule Image.Color do
 
   ### Example
 
-      iex> Image.Color.convert(:misty_rose, :srgb_to_hsv)
+      iex> Image.Color.convert(:misty_rose, :srgb, :hsv)
       {:ok, [4, 30, 255]}
 
-      iex> Image.Color.convert([255, 255, 255], :srgb_to_hsv)
-      {:ok, [0, 0, 255]}
+      iex> Image.Color.convert([255, 255, 255], :srgb, :lab)
+      {:ok, [100.0, 0.005245208740234375, -0.010609626770019531]}
 
   """
   @doc since: "0.49.0"
 
-  def convert(color, conversion, options \\ [])
+  def convert(color, from, to, options \\ [])
 
-  def convert(%Vimage{} = image, conversion, options) do
-    srgb = Image.to_colorspace!(image, :srgb)
-    color = Image.get_pixel!(srgb, 0, 0)
-    convert(color, conversion, options)
+  def convert([r, g, b], :srgb, :srgb, _options) do
+    {:ok, [round(r), round(g), round(b)]}
   end
 
-  def convert(color, :srgb_to_hsv, _options) do
+  def convert(color, from, from, _options) do
+    {:ok, color}
+  end
+
+  def convert(color, :srgb, :hsv, _options) do
     with {:ok, color} <- validate_color(color) do
       Image.new!(1, 1, color: color)
       |> Operation.srgb2hsv!()
@@ -447,9 +448,28 @@ defmodule Image.Color do
     end
   end
 
-  def convert(color, :srgb_to_hlv, options) do
+  def convert(color, :lab, :srgb, _options) do
+    with {:ok, color} <- validate_color(color) do
+      Image.new!(1, 1, color: color)
+      |> Operation.lab2labq!()
+      |> Operation.labq2srgb!()
+      |> Image.get_pixel(0, 0)
+    end
+  end
+
+  def convert(color, :srgb, :lab, _options) do
+    with {:ok, color} <- validate_color(color) do
+      Image.new!(1, 1, color: color)
+      |> Operation.srgb2scrgb!()
+      |> Operation.scrgb2xyz!()
+      |> Operation.xyz2lab!()
+      |> Operation.getpoint(0, 0)
+    end
+  end
+
+  def convert(color, :srgb, :hlv, options) do
     with {:ok, [r, g, b]} <- validate_color(color),
-         {:ok, [h, _s, v]} = convert(color, :srgb_to_hsv) do
+         {:ok, [h, _s, v]} = convert(color, :srgb, :hsv, options) do
       repetitions = Keyword.get(options, :repetitions, @default_repetitions)
       lum = :math.sqrt(0.241 * r + 0.691 * g + 0.068 * b)
 
@@ -461,8 +481,15 @@ defmodule Image.Color do
     end
   end
 
+  @doc false
+  def convert(%Vimage{} = image, to) do
+    from = Image.colorspace(image)
+    color = Image.get_pixel!(image, 0, 0)
+    convert(color, from, to)
+  end
+
   @doc """
-  Converts an sRGB color to another color space or
+  Converts an color from one color space to another or
   raises an exception.
 
   ### Arguments
@@ -473,10 +500,9 @@ defmodule Image.Color do
     string or atom. For example: `:misty_rose`. See
     `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
 
-  * `conversion` is the conversion to perform. The valid
-    conversions are:
+  * `from` is the colorspace from which `color` is converted.
 
-      * `:srgb_to_hsv`
+  * `to` is the colorspace into which the `color` is converted.
 
   * `options` is a keyword list of options.
 
@@ -492,17 +518,17 @@ defmodule Image.Color do
 
   ### Example
 
-      iex> Image.Color.convert!(:misty_rose, :srgb_to_hsv)
+      iex> Image.Color.convert!(:misty_rose, :srgb, :hsv)
       [4, 30, 255]
 
-      iex> Image.Color.convert!([255, 255, 255], :srgb_to_hsv)
-      [0, 0, 255]
+      iex> Image.Color.convert!([255, 255, 255], :srgb, :lab)
+      [100.0, 0.005245208740234375, -0.010609626770019531]
 
   """
   @doc since: "0.49.0"
 
-  def convert!(color, conversion, options \\ []) do
-    case convert(color, conversion, options) do
+  def convert!(color, from, to, options \\ []) do
+    case convert(color, from, to, options) do
       {:ok, color} -> color
       {:error, reason} -> raise Image.Error, reason
     end

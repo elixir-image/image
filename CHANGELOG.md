@@ -8,6 +8,8 @@ This is the changelog for Image version 0.51.1 released on ______, 2024.  For ol
 
 * Fix `Image.delta_e/2` to return a float (not an integer)
 
+* Fix `Image.k_means/2` to work with images in color spaces other than sRGB.
+
 ## Image 0.51.0
 
 This is the changelog for Image version 0.51.0 released on June 29th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

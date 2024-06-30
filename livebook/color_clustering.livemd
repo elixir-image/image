@@ -53,7 +53,7 @@ image
 
 ```
 
-The histogram image shows the distribution of the three color primaries that consituents of an [sRGB](https://en.wikipedia.org/wiki/SRGB#:~:text=sRGB%20is%20a%20standard%20RGB,and%20the%20World%20Wide%20Web.) image and a white line that shows the luminance distribution.
+The histogram image shows the distribution of the three color primaries that are the consituents of an [sRGB](https://en.wikipedia.org/wiki/SRGB#:~:text=sRGB%20is%20a%20standard%20RGB,and%20the%20World%20Wide%20Web.) image and a white line that shows the luminance distribution.
 
 Now lets get the 32 most dominant colors in the image. Dominant colors is simply those colors that appear most often in the image.
 
@@ -150,7 +150,7 @@ k_means
 
 ## Color Reduction
 
-You might be wondering at this point, what would the image look like if it only used the colors returned from `Image.k_means/2`. Well we can do that too by using the `Image.reduce_colors/2` function. This function using `Image.k_means/2` under the hood, then replaces each pixel in the image with the cluster color that is closest to it.
+You might be wondering at this point, what would the image look like if it only used the colors returned from `Image.k_means/2`. Well we can do that too by using the `Image.reduce_colors/2` function. This function calls `Image.k_means/2` under the hood, then replaces each pixel in the image with the cluster color that is closest to it.
 
 In this example we'll see what the base image looks like using 2, 4, 8, 16, 32 and 64 colors.
 

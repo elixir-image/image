@@ -7010,8 +7010,8 @@ defmodule Image do
     @default_clusters 16
 
     @doc """
-    Applies the [K-means](https://en.wikipedia.org/wiki/K-means_clustering) clustering
-    algorithm to an image using the [scholar](https://hex.pm/packages/scholar)
+    Applies [K-means](https://en.wikipedia.org/wiki/K-means_clustering) clustering
+    to an image using the [scholar](https://hex.pm/packages/scholar)
     library. The returned result is a list of colors resulting from
     partioning the colors in an image.
 
@@ -7037,10 +7037,10 @@ defmodule Image do
 
     ### Notes
 
-    * The current implementation is targetted towards
-      sRGB images Results for images in other colorspaces
-      is undefined. It is planned this limitation be
-      removed in a future release.
+    * The current implementation is performed in the
+      sRGB colorspace. This may not produce the most
+      perceptually appropriate clusters. This limitation
+      will be removed in a future release.
 
     * The option `:num_clusters` determines the
       number of clusters into which image colors are
@@ -7071,28 +7071,28 @@ defmodule Image do
 
     ### Example
 
-        image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
-        Image.k_means(image)
+        iex> key = Nx.Random.key(40)
+        iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+        iex> Image.k_means(image, key: key)
         {:ok,
-          [
-            [31, 77, 104],
-            [37, 39, 38],
-            [38, 123, 160],
-            [41, 188, 57],
-            [94, 82, 84],
-            [107, 109, 138],
-            [109, 68, 29],
-            [110, 156, 185],
-            [154, 120, 99],
-            [167, 150, 155],
-            [176, 112, 39],
-            [178, 189, 205],
-            [217, 130, 131],
-            [223, 163, 79],
-            [229, 224, 221],
-            [230, 195, 151]
-          ]
-        }
+         [
+           [32, 37, 39],
+           [34, 76, 101],
+           [41, 121, 158],
+           [42, 189, 58],
+           [93, 61, 32],
+           [99, 87, 90],
+           [112, 156, 184],
+           [115, 112, 140],
+           [157, 100, 37],
+           [166, 125, 103],
+           [175, 191, 206],
+           [178, 148, 158],
+           [217, 145, 60],
+           [228, 170, 116],
+           [228, 226, 226],
+           [231, 200, 167]
+         ]}
 
     """
     @doc subject: "Clusters", since: "0.49.0"
@@ -7100,29 +7100,26 @@ defmodule Image do
     @spec k_means(image :: Vimage.t(), options :: Keyword.t()) ::
       {:ok, list(Color.t())} | {:error, error_message()}
 
-    def k_means(%Vimage{} = image, options \\ [num_clusters: @default_clusters]) do
-      with {:ok, rgb_image} <- Image.to_colorspace(image, :srgb) do
+    def k_means(%Vimage{} = image, options \\ []) do
+      options = Keyword.put_new(options, :num_clusters, @default_clusters)
+      original_colorspace = Image.colorspace(image)
+
+      with {:ok, lab_image} <- Image.to_colorspace(image, :srgb) do
         k_means =
-          rgb_image
+          lab_image
           |> Image.Scholar.k_means(options)
           |> Map.fetch!(:clusters)
           |> Nx.to_list()
           |> Enum.sort()
-          |> Enum.map(fn
-            [r, g, b] ->
-              [round(r), round(g), round(b)]
-
-            [r, g, b, a] ->
-              [round(r), round(g), round(b), round(a)]
-          end)
+          |> Enum.map(&Color.convert!(&1, :srgb, original_colorspace))
 
         {:ok, k_means}
       end
     end
 
     @doc """
-    Applies the [K-means](https://en.wikipedia.org/wiki/K-means_clustering) clustering
-    algorithm to an image using the [scholar](https://hex.pm/packages/scholar)
+    Applies [K-means](https://en.wikipedia.org/wiki/K-means_clustering) clustering
+    to an image using the [scholar](https://hex.pm/packages/scholar)
     library. The returned result is a list of colors resulting from
     partioning the colors in an image.
 
@@ -7182,25 +7179,26 @@ defmodule Image do
 
     ### Example
 
-        image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
-        Image.k_means!(image)
+        iex> key = Nx.Random.key(40)
+        iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+        iex> Image.k_means!(image, key: key)
         [
-          [31, 77, 104],
-          [37, 39, 38],
-          [38, 123, 160],
-          [41, 188, 57],
-          [94, 82, 84],
-          [107, 109, 138],
-          [109, 68, 29],
-          [110, 156, 185],
-          [154, 120, 99],
-          [167, 150, 155],
-          [176, 112, 39],
-          [178, 189, 205],
-          [217, 130, 131],
-          [223, 163, 79],
-          [229, 224, 221],
-          [230, 195, 151]
+          [32, 37, 39],
+          [34, 76, 101],
+          [41, 121, 158],
+          [42, 189, 58],
+          [93, 61, 32],
+          [99, 87, 90],
+          [112, 156, 184],
+          [115, 112, 140],
+          [157, 100, 37],
+          [166, 125, 103],
+          [175, 191, 206],
+          [178, 148, 158],
+          [217, 145, 60],
+          [228, 170, 116],
+          [228, 226, 226],
+          [231, 200, 167]
         ]
 
     """
@@ -7209,7 +7207,7 @@ defmodule Image do
     @spec k_means!(image :: Vimage.t(), options :: Keyword.t()) ::
       list(Color.t()) | no_return()
 
-    def k_means!(%Vimage{} = image, options \\ [num_clusters: @default_clusters]) do
+    def k_means!(%Vimage{} = image, options \\ []) do
       case k_means(image, options) do
         {:ok, k_means} -> k_means
         {:error, reason} -> raise Image.Error, reason
