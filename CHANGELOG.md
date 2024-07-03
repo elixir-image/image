@@ -4,7 +4,6 @@
 
 This is the changelog for Image version 0.52.0 released on July 3rd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
-
 ### Enhancements
 
 * Adds `:background_color` option to `Image.flatten/2`.
