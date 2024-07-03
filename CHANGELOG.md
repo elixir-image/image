@@ -1,8 +1,15 @@
 # Changelog
 
-## Image 0.51.1
+## Image 0.52.0
 
-This is the changelog for Image version 0.51.1 released on ______, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.52.0 released on July 3rd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+
+### Enhancements
+
+* Adds `:background_color` option to `Image.flatten/2`.
+
+* Add `Image.Nx` to host some `Nx` convenience functions.
 
 ### Bug Fixes
 

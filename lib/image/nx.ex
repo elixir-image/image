@@ -57,7 +57,7 @@ defmodule Image.Nx do
 
   """
   def nonzero(tensor) do
-    mask = select(tensor, tensor([1]), tensor([0]))
+    mask = logical_or(tensor, tensor)
     masked_select(tensor, mask)
   end
 

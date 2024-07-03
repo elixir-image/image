@@ -5227,6 +5227,16 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:background_color` is an RGB color which is used
+    to fill the transparent parts of the image.. The color
+    can be an integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name. The default is `:black`.
+
   ### Returns
 
   * `{:ok, flattened_image}` or
@@ -5236,12 +5246,16 @@ defmodule Image do
   """
   @doc subject: "Operation", since: "0.23.0"
 
-  @spec flatten(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
-  def flatten(%Vimage{} = image) do
-    if has_alpha?(image) do
-      Vix.Vips.Operation.flatten(image)
-    else
-      {:ok, image}
+  @spec flatten(image :: Vimage.t(), options :: Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  def flatten(%Vimage{} = image, options \\ []) do
+    background_color = Keyword.get(options, :background_color, :black)
+
+    with {:ok, background_color} <- Color.validate_color(background_color) do
+      if has_alpha?(image) do
+        Vix.Vips.Operation.flatten(image, background: background_color)
+      else
+        {:ok, image}
+      end
     end
   end
 
@@ -5253,6 +5267,16 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:background_color` is an RGB color which is used
+    to fill the transparent parts of the image.. The color
+    can be an integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name. The default is `:black`.
+
   ### Returns
 
   * `flattened_image` or
@@ -5262,9 +5286,9 @@ defmodule Image do
   """
   @doc subject: "Operation", since: "0.23.0"
 
-  @spec flatten!(image :: Vimage.t()) :: Vimage.t() | no_return()
-  def flatten!(%Vimage{} = image) do
-    case flatten(image) do
+  @spec flatten!(image :: Vimage.t(), options :: Keyword.t()) :: Vimage.t() | no_return()
+  def flatten!(%Vimage{} = image, options \\ []) do
+    case flatten(image, options) do
       {:ok, flattened} -> flattened
       {:error, reason} -> raise Image.Error, reason
     end
