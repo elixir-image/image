@@ -19,6 +19,7 @@ The documentation can be found at [https://hexdocs.pm/image](https://hexdocs.pm/
 ```elixir
 def deps do
   [
+    # ...
     {:image, "~> 0.37"}
   ]
 end
@@ -49,57 +50,62 @@ You can choose this using `VIX_COMPILATION_MODE` environment variable. This vari
 
 `Nx` is required in order to support the functions in `Image.Classification`. It is also required to support [eVision](https://hex.pm/packages/evision) and [Bumblebee](https://hex.pm/packages/bumblebee) integrations.
 
-1. Add `Nx` to your `mix.exs`
-```elixir
-def deps do
-  [
-    ...
-    {:nx, "~> 0.4"},
-    ...
-  ]
-end
-```
+1. Add `Nx` to your `mix.exs`:
+
+    ```elixir
+    def deps do
+      [
+        # ...
+        {:nx, "~> 0.4"}
+      ]
+    end
+    ```
 
 2. Add a default `Nx` backend to `config.exs`.
-`Nx` supports a variety of backends that provide CPU and GPU acceleration. The CPU backend that provides the widest platform compatibility is `EXLA.Backend`.
-```elixir
-config :nx,
-  default_backend: EXLA.Backend
-```
 
-3. Update dependencies
-```elixir
-mix deps.get
-```
+    `Nx` supports a variety of backends that provide CPU and GPU acceleration. The CPU backend that provides the widest platform compatibility is `EXLA.Backend`.
+
+    ```elixir
+    config :nx, default_backend: EXLA.Backend
+    ```
+
+3. Get dependencies:
+
+    ```elixir
+    mix deps.get
+    ```
 
 ### Installing Bumblebee
 
 [Bumblebee](https://hex.pm/packages/bumblebee) provides pre-trained and transformer Neural Network models in Axon that can be used for a variety of image classification, segmentation and detection operations. When `Bumblebee` is configured, the functions in `Image.Classification` become available.
 
 1. Add `Bumblebee` and `exla` to your `mix.exs`.
-`exla` is required in order to provide CPU or GPU acceleration for the models so as to deliver acceptable performance. `Nx` will be installed as a transitory dependency.
-```elixir
-def deps do
-  [
-    ...
-    {:bumblebee, "~> 0.1"},
-    {:exla, "~> 0.4"},
-    ...
-  ]
-end
-```
+
+    `exla` is required in order to provide CPU or GPU acceleration for the models so as to deliver acceptable performance. `Nx` will be installed as a transitory dependency.
+
+    ```elixir
+    def deps do
+      [
+        # ...
+        {:bumblebee, "~> 0.1"},
+        {:exla, "~> 0.4"}
+      ]
+    end
+    ```
 
 2. Add a default Nx backend to `config.exs`.
-`Nx` supports a variety of backends that provide CPU and GPU acceleration. The CPU backend that provides the widest platform compatibility is `EXLA.Backend`.
-```elixir
-config :nx,
-  default_backend: EXLA.Backend
-```
 
-3. Update dependencies
-```elixir
-mix deps.get
-```
+    `Nx` supports a variety of backends that provide CPU and GPU acceleration. The CPU backend that provides the widest platform compatibility is `EXLA.Backend`.
+
+    ```elixir
+    config :nx, default_backend: EXLA.Backend
+    ```
+
+3. Get dependencies:
+
+    ```elixir
+    mix deps.get
+    ```
 
 ### Installing eVision
 
@@ -108,22 +114,23 @@ mix deps.get
 As of [Image version 0.9.0](https://hex,pm/packages/image/0.9.0), experimental support for [eVision (OpenCV)](https://github.com/cocoa-xu/evision) is provided. There is extensive documentation on how to install `eVision` and the required [OpenCV](https://opencv.org). However to most cases the following should be enough:
 
 1. Add `eVision` to your `mix.exs`. [exla](https://hex.pm/packages/exla) may be optionally configured too, see the `Nx` installation section above.
-```elixir
-def deps do
-  [
-    ...
-    {:evision, "~> 0.1"},
-    ...
-  ]
-end
-```
 
-2. Update dependencies
-```elixir
-mix deps.get
-```
+    ```elixir
+    def deps do
+      [
+        # ...
+        {:evision, "~> 0.1"}
+      ]
+    end
+    ```
 
-Then proceed as normal.  `eVision` will download a precompiled `OpenCV` for the appropriate system architecture and compile both the NIF and Elixir code.
+2. Get dependencies:
+
+    ```elixir
+    mix deps.get
+    ```
+
+Then proceed as normal. `eVision` will download a precompiled `OpenCV` for the appropriate system architecture and compile both the NIF and Elixir code.
 
 ## Configuring Libvips
 
