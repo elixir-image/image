@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.52.1
+
+This is the changelog for Image version 0.52.1 released on July 3rd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix including `Image.Nx` only if `Nx` is configured.  Closes #143.
+
 ## Image 0.52.0
 
 This is the changelog for Image version 0.52.0 released on July 3rd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
