@@ -180,6 +180,10 @@ unset VIPS_LEAK
 
 The default number of threads is equal to the number of cores detected on the running system. This may create CPU contention with other workloads given that image processing is CPU intensive.  Therefore it may be prudent to reduce the number of threads if overall system throughput is being affected.
 
+### Fontconfig Debug Output
+
+Text image generation uses fonts installed and managed by [fontconfig](https://www.freedesktop.org/wiki/Software/fontconfig/). Debug information output is controlled by the [FC_DEBUG](https://www.freedesktop.org/software/fontconfig/fontconfig-user.html) environment variable.
+
 ## Library packaging future
 
 In a future release, `:image` will be split into several packages
