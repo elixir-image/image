@@ -7737,6 +7737,11 @@ defmodule Image do
 
   * `{:error, reason}`.
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/cat.png")
+      iex> {:ok, _brighter_image} = Image.brightness(image, 1.5)
+
   """
   @doc since: "0.34.0"
   @doc subject: "Operation"
@@ -7772,6 +7777,11 @@ defmodule Image do
   * `adjusted_image` or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/cat.png")
+      iex> _brighter_image = Image.brightness!(image, 1.5)
 
   """
   @doc since: "0.34.0"
@@ -7810,9 +7820,15 @@ defmodule Image do
 
   * `{:error, reason}`.
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/cat.png")
+      iex> {:ok, _image_with_more_contrast} = Image.contrast(image, 1.2)
+
   """
 
-  # Implementation is based upon https://stackoverflow.com/questions/73601395/adjusting-contrast-in-vips-the-same-way-as-the-matching-css-filter
+  # Implementation is based upon
+  # https://stackoverflow.com/questions/73601395/adjusting-contrast-in-vips-the-same-way-as-the-matching-css-filter
 
   @doc since: "0.35.0"
   @doc subject: "Operation"
@@ -7860,6 +7876,11 @@ defmodule Image do
   * `adjusted_image` or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/cat.png")
+      iex> _image_with_more_contrast = Image.contrast!(image, 1.2)
 
   """
   @doc since: "0.35.0"

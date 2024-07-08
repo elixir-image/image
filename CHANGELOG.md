@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.52.2
+
+This is the changelog for Image version 0.52.2 released on July 9th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix the return from `Image.contrast/2`. Thanks to @RyoWakabayashi for the report and the PR. Closes #144.
+
 ## Image 0.52.1
 
 This is the changelog for Image version 0.52.1 released on July 3rd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
