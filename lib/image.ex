@@ -7825,7 +7825,7 @@ defmodule Image do
 
     without_alpha_band(image, fn image ->
       with_colorspace(image, :scrgb, fn scrgb ->
-        scrgb * contrast - (0.5 * contrast - 0.5)
+        {:ok, scrgb * contrast - (0.5 * contrast - 0.5)}
       end)
     end)
   end
