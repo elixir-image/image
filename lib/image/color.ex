@@ -386,7 +386,7 @@ defmodule Image.Color do
 
   @doc false
   def compare_colors(color_1, color_2, options) do
-    convert!(color_1, :srgb_to_hlv, options) < convert!(color_2, :srgb_to_hlv, options)
+    convert!(color_1, :srgb, :hlv, options) < convert!(color_2, :srgb, :hlv, options)
   end
 
   @default_repetitions 8

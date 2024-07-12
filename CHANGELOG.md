@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.52.3
+
+This is the changelog for Image version 0.52.3 released on July 13th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix `Image.Color.sort/2`. Thanks to @Solido for the report. Closes #145.
+
 ## Image 0.52.2
 
 This is the changelog for Image version 0.52.2 released on July 9th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
