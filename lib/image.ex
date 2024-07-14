@@ -10029,6 +10029,9 @@ defmodule Image do
   Split the image into a list of its component
   bands.
 
+  This can be considered the inverse of
+  `Image.join_bands/1`.
+
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
@@ -10044,6 +10047,64 @@ defmodule Image do
   @spec split_bands(Vimage.t()) :: [Vimage.t()]
   def split_bands(%Vimage{} = image) do
     for i <- 0..max_band_index(image), do: image[i]
+  end
+
+  @doc """
+  Joins a list of bands into a single image.
+
+  This can be considered the inverse of
+  `Image.split_bands/1`.
+
+  ### Arguments
+
+  * `image_list` is any list of `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, image}` where `image` is created by joining
+    `image_bands` together or
+
+  * `{:error, reason}`.
+
+  """
+  @doc subject: "Split and join", since: "0.53.0"
+
+  @spec join_bands(image_list :: [Vimage.t()]) ::
+    {:ok, Vimage.t()} | {:error, error_message()}
+
+  def join_bands(bands) when is_list(bands) do
+    Operation.bandjoin(bands)
+  end
+
+  @doc """
+  Joins a list of bands into a single image or
+  raises an exception.
+
+  This can be considered the inverse of
+  `Image.split_bands!/1`.
+
+  ### Arguments
+
+  * `image_list` is any list of `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * an image created by joining `image_bands`
+    together or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Split and join", since: "0.53.0"
+
+  @spec join_bands!(image_list :: [Vimage.t()]) ::
+    Vimage.t() | no_return()
+
+  def join_bands!(bands) when is_list(bands) do
+    case join_bands(bands) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
   end
 
   @doc """
