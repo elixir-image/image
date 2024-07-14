@@ -7,7 +7,7 @@ defmodule Image.Color.Conversion do
     |> Enum.map(&to_string/1)
 
   graph =
-    :digraph.new([:acyclic])
+    :digraph.new()
 
   edges =
     for fun <- functions, reduce: [] do
@@ -30,13 +30,22 @@ defmodule Image.Color.Conversion do
     end
     |> Enum.uniq()
 
-    vertices = :digraph.vertices(graph) |> IO.inspect(label: "Vertices")
+  vertices =
+    :digraph.vertices(graph)
 
-    for v1 <- vertices, v2 <- vertices do
-      case :digraph.get_path(graph, v1, v2) do
-        path when is_list(path) -> "From #{inspect v1} to #{inspect v2} -> #{inspect path}}"; {v1, v2, path}
-        false -> IO.puts "No path from #{inspect v1} to #{inspect v2}"
-      end
+  for v1 <- vertices, v2 <- vertices do
+    case :digraph.get_path(graph, v1, v2) do
+      path when is_list(path) ->
+        from = String.to_atom(v1)
+        to = String.to_atom(v2)
+        conversions = Image.Color.Conversion
+
+        def convert(_image, unquote(from), unquote(to), _options) do
+
+        end
+
+      false ->
+        []
     end
-
+    end
 end
