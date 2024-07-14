@@ -23,7 +23,6 @@ This is the changelog for Image version 0.52.2 released on July 9th, 2024.  For 
 ### Bug Fixes
 
 * Fix the return from `Image.contrast/2`. Thanks to @RyoWakabayashi for the report and the PR. Closes #144.
->>>>>>> 3b65c6a6981ec73b69907e6e6e2ea776be91ef1b
 
 ## Image 0.52.1
 
