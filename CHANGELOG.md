@@ -8,6 +8,23 @@ This is the changelog for Image version 0.53.0 released on July 14th, 2024.  For
 
 * Adds `Image.join_bands/1` and `Image.join_bands!/1`. Thanks to @Solido for the suggestion. Closes #146.
 
+## Image 0.52.3
+
+This is the changelog for Image version 0.52.3 released on July 13th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix `Image.Color.sort/2`. Thanks to @Solido for the report. Closes #145.
+
+## Image 0.52.2
+
+This is the changelog for Image version 0.52.2 released on July 9th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix the return from `Image.contrast/2`. Thanks to @RyoWakabayashi for the report and the PR. Closes #144.
+>>>>>>> 3b65c6a6981ec73b69907e6e6e2ea776be91ef1b
+
 ## Image 0.52.1
 
 This is the changelog for Image version 0.52.1 released on July 3rd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
