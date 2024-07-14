@@ -1,33 +1,43 @@
 defmodule Image.Draw.Test do
   use ExUnit.Case, async: true
-  alias Vix.Vips.Image, as: Vimage
   import Image.TestSupport
 
-  test "drawing a circle on a white image" do
+  test "mutating draw a rectangle on a white image" do
+    {:ok, image} = Vix.Vips.Operation.black!(500, 500, bands: 3) |> Vix.Vips.Operation.invert()
+
+    assert {:ok, _image} =
+             Image.mutate(image, fn mut_img ->
+               {:ok, _} = Image.Draw.rect(mut_img, 10, 10, 100, 100, color: :green, fill: true)
+             end)
+  end
+
+  test "mutating draw a circle on a white image" do
     {:ok, image} = Vix.Vips.Operation.black!(500, 500, bands: 3) |> Vix.Vips.Operation.invert()
     cx = cy = div(Image.height(image), 2)
 
-    {:ok, image} =
-      Vimage.mutate(image, fn mut_img ->
-        :ok = Vix.Vips.MutableOperation.draw_circle(mut_img, [0, 200, 0], cx, cy, 100, fill: true)
-      end)
-
-    Image.write(image, "/Users/kip/Desktop/draw.jpg")
+    assert {:ok, _image} =
+             Image.mutate(image, fn mut_img ->
+               {:ok, _} = Image.Draw.circle(mut_img, cx, cy, 100, fill: true, color: [0, 200, 0])
+             end)
   end
 
-  test "draw an image onto another image" do
+  test "mutating draw a line on a white image" do
+    {:ok, image} = Vix.Vips.Operation.black!(500, 500, bands: 3) |> Vix.Vips.Operation.invert()
+
+    assert {:ok, _image} =
+             Image.mutate(image, fn mut_img ->
+               {:ok, _} = Image.Draw.line(mut_img, 0, 0, 499, 499, color: [0, 200, 0])
+             end)
+  end
+
+  test "mutating draw an image onto another image" do
     {:ok, image} = Vix.Vips.Operation.black(500, 500, bands: 4)
     {:ok, star} = Image.Shape.star(5, rotation: 90, fill_color: :green, stroke_color: :green)
 
-    {:ok, image} =
-      Vimage.mutate(image, fn mut_img ->
-        :ok =
-          Vix.Vips.MutableOperation.draw_image(mut_img, star, 100, 100,
-            mode: :VIPS_COMBINE_MODE_ADD
-          )
-      end)
-
-    Image.write(image, "/Users/kip/Desktop/draw2.png")
+    assert {:ok, _image} =
+             Image.mutate(image, fn mut_img ->
+               {:ok, _} = Image.Draw.image(mut_img, star, 100, 100, mode: :VIPS_COMBINE_MODE_ADD)
+             end)
   end
 
   test "draw a line" do

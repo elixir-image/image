@@ -322,7 +322,7 @@ defmodule Image.Test do
   end
 
   test "Joining bands results in the same image" do
-    image = Image.open! "./test/support/images/Singapore-2016-09-5887.jpg"
+    image = Image.open!("./test/support/images/Singapore-2016-09-5887.jpg")
     bands = Image.split_bands(image)
     joined = Image.join_bands!(bands)
     assert {:ok, +0.0, _} = Image.compare(image, joined)

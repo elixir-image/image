@@ -27,5 +27,4 @@ defmodule Image.FlattenTest do
 
     assert_images_equal(result, validate_path)
   end
-
 end

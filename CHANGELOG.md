@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.53.1
+
+This is the changelog for Image version 0.53.1 released on July 15th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix typespecs in `Image.Draw`, improve tests and clarify docs. In particular, document that the function passed to `Image.mutate/2` *must* return either `:ok` or `{:ok, term}`.
+
+* Fix `Image.get_pixel/3` to ensure only integer values are returned when the image band format is integer. This is required because the underlying `Vix.Vips.Operation.getpoint/3` always returns floats.
+
 ## Image 0.53.0
 
 This is the changelog for Image version 0.53.0 released on July 14th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

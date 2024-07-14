@@ -8,39 +8,53 @@ defmodule Image.Options.Draw do
   alias Image.Color
   alias Image.CombineMode
 
-  @type circle :: [
-          {:fill, boolean()}
-          | {:color, Color.t()}
-        ]
+  @type circle ::
+          [
+            {:fill, boolean()}
+            | {:color, Color.t()}
+          ]
+          | map()
 
-  @type rect :: [
-          {:fill, boolean()}
-          | {:color, Color.t()}
-          | {:stroke_width, pos_integer()}
-        ]
+  @type rect ::
+          [
+            {:fill, boolean()}
+            | {:color, Color.t()}
+            | {:stroke_width, pos_integer()}
+          ]
+          | map()
 
-  @type point :: [
-          {:color, Color.t()}
-        ]
+  @type point ::
+          [
+            {:color, Color.t()}
+          ]
+          | map()
 
-  @type flood :: [
-          {:equal, boolean()}
-          | {:color, Color.t()}
-        ]
+  @type flood ::
+          [
+            {:equal, boolean()}
+            | {:color, Color.t()}
+          ]
+          | map()
 
-  @type mask :: [
-          {:color, Color.t()}
-        ]
+  @type mask ::
+          [
+            {:color, Color.t()}
+          ]
+          | map()
 
-  @type line :: [
-          {:color, Color.t()}
-        ]
+  @type line ::
+          [
+            {:color, Color.t()}
+          ]
+          | map()
 
-  @type smudge :: []
+  @type smudge :: [] | map()
 
-  @type image :: [
-          {:mode, CombineMode.t()}
-        ]
+  @type image ::
+          [
+            {:mode, CombineMode.t()}
+          ]
+          | map()
 
   @doc false
   def default_options(:circle) do
@@ -105,6 +119,10 @@ defmodule Image.Options.Draw do
   Validate the options for `Image.Draw`.
 
   """
+  def validate_options(_type, %{} = options) do
+    {:ok, options}
+  end
+
   def validate_options(type, options) do
     options = Keyword.merge(default_options(type), options)
 

@@ -5246,7 +5246,8 @@ defmodule Image do
   """
   @doc subject: "Operation", since: "0.23.0"
 
-  @spec flatten(image :: Vimage.t(), options :: Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec flatten(image :: Vimage.t(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
   def flatten(%Vimage{} = image, options \\ []) do
     background_color = Keyword.get(options, :background_color, :black)
 
@@ -6941,7 +6942,7 @@ defmodule Image do
     delta_e(color_1, color_2, version)
   end
 
-  def delta_e(color_1, color_2, version)  do
+  def delta_e(color_1, color_2, version) do
     with {:ok, version} <- validate_delta_e_version(version),
          {:ok, color_1} <- Color.validate_color(color_1),
          {:ok, color_2} <- Color.validate_color(color_2) do
@@ -7025,9 +7026,8 @@ defmodule Image do
 
   defp validate_delta_e_version(version) do
     {:error,
-        "Invalid delta_e version #{inspect version}. " <>
-        "Version must be one of #{inspect @delta_e_versions}"
-    }
+     "Invalid delta_e version #{inspect(version)}. " <>
+       "Version must be one of #{inspect(@delta_e_versions)}"}
   end
 
   if Code.ensure_loaded?(Scholar.Cluster.KMeans) do
@@ -7122,7 +7122,7 @@ defmodule Image do
     @doc subject: "Clusters", since: "0.49.0"
 
     @spec k_means(image :: Vimage.t(), options :: Keyword.t()) ::
-      {:ok, list(Color.t())} | {:error, error_message()}
+            {:ok, list(Color.t())} | {:error, error_message()}
 
     def k_means(%Vimage{} = image, options \\ []) do
       options = Keyword.put_new(options, :num_clusters, @default_clusters)
@@ -7229,7 +7229,7 @@ defmodule Image do
     @doc subject: "Clusters", since: "0.49.0"
 
     @spec k_means!(image :: Vimage.t(), options :: Keyword.t()) ::
-      list(Color.t()) | no_return()
+            list(Color.t()) | no_return()
 
     def k_means!(%Vimage{} = image, options \\ []) do
       case k_means(image, options) do
@@ -7363,6 +7363,9 @@ defmodule Image do
   the length of the list is equal to the number
   of bands in the image.
 
+  If the colorspace of the image is `:srgb` then
+  the values are rounded.
+
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
@@ -7388,8 +7391,18 @@ defmodule Image do
           {:ok, Color.rgb_color()} | {:error, error_message()}
 
   def get_pixel(%Vimage{} = image, x, y) do
+    band_format = Image.band_format(image)
+
     with {:ok, values} <- Operation.getpoint(image, x, y) do
-      {:ok, Enum.map(values, &round/1)}
+      values =
+        case band_format do
+          {:u, _} ->
+            Enum.map(values, &round/1)
+          _other ->
+            values
+        end
+
+      {:ok, values}
     end
   end
 
@@ -7439,7 +7452,7 @@ defmodule Image do
   Mutations, like those functions in the
   `Image.Draw`, module are operations on
   a *copy* of the base image and operations
-  are serialized through a genserver in order
+  are serialized through a gen_server in order
   to maintain thread safety.
 
   In order to perform multiple mutations without
@@ -7461,15 +7474,13 @@ defmodule Image do
   process is ended and a normal `t:Vix.Vips.Image.t/0`
   is returned.
 
-  This function is a convenience wrapper
-  around `Vix.Vips.Image.mutate/2`.
-
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `fun` is any 1-arity function that receives
-    a `t:Vix.Vips.MutableImage.t/0` parameter.
+    a `t:Vix.Vips.MutableImage.t/0` parameter. This function
+    *must* return either `:ok` or `{:ok, term}`.
 
   ### Returns
 
@@ -7477,21 +7488,21 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Notes
+
+  The image is copied and operations are serialized behind a gen_server.
+  Only one copy is made but all operations will be serialized behind the
+  gen_server. When the function returns, the gen_server is broken down and
+  the underlying mutated `t:Vix.Vips.Image.t/0` is returned.
+
   ### Example
 
-        # The image is copied and operations
-        # are serialized behind a genserver.
-        # Only one copy is made but all operations
-        # will be serialized behind a genserver.
-        # When the function returns the genserver
-        # is broken down and the underlying
-        # mutated `t:Vix.Vips.Image.t/0` is returned.
-
-        Image.mutate image, fn mutable_image ->
-          mutable_image
-          |> Image.Draw.rect!(0, 0, 10, 10, color: :red)
-          |> Image.Draw.rect!(10, 10, 20, 20, color: :green)
-        end
+      iex> {:ok, image} = Image.open("./test/support/images/puppy.webp")
+      iex> {:ok, _mutated_copy} =
+      ...>   Image.mutate(image, fn mut_image ->
+      ...>     cx = cy = div(Image.height(image), 2)
+      ...>     {:ok, _image} = Image.Draw.circle(mut_image, cx, cy, 100, color: :green)
+      ...>   end)
 
   """
   @doc subject: "Operation", since: "0.7.0"
@@ -7500,7 +7511,11 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def mutate(%Vimage{} = image, fun) when is_function(fun, 1) do
-    Vimage.mutate(image, fun)
+    case Vimage.mutate(image, fun) do
+      {:error, reason} -> {:error, reason}
+      {:ok, {image, _other}} -> {:ok, image}
+      {:ok, image} -> {:ok, image}
+    end
   end
 
   @doc """
@@ -10091,7 +10106,7 @@ defmodule Image do
   @doc subject: "Split and join", since: "0.53.0"
 
   @spec join_bands(image_list :: [Vimage.t()]) ::
-    {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error_message()}
 
   def join_bands(bands) when is_list(bands) do
     Operation.bandjoin(bands)
@@ -10119,7 +10134,7 @@ defmodule Image do
   @doc subject: "Split and join", since: "0.53.0"
 
   @spec join_bands!(image_list :: [Vimage.t()]) ::
-    Vimage.t() | no_return()
+          Vimage.t() | no_return()
 
   def join_bands!(bands) when is_list(bands) do
     case join_bands(bands) do

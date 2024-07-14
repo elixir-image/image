@@ -61,6 +61,5 @@ if Code.ensure_loaded?(Nx) do
       mask = logical_or(tensor, tensor)
       masked_select(tensor, mask)
     end
-
   end
 end
