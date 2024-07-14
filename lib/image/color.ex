@@ -448,12 +448,32 @@ defmodule Image.Color do
     end
   end
 
+
+  def convert(color, :labq, :srgb, _options) do
+    with {:ok, color} <- validate_color(color) do
+      Image.new!(1, 1, color: color, interpretation: :labq)
+      |> Operation.labq2srgb!()
+      |> Image.get_pixel(0, 0)
+    end
+  end
+
   def convert(color, :lab, :srgb, _options) do
     with {:ok, color} <- validate_color(color) do
-      Image.new!(1, 1, color: color)
+      Image.new!(1, 1, color: color, interpretation: :lab)
       |> Operation.lab2labq!()
       |> Operation.labq2srgb!()
       |> Image.get_pixel(0, 0)
+    end
+  end
+
+
+  def convert(color, :labs, :srgb, _options) do
+    with {:ok, color} <- validate_color(color) do
+      IO.inspect color
+      Image.new!(1, 1, color: color, interpretation: :labs)
+      |> Operation.labs2labq!()
+      |> Operation.labq2srgb!()
+      |> Operation.getpoint(0, 0)
     end
   end
 

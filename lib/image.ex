@@ -7061,11 +7061,6 @@ defmodule Image do
 
     ### Notes
 
-    * The current implementation is performed in the
-      sRGB colorspace. This may not produce the most
-      perceptually appropriate clusters. This limitation
-      will be removed in a future release.
-
     * The option `:num_clusters` determines the
       number of clusters into which image colors are
       partioned. The default is `num_clusters: #{@default_clusters}`.
@@ -7128,14 +7123,14 @@ defmodule Image do
       options = Keyword.put_new(options, :num_clusters, @default_clusters)
       original_colorspace = Image.colorspace(image)
 
-      with {:ok, lab_image} <- Image.to_colorspace(image, :srgb) do
+      with {:ok, lab_image} <- Image.to_colorspace(image, :labs) do
         k_means =
           lab_image
           |> Image.Scholar.k_means(options)
           |> Map.fetch!(:clusters)
           |> Nx.to_list()
           |> Enum.sort()
-          |> Enum.map(&Color.convert!(&1, :srgb, original_colorspace))
+          |> Enum.map(&Color.convert!(&1, :labs, original_colorspace))
 
         {:ok, k_means}
       end
