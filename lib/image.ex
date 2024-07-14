@@ -10073,7 +10073,7 @@ defmodule Image do
   @doc """
   Joins a list of bands into a single image.
 
-  This can be considered the inverse of
+  This can be considered the inverse operation of
   `Image.split_bands/1`.
 
   ### Arguments
@@ -10101,8 +10101,8 @@ defmodule Image do
   Joins a list of bands into a single image or
   raises an exception.
 
-  This can be considered the inverse of
-  `Image.split_bands!/1`.
+  This can be considered the inverse operation of
+  `Image.split_bands/1`.
 
   ### Arguments
 
