@@ -35,7 +35,10 @@ defmodule Image.Blurhash do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0`. Only 3-band images
+    are supported by blurhash. Therefore if `image` has an
+    alpha band it is necessary to flatten it or remove the
+    alpha band before calling `Image.Blurhash.encode/2`.
 
   * `options` is a keyword list of options. The default is
     `[x_components: 4, y_components: 3]`.
