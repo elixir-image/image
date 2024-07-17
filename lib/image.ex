@@ -8656,22 +8656,22 @@ defmodule Image do
   def vibrance(%Vimage{} = image, vibrance, options \\ []) when is_multiplier(vibrance) do
     use Image.Math
 
-    threshold = Keyword.get(options, :threshold, 100)
+    with {:ok, options} <- Options.Vibrance.validate_options(options) do
+      identity = Operation.identity!()
+      h2 = 255
+      h3 = 6 * identity / h2
+      h4 = 2 / (1 + exp!(-h3)) - 1
+      h5 = h3 / 6
+      h6 = h4 - h5
+      h7 = vibrance
+      h8 = h5 + h7 * h6
 
-    identity = Operation.identity!()
-    h2 = 255
-    h3 = 6 * identity / h2
-    h4 = 2 / (1 + exp!(-h3)) - 1
-    h5 = h3 / 6
-    h6 = h4 - h5
-    h7 = vibrance
-    h8 = h5 + h7 * h6
-
-    with_colorspace(image, :lch, fn image ->
-      g5 = h2 * image[1] / threshold
-      g7 = threshold * Operation.maplut!(g5, h8)
-      Image.join_bands([image[0], g7, image[2]])
-    end)
+      with_colorspace(image, :lch, fn image ->
+        g5 = h2 * image[1] / options.threshold
+        g7 = options.threshold * Operation.maplut!(g5, h8)
+        Image.join_bands([image[0], g7, image[2]])
+      end)
+    end
   end
 
   @doc """
