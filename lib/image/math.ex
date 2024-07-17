@@ -35,7 +35,7 @@ defmodule Image.Math do
   alias Vix.Vips.Operation
   alias Vix.Vips.Image, as: Vimage
 
-  import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
+  import Kernel, except: [+: 2, -: 1, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
 
   @doc """
   Guards if a given value might be reasonably interpreted
@@ -47,9 +47,22 @@ defmodule Image.Math do
   @doc false
   defmacro __using__(_opts) do
     quote do
-      import Kernel, except: [+: 2, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
+      import Kernel, except: [+: 2, -: 1, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
       import Image.Math
     end
+  end
+
+  @doc """
+  Matrix unary minues of an
+  image or a number.
+
+  """
+  def -(%Vimage{} = a) do
+    multiply!(a, -1)
+  end
+
+  def -(a) when is_number(a) do
+    Kernel.-(a)
   end
 
   @doc """
@@ -229,6 +242,11 @@ defmodule Image.Math do
     boolean_rshift!(a, b)
   end
 
+  @spec exp(Vimage.t()) ::  {:ok, Vimage.t()} | {:error, Image.error_message()}
+  def exp(image) do
+    Operation.math(image, :VIPS_OPERATION_MATH_EXP)
+  end
+
   @spec pow(Vimage.t(), Vimage.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error_message()}
 
@@ -330,6 +348,11 @@ defmodule Image.Math do
     multiply(image, [value])
   end
 
+  @spec multiply(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  def multiply(value, %Vimage{} = image) when is_number(value) do
+    multiply(image, [value])
+  end
+
   @spec multiply(Vimage.t(), list()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
   def multiply(%Vimage{} = image, value) when is_list(value) do
     Operation.linear(image, value, [0.0])
@@ -349,6 +372,11 @@ defmodule Image.Math do
   def divide(%Vimage{} = image, value) when is_number(value) do
     divide(image, [value])
   end
+
+  # @spec divide(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  # def divide(value, %Vimage{} = image) when is_number(value) do
+  #
+  # end
 
   @spec divide(Vimage.t(), [number()]) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
   def divide(%Vimage{} = image, value) when is_list(value) do
@@ -596,6 +624,14 @@ defmodule Image.Math do
   @spec divide!(number(), number()) :: number() | no_return()
   def divide!(a, b) do
     Kernel./(a, b)
+  end
+
+  @spec exp!(Vimage.t()) ::  Vimage.t() | no_return()
+  def exp!(image) do
+    case exp(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
   end
 
   @spec pow!(Vimage.t(), number()) :: Vimage.t() | no_return()
