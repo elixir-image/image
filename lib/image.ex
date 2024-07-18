@@ -8628,9 +8628,9 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `saturation` is any float greater than `0.0`. A number less
-    than `1.0` means reduce saturation. A number greater than `1.0`
-    means increase saturation.
+  * `saturation` is any float in the range `-1.0` to `+1.0`.
+    A number less than `1.0` means reduce saturation. A
+    number greater than `1.0` means increase saturation.
 
   * `options` is a keyword list of options.
 
@@ -8656,7 +8656,7 @@ defmodule Image do
   @spec vibrance(image :: Vimage.t(), vibrance :: float(), options :: Options.Vibrance.vibrance_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def vibrance(%Vimage{} = image, vibrance, options \\ []) when is_multiplier(vibrance) do
+  def vibrance(%Vimage{} = image, vibrance, options \\ []) when vibrance >= -1.0 and vibrance <= 1.0 do
     use Image.Math
 
     with {:ok, options} <- Options.Vibrance.validate_options(options) do
@@ -8693,9 +8693,9 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `saturation` is any float greater than `0.0`. A number less
-    than `1.0` means reduce saturation. A number greater than `1.0`
-    means increase saturation.
+  * `saturation` is any float in the range `-1.0` to `+1.0`.
+    A number less than `1.0` means reduce saturation. A
+    number greater than `1.0` means increase saturation.
 
   * `options` is a keyword list of options.
 
@@ -8703,7 +8703,7 @@ defmodule Image do
 
   * `:threshold` is the saturation level above which no
     adjustment is made. The range is `1..100` with a default
-    of `70`.
+    of `60`.
 
   ### Returns
 
@@ -8721,7 +8721,7 @@ defmodule Image do
   @spec vibrance!(image :: Vimage.t(), vibrance :: float(), options :: Options.Vibrance.vibrance_options()) ::
           Vimage.t() | no_return()
 
-  def vibrance!(%Vimage{} = image, vibrance, options \\ []) when is_multiplier(vibrance) do
+  def vibrance!(%Vimage{} = image, vibrance, options \\ []) do
     case vibrance(image, vibrance, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason

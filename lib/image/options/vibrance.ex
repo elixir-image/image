@@ -16,7 +16,7 @@ defmodule Image.Options.Vibrance do
   """
   @type vibrance_options :: [vibrance_option()] | map()
 
-  @default_vibrance_threshold 70
+  @default_vibrance_threshold 60
 
   @doc false
   def default_vibrance_threshold do
