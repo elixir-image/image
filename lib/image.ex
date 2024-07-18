@@ -8647,6 +8647,9 @@ defmodule Image do
   * `{:error, reason}`.
 
   """
+
+  # See https://github.com/libvips/libvips/discussions/4039
+
   @doc since: "0.54.0"
   @doc subject: "Operation"
 
@@ -8657,20 +8660,71 @@ defmodule Image do
     use Image.Math
 
     with {:ok, options} <- Options.Vibrance.validate_options(options) do
-      identity = Operation.identity!()
-      h2 = 255
-      h3 = 6 * identity / h2
-      h4 = 2 / (1 + exp!(-h3)) - 1
-      h5 = h3 / 6
+      h1 = Operation.identity!() * 1.0
+      threshold = options.threshold * 1.0
+
+      h2 = 255.0
+      h3 = 6.0 * h1 / h2
+      h4 = 2.0 / (1.0 + exp!(-h3)) - 1.0
+      h5 = h3 / 6.0
       h6 = h4 - h5
       h7 = vibrance
       h8 = h5 + h7 * h6
 
       with_colorspace(image, :lch, fn image ->
-        g5 = h2 * image[1] / options.threshold
-        g7 = options.threshold * Operation.maplut!(g5, h8)
+        g5 = h2 * image[1] / threshold
+        g7 = threshold * Operation.maplut!(g5, h8)
         Image.join_bands([image[0], g7, image[2]])
       end)
+    end
+  end
+
+  @doc """
+  Apply an curve adjustment to an image's saturation
+  (chroma) such that less saturated colors are more
+  affected than more saturated colors. Raises on
+  error.
+
+  This operation is similar to the vibrance function
+  in Adobe Lightroom. However this implementation does
+  not account for skin tones.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `saturation` is any float greater than `0.0`. A number less
+    than `1.0` means reduce saturation. A number greater than `1.0`
+    means increase saturation.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:threshold` is the saturation level above which no
+    adjustment is made. The range is `1..100` with a default
+    of `70`.
+
+  ### Returns
+
+  * `adjusted_image` or
+
+  * raises an exception.
+
+  """
+
+  # See https://github.com/libvips/libvips/discussions/4039
+
+  @doc since: "0.54.0"
+  @doc subject: "Operation"
+
+  @spec vibrance!(image :: Vimage.t(), vibrance :: float(), options :: Options.Vibrance.vibrance_options()) ::
+          Vimage.t() | no_return()
+
+  def vibrance!(%Vimage{} = image, vibrance, options \\ []) when is_multiplier(vibrance) do
+    case vibrance(image, vibrance, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 

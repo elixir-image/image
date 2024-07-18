@@ -12,7 +12,7 @@ This is the changelog for Image version 0.54.0 released on ____, 2024.  For olde
 
 ### Enhancements
 
-* Adds `Image.vibrance/3` following the [libvips discussion](https://github.com/libvips/libvips/discussions/4039).
+* Adds `Image.vibrance/3` and `Image.vibrance!/3` following the [libvips discussion](https://github.com/libvips/libvips/discussions/4039).
 
 ## Image 0.53.0
 

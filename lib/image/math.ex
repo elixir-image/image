@@ -262,7 +262,7 @@ defmodule Image.Math do
   end
 
   @spec pow(number(), number()) :: {:ok, number()}
-  def pow(a, b) do
+  def pow(a, b) when is_number(a) and is_number(b) do
     {:ok, Kernel.**(a, b)}
   end
 
@@ -359,7 +359,7 @@ defmodule Image.Math do
   end
 
   @spec multiply(number(), number()) :: {:ok, number}
-  def multiply(a, b) do
+  def multiply(a, b) when is_number(a) and is_number(b) do
     {:ok, Kernel.*(a, b)}
   end
 
@@ -373,10 +373,13 @@ defmodule Image.Math do
     divide(image, [value])
   end
 
-  # @spec divide(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
-  # def divide(value, %Vimage{} = image) when is_number(value) do
-  #
-  # end
+  # See https://github.com/libvips/libvips/blob/master/cplusplus/VImage.cpp#L1062-L1066
+  @spec divide(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  def divide(value, %Vimage{} = image) when is_number(value) do
+    image
+    |> pow!(-1.0)
+    |> multiply(value)
+  end
 
   @spec divide(Vimage.t(), [number()]) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
   def divide(%Vimage{} = image, value) when is_list(value) do
@@ -621,8 +624,16 @@ defmodule Image.Math do
     end
   end
 
+  @spec divide!(Image.pixel(), Vimage.t()) :: Vimage.t() | no_return()
+  def divide!(value, %Vimage{} = image) do
+    case divide(value, image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
+  end
+
   @spec divide!(number(), number()) :: number() | no_return()
-  def divide!(a, b) do
+  def divide!(a, b) when is_number(a) and is_number(b) do
     Kernel./(a, b)
   end
 
@@ -643,7 +654,7 @@ defmodule Image.Math do
   end
 
   @spec pow!(number(), number()) :: number() | no_return()
-  def pow!(a, b) do
+  def pow!(a, b) when is_number(a) and is_number(b) do
     Kernel.**(a, b)
   end
 
