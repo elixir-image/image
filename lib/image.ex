@@ -1877,7 +1877,7 @@ defmodule Image do
   #    threshold = 20
   #    mask = ((foreground - key_colour) ** 2).bandmean() > (3 * threshold ** 2)
 
-  @doc subject: "Operation", since: "0.13.0"
+  @doc subject: "Mask", since: "0.13.0"
 
   @spec chroma_mask(image :: Vimage.t(), options :: ChromaKey.chroma_key_options() | map()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -1966,7 +1966,7 @@ defmodule Image do
      representing a CSS color name.
 
   """
-  @doc subject: "Operation", since: "0.13.0"
+  @doc subject: "Mask", since: "0.13.0"
 
   @spec chroma_mask!(image :: Vimage.t(), options :: ChromaKey.chroma_key_options()) ::
           Vimage.t() | no_return()
