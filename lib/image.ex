@@ -7398,6 +7398,7 @@ defmodule Image do
         case band_format do
           {:u, _} ->
             Enum.map(values, &round/1)
+
           _other ->
             values
         end
@@ -8653,10 +8654,15 @@ defmodule Image do
   @doc since: "0.54.0"
   @doc subject: "Operation"
 
-  @spec vibrance(image :: Vimage.t(), vibrance :: float(), options :: Options.Vibrance.vibrance_options()) ::
+  @spec vibrance(
+          image :: Vimage.t(),
+          vibrance :: float(),
+          options :: Options.Vibrance.vibrance_options()
+        ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def vibrance(%Vimage{} = image, vibrance, options \\ []) when vibrance >= -1.0 and vibrance <= 1.0 do
+  def vibrance(%Vimage{} = image, vibrance, options \\ [])
+      when vibrance >= -1.0 and vibrance <= 1.0 do
     use Image.Math
 
     with {:ok, options} <- Options.Vibrance.validate_options(options) do
@@ -8718,7 +8724,11 @@ defmodule Image do
   @doc since: "0.54.0"
   @doc subject: "Operation"
 
-  @spec vibrance!(image :: Vimage.t(), vibrance :: float(), options :: Options.Vibrance.vibrance_options()) ::
+  @spec vibrance!(
+          image :: Vimage.t(),
+          vibrance :: float(),
+          options :: Options.Vibrance.vibrance_options()
+        ) ::
           Vimage.t() | no_return()
 
   def vibrance!(%Vimage{} = image, vibrance, options \\ []) do

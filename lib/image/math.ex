@@ -61,7 +61,7 @@ defmodule Image.Math do
     multiply!(a, -1)
   end
 
-  def -(a) when is_number(a) do
+  def -a when is_number(a) do
     Kernel.-(a)
   end
 
@@ -242,7 +242,7 @@ defmodule Image.Math do
     boolean_rshift!(a, b)
   end
 
-  @spec exp(Vimage.t()) ::  {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec exp(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
   def exp(image) do
     Operation.math(image, :VIPS_OPERATION_MATH_EXP)
   end
@@ -637,7 +637,7 @@ defmodule Image.Math do
     Kernel./(a, b)
   end
 
-  @spec exp!(Vimage.t()) ::  Vimage.t() | no_return()
+  @spec exp!(Vimage.t()) :: Vimage.t() | no_return()
   def exp!(image) do
     case exp(image) do
       {:ok, image} -> image

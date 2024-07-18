@@ -46,7 +46,7 @@ defmodule Image.Options.Vibrance do
   end
 
   defp validate_option({:threshold, threshold}, options)
-      when is_integer(threshold) and threshold in 1..100//1 do
+       when is_integer(threshold) and threshold in 1..100//1 do
     {:cont, options}
   end
 
