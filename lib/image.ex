@@ -8666,23 +8666,51 @@ defmodule Image do
     use Image.Math
 
     with {:ok, options} <- Options.Vibrance.validate_options(options) do
-      h1 = Operation.identity!() * 1.0
       threshold = options.threshold * 1.0
-
-      h2 = 255.0
-      h3 = 6.0 * h1 / h2
-      h4 = 2.0 / (1.0 + exp!(-h3)) - 1.0
-      h5 = h3 / 6.0
-      h6 = h4 - h5
-      h7 = vibrance
-      h8 = h5 + h7 * h6
+      curve = logistic_curve_rhs(vibrance)
 
       with_colorspace(image, :lch, fn image ->
-        g5 = h2 * image[1] / threshold
-        g7 = threshold * Operation.maplut!(g5, h8)
-        Image.join_bands([image[0], g7, image[2]])
+        g5 = Color.max_rgb() * image[1] / threshold
+        chroma = threshold * Operation.maplut!(g5, curve)
+        Image.join_bands([image[0], chroma, image[2]])
       end)
     end
+  end
+
+  @doc """
+  Returns a single band image representing the
+  right hand side (positive range) of the
+  [logistic function](https://en.wikipedia.org/wiki/Logistic_function).
+
+  ### Arguments
+
+  * `k` is a float in the range `-1.0` to `1.0` representing
+    the logistic growth rate (slope of the curve).
+
+  ### Returns
+
+  * A single band `t:Vimage.t/0` representing the right hand side
+    (positive numbers) of the logistic curve.
+
+  """
+  # See https://github.com/libvips/libvips/discussions/4039
+  @doc since: "0.54.0"
+  @doc subject: "Histogram"
+
+  @spec logistic_curve_rhs(k :: float()) :: Vimage.t()
+  def logistic_curve_rhs(k) when is_float(k) and k >= -1.0 and k <= 1.0 do
+    use Image.Math
+
+    h1 = Operation.identity!() * 1.0
+    h2 = Color.max_rgb()
+    h3 = 6.0 * h1 / h2
+    h4 = 2.0 / (1.0 + exp!(-h3)) - 1.0
+
+    h5 = h3 / 6.0
+    h6 = h4 - h5
+    h7 = k
+    h8 = h5 + h7 * h6
+    h8
   end
 
   @doc """

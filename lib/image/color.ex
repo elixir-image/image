@@ -103,6 +103,12 @@ defmodule Image.Color do
   defguard is_inbuilt_profile(profile) when profile in @inbuilt_profiles
 
   @doc """
+  Return max rgb value.
+
+  """
+  def max_rgb, do: 255
+
+  @doc """
   Returns the list of color profiles built into
   `libvips`.
 
