@@ -7735,8 +7735,8 @@ defmodule Image do
   Apply a percentage adjustment to an image's brightness
   (luminance).
 
-  The image is converted to the `lch` color space, multiplies the
-  luminance band by the provided float percentage and converts
+  The image is converted to the [LCh color space](https://en.wikipedia.org/wiki/HCL_color_space),
+  multiplies the luminance band by the provided float percentage and converts
   the image back to its original color space.
 
   ### Arguments
@@ -7776,8 +7776,8 @@ defmodule Image do
   Apply a percentage adjustment to an image's brightness
   (luminance) or raises an exception.
 
-  The image is converted to the `lch` color space, multiplies the
-  luminance band by the provided float percentage and converts
+  The image is converted to the [LCh color space](https://en.wikipedia.org/wiki/HCL_color_space),
+  multiplies the luminance band by the provided float percentage and converts
   the image back to its original color space.
 
   ### Arguments
@@ -8544,8 +8544,8 @@ defmodule Image do
   Apply an adjustment to an image's saturation
   (chroma).
 
-  The image is converted to the `lch` color space, multiplies the
-  chroma band by the provided float and converts
+  The image is converted to the [LCh color space](https://en.wikipedia.org/wiki/HCL_color_space),
+  multiplies the chroma band by the provided float and converts
   the image back to its original color space.
 
   ### Arguments
@@ -8578,8 +8578,8 @@ defmodule Image do
   Apply an adjustment to an image's saturation
   (chroma) or raises an exception.
 
-  The image is converted to the `lch` color space, multiplies the
-  chroma band by the provided float and converts
+  The image is converted to the [LCh color space](https://en.wikipedia.org/wiki/HCL_color_space),
+  multiplies the chroma band by the provided float and converts
   the image back to its original color space.
 
   ### Arguments
