@@ -7760,7 +7760,7 @@ defmodule Image do
 
   """
   @doc since: "0.34.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec brightness(image :: Vimage.t(), brightness :: float()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -7801,7 +7801,7 @@ defmodule Image do
 
   """
   @doc since: "0.34.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec brightness!(image :: Vimage.t(), brightness :: float()) :: Vimage.t() | no_return()
   def brightness!(%Vimage{} = image, brightness) when is_multiplier(brightness) do
@@ -7847,7 +7847,7 @@ defmodule Image do
   # https://stackoverflow.com/questions/73601395/adjusting-contrast-in-vips-the-same-way-as-the-matching-css-filter
 
   @doc since: "0.35.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec contrast(image :: Vimage.t(), contrast :: float()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -7900,7 +7900,7 @@ defmodule Image do
 
   """
   @doc since: "0.35.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec contrast!(image :: Vimage.t(), contrast :: float()) :: Vimage.t() | no_return()
   def contrast!(%Vimage{} = image, contrast) when is_multiplier(contrast) do
@@ -7936,7 +7936,7 @@ defmodule Image do
 
   """
   @doc since: "0.42.0"
-  @doc subject: "operation"
+  @doc subject: "Basic Adjustments"
 
   @spec invert(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def invert(%Vimage{} = image) do
@@ -7969,7 +7969,7 @@ defmodule Image do
 
   """
   @doc since: "0.42.0"
-  @doc subject: "operation"
+  @doc subject: "Basic Adjustments"
 
   @spec invert!(image :: Vimage.t()) :: Vimage.t() | no_return()
   def invert!(%Vimage{} = image) do
@@ -8023,7 +8023,7 @@ defmodule Image do
 
   """
   @doc since: "0.35.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec modulate(image :: Vimage.t(), options :: Options.Modulate.modulate_options()) ::
           {:ok, Vimage.t()} | {:error, error_message}
@@ -8084,7 +8084,7 @@ defmodule Image do
 
   """
   @doc since: "0.35.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec modulate!(image :: Vimage.t(), options :: Options.Modulate.modulate_options()) ::
           Vimage.t() | no_return()
@@ -8136,7 +8136,7 @@ defmodule Image do
 
   """
   @doc since: "0.35.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec equalize(image :: Vimage.t(), bands :: Options.Equalize.equalize_option()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -8255,7 +8255,7 @@ defmodule Image do
 
   """
   @doc since: "0.35.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec equalize!(image :: Vimage.t(), bands :: Options.Equalize.equalize_option()) ::
           Vimage.t() | no_return()
@@ -8328,7 +8328,7 @@ defmodule Image do
 
   """
   @doc since: "0.35.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec apply_tone_curve(image :: Vimage.t(), options :: Options.ToneCurve.tone_curve_options()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -8403,7 +8403,7 @@ defmodule Image do
 
   """
   @doc since: "0.35.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec apply_tone_curve!(image :: Vimage.t(), options :: Options.ToneCurve.tone_curve_options()) ::
           Vimage.t() | no_return()
@@ -8473,7 +8473,7 @@ defmodule Image do
 
   """
   @doc since: "0.35.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec local_contrast(
           image :: Vimage.t(),
@@ -8564,7 +8564,7 @@ defmodule Image do
 
   """
   @doc since: "0.34.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec saturation(image :: Vimage.t(), saturation :: float()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
@@ -8606,7 +8606,7 @@ defmodule Image do
 
   """
   @doc since: "0.34.0"
-  @doc subject: "Operation"
+  @doc subject: "Basic Adjustments"
 
   @spec saturation!(image :: Vimage.t(), saturation :: float()) :: Vimage.t() | no_return()
   def saturation!(%Vimage{} = image, saturation) when is_multiplier(saturation) do

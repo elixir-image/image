@@ -176,6 +176,7 @@ defmodule Image.MixProject do
   defp groups_for_docs do
     [
       "Files and streams": &(&1[:subject] == "Load and save"),
+      "Basic Adjustments": &(&1[:subject] == "Basic Adjustments"),
       Operations: &(&1[:subject] == "Operation"),
       Resize: &(&1[:subject] == "Resize"),
       Crop: &(&1[:subject] == "Crop"),
