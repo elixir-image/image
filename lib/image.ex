@@ -6841,7 +6841,7 @@ defmodule Image do
   Returns the histogram for an image.
 
   The histogram is returned as a `t:Vimage.t/0`
-  that is a 255 by 255 image the same numbers of
+  that is a 255 by 255 image with the same numbers of
   bands as the source image.
 
   ### Argument
@@ -8440,7 +8440,7 @@ defmodule Image do
   @doc """
   Apply a local contrast adjustment to an image.
 
-  This function applies a [Constrast Limited Adaptive histogram equalization (AHE)](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#Contrast_Limited_AHE)
+  This function applies a [Constrast Limited Adaptive histogram equalization (CLAHE)](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#Contrast_Limited_AHE)
   to improve contrast in images. It differs from ordinary histogram
   equalization in the respect that the adaptive method computes several
   histograms, each corresponding to a distinct section of the image, and
@@ -8492,7 +8492,7 @@ defmodule Image do
   Apply a local contrast adjustment to an image
   or raises an exception.
 
-  This function applies a [Constrast Limited Adaptive histogram equalization (AHE)](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#Contrast_Limited_AHE)
+  This function applies a [Constrast Limited Adaptive histogram equalization (CLAHE)](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#Contrast_Limited_AHE)
   to improve contrast in images. It differs from ordinary histogram
   equalization in the respect that the adaptive method computes several
   histograms, each corresponding to a distinct section of the image, and
