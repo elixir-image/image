@@ -8744,6 +8744,12 @@ defmodule Image do
   * A single band `t:Vimage.t/0` representing the right hand side
     (positive numbers) of the logistic curve.
 
+  ### Notes
+
+  * This is not a general purpose curve generator. It is used by
+    `Image.vibrance/3` and may, in the future, be developed into a more
+    general purpose logistic curve function.
+
   """
   # See https://github.com/libvips/libvips/discussions/4039
   @doc since: "0.54.0"
