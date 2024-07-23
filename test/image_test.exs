@@ -327,4 +327,9 @@ defmodule Image.Test do
     joined = Image.join_bands!(bands)
     assert {:ok, +0.0, _} = Image.compare(image, joined)
   end
+
+  test "Opening an HEIC binary" do
+    heic = File.read!("./test/support/images/sample1.heic")
+    assert {:ok, _image} = Image.open(heic)
+  end
 end

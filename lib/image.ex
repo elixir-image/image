@@ -757,6 +757,21 @@ defmodule Image do
     from_binary(image, options)
   end
 
+  # 'heic': the usual HEIF images
+  # 'heix': 10bit images, or anything that uses h265 with range extension
+  # 'hevc', 'hevx': brands for image sequences
+  # 'heim': multiview
+  # 'heis': scalable
+  # 'hevm': multiview sequence
+  # 'hevs': sc
+
+  @heic_types ["heic", "heix", "hevc", "hevx", "heim", "heis", "hevm", "hevs", "mif1"]
+
+  def open(<<_::bytes-4, "ftyp", type::bytes-4, _rest::binary>> = image, options)
+      when type in @heic_types do
+    from_binary(image, options)
+  end
+
   # A file path
   def open(image_path, options) when is_binary(image_path) do
     with {:ok, options} <- Options.Open.validate_options(options) do
