@@ -15,7 +15,7 @@ color = fn -> [Enum.random(1..255), Enum.random(1..255), Enum.random(1..255)] en
 {time, {:ok, image}} = :timer.tc fn ->
   Vix.Vips.Image.mutate image, fn mut_img ->
     Enum.each(1..circles, fn _circle ->
-      :ok = Vix.Vips.MutableImage.draw_circle(mut_img,
+      :ok = Vix.Vips.MutableOperation.draw_circle(mut_img,
         color.(),
         cx.(width),
         cy.(height),
