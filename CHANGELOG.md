@@ -2,19 +2,7 @@
 
 ## Image 0.54.0
 
-This is the changelog for Image version 0.54.1 released on 19th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
-
-### Bug Fixes
-
-* Return an error if opening a video stream returns a `Evision.VideoCapture.t` struct but the `isOpened` field is `false`.
-
-### Enhancements
-
-* Add documentation to `Image.Video.open/2` illustrating how to open RTSP video streams.
-
-## Image 0.54.0
-
-This is the changelog for Image version 0.54.0 released on July 24th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.54.0 released on August 18th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
@@ -24,9 +12,13 @@ This is the changelog for Image version 0.54.0 released on July 24th, 2024.  For
 
 * Fix using `Image.open/2` with binary HEIC files. HEIC magic numbers are now used to identify if a binary is an HEIC image (as is already done for other image types).
 
+* Return an error if opening a video stream returns a `Evision.VideoCapture.t` struct but the `isOpened` field is `false`.
+
 ### Enhancements
 
 * Adds `Image.vibrance/3` and `Image.vibrance!/3` following the [libvips discussion](https://github.com/libvips/libvips/discussions/4039).
+
+* Add documentation to `Image.Video.open/2` illustrating how to open RTSP video streams.
 
 ## Image 0.53.0
 
