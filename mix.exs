@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.54.0"
+  @version "0.54.1"
 
   @app_name "image"
 
@@ -55,6 +55,7 @@ defmodule Image.MixProject do
 
       # eVision OpenCV bindings
       {:evision, "~> 0.1.33 or ~> 0.2", optional: true},
+      # {:evision, github: "cocoa-xu/evision"},
 
       # For XMP metadata parsing
       {:sweet_xml, "~> 0.7"},

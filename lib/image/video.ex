@@ -93,12 +93,13 @@ if Image.evision_configured?() do
     end
 
     @doc """
-    Opens a video file or video stream for
+    Opens a video file, camera, RTSP URL or video stream for
     frame extraction.
 
     ### Arguments
 
-    * `filename_or_stream` is the filename of a video file
+    * `filename_or_stream` is the filename of a video file,
+      the URL of an [RTSP stream](https://en.wikipedia.org/wiki/Real-Time_Streaming_Protocol)
       or the OpenCV representation of a video stream as
       an integer.  It may also be `:default_camera` to open
       the default camera if there is one.
@@ -120,13 +121,21 @@ if Image.evision_configured?() do
 
     * `{:error, reason}`.
 
-    ### Note
+    ### Notes
 
     * The video `t:VideoCapture.t/0` struct that is returned
       includes metadata fields for frame rate (:fps), frame width
       (:frame_width), frame height (:frame_height) and frame count
       (:frame_count). *Note that frame count is an approximation due to
       issues in the underlying OpenCV*.
+
+    * Opening an RTSP stream requires that `evision` be built with
+      `ffpmeg` support. Since the prebuilt `evision` packages are not
+      built with `ffmpeg` support, `evision` must be installed and
+      compiled with the environment variable `EVISION_PREFER_PRECOMPILED=false`
+      after ensuring that `ffmpeg` is installed. On a MacOS system,
+      `brew install ffmpeg && brew link ffpeg` or similar will perform
+      that installation. See also the [detailed evision installation instructions](https://github.com/cocoa-xu/evision/wiki/Compile-evision-from-source).
 
     ### Example
 
@@ -143,8 +152,11 @@ if Image.evision_configured?() do
     def open(filename, options) when is_binary(filename) and is_list(options) do
       with {:ok, backend} <- Options.Video.validate_open_options(options) do
         case VideoCapture.videoCapture(filename, apiPreference: backend) do
-          %VideoCapture{} = video ->
+          %VideoCapture{isOpened: true} = video ->
             {:ok, video}
+
+          %VideoCapture{isOpened: false} ->
+            {:error, "Could not open video #{inspect(filename)}"}
 
           error ->
             {:error, "Could not open video #{inspect(filename)}. Error #{inspect(error)}"}
@@ -155,8 +167,11 @@ if Image.evision_configured?() do
     def open(camera, options) when is_integer(camera) and camera >= 0 do
       with {:ok, backend} <- Options.Video.validate_open_options(options) do
         case VideoCapture.videoCapture(camera, apiPreference: backend) do
-          %VideoCapture{} = video ->
+          %VideoCapture{isOpened: true} = video ->
             {:ok, video}
+
+          %VideoCapture{isOpened: false} ->
+            {:error, "Could not open camera #{inspect(camera)}"}
 
           error ->
             {:error, "Could not open the camera. Error #{inspect(error)}"}
@@ -171,12 +186,16 @@ if Image.evision_configured?() do
     end
 
     @doc """
-    Opens a video file for frame extraction or
-    raises an exception.
+    Opens a video file, camera, RTSP URL or video stream for
+    frame extraction or raises an exception.
 
     ### Arguments
 
-    * `filename` is the filename of a video file.
+    * `filename_or_stream` is the filename of a video file,
+      the URL of an [RTSP stream](https://en.wikipedia.org/wiki/Real-Time_Streaming_Protocol)
+      or the OpenCV representation of a video stream as
+      an integer.  It may also be `:default_camera` to open
+      the default camera if there is one.
 
     * `options` is a keyword list of options. The default
       is `[]`.
@@ -194,6 +213,22 @@ if Image.evision_configured?() do
     * `video` or
 
     * raises an exception.
+
+    ### Notes
+
+    * The video `t:VideoCapture.t/0` struct that is returned
+      includes metadata fields for frame rate (:fps), frame width
+      (:frame_width), frame height (:frame_height) and frame count
+      (:frame_count). *Note that frame count is an approximation due to
+      issues in the underlying OpenCV*.
+
+    * Opening an RTSP stream requires that `evision` be built with
+      `ffpmeg` support. Since the prebuilt `evision` packages are not
+      built with `ffmpeg` support, `evision` must be installed and
+      compiled with the environment variable `EVISION_PREFER_PRECOMPILED=false`
+      after ensuring that `ffmpeg` is installed. On a MacOS system,
+      `brew install ffmpeg && brew link ffpeg` or similar will perform
+      that installation. See also the [detailed evision installation instructions](https://github.com/cocoa-xu/evision/wiki/Compile-evision-from-source).
 
     ### Example
 

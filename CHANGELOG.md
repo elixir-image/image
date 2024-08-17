@@ -2,6 +2,18 @@
 
 ## Image 0.54.0
 
+This is the changelog for Image version 0.54.1 released on 19th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Return an error if opening a video stream returns a `Evision.VideoCapture.t` struct but the `isOpened` field is `false`.
+
+### Enhancements
+
+* Add documentation to `Image.Video.open/2` illustrating how to open RTSP video streams.
+
+## Image 0.54.0
+
 This is the changelog for Image version 0.54.0 released on July 24th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes

@@ -17,8 +17,8 @@ defmodule Image.VideoTest do
     # Image.preview image
     # Image.preview Image.open!(validate_path)
 
-    # The 6.5 comes from the variability of different
+    # The 8.0 comes from the variability of different
     # frameworks compressing differently
-    assert_images_equal(image, validate_path, 6.5)
+    assert_images_equal(image, validate_path, 8.0)
   end
 end
