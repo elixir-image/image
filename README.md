@@ -31,16 +31,16 @@ Starting from v0.16.0 [Vix](https://hex.pm/packages/vix) which underpins `Image`
 
 By default `Vix` provides pre-built NIF and `libvips` and uses them for operation. This makes deployment and release of your application a breeze. With this you don't have to install any compiler tools or `libvips` to use `Vix`. This is especially useful when using `Image` with [Livebook](https://livebook.dev).
 
-However the pre-built NIF and pre-built libvips do not include dependencies that support all image formats and operations. If you require those formats or operations then you can bring your own `libvips` by installing it manually and configure `Vix` to use that instead. `Vix` makes sure to generate relevant functions and documentation based on the dependencies you bring. For example, if you install libvips with `tiff` support, vix will generate `tiff` related bindings for you.
+However, the pre-built NIF and pre-built libvips do not include dependencies that support all image formats and operations. If you require those formats or operations then you can bring your own `libvips` by installing it manually and configure `Vix` to use that instead. `Vix` makes sure to generate relevant functions and documentation based on the dependencies you bring. For example, if you install libvips with `tiff` support, vix will generate `tiff` related bindings for you.
 
 You can choose this using `VIX_COMPILATION_MODE` environment variable. This variable must be set both during compilation and runtime. Possible values are:
 
 * `PRECOMPILED_NIF_AND_LIBVIPS` (Default): Uses vix provided NIF and libvips. No need to install any additional dependencies. Big thanks to sharp library maintainers, pre-compiled libvips is based on: https://github.com/lovell/sharp-libvips/.
 
-* `PLATFORM_PROVIDED_LIBVIPS`: Uses platform provided libvips and NIF will be compiled during compilation phase. The following build tools are required generate the `Vix` NIF:
+* `PLATFORM_PROVIDED_LIBVIPS`: Uses platform provided libvips and NIF will be compiled during the compilation phase. The following build tools are required generate the `Vix` NIF:
   * Install a platform specific `libvips`. This can be compiled from source (see https://www.libvips.org/install.html) or via a platform package manager. For example:
-    * macOS: brew brew install libvips
-    * Linux: apt install libvips-dev For more details see
+    * macOS: `brew install libvips`
+    * Linux: `apt install libvips-dev`
   * Install `pkg-config`
   * Ensure a supported C compiler is installed
 
@@ -111,7 +111,7 @@ You can choose this using `VIX_COMPILATION_MODE` environment variable. This vari
 
 [eVision (OpenCV)](https://github.com/cocoa-xu/evision) provides Elixir bindings to [OpenCV](https://opencv.org), the most well-known computer vision library.
 
-As of [Image version 0.9.0](https://hex,pm/packages/image/0.9.0), experimental support for [eVision (OpenCV)](https://github.com/cocoa-xu/evision) is provided. There is extensive documentation on how to install `eVision` and the required [OpenCV](https://opencv.org). However to most cases the following should be enough:
+As of [Image version 0.9.0](https://hex,pm/packages/image/0.9.0), experimental support for [eVision (OpenCV)](https://github.com/cocoa-xu/evision) is provided. There is extensive documentation on how to install `eVision` and the required [OpenCV](https://opencv.org). However in most cases, the following should be enough:
 
 1. Add `eVision` to your `mix.exs`. [exla](https://hex.pm/packages/exla) may be optionally configured too, see the `Nx` installation section above.
 
@@ -142,7 +142,7 @@ Then proceed as normal. `eVision` will download a precompiled `OpenCV` for the a
 
 ### GLib Debug Output
 
-The platform upon which `Image` and `Vix` stand is [libvips](https://www.libvips.org), a `C` library that performs the image manipulation. It's `libvips` that delivers the speed, memory efficiency and functionality.
+The platform upon which `Image` and `Vix` stand is [libvips](https://www.libvips.org), a `C` library that performs the image manipulation. It's `libvips` that delivers the speed, memory efficiency, and functionality.
 
 `libvips` uses the [GLib](https://docs.gtk.org/glib/) library which has configurable debug output. This output depends on the setting of the environment variable `G_DEBUG`.  The initial value will depend on the installation method of `libvips` for a given system. It can be changed by setting the `G_DEBUG` environment variable to one of the following:
 
