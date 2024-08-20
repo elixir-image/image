@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.54.1
+
+This is the changelog for Image version 0.54.1 released on August 20th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Adjust `Image.Math.-/1` (unary minus) syntax to be compatible on more elixir versions. Should be ok back to Elixir 1.12 depending on vix version support requirement on OTP.
+
 ## Image 0.54.0
 
 This is the changelog for Image version 0.54.0 released on August 18th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

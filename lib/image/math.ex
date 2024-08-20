@@ -57,7 +57,7 @@ defmodule Image.Math do
   image or a number.
 
   """
-  def -(%Vimage{} = a) do
+  def -a when is_struct(a, Vimage) do
     multiply!(a, -1)
   end
 
