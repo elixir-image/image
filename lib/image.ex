@@ -1385,8 +1385,8 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` (or `{:ok, binary}` if the destination is
-    `:memory`) or
+  * `{:ok, image}`, or `{:ok, binary}` if the destination is
+    `:memory`) or `{:ok, conn}` if the destination is a `t:Plug.Connt.t/0` or
 
   * `{:error, reason}`
 
@@ -1397,7 +1397,7 @@ defmodule Image do
             image_path :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t() | :memory,
             options :: Options.Write.image_write_options()
           ) ::
-            {:ok, Vimage.t()} | {:ok, binary()} | {:error, error_message()}
+            {:ok, Vimage.t()} | {:ok, binary()} | {:ok, Plug.Conn.t()} | {:error, error_message()}
   else
     @spec write(
             image :: Vimage.t(),
@@ -1438,7 +1438,7 @@ defmodule Image do
           end)
 
         with %Plug.Conn{} <- result do
-          {:ok, image}
+          {:ok, result}
         end
       end
     end
