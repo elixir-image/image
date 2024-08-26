@@ -22,7 +22,7 @@ defmodule Image.Application do
   end
 
   # When Bumblebee is available
-  if Code.ensure_loaded?(Bumblebee) do
+  if Image.bumblebee_configured?() do
     @services [
       {{Image.Classification, :classifier, []}, true},
       {{Image.Generation, :generator, []}, false}
