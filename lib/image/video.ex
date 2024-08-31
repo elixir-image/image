@@ -58,13 +58,13 @@ if Image.evision_configured?() do
 
     ### Arguments
 
-    * `filename` is the filename of a video file
+    * `filename` is the filename of a video file.
 
     ### Returns
 
-    * `{:ok, video}` or
+    * The result of the user function or
 
-    * `{:error, reason}`
+    * `{:error, reason}` if the video file could not be opened.
 
     ### Example
 
@@ -73,8 +73,7 @@ if Image.evision_configured?() do
         ...> end
 
     """
-    @spec with_video(filename :: Path.t(), (VideoCapture.t() -> any())) ::
-            {:ok, VideoCapture.t()} | {:error, Image.error_message()}
+    @spec with_video(filename :: Path.t(), (VideoCapture.t() -> any())) :: any()
 
     def with_video(filename, fun) when is_binary(filename) and is_function(fun, 1) do
       filename

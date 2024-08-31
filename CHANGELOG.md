@@ -8,6 +8,8 @@ This is the changelog for Image version 0.54.2 released on _______, 2024.  For o
 
 * Return the updated `t:Plug.Conn.t/0` when calling `Image.write/2` with the destination being a plug. Thanks to @lostkobrakai for the issue. Closes #159.
 
+* Fix the spec for `Image.Video.with_video/2`. Thanks to @nikitosing for the report. Closes #162.
+
 ## Image 0.54.1
 
 This is the changelog for Image version 0.54.1 released on August 20th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
