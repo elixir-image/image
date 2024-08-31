@@ -2,11 +2,13 @@
 
 ## Image 0.54.2
 
-This is the changelog for Image version 0.54.2 released on _______, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.54.2 released on September 1st, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
 * Return the updated `t:Plug.Conn.t/0` when calling `Image.write/2` with the destination being a plug. Thanks to @lostkobrakai for the issue. Closes #159.
+
+* Fixes `Image.Application` to use `Image.bumblebee_configured?/0`. Thanks to @mat-hek for the PR. Closes #160.
 
 * Fix the spec for `Image.Video.with_video/2`. Thanks to @nikitosing for the report. Closes #162.
 
