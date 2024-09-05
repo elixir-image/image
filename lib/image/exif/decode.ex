@@ -14,19 +14,21 @@ defmodule Image.Exif.Decode do
   def tag(:tiff, 0x0100, value), do: {:image_width, value}
   def tag(:tiff, 0x0101, value), do: {:image_height, value}
   def tag(:tiff, 0x010D, value), do: {:document_name, value}
-  def tag(:tiff, 0x010E, value), do: {:image_description, value}
-  def tag(:tiff, 0x010F, value), do: {:make, value}
-  def tag(:tiff, 0x0110, value), do: {:model, value}
+  def tag(:tiff, 0x010E, value), do: {:image_description, trim(value)}
+  def tag(:tiff, 0x010F, value), do: {:make, trim(value)}
+  def tag(:tiff, 0x0110, value), do: {:model, trim(value)}
   def tag(:tiff, 0x0112, value), do: {:orientation, orientation(value)}
   def tag(:tiff, 0x011A, value), do: {:x_resolution, value}
   def tag(:tiff, 0x011B, value), do: {:y_resolution, value}
   def tag(:tiff, 0x0128, value), do: {:resolution_units, resolution(value)}
-  def tag(:tiff, 0x0131, value), do: {:software, value}
+  def tag(:tiff, 0x0131, value), do: {:software, trim(value)}
   def tag(:tiff, 0x0132, value), do: {:modify_date, date_time(value)}
   def tag(:tiff, 0x0213, value), do: {:YCbCr_positioning, ycbcr_positioning(value)}
 
   def tag(:tiff, 0x8769, value), do: {:exif, value}
   def tag(:tiff, 0x8825, value), do: {:gps, value}
+
+  def tag(:tiff, 0xC4A5, value), do: {:print_image_matching, value}
 
   def tag(:exif, 0x0201, value), do: {:thumbnail_offset, value}
   def tag(:exif, 0x0202, value), do: {:thumbnail_size, value}
@@ -66,6 +68,7 @@ defmodule Image.Exif.Decode do
   def tag(_, 0xA002, value), do: {:exif_image_width, value}
   def tag(_, 0xA003, value), do: {:exif_image_height, value}
   def tag(_, 0xA004, value), do: {:related_sound_file, value}
+  def tag(_, 0xA005, value), do: {:interopt_offset, value}
   def tag(_, 0xA20B, value), do: {:flash_energy, value}
   def tag(_, 0xA20C, value), do: {:spatial_frequency_response, value}
   def tag(_, 0xA20E, value), do: {:focal_plane_x_resolution, value}
@@ -98,8 +101,8 @@ defmodule Image.Exif.Decode do
   def tag(_, 0xA434, value), do: {:lens_model, value}
   def tag(_, 0xA435, value), do: {:lens_serial_number, value}
 
-  def tag(_, 0x8298, value), do: {:copyright, value}
-  def tag(_, 0x13B, value), do: {:artist, value}
+  def tag(_, 0x8298, value), do: {:copyright, trim(value)}
+  def tag(_, 0x13B, value), do: {:artist, trim(value)}
   def tag(_, 0x9010, value), do: {:time_offset, value}
   def tag(_, 0xA431, value), do: {:body_serial_number, value}
 
@@ -120,10 +123,23 @@ defmodule Image.Exif.Decode do
   defp date_time(date_time) do
     case String.split(date_time, [":", "-", "T", " "]) do
       [y, m, d, h, mm, s] ->
-        NaiveDateTime.new!(int(y), int(m), int(d), int(h), int(mm), int(s))
+        case NaiveDateTime.new(int(y), int(m), int(d), int(h), int(mm), int(s)) do
+          {:ok, naive_datetime} -> naive_datetime
+          {:error, _} -> date_time
+        end
 
       _other ->
         date_time
+    end
+  end
+
+  def trim(value) do
+    cond do
+      <<0::size(byte_size(value) * 8)>> == value ->
+        nil
+
+      true ->
+        String.trim(value)
     end
   end
 

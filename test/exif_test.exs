@@ -21,6 +21,6 @@ defmodule Image.ExitTest do
     image = image_path("kodak-dc210.jpg")
     {:ok, image} = Image.open(image, access: :random)
 
-    assert {:ok, %{copyright: "", image_description: ""}} = Image.exif(image)
+    assert {:ok, %{copyright: nil, image_description: nil}} = Image.exif(image)
   end
 end

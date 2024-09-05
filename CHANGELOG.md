@@ -1,5 +1,23 @@
 # Changelog
 
+## Image 0.54.3
+
+This is the changelog for Image version 0.54.3 released on September 6th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix parsing invalid date time in Exif data. When invalid, the raw underlying string is returned.
+
+* Trim strings in Exif data. As a result, empty strings will be returned now as `nil` rather than `""`.
+
+* Replace a ``<<0, ....>>` sequence in an Exif string value with `nil`.
+
+* Decode additional tags:
+
+  * Exif tag `0xA005`, Interop Offset. The value is in internal file pointer so has no meaningful interpretation in `image`.
+
+  * TIFF tag `0xC4A5`, Print Image Matching. According to [this source](https://www.loc.gov/preservation/digital/formats/content/tiff_tags.shtml) the field has no standardised values so the raw value is returned.
+
 ## Image 0.54.2
 
 This is the changelog for Image version 0.54.2 released on September 1st, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
