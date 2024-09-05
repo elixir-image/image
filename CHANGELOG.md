@@ -10,7 +10,7 @@ This is the changelog for Image version 0.54.3 released on September 6th, 2024. 
 
 * Trim strings in Exif data. As a result, empty strings will be returned now as `nil` rather than `""`.
 
-* Replace a ``<<0, ....>>` sequence in an Exif string value with `nil`.
+* Replace a `<<0, ....>>` sequence in an Exif string value with `nil`.
 
 * Decode additional tags:
 
