@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.54.4
+
+This is the changelog for Image version 0.54.4 released on ________, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Raises minimum Elixir version to 1.14 since that is the minimum requriement now for [Nx](https://hex.pm/packages/nx).
+
+* Add Elixir 1.14 to the CI matrix. Thanks very much to @@leandrocp for the PR. Closes #164.
+
 ## Image 0.54.3
 
 This is the changelog for Image version 0.54.3 released on September 6th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
