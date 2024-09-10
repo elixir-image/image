@@ -45,8 +45,8 @@ jobs:
       matrix:
         include:
           # minimum required versions
-          - otp: "24"
-            elixir: "1.14.0"
+          - otp: "26.2"
+            elixir: "1.14.4-otp-26"
           # latest
           - otp: "27"
             elixir: "1.17.2-otp-27"
