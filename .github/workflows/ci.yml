@@ -45,11 +45,12 @@ jobs:
       matrix:
         include:
           # minimum required versions
-          - otp: "26.2"
-            elixir: "1.14.4-otp-26"
+          - otp: "25.3"
+            elixir: "1.14.4-otp-25"
           # latest
           - otp: "27"
             elixir: "1.17.2-otp-27"
+            lint: true
     steps:
     # Step: Setup Elixir + Erlang image as the base.
     - name: Set up Elixir
@@ -132,6 +133,7 @@ jobs:
     # Customize this step if a different behavior is desired.
     - name: Compiles without warnings
       run: mix compile --warnings-as-errors
+      if: ${{ matrix.lint }}
 
     # Step: Check that the checked in code has already been formatted.
     # This step fails if something was found unformatted.
@@ -146,3 +148,4 @@ jobs:
     # Step: Execute dialyzer.
     - name: Run dialyzer
       run: mix dialyzer
+      if: ${{ matrix.lint }}
