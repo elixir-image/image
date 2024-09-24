@@ -377,7 +377,7 @@ defmodule Image.Text do
     `#FF00FF` for the color "Fuchsia".
 
   """
-  @spec simple_text(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec simple_text(String.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
   def simple_text(string, options \\ [])
 
   def simple_text(string, options) when is_list(options) do
@@ -473,7 +473,7 @@ defmodule Image.Text do
     `#FF00FF` for the color "Fuchsia".
 
   """
-  @spec simple_text!(Vimage.t(), Keyword.t()) :: Vimage.t() | no_return()
+  @spec simple_text!(String.t(), Keyword.t()) :: Vimage.t() | no_return()
   def simple_text!(string, options \\ []) do
     case simple_text(string, options) do
       {:ok, image} -> image
