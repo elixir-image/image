@@ -332,8 +332,7 @@ defmodule Image.Text do
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
-    a background. A black background will be forced if a
-    `:background_fill_color` is not provided
+    a background.
 
   * `:dpi` sets the resolution of the text generation. The
     default `72` which is suitable for screen output. `300`
@@ -420,8 +419,7 @@ defmodule Image.Text do
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
-    a background. A black background will be forced if a
-    `:background_fill_color` is not provided
+    a background.
 
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
