@@ -45,6 +45,8 @@ defmodule Image.Exif.Decode do
   def tag(_, 0x9000, value), do: {:exif_version, version(value)}
   def tag(_, 0x9003, value), do: {:datetime_original, date_time(value)}
   def tag(_, 0x9004, value), do: {:datetime_digitized, date_time(value)}
+  def tag(_, 0x9011, value), do: {:datetime_original_offset, value}
+  def tag(_, 0x9012, value), do: {:datetime_digitized_offset, value}
   def tag(_, 0x9101, value), do: {:component_configuration, component_configuration(value)}
   def tag(_, 0x9102, value), do: {:compressed_bits_per_pixel, value}
   def tag(_, 0x9201, value), do: {:shutter_speed_value, value}
@@ -333,12 +335,20 @@ defmodule Image.Exif.Decode do
   defp ycbcr_positioning(2), do: "Co-sited"
   defp ycbcr_positioning(other), do: "Unknown (#{other})"
 
-  @spec version(charlist()) :: binary()
+  @spec version(charlist() | binary()) :: binary()
   defp version([?0, major, minor1, minor2]) do
     <<major, ?., minor1, minor2>>
   end
 
   defp version([major1, major2, minor1, minor2]) do
+    <<major1, major2, ?., minor1, minor2>>
+  end
+
+  defp version(<<?0, major, minor1, minor2>>) do
+    <<major, ?., minor1, minor2>>
+  end
+
+  defp version(<<major1, major2, minor1, minor2>>) do
     <<major1, major2, ?., minor1, minor2>>
   end
 end
