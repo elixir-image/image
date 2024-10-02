@@ -325,7 +325,7 @@ defmodule Image.Text do
     you can pass it by calling with `Phoenix.HTML.raw/1`
     on the string first.
 
-  * `options` is a `t:Keyword.t/0` list of options
+  * `options` is a `t:Keyword.t/0` list of options.
 
   ### Options
 
@@ -339,9 +339,13 @@ defmodule Image.Text do
     default `72` which is suitable for screen output. `300`
     may be more appropriate for printed output.
 
-  * `:width` is the width of the generated text image.
+  * `:width` is the maximum width of the generated text image in pixels. The
+    default is calculated by the rendering engine based upon the font
+    and other options.
 
-  * `:height` is the height of the generated text image.
+  * `:height` is the maximum height of the generated text image in pixels. The
+    default is calculated by the rendering engine based upon the font
+    and other options.
 
   * `:font_size` is an integer font size in pixels. The
     default is `50`. If set to `0`, the font size will
@@ -367,7 +371,7 @@ defmodule Image.Text do
 
   * `{:ok, image}` or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -430,9 +434,13 @@ defmodule Image.Text do
     default `72` which is suitable for screen output. `300`
     may be more appropriate for printed output.
 
-  * `:width` is the width of the generated text image.
+  * `:width` is the maximum width of the generated text image in pixels. The
+    default is calculated by the rendering engine based upon the font
+    and other options.
 
-  * `:height` is the height of the generated text image.
+  * `:height` is the maximum height of the generated text image in pixels. The
+    default is calculated by the rendering engine based upon the font
+    and other options.
 
   * `:font_size` is an integer font size in pixels. The
     default is `50`. If set to `0`, the font size will
@@ -458,7 +466,7 @@ defmodule Image.Text do
 
   * `image` or
 
-  * raises an exception
+  * raises an exception.
 
   ### Notes
 
