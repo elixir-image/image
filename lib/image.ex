@@ -9723,7 +9723,8 @@ defmodule Image do
 
   @doc """
   Compare two images using a particular comparison metric
-  returning a score indicating the similarity of the images.
+  returning a score indicating the similarity of the images and
+  an image highlighting the differences between the two images.
 
   ### Arguments
 
@@ -9758,6 +9759,16 @@ defmodule Image do
       the two images are less similar but the number itself cannot be
       interpreted as a percentage value.
 
+  * `:saturation` is a float between `0.0` and `1.0` that is applied to the
+    base image when overlaying the difference image. This may help the difference
+    pixels become more obvious. The default ia `1.0` meaning no change in
+    saturation.
+
+  * `:brightness` is a float between `0.0` and `1.0` that is applied to the
+    base image when overlaying the difference image. This may help the difference
+    pixels become more obvious. The default ia `1.0` meaning no change in
+    brightness.
+
   * `:difference_color` is the color to be used for the pixels that are
     different between the two images. This can be specified as a single integer
     which will be applied to all bands, or a list of integers representing
@@ -9770,16 +9781,6 @@ defmodule Image do
     image. This has the effect of boosting the overall brightness of the difference
     pixels making them stand out more against the background image. The default
     is `1.5`.
-
-  * `:saturation` is a float between `0.0` and `1.0` that is applied to the
-    base image when overlaying the difference image. This may help the difference
-    pixels become more obvious. The default ia `1.0` meaning no change in
-    saturation.
-
-  * `:brightness` is a float between `0.0` and `1.0` that is applied to the
-    base image when overlaying the difference image. This may help the difference
-    pixels become more obvious. The default ia `1.0` meaning no change in
-    brightness.
 
   ### Notes
 
@@ -9799,7 +9800,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, comparison_score}` or
+  * `{:ok, comparison_metric, difference_image}` or
 
   * `{:error, reason}`
 
@@ -9956,7 +9957,7 @@ defmodule Image do
     end
   end
 
-  def dhash_pixels(image, convolution, hash_size) do
+  defp dhash_pixels(image, convolution, hash_size) do
     image
     |> pixelate_for_hash(hash_size)
     |> Operation.cast!(:VIPS_FORMAT_INT)
