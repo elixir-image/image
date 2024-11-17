@@ -4673,7 +4673,7 @@ defmodule Image do
   """
   @doc subject: "Crop"
 
-  @spec crop!(Vimage.t(), integer(), integer(), pos_integer(), pos_integer()) ::
+  @spec crop!(Vimage.t(), x_location(), y_location(), pos_integer(), pos_integer()) ::
           Vimage.t() | no_return
 
   def crop!(%Vimage{} = image, left, top, width, height) do
