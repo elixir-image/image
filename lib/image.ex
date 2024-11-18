@@ -1332,7 +1332,7 @@ defmodule Image do
     to an icc profile file. The default is to use the icc
     profile of the input image if there is one.
 
-  #### GIF options
+  #### GIF images
 
   * `:interframe_maxerror` Maximum inter-frame error for transparency.
     The value must be in the range `0..32`.
@@ -1361,6 +1361,12 @@ defmodule Image do
     to apply a number of techniques to minimise the file
     size of the `heif` file at the cost of additional time to
     save the image. All metadata will also be removed.
+
+  ### TIFF options
+
+  * `:pyramid` is a boolean indicating whether to write the
+    image as an
+    [image pyramid](https://en.wikipedia.org/wiki/Pyramid_(image_processing)).
 
   ### Merging image type options
 

@@ -45,6 +45,7 @@ defmodule Image.Options.Write do
   @typedoc "Options for writing a tiff file with `Image.write/2`."
   @type tiff_write_option ::
           {:icc_profile, Path.t()}
+          | {:pyramid, boolean()}
 
   @typedoc "Options for writing a heif file with `Image.write/2`."
   @type heif_write_option ::
@@ -224,6 +225,11 @@ defmodule Image.Options.Write do
       |> Keyword.delete(:minimize_file_size)
       |> Keyword.put(:strip, true)
 
+    {:cont, options}
+  end
+
+  # For tiff files, allow the :pyramid option
+  defp validate_option({:pyramid, pyramid?}, options, image_type) when is_tiff(image_type) and is_boolean(pyramid?) do
     {:cont, options}
   end
 

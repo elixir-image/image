@@ -1,5 +1,17 @@
 # Changelog
 
+## Image 0.55.0
+
+This is the changelog for Image version 0.55.0 released on November 19th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix spec for `Image.crop!/4`. Thanks to @BobbyMcWho for the PR. Closes #171.
+
+### Enhancements
+
+* Support the `:pyramid` option for saving `.tiff` files. Thanks to @dersmon for the suggestion. Closes #172.
+
 ## Image 0.54.4
 
 This is the changelog for Image version 0.54.4 released on October 3rd, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
