@@ -229,7 +229,8 @@ defmodule Image.Options.Write do
   end
 
   # For tiff files, allow the :pyramid option
-  defp validate_option({:pyramid, pyramid?}, options, image_type) when is_tiff(image_type) and is_boolean(pyramid?) do
+  defp validate_option({:pyramid, pyramid?}, options, image_type)
+       when is_tiff(image_type) and is_boolean(pyramid?) do
     {:cont, options}
   end
 

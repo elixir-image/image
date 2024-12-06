@@ -19,11 +19,11 @@ defmodule Image.Draw do
 
   @typedoc "Bounding box returned from Image.Draw.flood/4"
   @type box :: %{
-    height: non_neg_integer(),
-    width: non_neg_integer(),
-    top: non_neg_integer(),
-    left: non_neg_integer()
-  }
+          height: non_neg_integer(),
+          width: non_neg_integer(),
+          top: non_neg_integer(),
+          left: non_neg_integer()
+        }
 
   @doc "Validates acceptable circle dimensions"
   defguard is_circle(cx, cy, radius)

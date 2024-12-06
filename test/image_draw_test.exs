@@ -51,6 +51,6 @@ defmodule Image.Draw.Test do
 
   test "flood an image" do
     assert {:ok, {%Vimage{} = _image, %{left: 0, width: 1, height: 2, top: 0}}} =
-      Image.new!(1, 2) |> Image.Draw.flood(0, 0, color: :white)
+             Image.new!(1, 2) |> Image.Draw.flood(0, 0, color: :white)
   end
 end
