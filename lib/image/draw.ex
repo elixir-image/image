@@ -17,6 +17,14 @@ defmodule Image.Draw do
 
   import Image, only: :macros
 
+  @typedoc "Bounding box returned from Image.Draw.flood/4"
+  @type box :: %{
+    height: non_neg_integer(),
+    width: non_neg_integer(),
+    top: non_neg_integer(),
+    left: non_neg_integer()
+  }
+
   @doc "Validates acceptable circle dimensions"
   defguard is_circle(cx, cy, radius)
            when is_integer(cx) and is_integer(cy) and cx >= 0 and cy >= 0 and is_integer(radius) and
@@ -586,7 +594,7 @@ defmodule Image.Draw do
           non_neg_integer(),
           Options.Draw.line()
         ) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t() | MutableImage.t()} | {:error, Image.error_message()}
 
   def line(image, x1, y1, x2, y2, options \\ [])
 
@@ -885,9 +893,7 @@ defmodule Image.Draw do
           non_neg_integer(),
           Options.Draw.flood()
         ) ::
-          {:ok,
-           {Vimage.t(), %{height: integer(), width: integer(), top: integer(), left: integer()}}}
-          | {:error, Image.error_message()}
+          {:ok, {Vimage.t(), box()}} | {:error, Image.error_message()}
 
   def flood(%image_type{} = image, left, top, options \\ [])
       when is_image(image_type) and is_point(left, top) do

@@ -2,6 +2,8 @@ defmodule Image.Draw.Test do
   use ExUnit.Case, async: true
   import Image.TestSupport
 
+  alias Vix.Vips.Image, as: Vimage
+
   test "mutating draw a rectangle on a white image" do
     {:ok, image} = Vix.Vips.Operation.black!(500, 500, bands: 3) |> Vix.Vips.Operation.invert()
 
@@ -45,5 +47,10 @@ defmodule Image.Draw.Test do
     {:ok, diagonal} = Image.Draw.line(image, 0, 0, 99, 99)
 
     assert_images_equal(diagonal, validate_path("draw/line.png"))
+  end
+
+  test "flood an image" do
+    assert {:ok, {%Vimage{} = _image, %{left: 0, width: 1, height: 2, top: 0}}} =
+      Image.new!(1, 2) |> Image.Draw.flood(0, 0, color: :white)
   end
 end

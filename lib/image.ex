@@ -15,7 +15,8 @@ defmodule Image do
 
   """
 
-  alias Vix.Vips.{Operation, MutableImage}
+  alias Vix.Vips.Operation
+  alias Vix.Vips.MutableImage
   alias Vix.Vips.Image, as: Vimage
 
   alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode, BandFormat}
@@ -7542,14 +7543,15 @@ defmodule Image do
   """
   @doc subject: "Operation", since: "0.7.0"
 
-  @spec mutate(Vimage.t(), (Vix.Vips.MutableImage.t() -> any())) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+  @spec mutate(Vimage.t(), (MutableImage.t() -> any())) ::
+          {:ok, Vimage.t()} | {:ok, {Vimage.t(), term()}} | {:error, error_message()}
 
   def mutate(%Vimage{} = image, fun) when is_function(fun, 1) do
     case Vimage.mutate(image, fun) do
       {:error, reason} -> {:error, reason}
-      {:ok, {image, _other}} -> {:ok, image}
-      {:ok, image} -> {:ok, image}
+      {:ok, {%Vimage{} = image, {%MutableImage{} = _mut, term}}} -> {:ok, {image, term}}
+      {:ok, {%Vimage{} = image, %MutableImage{} = _mut}} -> {:ok, image}
+      {:ok, %Vimage{} = image} -> {:ok, image}
     end
   end
 
