@@ -887,6 +887,7 @@ defmodule Image.Draw do
         ) ::
           {:ok,
            {Vimage.t(), %{height: integer(), width: integer(), top: integer(), left: integer()}}}
+          | {:ok, Vimage.t()}
           | {:error, Image.error_message()}
 
   def flood(%image_type{} = image, left, top, options \\ [])
@@ -977,6 +978,7 @@ defmodule Image.Draw do
   def flood!(%Vimage{} = image, left, top, options \\ []) do
     case flood(image, left, top, options) do
       {:ok, {image, _location}} -> image
+      {:ok, %Vimage{} = image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
   end
