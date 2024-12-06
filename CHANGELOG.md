@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.55.1
+
+This is the changelog for Image version 0.55.1 released on December 7th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fixes `Image.mutate/4` to correctly interpret the return results of mutation functions in `Image.Draw`. Thanks to @ramyma for the issue and the PR.  Closes #173, closes #174.
+
 ## Image 0.55.0
 
 This is the changelog for Image version 0.55.0 released on November 19th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
