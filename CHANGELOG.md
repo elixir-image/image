@@ -8,6 +8,14 @@ This is the changelog for Image version 0.55.2 released on December 8th, 2024.  
 
 * Update the version number only so that there is no retired version as the latest on hex.
 
+## Image 0.55.1
+
+This is the changelog for Image version 0.55.1 released on December 8th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Deprecated and retired.
+
 ## Image 0.55.0
 
 This is the changelog for Image version 0.55.0 released on December 8th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
