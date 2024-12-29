@@ -57,6 +57,8 @@ defmodule Image.MixProject do
       {:evision, "~> 0.1.33 or ~> 0.2", optional: true},
       # {:evision, github: "cocoa-xu/evision"},
 
+      {:xav, "~> 0.8", optional: true},
+
       # For XMP metadata parsing
       {:sweet_xml, "~> 0.7"},
 
