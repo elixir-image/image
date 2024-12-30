@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.55.2"
+  @version "0.56.0"
 
   @app_name "image"
 
@@ -9,7 +9,7 @@ defmodule Image.MixProject do
     [
       app: String.to_atom(@app_name),
       version: @version,
-      elixir: "~> 1.14",
+      elixir: "~> 1.15",
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       source_url: "https://github.com/kipcole9/image",
