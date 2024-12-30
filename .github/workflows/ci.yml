@@ -22,21 +22,6 @@ permissions:
 
 jobs:
   test:
-    # Set up a Postgres DB service. By default, Phoenix applications
-    # use Postgres. This creates a database for running tests.
-    # Additional services can be defined here if required.
-    # services:
-    #   db:
-    #     image: postgres:12
-    #     ports: ['5432:5432']
-    #     env:
-    #       POSTGRES_PASSWORD: postgres
-    #     options: >-
-    #       --health-cmd pg_isready
-    #       --health-interval 10s
-    #       --health-timeout 5s
-    #       --health-retries 5
-
     runs-on: ubuntu-latest
     name: Test on OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
     strategy:
@@ -49,8 +34,6 @@ jobs:
       matrix:
         include:
           # minimum required versions
-          - otp: "26.2.5.6"
-            elixir: "1.14.4-otp-26"
           - otp: "26.2.5.6"
             elixir: "1.15.4-otp-26"
           - otp: "26.2.5.6"
@@ -108,7 +91,7 @@ jobs:
     # Install latest libvips
     - name: Get latest version of libvips
       run: |
-        VIPS_LATEST_RELEASE="https://github.com/libvips/libvips/releases/download/v8.14.4/vips-8.14.4.tar.xz"
+        VIPS_LATEST_RELEASE="https://github.com/libvips/libvips/releases/download/v8.15.5/vips-8.15.5.tar.xz"
         echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
 
     - name: Cache libvips artifacts
