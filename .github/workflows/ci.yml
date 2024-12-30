@@ -43,11 +43,12 @@ jobs:
       fail-fast: false
       # Specify the OTP and Elixir versions to use when building
       # and running the workflow steps.
+      # Since Bumblebee required OTP 26 (because of Req/Finch/Telemetry)
+      # we only test on OTP 26 and later. Non-bumblebee installs will 
+      # also work on OTP 25.
       matrix:
         include:
           # minimum required versions
-          - otp: "25.3.2.5"
-            elixir: "1.15.4-otp-25"
           - otp: "26.2.5.6"
             elixir: "1.15.4-otp-26"
           - otp: "26.2.5.6"
