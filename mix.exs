@@ -57,8 +57,6 @@ defmodule Image.MixProject do
       {:evision, "~> 0.1.33 or ~> 0.2", optional: true},
       # {:evision, github: "cocoa-xu/evision"},
 
-      {:xav, "~> 0.8", optional: true},
-
       # For XMP metadata parsing
       {:sweet_xml, "~> 0.7"},
 
@@ -77,11 +75,11 @@ defmodule Image.MixProject do
       # Bumblebee for image classification
       if(otp_release() >= 24,
         do: [
-          {:nx, "~> 0.7", optional: true},
+          {:nx, "~> 0.9", optional: true},
           {:nx_image, "~> 0.1", optional: true},
           {:scholar, "~> 0.3", optional: true},
-          {:bumblebee, "~> 0.3", optional: true},
-          {:exla, "~> 0.5", optional: true},
+          {:bumblebee, "~> 0.6", optional: true},
+          {:exla, "~> 0.9", optional: true},
           {:rustler, "> 0.0.0", optional: true}
         ]
       ),

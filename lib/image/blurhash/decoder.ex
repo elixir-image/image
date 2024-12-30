@@ -81,9 +81,9 @@ defmodule Image.Blurhash.Decoder do
   end
 
   def construct_pixel_iodata(width, height, matrix) do
-    Enum.reduce((height - 1)..0, [], fn y, acc ->
+    Enum.reduce((height - 1)..0//-1, [], fn y, acc ->
       pixel_row =
-        Enum.reduce((width - 1)..0, [], fn x, acc ->
+        Enum.reduce((width - 1)..0//-1, [], fn x, acc ->
           {linear_r, linear_g, linear_b} =
             Enum.reduce(matrix, {0, 0, 0}, fn {{component_x, component_y},
                                                {current_red, current_green, current_blue}},
