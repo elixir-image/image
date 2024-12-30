@@ -9,7 +9,7 @@ defmodule Image.MixProject do
     [
       app: String.to_atom(@app_name),
       version: @version,
-      elixir: "~> 1.15",
+      elixir: "~> 1.14",
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       source_url: "https://github.com/kipcole9/image",

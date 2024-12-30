@@ -1,13 +1,5 @@
 # Changelog
 
-## Image 0.56.0
-
-This is the changelog for Image version 0.56.0 released on December 31st, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
-
-### Enhancements
-
-* Require a minimum Elixir version of 1.15.
-
 ## Image 0.55.2
 
 This is the changelog for Image version 0.55.2 released on December 8th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
