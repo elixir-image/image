@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.56.0
+
+This is the changelog for Image version 0.56.0 released on January 21st, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds `Image.find_trim/2` and `Image.find_trim!/2` to return the bounding box of the non-background area of an image.
+
 ## Image 0.55.2
 
 This is the changelog for Image version 0.55.2 released on December 8th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

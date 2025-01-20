@@ -5139,65 +5139,13 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def trim(%Vimage{} = image, options \\ []) do
-    case Keyword.pop(options, :background) do
-      {:alpha, other_options} ->
-        trim_to_alpha(image, other_options)
+    case find_trim(image, options) do
+      {:ok, {left, top, width, height}} ->
+        crop(image, left, top, width, height)
 
-      _other ->
-        trim_to_color(image, options)
+      error ->
+        error
     end
-  end
-
-  defp trim_to_color(image, options) do
-    with {:ok, options} <- Options.Trim.validate_options(options) do
-      background = maybe_calculate_color(image, options.background)
-      threshold = options.threshold
-
-      case Operation.find_trim(image, background: background, threshold: threshold) do
-        {:ok, {_left, _top, 0, 0}} ->
-          {:error, nothing_to_trim_error()}
-
-        {:ok, {left, top, width, height}} ->
-          Image.crop(image, left, top, width, height)
-
-        error ->
-          error
-      end
-    end
-  end
-
-  defp trim_to_alpha(%Vimage{} = image, options) do
-    image
-    |> split_alpha()
-    |> trim_to_alpha(image, options)
-  end
-
-  defp trim_to_alpha({_other_bands, alpha}, image, options) when not is_nil(alpha) do
-    options = Keyword.put(options, :background, [0, 0, 0])
-
-    with {:ok, options} <- Options.Trim.validate_options(options) do
-      case Operation.find_trim(alpha,
-             background: options.background,
-             threshold: options.threshold
-           ) do
-        {:ok, {_left, _top, 0, 0}} ->
-          {:error, nothing_to_trim_error()}
-
-        {:ok, {left, top, width, height}} ->
-          Image.crop(image, left, top, width, height)
-
-        error ->
-          error
-      end
-    end
-  end
-
-  defp trim_to_alpha({_other_bands, nil}, _image, _options) do
-    {:error, {Image.Error, "Image has no alpha band"}}
-  end
-
-  defp nothing_to_trim_error do
-    {Image.Error, "Could not find anything to trim"}
   end
 
   @doc """
@@ -5251,6 +5199,169 @@ defmodule Image do
   def trim!(%Vimage{} = image, options \\ []) do
     case trim(image, options) do
       {:ok, trimmed} -> trimmed
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Finds the bounding box of the non-background
+  area.
+
+  The image is median-filtered, all the row and column sums
+  of the absolute difference from background are calculated
+  in a single pass.
+
+  Then the first row or column in each of the four directions
+  where the sum is greater than threshold gives the bounding
+  box.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:background` is the color to be considered
+    the background color. The default is automatically
+    detected by averaging the pixels at the top
+    left of the image. If background is set to
+    `:alpha` then the image is trimmed to the size
+    of the alpha mask.
+
+  * `:threshold` is the integer threshold (or color
+    similarity) that is applied when determining the
+    bounds of the non-background area. The default is
+    `10`. The default value means only a small color
+    background color range is considered.  Increasing
+    the threshold value maybe required.
+
+  ### Returns
+
+  * `{:ok, {left, top, width, height}}` which is the bounding box
+    of the non-background area or
+
+  * `{:error, reason}`.
+
+  """
+  @doc subject: "Resize", since: "0.56.0"
+
+  @spec find_trim(image :: Vimage.t(), options :: Options.Trim.trim_options()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def find_trim(%Vimage{} = image, options \\ []) do
+    case Keyword.pop(options, :background) do
+      {:alpha, other_options} ->
+        find_trim_to_alpha(image, other_options)
+
+      _other ->
+        find_trim_to_color(image, options)
+    end
+  end
+
+  defp find_trim_to_color(image, options) do
+    with {:ok, options} <- Options.Trim.validate_options(options) do
+      background = maybe_calculate_color(image, options.background)
+      threshold = options.threshold
+
+      case Operation.find_trim(image, background: background, threshold: threshold) do
+        {:ok, {_left, _top, 0, 0}} ->
+          {:error, nothing_to_trim_error()}
+
+        {:ok, {left, top, width, height}} ->
+          {:ok, {left, top, width, height}}
+
+        error ->
+          error
+      end
+    end
+  end
+
+  defp find_trim_to_alpha(%Vimage{} = image, options) do
+    image
+    |> split_alpha()
+    |> find_trim_to_alpha(image, options)
+  end
+
+  defp find_trim_to_alpha({_other_bands, alpha}, _image, options) when not is_nil(alpha) do
+    options = Keyword.put(options, :background, [0, 0, 0])
+
+    with {:ok, options} <- Options.Trim.validate_options(options) do
+      case Operation.find_trim(alpha,
+             background: options.background,
+             threshold: options.threshold
+           ) do
+        {:ok, {_left, _top, 0, 0}} ->
+          {:error, nothing_to_trim_error()}
+
+        {:ok, {left, top, width, height}} ->
+          {:ok, {left, top, width, height}}
+
+        error ->
+          error
+      end
+    end
+  end
+
+  defp find_trim_to_alpha({_other_bands, nil}, _image, _options) do
+    {:error, {Image.Error, "Image has no alpha band"}}
+  end
+
+  defp nothing_to_trim_error do
+    {Image.Error, "Could not find anything to trim"}
+  end
+
+  @doc """
+  Finds the bounding box of the non-background
+  area or raises an error.
+
+  The image is median-filtered, all the row and column sums
+  of the absolute difference from background are calculated
+  in a single pass.
+
+  Then the first row or column in each of the four directions
+  where the sum is greater than threshold gives the bounding
+  box.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:background` is the color to be considered
+    the background color. The default is automatically
+    detected by averaging the pixels at the top
+    left of the image. If background is set to
+    `:alpha` then the image is trimmed to the size
+    of the alpha mask.
+
+  * `:threshold` is the integer threshold (or color
+    similarity) that is applied when determining the
+    bounds of the non-background area. The default is
+    `10`. The default value means only a small color
+    background color range is considered.  Increasing
+    the threshold value maybe required.
+
+  ### Returns
+
+  * `{left, top, width, height}` which is the bounding box
+    of the non-background area or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Resize", since: "0.56.0"
+
+  @spec find_trim!(image :: Vimage.t(), options :: Options.Trim.trim_options()) ::
+          Vimage.t() | no_return()
+
+  def find_trim!(%Vimage{} = image, options \\ []) do
+    case trim(image, options) do
+      {:ok, bounding_box} -> bounding_box
       {:error, reason} -> raise Image.Error, reason
     end
   end
