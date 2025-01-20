@@ -130,6 +130,12 @@ defmodule Image do
   @type pixel :: [number()] | number()
 
   @typedoc """
+  The bounding box returned by find_time/2
+
+  """
+  @type bounding_box :: {left :: non_neg_integer(), top :: non_neg_integer(), width :: non_neg_integer(), height :: non_neg_integer()}
+
+  @typedoc """
   Image orientation.
 
   """
@@ -5248,7 +5254,7 @@ defmodule Image do
   @doc subject: "Resize", since: "0.56.0"
 
   @spec find_trim(image :: Vimage.t(), options :: Options.Trim.trim_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, bounding_box()} | {:error, error_message()}
 
   def find_trim(%Vimage{} = image, options \\ []) do
     case Keyword.pop(options, :background) do
@@ -5357,10 +5363,10 @@ defmodule Image do
   @doc subject: "Resize", since: "0.56.0"
 
   @spec find_trim!(image :: Vimage.t(), options :: Options.Trim.trim_options()) ::
-          Vimage.t() | no_return()
+          bounding_box() | no_return()
 
   def find_trim!(%Vimage{} = image, options \\ []) do
-    case trim(image, options) do
+    case find_trim(image, options) do
       {:ok, bounding_box} -> bounding_box
       {:error, reason} -> raise Image.Error, reason
     end
