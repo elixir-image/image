@@ -3167,7 +3167,7 @@ defmodule Image do
 
   ### Notes
 
-  `Image.join/2`Lay out the list of images in a grid.
+  `Image.join/2` lays out the list of images in a grid.
   The grid is `:across` images across and however high
   is necessary to use up all of `image_list`.  Images are
   set down left-to-right and top-to-bottom.
