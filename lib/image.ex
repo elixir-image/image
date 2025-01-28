@@ -133,7 +133,9 @@ defmodule Image do
   The bounding box returned by find_time/2
 
   """
-  @type bounding_box :: {left :: non_neg_integer(), top :: non_neg_integer(), width :: non_neg_integer(), height :: non_neg_integer()}
+  @type bounding_box ::
+          {left :: non_neg_integer(), top :: non_neg_integer(), width :: non_neg_integer(),
+           height :: non_neg_integer()}
 
   @typedoc """
   Image orientation.
@@ -4548,7 +4550,13 @@ defmodule Image do
 
   @doc subject: "Crop"
 
-  @spec crop(Vimage.t(), x_location(), y_location(), pos_integer(), pos_integer()) ::
+  @spec crop(
+          image :: Vimage.t(),
+          left :: x_location(),
+          top :: y_location(),
+          width :: pos_integer(),
+          height :: pos_integer()
+        ) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def crop(%Vimage{} = image, left, top, width, height) do
@@ -4699,7 +4707,13 @@ defmodule Image do
   """
   @doc subject: "Crop"
 
-  @spec crop!(Vimage.t(), x_location(), y_location(), pos_integer(), pos_integer()) ::
+  @spec crop!(
+          image :: Vimage.t(),
+          left :: x_location(),
+          top :: y_location(),
+          width :: pos_integer(),
+          height :: pos_integer()
+        ) ::
           Vimage.t() | no_return
 
   def crop!(%Vimage{} = image, left, top, width, height) do
@@ -4745,7 +4759,7 @@ defmodule Image do
   """
   @doc subject: "Crop", since: "0.27.0"
 
-  @spec center_crop(Vimage.t(), pos_integer(), pos_integer()) ::
+  @spec center_crop(image :: Vimage.t(), width :: pos_integer(), height :: pos_integer()) ::
           {:ok, Vimage.t()} | {:error, error_message}
 
   def center_crop(%Vimage{} = image, width, height) do
