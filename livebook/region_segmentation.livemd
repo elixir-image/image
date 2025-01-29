@@ -1,0 +1,73 @@
+# Region detection for mammogram images
+
+## Section
+
+```elixir
+Mix.install([:image, :kino])
+```
+
+## Select the image
+
+```elixir
+image_input = Kino.Input.image("Image to segment")
+```
+
+## Find image regions
+
+```elixir
+threshold = 0
+
+# Image.blur/2
+blur_sigma = 1.5
+min_amplitude = 0.01
+
+image = 
+  image_input
+  |> Kino.Input.read()
+  |> Image.from_kino!() 
+
+lab_image =
+  image
+  |> Image.flatten!() 
+  |> Image.to_colorspace!(:lab)
+
+mask = 
+  lab_image[1]
+  |> Image.blur!(sigma: blur_sigma, min_amplitude: min_amplitude)
+  |> Image.Math.greater_than!(threshold)
+
+{labels, _regions} = Vix.Vips.Operation.labelregions!(mask)
+xy = Vix.Vips.Operation.xyz!(Image.width(labels), Image.height(labels))
+
+hist_xy_min = 
+  xy
+  |> Vix.Vips.Operation.hist_find_indexed!(labels, combine: :VIPS_COMBINE_MIN) 
+  |> Vix.Vips.Image.to_list!()
+  |> hd()
+
+hist_xy_max = 
+  xy
+  |> Vix.Vips.Operation.hist_find_indexed!(labels, combine: :VIPS_COMBINE_MAX) 
+  |> Vix.Vips.Image.to_list!()
+  |> hd()
+
+bounding_boxes = 
+  hist_xy_min
+  |> Enum.zip(hist_xy_max) 
+  |> IO.inspect(label: "Region bounding boxes")
+
+# Draw the bounding boxes over the original
+# image.
+{:ok, overlay} = 
+  Image.mutate(image, fn i ->
+    Enum.reduce(bounding_boxes, fn {[x_min, y_min], [x_max, y_max]}, _acc ->
+      x_min = trunc(x_min)
+      y_min = trunc(y_min)
+      x_max = trunc(x_max - x_min)
+      y_max = trunc(y_max - y_min)
+      Image.Draw.rect!(i, x_min, y_min, x_max, y_max, fill: false, color: :red)
+    end)
+  end)
+
+Image.Kino.show(overlay)
+```
