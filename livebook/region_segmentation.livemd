@@ -61,7 +61,7 @@ image =
   image_input
   |> Kino.Input.read()
   |> Image.from_kino!() 
-  |> Image.flatten()
+  |> Image.flatten!()
 
 # For monochrome mammograms we may not 
 # get much benefit from lab space, but
