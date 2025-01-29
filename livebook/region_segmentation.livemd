@@ -69,10 +69,7 @@ image =
 # reflects the monochrome nature of then
 # image. We might use other strategies to
 # create a mask with color data.
-lab_image =
-  image
-  |> Image.flatten!() 
-  |> Image.to_colorspace!(:lab)
+lab_image = Image.to_colorspace!(image, :lab)
 
 # Mask just using the luminance band. Since
 # we are using a luminance mask we just start
