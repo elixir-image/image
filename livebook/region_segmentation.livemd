@@ -30,7 +30,8 @@ image =
 # get much benefit from lab space, but
 # working with just the luminance band
 # reflects the monochrome nature of then
-# image.
+# image. We might use other strategies to
+# create a mask with color data.
 lab_image =
   image
   |> Image.flatten!() 
@@ -76,7 +77,9 @@ bounding_boxes =
 # Draw the bounding boxes over the original
 # image.
 {:ok, overlay} = 
-  Image.mutate(image, fn i ->
+  image
+  |> Vix.Vips.Operation.copy!()
+  |> Image.mutate(fn i ->
     Enum.reduce(bounding_boxes, i, fn {[x_min, y_min], [x_max, y_max]}, acc ->
       x_min = trunc(x_min)
       y_min = trunc(y_min)
@@ -87,4 +90,44 @@ bounding_boxes =
   end)
 
 Image.Kino.show(overlay)
+```
+
+## Identify and remove artifacts
+
+For the purposes of this example lets assume that the subject of the image is the largest region and that all the other regions are artifacts.
+
+```elixir
+# Sort the regions by their area, descending in size
+# then drop the first one (the largest area)
+area = fn {[x_min, y_min], [x_max, y_max]} ->
+  width = trunc(x_max - x_min) + 1
+  height = trunc(y_max - y_min) + 1
+  width * height
+end
+
+artifacts =
+  bounding_boxes
+  |> Enum.sort(fn a, b -> area.(a) > area.(b) end)
+  |> Enum.drop(1)
+
+# Get the dominant color on the basis that is
+# most likely the righ color for a mammogram or
+# other medical scan.
+background_color = Image.dominant_color!(image)
+
+# For each artifact, compose an image of the same
+# size as the artifact, that has the color of the
+# dominant color, and embed it in the same place
+# as the artifact.
+
+masked_image =
+  Enum.reduce artifacts, image, fn {[x_min, y_min], [x_max, y_max]}, i ->
+    width = trunc(x_max - x_min) + 1
+    height = trunc(y_max - y_min) + 1
+    {:ok, mask} = Image.new(width, height, color: background_color)
+    
+    Image.compose!(i, mask, x: trunc(x_min), y: trunc(y_min))
+  end
+
+Image.Kino.show(masked_image)
 ```
