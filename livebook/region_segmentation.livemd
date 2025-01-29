@@ -54,7 +54,7 @@ hist_xy_max =
 bounding_boxes = 
   hist_xy_min
   |> Enum.zip(hist_xy_max) 
-  |> IO.inspect(label: "Region bounding boxes")
+  |> IO.inspect(label: "Region bounding boxes {[x_min, y_min], [x_max, y_max]}")
 
 # Draw the bounding boxes over the original
 # image.
@@ -65,7 +65,7 @@ bounding_boxes =
       y_min = trunc(y_min)
       x_max = trunc(x_max - x_min)
       y_max = trunc(y_max - y_min)
-      Image.Draw.rect!(i, x_min, y_min, x_max, y_max, fill: false, color: :red)
+      Image.Draw.rect!(i, x_min, y_min, x_max, y_max, fill: false, color: :red, stroke_width: 3)
     end)
   end)
 
