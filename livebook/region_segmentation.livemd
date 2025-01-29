@@ -27,7 +27,7 @@ Create an image mask that can be used to identify regions.
 
 Assuming artifacts are those regions that are smaller than the largest region, we
 
-1. Sort the regions by desceding size and drop the first entry
+1. Sort the regions by desceding size and drop the first entry.
 2. For each entry, create a new image that is the same size as the artifact, with a color that is equal to the dominant color of the original image (which for a mammogram would likely be black).
 3. Then we compose this created image over the top or the original image in the same place as the artifact - effectively masking it out.
 
