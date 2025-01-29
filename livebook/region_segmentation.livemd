@@ -15,9 +15,14 @@ image_input = Kino.Input.image("Image to segment")
 ## Find image regions
 
 ```elixir
+# Threshold beyond which the pixel is
+# included in the mask. For a monochromatic
+# mammogram, anything not black (0) is part
+# of the mask.
 threshold = 0
 
-# Image.blur/2
+# See Image.blur/2. Blurring the image
+# before masking will cater for image noise.
 blur_sigma = 1.5
 min_amplitude = 0.01
 
@@ -111,20 +116,21 @@ artifacts =
   |> Enum.drop(1)
 
 # Get the dominant color on the basis that is
-# most likely the righ color for a mammogram or
+# most likely the right color for a mammogram or
 # other medical scan.
 background_color = Image.dominant_color!(image)
 
-# For each artifact, compose an image of the same
+# For each artifact, create an image of the same
 # size as the artifact, that has the color of the
-# dominant color, and embed it in the same place
-# as the artifact.
+# dominant color, and compose it in the same place
+# as the artifact thereby masking it out of the image.
+image_bands = Image.bands(image)
 
 masked_image =
   Enum.reduce artifacts, image, fn {[x_min, y_min], [x_max, y_max]}, i ->
     width = trunc(x_max - x_min) + 1
     height = trunc(y_max - y_min) + 1
-    {:ok, mask} = Image.new(width, height, color: background_color)
+    {:ok, mask} = Image.new(width, height, color: background_color, bands: image_bands)
     
     Image.compose!(i, mask, x: trunc(x_min), y: trunc(y_min))
   end
