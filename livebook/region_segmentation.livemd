@@ -26,17 +26,30 @@ image =
   |> Kino.Input.read()
   |> Image.from_kino!() 
 
+# For monochrome mammograms we may not 
+# get much benefit from lab space, but
+# working with just the luminance band
+# reflects the monochrome nature of then
+# image.
 lab_image =
   image
   |> Image.flatten!() 
   |> Image.to_colorspace!(:lab)
 
+# Mask just using the luminance band. Since
+# we are using a luminance mask we jus start
+# with the "L" band of the image. Thresholding
+# with a value > 0 means we're using non-black
+# pixels as the mask.
 mask = 
-  lab_image[1]
+  lab_image[0]
   |> Image.blur!(sigma: blur_sigma, min_amplitude: min_amplitude)
   |> Image.Math.greater_than!(threshold)
 
 {labels, _regions} = Vix.Vips.Operation.labelregions!(mask)
+
+# Operation.xyz/2 creates an image where each pixel
+# values are coordinates.
 xy = Vix.Vips.Operation.xyz!(Image.width(labels), Image.height(labels))
 
 hist_xy_min = 
