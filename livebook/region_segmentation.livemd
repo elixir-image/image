@@ -52,6 +52,10 @@ mask =
   |> Image.blur!(sigma: blur_sigma, min_amplitude: min_amplitude)
   |> Image.Math.greater_than!(threshold)
 
+Image.Kino.show(mask)
+```
+
+```elixir
 {labels, _regions} = Vix.Vips.Operation.labelregions!(mask)
 
 # Operation.xyz/2 creates an image where each pixel
@@ -100,6 +104,8 @@ Image.Kino.show(overlay)
 ## Identify and remove artifacts
 
 For the purposes of this example lets assume that the subject of the image is the largest region and that all the other regions are artifacts.
+
+It may be that other strategies are required. Perhaps regions under a certain area to capture small regions only. It may also be useful to `Image.trim/2` or `Image.find_trim/2` on the original image too.
 
 ```elixir
 # Sort the regions by their area, descending in size
