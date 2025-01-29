@@ -1,6 +1,37 @@
-# Region detection for mammogram images
+# Artifact removal for mammogram images
 
-## Section
+## Objectives & Principles
+
+Analyse a mammogram (monochrome) image and remove any artifacts that might result from labelling, noise or other scanning artifacts.
+
+The working principle is that the largest region (contiguous set of pixels) is the principal subject and that any other regions are artifacts.
+
+The steps these:
+
+### Create a mask
+
+Create an image mask that can be used to identify regions.
+
+1. First we convert the image to a format suitable for thresholding. For monochrome mammogram images we convert to LAB colorspace and use the L (lightness) band to form the mask.
+2. Then we gaussian blur the mask to remove image noise or scanning defects.
+3. Finally, we threshold the mask to get pure white for the mask and pure black for the rest.
+
+### Find image regions
+
+1. Using `Vix.Vips.Operation.labelregions/1` we identify the regions in the image. This returns an image whose content is the region definitions. We need to extract those into bounding boxes.
+2. Bounding boxes are extracted through a libvips technique that relies on being able to generate an image whose pixels are their own coordinates with `Vix.Vips.Operation.xyz/2`
+3. Zipping the results of `:min` and `:max` `Vix.Vips.Operation.hist_find_indexed/2` calls with the mask and coordinate image we can return a list of `{[x_min, y_min], [x_max, y_max]}` tuples.
+4. We drop the first two entries in the list because the list of regions will include the zero-pixel origin as well as a region that is the entire image.
+
+### Removing the artifacts
+
+Assuming artifacts are those regions that are smaller than the largest region, we
+
+1. Sort the regions by desceding size and drop the first entry
+2. For each entry, create a new image that is the same size as the artifact, with a color that is equal to the dominant color of the original image (which for a mammogram would likely be black).
+3. Then we compose this created image over the top or the original image in the same place as the artifact - effectively masking it out.
+
+## Install Dependencoes
 
 ```elixir
 Mix.install([:image, :kino])
@@ -12,7 +43,7 @@ Mix.install([:image, :kino])
 image_input = Kino.Input.image("Image to segment")
 ```
 
-## Find image regions
+## Create a mask
 
 ```elixir
 # Threshold beyond which the pixel is
@@ -55,6 +86,8 @@ mask =
 Image.Kino.show(mask)
 ```
 
+## Find the bounding boxes of artifacts
+
 ```elixir
 {labels, _regions} = Vix.Vips.Operation.labelregions!(mask)
 
@@ -92,8 +125,8 @@ bounding_boxes =
     Enum.reduce(bounding_boxes, i, fn {[x_min, y_min], [x_max, y_max]}, acc ->
       x_min = trunc(x_min)
       y_min = trunc(y_min)
-      width = trunc(x_max - x_min) + 1
-      height = trunc(y_max - y_min) + 1
+      width = trunc(x_max - x_min)
+      height = trunc(y_max - y_min)
       Image.Draw.rect!(acc, x_min, y_min, width, height, fill: false, color: :red, stroke_width: 3)
     end)
   end)
@@ -111,8 +144,8 @@ It may be that other strategies are required. Perhaps regions under a certain ar
 # Sort the regions by their area, descending in size
 # then drop the first one (the largest area)
 area = fn {[x_min, y_min], [x_max, y_max]} ->
-  width = trunc(x_max - x_min) + 1
-  height = trunc(y_max - y_min) + 1
+  width = trunc(x_max - x_min)
+  height = trunc(y_max - y_min)
   width * height
 end
 
@@ -134,8 +167,8 @@ image_bands = Image.bands(image)
 
 masked_image =
   Enum.reduce artifacts, image, fn {[x_min, y_min], [x_max, y_max]}, i ->
-    width = trunc(x_max - x_min) + 1
-    height = trunc(y_max - y_min) + 1
+    width = trunc(x_max - x_min)
+    height = trunc(y_max - y_min)
     {:ok, mask} = Image.new(width, height, color: background_color, bands: image_bands)
     
     Image.compose!(i, mask, x: trunc(x_min), y: trunc(y_min))
