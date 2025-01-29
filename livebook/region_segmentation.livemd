@@ -63,9 +63,9 @@ bounding_boxes =
     Enum.reduce(bounding_boxes, fn {[x_min, y_min], [x_max, y_max]}, _acc ->
       x_min = trunc(x_min)
       y_min = trunc(y_min)
-      x_max = trunc(x_max - x_min)
-      y_max = trunc(y_max - y_min)
-      Image.Draw.rect!(i, x_min, y_min, x_max, y_max, fill: false, color: :red, stroke_width: 3)
+      width = trunc(x_max - x_min)
+      height = trunc(y_max - y_min)
+      Image.Draw.rect!(i, x_min, y_min, width, height, fill: false, color: :red, stroke_width: 3)
     end)
   end)
 
