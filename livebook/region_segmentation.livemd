@@ -61,6 +61,7 @@ image =
   image_input
   |> Kino.Input.read()
   |> Image.from_kino!() 
+  |> Image.flatten()
 
 # For monochrome mammograms we may not 
 # get much benefit from lab space, but
@@ -74,7 +75,7 @@ lab_image =
   |> Image.to_colorspace!(:lab)
 
 # Mask just using the luminance band. Since
-# we are using a luminance mask we jus start
+# we are using a luminance mask we just start
 # with the "L" band of the image. Thresholding
 # with a value > 0 means we're using non-black
 # pixels as the mask.
