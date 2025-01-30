@@ -553,7 +553,7 @@ defmodule Image.Text do
 
   @doc """
   Adds a background to an image generated from
-  text returning and image or raising an exception.
+  text returning an image or raising an exception.
 
   ### Arguments
 
