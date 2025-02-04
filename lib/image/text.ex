@@ -566,7 +566,7 @@ defmodule Image.Text do
 
   * `:background_fill_color` is the background fill color behind
     the text. The default is `:none` which indicates no
-    background. Note that if
+    background.
 
   * `:background_fill_opacity` is the opacity of the background. It is a
     float between `0.0` and `1.0` where `0.0` means transparent
