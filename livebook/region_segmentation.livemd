@@ -69,7 +69,7 @@ image =
 # For monochrome mammograms we may not 
 # get much benefit from lab space, but
 # working with just the luminance band
-# reflects the monochrome nature of then
+# reflects the monochrome nature of the
 # image. We might use other strategies to
 # create a mask with color data.
 lab_image = Image.to_colorspace!(image, :lab)
