@@ -47,10 +47,13 @@ image_input = Kino.Input.image("Image to segment")
 
 ```elixir
 # Threshold beyond which the pixel is
-# included in the mask. For a monochromatic
-# mammogram, anything not black (0) is part
-# of the mask.
-threshold = 0
+# included in the mask. Typically a value 
+# between 0 (for pure B&W images) and 60
+# will be reasonable. This is highly dependant
+# on a specific image. Basically this is the
+# value used to decide what is the image and
+# what is the background.
+threshold = 60
 
 # See Image.blur/2. Blurring the image
 # before masking will cater for image noise.
@@ -125,6 +128,7 @@ bounding_boxes =
       y_min = trunc(y_min)
       width = trunc(x_max - x_min)
       height = trunc(y_max - y_min)
+
       Image.Draw.rect!(acc, x_min, y_min, width, height, fill: false, color: :red, stroke_width: 3)
     end)
   end)
@@ -167,8 +171,8 @@ masked_image =
   Enum.reduce artifacts, image, fn {[x_min, y_min], [x_max, y_max]}, i ->
     width = trunc(x_max - x_min)
     height = trunc(y_max - y_min)
+
     {:ok, mask} = Image.new(width, height, color: background_color, bands: image_bands)
-    
     Image.compose!(i, mask, x: trunc(x_min), y: trunc(y_min))
   end
 
