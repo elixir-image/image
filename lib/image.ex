@@ -4092,9 +4092,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, pixelated_image}` or
+  * `pixelated_image` or
 
-  * `{:error, reason}`
+  * raises an exception
 
   """
   @doc subject: "Operation", since: "0.14.0"
