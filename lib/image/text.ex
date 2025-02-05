@@ -60,7 +60,8 @@ defmodule Image.Text do
   is ultimately called by this function.
 
   * `:font` is any font recognised on the host system.
-    The default is"Helvetica".
+    The default is "Helvetica". The system command `fc-list`
+    can typically be used to see what fonts are available.
 
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
@@ -214,7 +215,8 @@ defmodule Image.Text do
   is ultimately called by this function.
 
   * `:font` is any font recognised on the host system.
-    The default is"Helvetica".
+    The default is "Helvetica". The system command `fc-list`
+    can typically be used to see what fonts are available.
 
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
@@ -359,7 +361,7 @@ defmodule Image.Text do
 
   * `:font` is any font recognised on the host system.
     The default is "Helvetica". The system command `fc-list`
-    can be used to see what fonts are available.
+    can typically be used to see what fonts are available.
 
   * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
     The alternatives are `:normal`, `:bold`, `:lighter`, `:bolder`,
@@ -416,7 +418,7 @@ defmodule Image.Text do
     you can pass it by calling with `Phoenix.HTML.raw/1`
     on the string first.
 
-  * `options` is a `t:Keyword.t/0` list of options
+  * `options` is a `t:Keyword.t/0` list of options.
 
   ### Options
 
