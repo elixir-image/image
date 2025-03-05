@@ -1151,7 +1151,7 @@ defmodule Image do
     via a `Kino.Input.image/1` input field. The data will have
     the following fields:
 
-    * `:file_ref` which contains a file reference to the image. It can be extraced
+    * `:file_ref` which contains a file reference to the image. It can be dereferenced
       into a path with `Kino.Input.file_path/1`
     * `:width` which is the width of the image in pixels
     * `:height` which is the height of the image in pixels
@@ -1166,8 +1166,8 @@ defmodule Image do
 
   ### Notes
 
-  * Thus function requries Kino v0.11.0 which in turn requires
-    Livebook v0.11.0.
+  * Thus function requires at least Kino v0.11.0 which in turn requires
+    at least Livebook v0.11.0.
 
   * The image is assumed to contain pixel data that is in
     unsigned 8-bit format which is common for most web-oriented
