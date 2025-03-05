@@ -1,0 +1,33 @@
+# Blur the image background
+
+## Objectives & Principles
+
+Blur the background of an image. We are given the original image, and the product segmented from that image (with an alpha mask). This livebook does not cover segmenting the background from the image.
+
+## Install Dependencoes
+
+```elixir
+Mix.install([:image, :kino])
+```
+
+```elixir
+original_image = Image.open!("/Users/kip/Desktop/original_image.png")
+product_image = Image.open!("/Users/kip/Desktop/product.png")
+
+# The inverted mask masks the product (not the background)
+inverted_mask = Image.invert!(product_image[3])
+```
+
+```elixir
+background = Image.add_alpha!(original_image, inverted_mask)
+```
+
+```elixir
+# Blur only the rgb channels, then add back the mask
+# which has crisp edges
+blurred_background = Image.blur!(background[0..2]) |> Image.add_alpha!(background[3])
+```
+
+```elixir
+composed = Image.compose!(blurred_background, product_image)
+```

@@ -5577,12 +5577,12 @@ defmodule Image do
   edge of the mask.
 
   Mask is used in the sense of an image, potentially
-  wuth an alpha band. The results on
+  with an alpha band. The results on
   other image types is undefined.
 
   ### Arguments
 
-  * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
+  * `image` is any non-complex-number `t:Vix.Vips.Image.t/0`.
 
   * `radius` is an integer in the range `#{inspect(@rank_radius_range)}`
     representing the approximate number of
@@ -5596,7 +5596,7 @@ defmodule Image do
 
   ### Notes
 
-  * Erode works for any non-complex image type, with any
+  * Erode works for any non-complex-number image type with any
     number of bands. The input is eroded by copying
     edge pixels before performing the operation so that
     the output image has the same size as the input.
@@ -5622,12 +5622,12 @@ defmodule Image do
   edge of the mask or raising an exception.
 
   Mask is used in the sense of an image, potentially
-  wuth an alpha band. The results on
+  with an alpha band. The results on
   other image types is undefined.
 
   ### Arguments
 
-  * `image` is any non-complex `t:Vix.Vips.Image.t/0`.
+  * `image` is any non-complex-number `t:Vix.Vips.Image.t/0`.
 
   * `radius` is an integer in the range `#{inspect(@rank_radius_range)}`
     representing the approximate number of
@@ -5641,7 +5641,7 @@ defmodule Image do
 
   ### Notes
 
-  * Erode works for any non-complex image type, with any
+  * Erode works for any non-complex-number image type with any
     number of bands. The input is eroded by copying
     edge pixels before performing the operation so that
     the output image has the same size as the input.
