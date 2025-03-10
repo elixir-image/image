@@ -1,5 +1,17 @@
 # Changelog
 
+## Image 0.57.0
+
+This is the changelog for Image version 0.56.1 released on March 11th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fixes `Image.from_kino!/2` to accept `format: :png` images.
+
+### Enhancements
+
+* Adds `Image.distort/2` to perform a freeform image distortion using [Shepard's algorithm](https://legacy.imagemagick.org/Usage/distorts/#shepards)
+
 ## Image 0.56.1
 
 This is the changelog for Image version 0.56.1 released on March 11th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

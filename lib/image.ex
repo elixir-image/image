@@ -130,6 +130,17 @@ defmodule Image do
   @type pixel :: [number()] | number()
 
   @typedoc """
+  Representaton of a coordinate in an image.
+
+  The first number is the displacement on the
+  x-axis (starting at 0 from the left) and the
+  second number is the displacement on the
+  y-axis (starting at 0 from the top).
+
+  """
+  @type point :: {number(), number()}
+
+  @typedoc """
   The bounding box returned by find_time/2
 
   """
@@ -1162,7 +1173,7 @@ defmodule Image do
 
   ### Notes
 
-  * Thus function requires at least Kino v0.11.0 which in turn requires
+  * This function requires at least Kino v0.11.0 which in turn requires
     at least Livebook v0.11.0.
 
   * For image type of `:rgb`, the image is required to contain raw pixel data
@@ -1210,30 +1221,34 @@ defmodule Image do
   * `image` is a a map returned from `Kino.Input.read(image)`
     via a `Kino.Input.image/1` input field. The data will have
     the following fields:
-    * `:file_ref` which contains a file reference to the image. It can be extraced into a path with `Kino.Input.file_path/1`
+
+    * `:file_ref` which contains a file reference to the image. It can be dereferenced
+      into a path with `Kino.Input.file_path/1`
     * `:width` which is the width of the image in pixels
     * `:height` which is the height of the image in pixels
-    * `:format` which is the image band format which must be `:rgb`
+    * `:format` which is the image band format which must be `:rgb` or `:png`.
 
   * `options` is a keyword list of options
 
   ### Options
 
-  * `:bands` indicates the integer number of bands (channels) in
-    the image. The default is `3`.
+  * `options` is a keyword list of options that is passed to `Image.open/2`
+    in the case of a `:png` image.
 
   ### Notes
 
-  * Thus function requries Kino v0.11.0 which in turn requires
-    Livebook v0.11.0.
+  * This function requires at least Kino v0.11.0 which in turn requires
+    at least Livebook v0.11.0.
 
-  * The image is assumed to contain pixel data that is in
-    unsigned 8-bit format which is common for most web-oriented
-    images.
+  * For image type of `:rgb`, the image is required to contain raw pixel data
+    that is in unsigned 8-bit rgb format.
+
+  * For image type of `:png`, the image can by any format and it will be
+    opened with `Image.open/2`. Any options are passed to `Image.open/2`.
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `image` or
 
   * raises an exception.
 
@@ -1243,8 +1258,9 @@ defmodule Image do
   @spec from_kino!(image :: kino_image(), options :: Keyword.t()) ::
           Vimage.t() | no_return()
 
-  def from_kino!(%{file_ref: ref, width: width, height: height, format: :rgb}, options \\ []) do
-    case from_kino(%{file_ref: ref, width: width, height: height, format: :rgb}, options) do
+  def from_kino!(%{file_ref: _ref, format: format} = image, options \\ [])
+      when format in [:rgb, :png] do
+    case from_kino(image, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
@@ -9321,11 +9337,10 @@ defmodule Image do
       be applied to all bands, or a list of integers representing
       the color for each band. The color can also be supplied as a
       CSS color name as a string or atom. For example: `:misty_rose`.
-      It can also be supplied as a hex string of
-      the form `#rrggbb`. The default is `:black`. `:background` can
-      also be set to `:average` in which case the background will be
-      the average color of the base image. See also `Image.Color.color_map/0`
-      and `Image.Color.rgb_color/1`.
+      It can also be supplied as a hex string of the form `#rrggbb`.
+      The default is `:black`. `:background` can also be set to `:average`
+      in which case the background will be the average color of the base
+      image. See also `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
 
     * `:extend_mode` determines how any additional pixels
       are generated. The values are:
@@ -9355,7 +9370,7 @@ defmodule Image do
     * `{:error, reason}`
 
     """
-    @doc subject: "Operation", since: "0.28.0"
+    @doc subject: "Distortion", since: "0.28.0"
 
     @spec warp_perspective(
             Vimage.t(),
@@ -9434,7 +9449,7 @@ defmodule Image do
       removed.
 
     """
-    @doc subject: "Operation", since: "0.28.0"
+    @doc subject: "Distortion", since: "0.28.0"
 
     @spec warp_perspective!(
             Vimage.t(),
@@ -9514,7 +9529,7 @@ defmodule Image do
       to the subject-of-interest that was warped.
 
     """
-    @doc subject: "Operation", since: "0.28.0"
+    @doc subject: "Distortion", since: "0.28.0"
 
     @spec straighten_perspective(
             Vimage.t(),
@@ -9598,7 +9613,7 @@ defmodule Image do
       to the subject-of-interest that was warped.
 
     """
-    @doc subject: "Operation", since: "0.28.0"
+    @doc subject: "Distortion", since: "0.28.0"
 
     @spec straighten_perspective!(
             Vimage.t(),
@@ -9616,6 +9631,63 @@ defmodule Image do
           {:error, reason} -> raise Image.Error, reason
         end
       end
+    end
+
+    @doc """
+    Distorts an image using [Shepards algorithm](https://legacy.imagemagick.org/Usage/distorts/#shepards).
+
+    Shepard’s distortion moves (or smudges) a given
+    source point to a destination point.
+
+    ### Arguments
+
+    * `image` is any `t:Vimage.t/0`
+
+    * `source` is a list of 2-tuples representing the source
+       points in `image`.
+
+    * `destination` is a list of 2-tuples representing the
+      the destination points into which the
+      image is transformed.
+
+    ### Example
+
+    In this example the points around `{30,11}` are distorted to `{20,11}` and
+    `{48, 29}` to `{58,29}`.
+
+          iex> koala = Image.open!("./test/support/images/koala.gif")
+          iex> {:ok, _distorted} = Image.distort(koala, [{30, 11}, {48, 29}], [{20,11}, {58,29}])
+
+    """
+    @doc subject: "Distortion", since: "0.57.0"
+
+    @spec distort(image :: Vimage.t(), source :: list(point()), destination :: list(point())) ::
+      {:ok, Vimage.t()} | {:error, error_message}
+
+    def distort(%Vimage{} = image, [{_x1, _y1} | _] = source, [{_x2, _y2} | _] = destination)
+        when length(source) == length(destination) do
+      use Image.Math
+
+      index = Vix.Vips.Operation.xyz!(Image.width(image), Image.height(image))
+      couples = Enum.zip(source, destination)
+
+      {deltas, weights} =
+        Enum.reduce(couples, {[], []}, fn {p1, p2}, {deltas, weights} ->
+          {p1x, p1y} = p1
+          {p2x, p2y} = p2
+
+          diff = index - Tuple.to_list(p2)
+          distance = diff[0]**2 + diff[1]**2
+
+          weight = Image.if_then_else!(distance < 1.0, 1.0, 1.0 / distance)
+          delta =  weight * [(p1x - p2x), (p1y - p2y)]
+
+          {[delta | deltas], [weight | weights]}
+        end)
+
+      index = index + Vix.Vips.Operation.sum!(deltas) / Vix.Vips.Operation.sum!(weights)
+      bicubic_interpolator = Vix.Vips.Interpolate.new!("bicubic")
+      Vix.Vips.Operation.mapim(image, index, interpolate: bicubic_interpolator)
     end
 
     @doc """
@@ -9646,7 +9718,7 @@ defmodule Image do
     * `{:error, reason}`.
 
     """
-    @doc subject: "Operation", since: "0.28.0"
+    @doc subject: "Distortion", since: "0.28.0"
 
     @spec transform_matrix(
             Vimage.t(),

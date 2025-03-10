@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.56.1"
+  @version "0.57.0"
 
   @app_name "image"
 
@@ -183,6 +183,7 @@ defmodule Image.MixProject do
       Resize: &(&1[:subject] == "Resize"),
       Crop: &(&1[:subject] == "Crop"),
       Transforms: &(&1[:subject] == "Generator"),
+      Distortion: &(&1[:subject] == "Distortion"),
       "Split & Join": &(&1[:subject] == "Split and join"),
       Color: &(&1[:subject] == "Color"),
       Introspection: &(&1[:subject] == "Image info"),
