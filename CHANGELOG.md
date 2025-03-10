@@ -2,11 +2,11 @@
 
 ## Image 0.56.1
 
-This is the changelog for Image version 0.56.1 released on March 7th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.56.1 released on March 11th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Enhancements
 
-* Support `:png` image types in `Image.from_kino/2`. Although the option is called `:png` in Kino, it actually allows any image format as long as it can be opening with `Image.open/2`.
+* Support `:png` image types in `Image.from_kino/2`. Although the option is called `:png` in Kino, it actually allows any image format as long as it can be opened with `Image.open/2`.
 
 ## Image 0.56.0
 
