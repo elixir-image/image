@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.56.0"
+  @version "0.56.1"
 
   @app_name "image"
 
@@ -72,7 +72,8 @@ defmodule Image.MixProject do
       ),
 
       # For NX interchange testing and
-      # Bumblebee for image classification
+      # Bumblebee for image classification,
+      # Scholar for k-means
       if(otp_release() >= 24,
         do: [
           {:nx, "~> 0.9", optional: true},
@@ -87,7 +88,7 @@ defmodule Image.MixProject do
       # For testing and benchmarking
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
       {:benchee, "~> 1.0", only: :dev, runtime: false, optional: true},
-      {:req, "~> 0.4", optional: true},
+      {:req, "~> 0.4", only: [:test, :dev], optional: true},
 
       # For release management
       {:ex_doc, "~> 0.18", only: [:release, :dev, :docs]},

@@ -1155,23 +1155,21 @@ defmodule Image do
       into a path with `Kino.Input.file_path/1`
     * `:width` which is the width of the image in pixels
     * `:height` which is the height of the image in pixels
-    * `:format` which is the image band format which must be `:rgb`.
+    * `:format` which is the image band format which must be `:rgb` or `:png`.
 
-  * `options` is a keyword list of options.
-
-  ### Options
-
-  * `:bands` indicates the integer number of bands (channels) in
-    the image. The default is `3`.
+  * `options` is a keyword list of options that is passed to `Image.open/2`
+    in the case of a `:png` image.
 
   ### Notes
 
   * Thus function requires at least Kino v0.11.0 which in turn requires
     at least Livebook v0.11.0.
 
-  * The image is assumed to contain pixel data that is in
-    unsigned 8-bit format which is common for most web-oriented
-    images.
+  * For image type of `:rgb`, the image is required to contain raw pixel data
+    that is in unsigned 8-bit rgb format.
+
+  * For image type of `:png`, the image can by any format and it will be
+    opened with `Image.open/2`. Any options are passed to `Image.open/2`.
 
   ### Returns
 
@@ -1185,14 +1183,22 @@ defmodule Image do
   @spec from_kino(image :: kino_image(), options :: Keyword.t()) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
-  def from_kino(%{file_ref: ref, width: width, height: height, format: :rgb}, options \\ []) do
+  @kino_bands 3
+  @kino_format :VIPS_FORMAT_UCHAR
+
+  def from_kino(kino_image, options \\ [])
+
+  def from_kino(%{file_ref: ref, width: width, height: height, format: :rgb}, _options) do
     file_path = apply(Kino.Input, :file_path, [ref])
-    bands = Keyword.get(options, :bands, 3)
-    image_format = :VIPS_FORMAT_UCHAR
 
     with {:ok, binary} <- File.read(file_path) do
-      Vix.Vips.Image.new_from_binary(binary, width, height, bands, image_format)
+      Vix.Vips.Image.new_from_binary(binary, width, height, @kino_bands, @kino_format)
     end
+  end
+
+  def from_kino(%{file_ref: ref, format: :png}, options) do
+    file_path = apply(Kino.Input, :file_path, [ref])
+    open(file_path, options)
   end
 
   @doc """
@@ -10057,13 +10063,13 @@ defmodule Image do
   end
 
   @doc """
-  Returns a 64-bit (for a has size of the default 64) difference hash as a
+  Returns a 64-bit (for a hash size of the default 64) difference hash as a
   binary.
 
   Image hashes can be used to compare the similarity
   of images. See `Image.hamming_distance/2`.
 
-  dhash is generates a "difference hash" for a given image. This
+  A `dhash` is a "difference hash" for a given image. This
   is a perceptual hash based on Neal Krawetz's dHash algorithm in
   a [Hacker Factor](http://www.hackerfactor.com/blog/index.php?/archives/529-Kind-of-Like-That.html)
   blog entry.
