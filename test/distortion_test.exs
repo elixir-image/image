@@ -10,10 +10,9 @@ defmodule Image.Distortion.Test do
     validate_path = validate_path(validate_file)
 
     image = Image.open!(image_path)
-    {:ok, distorted} = Image.distort(image, [{30, 11}, {48, 29}], [{20,11}, {58,29}])
+    {:ok, distorted} = Image.distort(image, [{30, 11}, {48, 29}], [{20, 11}, {58, 29}])
 
     # {:ok, _image} = Image.write(distorted, validate_path)
     assert_images_equal(distorted, validate_path)
   end
-
 end

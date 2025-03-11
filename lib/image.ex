@@ -9662,7 +9662,7 @@ defmodule Image do
     @doc subject: "Distortion", since: "0.57.0"
 
     @spec distort(image :: Vimage.t(), source :: list(point()), destination :: list(point())) ::
-      {:ok, Vimage.t()} | {:error, error_message}
+            {:ok, Vimage.t()} | {:error, error_message}
 
     def distort(%Vimage{} = image, [{_x1, _y1} | _] = source, [{_x2, _y2} | _] = destination)
         when length(source) == length(destination) do
@@ -9677,10 +9677,10 @@ defmodule Image do
           {p2x, p2y} = p2
 
           diff = index - Tuple.to_list(p2)
-          distance = diff[0]**2 + diff[1]**2
+          distance = diff[0] ** 2 + diff[1] ** 2
 
           weight = Image.if_then_else!(distance < 1.0, 1.0, 1.0 / distance)
-          delta =  weight * [(p1x - p2x), (p1y - p2y)]
+          delta = weight * [p1x - p2x, p1y - p2y]
 
           {[delta | deltas], [weight | weights]}
         end)
@@ -9709,7 +9709,7 @@ defmodule Image do
     parameter in most, if not all, cases.
 
     A future release may incorporate the lensfun database to automatically
-    derive the correct parameters based upon image exif data.
+    derive the correct parameters based upon image [exif](https://en.wikipedia.org/wiki/Exif) data.
 
     ### Arguments
 
@@ -9733,8 +9733,14 @@ defmodule Image do
     """
     @doc subject: "Distortion", since: "0.58.0"
 
-    @spec barrel_correction(image :: Vimage.t(), a :: number(), b :: number(), c :: number(), d :: number() | nil) ::
-      {:ok, Vimage.t()} | {:error, error_message}
+    @spec barrel_correction(
+            image :: Vimage.t(),
+            a :: number(),
+            b :: number(),
+            c :: number(),
+            d :: number() | nil
+          ) ::
+            {:ok, Vimage.t()} | {:error, error_message}
 
     def barrel_correction(%Vimage{} = image, a, b, c, d \\ nil)
         when is_number(a) and is_number(b) and is_number(c) and (is_number(d) or is_nil(d)) do
@@ -9755,16 +9761,16 @@ defmodule Image do
       delta = (index - [centre_x, centre_y]) / radius
 
       # distance or radius of destination image
-      dstr = pow!(delta[0]**2 + delta[1]**2, 0.5)
+      dstr = pow!(delta[0] ** 2 + delta[1] ** 2, 0.5)
 
       # distance or radius of source image (with formula)
-      srcr = dstr * (a*dstr**3 + b*dstr**2 + c*dstr + d)
+      srcr = dstr * (a * dstr ** 3 + b * dstr ** 2 + c * dstr + d)
 
       # comparing old and new distance to get factor
       factor = Vix.Vips.Operation.abs!(dstr / srcr)
 
       # coordinates in the source image
-      transform = [centre_x, centre_y] + (delta * factor * radius)
+      transform = [centre_x, centre_y] + delta * factor * radius
 
       # Map new coordinates
       Vix.Vips.Operation.mapim(image, transform)

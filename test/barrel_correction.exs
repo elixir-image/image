@@ -15,5 +15,4 @@ defmodule Image.BarrelCorrection.Test do
     {:ok, _image} = Image.write(distorted, validate_path)
     assert_images_equal(barrel_corrected, validate_path)
   end
-
 end
