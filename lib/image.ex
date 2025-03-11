@@ -9738,7 +9738,7 @@ defmodule Image do
             a :: number(),
             b :: number(),
             c :: number(),
-            d :: number() | nil
+            d :: (number() | nil)
           ) ::
             {:ok, Vimage.t()} | {:error, error_message}
 
@@ -9746,7 +9746,7 @@ defmodule Image do
         when is_number(a) and is_number(b) and is_number(c) and (is_number(d) or is_nil(d)) do
       use Image.Math
 
-      d = if d == nil, do: 1.0 - a - b - c, else: d
+      d = if is_nil(d), do: 1.0 - a - b - c, else: d
 
       width = width(image)
       height = height(image)
