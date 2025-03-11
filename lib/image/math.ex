@@ -35,7 +35,7 @@ defmodule Image.Math do
   alias Vix.Vips.Operation
   alias Vix.Vips.Image, as: Vimage
 
-  import Kernel, except: [+: 2, -: 1, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
+  import Kernel, except: [+: 2, -: 1, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2, abs: 1]
 
   @doc """
   Guards if a given value might be reasonably interpreted
@@ -47,7 +47,7 @@ defmodule Image.Math do
   @doc false
   defmacro __using__(_opts) do
     quote do
-      import Kernel, except: [+: 2, -: 1, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2]
+      import Kernel, except: [+: 2, -: 1, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2, abs: 2]
       import Image.Math
     end
   end
@@ -245,6 +245,16 @@ defmodule Image.Math do
   @spec exp(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
   def exp(image) do
     Operation.math(image, :VIPS_OPERATION_MATH_EXP)
+  end
+
+  @spec abs(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  def abs(%Vimage{} = image) do
+    Operation.abs(image)
+  end
+
+  @spec abs(number) :: {:ok, number}
+  def abs(number) do
+    {:ok, Kernel.abs(number)}
   end
 
   @spec pow(Vimage.t(), Vimage.t()) ::
@@ -641,6 +651,14 @@ defmodule Image.Math do
   def exp!(image) do
     case exp(image) do
       {:ok, image} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
+  end
+
+  @spec abs!(Vimage.t() | number()) :: Vimage.t() | no_return()
+  def abs!(image_or_number) do
+    case abs(image_or_number) do
+      {:ok, image_or_number} -> image_or_number
       {:error, reason} -> raise ArgumentError, reason
     end
   end

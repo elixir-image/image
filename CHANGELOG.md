@@ -1,8 +1,16 @@
 # Changelog
 
+## Image 0.58.0
+
+This is the changelog for Image version 0.58.0 released on March 11th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Add `Image.Math.abs/1`.
+
 ## Image 0.57.0
 
-This is the changelog for Image version 0.56.1 released on March 11th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.57.0 released on March 11th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 

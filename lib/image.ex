@@ -9474,7 +9474,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vimage.t/0`.
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -9558,7 +9558,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vimage.t/0`.
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -9641,7 +9641,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vimage.t/0`.
 
     * `source` is a list of 2-tuples representing the source
        points in `image`.
@@ -9688,6 +9688,86 @@ defmodule Image do
       index = index + Vix.Vips.Operation.sum!(deltas) / Vix.Vips.Operation.sum!(weights)
       bicubic_interpolator = Vix.Vips.Interpolate.new!("bicubic")
       Vix.Vips.Operation.mapim(image, index, interpolate: bicubic_interpolator)
+    end
+
+    @doc """
+    Applies a correction for [barrel distortion](https://www.iphotography.com/blog/what-is-lens-barrel-distortion/).
+
+    Barrel distortion is present in all but the most optically
+    perfect camera lens. Some cameras will apply a correction
+    in-camera, many do not.
+
+    The parameters to the function, which are "a", "b", "c" and
+    optionally "d", are specific to each lens and focal distance.
+
+    The primary source of these parameters is the [lensfun database](https://github.com/lensfun/lensfun)
+    which lists the parameters for many lens.
+
+    In general these numbers are very small, typically less than
+    0.1, so when experimenting to find acceptable output start with
+    small numbers for `a` and `b` and `0.0` for `c`. Omit the `d`
+    parameter in most, if not all, cases.
+
+    A future release may incorporate the lensfun database to automatically
+    derive the correct parameters based upon image exif data.
+
+    ### Arguments
+
+    * `image` is any `t:Vimage.t/0`.
+
+    * `a`, `b`, `c` are parameters specific to each
+      camera lens and focal distance, typically found in the
+      [lensfun]() database.
+
+    ### Returns
+
+    * `{:ok, undistorted_image}` or
+
+    * `{:error, reason}`
+
+    ### Example
+
+          iex> image = Image.open!("./test/support/images/gridlines_barrel.png")
+          iex> Image.barrel_correction(image, -0.007715, 0.086731, 0.0)
+
+    """
+    @doc subject: "Distortion", since: "0.58.0"
+
+    @spec barrel_correction(image :: Vimage.t(), a :: number(), b :: number(), c :: number(), d :: number() | nil) ::
+      {:ok, Vimage.t()} | {:error, error_message}
+
+    def barrel_correction(%Vimage{} = image, a, b, c, d \\ nil)
+        when is_number(a) and is_number(b) and is_number(c) and (is_number(d) or is_nil(d)) do
+      use Image.Math
+
+      d = if d == nil, do: 1.0 - a - b - c, else: d
+
+      width = width(image)
+      height = height(image)
+
+      radius = min(width, height) / 2
+      centre_x = (width - 1) / 2
+      centre_y = (height - 1) / 2
+
+      # Cartesian coordinates of the destination point
+      # relative to the centre of the image.
+      index = Vix.Vips.Operation.xyz!(width, height)
+      delta = (index - [centre_x, centre_y]) / radius
+
+      # distance or radius of destination image
+      dstr = pow!(delta[0]**2 + delta[1]**2, 0.5)
+
+      # distance or radius of source image (with formula)
+      srcr = dstr * (a*dstr**3 + b*dstr**2 + c*dstr + d)
+
+      # comparing old and new distance to get factor
+      factor = Vix.Vips.Operation.abs!(dstr / srcr)
+
+      # coordinates in the source image
+      transform = [centre_x, centre_y] + (delta * factor * radius)
+
+      # Map new coordinates
+      Vix.Vips.Operation.mapim(image, transform)
     end
 
     @doc """
