@@ -6,6 +6,8 @@ This is the changelog for Image version 0.58.0 released on March 11th, 2025.  Fo
 
 ### Enhancements
 
+* Add `Image.barrel_correction/5` to correct barrel distortion in an image.
+
 * Add `Image.Math.abs/1`.
 
 ## Image 0.57.0
