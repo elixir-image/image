@@ -9729,7 +9729,7 @@ defmodule Image do
     ### Example
 
           iex> image = Image.open!("./test/support/images/gridlines_barrel.png")
-          iex> Image.distortion_correction(image, -0.007715, 0.086731, 0.0)
+          iex> Image.radial_distortion_correction(image, -0.007715, 0.086731, 0.0)
 
     """
     @doc subject: "Distortion", since: "0.58.0"
@@ -9774,7 +9774,87 @@ defmodule Image do
       transform = [centre_x, centre_y] + delta * factor * radius
 
       # Map new coordinates
-      Vix.Vips.Operation.mapim(image, transform)
+      Operation.mapim(image, transform)
+    end
+
+    @doc """
+    Applies a correction for [vignetting](https://en.wikipedia.org/wiki/Vignetting).
+
+    In photography and optics, vignetting is a reduction of an image's
+    brightness or saturation toward the periphery compared to the
+    image center.
+
+    Vignetting is often an unintended and undesired effect caused by
+    camera settings or lens limitations.
+
+    The parameters to the function, which are "k1", "k2" and "k3"
+    are specific to each lens, aperature and focal distance.
+
+    The primary source of these parameters is the [lensfun database](https://github.com/lensfun/lensfun)
+    which lists the parameters for many lens.
+
+    In general these numbers are very small, typically less than
+    0.1, so when experimenting to find acceptable output start with
+    small numbers for `k1` and `k2` and `0.0` for `k3`.
+
+    A future release may incorporate the lensfun database to automatically
+    derive the correct parameters based upon image [exif](https://en.wikipedia.org/wiki/Exif) data.
+
+    ### Arguments
+
+    * `image` is any `t:Vimage.t/0`.
+
+    * `k1`, `k2`, `k3` are parameters specific to each
+      camera lens and focal distance, typically found in the
+      [lensfun](https://github.com/lensfun/lensfun) database.
+
+    ### Returns
+
+    * `{:ok, unvignetted_image}` or
+
+    * `{:error, reason}`
+
+    ### Example
+
+          iex> image = Image.new!(200, 200, color: :green)
+          iex> Image.vignette_correction(image, -0.2764, -1.26031, 0.7727)
+
+    """
+
+    @doc subject: "Distortion", since: "0.59.0"
+
+    @spec vignette_correction(
+            image :: Vimage.t(),
+            k1 :: number(),
+            k2 :: number(),
+            k3 :: number()
+          ) ::
+            {:ok, Vimage.t()} | {:error, error_message}
+
+    def vignette_correction(%Vimage{} = image, k1, k2, k3) do
+      use Image.Math
+
+      format = Image.band_format(image)
+      width = Image.width(image)
+      height = Image.height(image)
+
+      centre_x = (width - 1) / 2
+      centre_y = (height - 1) / 2
+
+      # Cartesian coordinates of the destination point
+      # relative to the centre of the image.
+      index = Operation.xyz!(width, height)
+      index = (index - [centre_x, centre_y])
+      r = pow!(index[0]**2 + index[1]**2, 0.5)
+      r = r / max!(r)
+
+      # Correction function from https://lensfun.github.io/calibration-tutorial/lens-vignetting.html
+      # Also http://download.macromedia.com/pub/labs/lensprofile_creator/lensprofile_creator_cameramodel.pdf
+      # Cd = Cs * (1 + k1 * R^2 + k2 * R^4 + k3 * R^6)
+      # Inverting the formula to un-vignette (rather than calibrate the vignette)
+      d_dest = 1.0 - (k1 * r**2) + (k2 * r**4) + (k3 * r**6)
+
+      Image.cast(image / d_dest, format)
     end
 
     @doc """
