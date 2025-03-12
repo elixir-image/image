@@ -9691,9 +9691,10 @@ defmodule Image do
     end
 
     @doc """
-    Applies a correction for [barrel distortion](https://www.iphotography.com/blog/what-is-lens-barrel-distortion/).
+    Applies a correction for [barrel distortion](https://www.iphotography.com/blog/what-is-lens-barrel-distortion/)
+    and pincushion distortion.
 
-    Barrel distortion is present in all but the most optically
+    Barrel/pincushion distortion is present in all but the most optically
     perfect camera lens. Some cameras will apply a correction
     in-camera, many do not.
 
@@ -9717,7 +9718,7 @@ defmodule Image do
 
     * `a`, `b`, `c` are parameters specific to each
       camera lens and focal distance, typically found in the
-      [lensfun]() database.
+      [lensfun](https://github.com/lensfun/lensfun) database.
 
     ### Returns
 
@@ -9728,12 +9729,12 @@ defmodule Image do
     ### Example
 
           iex> image = Image.open!("./test/support/images/gridlines_barrel.png")
-          iex> Image.barrel_correction(image, -0.007715, 0.086731, 0.0)
+          iex> Image.distortion_correction(image, -0.007715, 0.086731, 0.0)
 
     """
     @doc subject: "Distortion", since: "0.58.0"
 
-    @spec barrel_correction(
+    @spec radial_distortion_correction(
             image :: Vimage.t(),
             a :: number(),
             b :: number(),
@@ -9742,7 +9743,7 @@ defmodule Image do
           ) ::
             {:ok, Vimage.t()} | {:error, error_message}
 
-    def barrel_correction(%Vimage{} = image, a, b, c, d \\ nil)
+    def radial_distortion_correction(%Vimage{} = image, a, b, c, d \\ nil)
         when is_number(a) and is_number(b) and is_number(c) and (is_number(d) or is_nil(d)) do
       use Image.Math
 

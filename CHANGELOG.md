@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.58.1
+
+This is the changelog for Image version 0.58.1 released on ____, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Breaking Change
+
+* Rename `Image.barrel_correction/5` to `Image.radial_distortion_correction/5` since it applies to both barrel and pincushion distortion.
+
 ## Image 0.58.0
 
 This is the changelog for Image version 0.58.0 released on March 11th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
