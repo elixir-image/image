@@ -123,6 +123,10 @@ defmodule Image.Exif.Decode do
 
   @spec date_time(binary()) :: NaiveDateTime.t()
   defp date_time(date_time) do
+    # Some devices produce datetimes with appended null bytes.
+    # We trim those before decoding.
+    date_time = String.trim_trailing(date_time, "\x00")
+
     case String.split(date_time, [":", "-", "T", " "]) do
       [y, m, d, h, mm, s] ->
         case NaiveDateTime.new(int(y), int(m), int(d), int(h), int(mm), int(s)) do
