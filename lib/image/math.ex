@@ -260,6 +260,30 @@ defmodule Image.Math do
     {:ok, Kernel.abs(number)}
   end
 
+  @spec max(Vimage.t() | list(number)) :: {:ok, float()} | {:error, Image.error_message()}
+  def max(%Vimage{} = image) do
+    case Operation.max(image) do
+      {:ok, {max, _}} -> {:ok, max}
+      other -> other
+    end
+  end
+
+  def max(list) do
+    {:ok, Kernel.max(list)}
+  end
+
+  @spec min(Vimage.t() | list(number)) :: {:ok, float()} | {:error, Image.error_message()}
+  def min(%Vimage{} = image) do
+    case Operation.min(image) do
+      {:ok, {max, _}} -> {:ok, max}
+      other -> other
+    end
+  end
+
+  def min(list) do
+    {:ok, Kernel.min(list)}
+  end
+
   @spec pow(Vimage.t(), Vimage.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error_message()}
 
@@ -658,10 +682,26 @@ defmodule Image.Math do
     end
   end
 
-  @spec abs!(Vimage.t() | number()) :: Vimage.t() | no_return()
-  def abs!(image_or_number) do
-    case abs(image_or_number) do
-      {:ok, image_or_number} -> image_or_number
+  @spec abs!(Vimage.t()) :: Vimage.t() | no_return()
+  def abs!(image) do
+    case abs(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
+  end
+
+  @spec max!(Vimage.t()) :: float() | no_return()
+  def max!(image) do
+    case max(image) do
+      {:ok, float} -> image
+      {:error, reason} -> raise ArgumentError, reason
+    end
+  end
+
+  @spec min!(Vimage.t()) :: float() | no_return()
+  def min!(image) do
+    case min(image) do
+      {:ok, float} -> image
       {:error, reason} -> raise ArgumentError, reason
     end
   end
