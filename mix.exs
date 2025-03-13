@@ -115,7 +115,6 @@ defmodule Image.MixProject do
         "lib",
         "priv/color",
         "priv/fonts",
-        "priv/lensfun",
         "mix.exs",
         "README*",
         "CHANGELOG*",
