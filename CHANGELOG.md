@@ -2,19 +2,17 @@
 
 ## Image 0.59.0
 
-This is the changelog for Image version 0.59.0 released on March 13th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.59.0 released on March 14th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Breaking Change
 
-* Rename `Image.barrel_correction/5` to `Image.radial_distortion_correction/5` since it applies to both barrel and pincushion distortion.
+* `Image.radial_distortion_correction/5` and `Image.vignette_correction/4` have moved to a new library [image_lens_correction](https://github.com/elixir-image/image_lens_correction).
 
 ### Enhancements
 
 * Tolerate non-compliant null-terminated datatime strings in Exif. Thanks to @hansihe for the PR. Closes #181.
 
-* Add `Image.vignette_correct/4` to apply a vignette correction to an image - typically a digital photograph.
-
-* Add `Image.Math.max/1`, `Image.Math.min/1`, `Image.Math.max!/1` and `Image.Math.min!/1`
+* Add `Image.Math.max/1`, `Image.Math.min/1`, `Image.Math.max!/1`, `Image.Math.min!/1` and `Image.Complex.polar/1`.
 
 ## Image 0.58.0
 

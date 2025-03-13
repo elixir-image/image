@@ -15,6 +15,15 @@ defmodule Image.Complex do
     complex(image, &Operation.complex(&1, :VIPS_OPERATION_COMPLEX_POLAR))
   end
 
+  @dialyzer {:nowarn_function, {:polar!, 1}}
+
+  def polar!(%Vimage{} = image) do
+    case polar(image) do
+     {:ok, polar} -> polar
+     {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
   @dialyzer {:nowarn_function, {:rectangular, 1}}
 
   def rectangular(%Vimage{} = image) do
