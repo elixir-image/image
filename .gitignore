@@ -48,5 +48,8 @@ test/perf/*.jpeg
 # ASDF
 .tool-versions
 
+# Mise
+mise.toml
+
 # Don't add the lensfun DTD to the repo
 lensfun-database.dtd
