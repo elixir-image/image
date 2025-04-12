@@ -50,7 +50,7 @@ defmodule Image do
   The valid sources of image data when opening an
   image.
   """
-  @type image_data :: Path.t() | File.Stream.t() | binary()
+  @type image_data :: Path.t() | File.Stream.t() | binary() | Enumerable.t()
 
   @typedoc """
   Represents either in image, or a color
@@ -809,19 +809,19 @@ defmodule Image do
     end
   end
 
-  # Any other stream
-  def open(%Stream{} = image_stream, options) do
-    with {:ok, options} <- Options.Open.validate_options(options) do
-      options = loader_options(options)
-      Vix.Vips.Image.new_from_enum(image_stream, options)
-    end
-  end
-
   def open(%File.Stream{}, _options) do
     {:error,
      "File stream must be specify the number of bytes to read. " <>
        "It should be opened as File.stream!(path, options, bytes) where bytes " <>
        "is the number of bytes to read on each iteration."}
+  end
+
+  # Any other stream
+  def open(image_stream, options) do
+    with {:ok, options} <- Options.Open.validate_options(options) do
+      options = loader_options(options)
+      Vix.Vips.Image.new_from_enum(image_stream, options)
+    end
   end
 
   defp do_open([path], options) do
