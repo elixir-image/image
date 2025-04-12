@@ -959,6 +959,16 @@ defmodule Image.Text do
     end
   end
 
+  defp location_from_options(image, x, y, nil, height) when is_integer(height) do
+    if Image.height(image) + y <= height do
+      {:ok, {x, y}}
+    else
+      {:error,
+       "Location [_, #{inspect(y)}] would place the text " <>
+         "outside the image bounds specified"}
+    end
+  end
+
   defp location_from_options(image, x, y, width, height)
        when is_integer(width) and is_integer(height) do
     if Image.width(image) + x <= width && Image.height(image) + y <= height do

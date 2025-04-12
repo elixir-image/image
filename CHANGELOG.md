@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.59.1
+
+This is the changelog for Image version 0.59.1 released on April ______, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Remove pattern matching on `Stream.t` in `Image.open/2`. Thanks to @dcrck for the PR. Closes #187.
+
+* Fix `Image.Text.text/2` when `:height` is specified but not `:width`. Thanks to @Neophen for the report. Closes #185.
+
 ## Image 0.59.0
 
 This is the changelog for Image version 0.59.0 released on March 14th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

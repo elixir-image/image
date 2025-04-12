@@ -246,4 +246,8 @@ defmodule TextImage.Test do
     # {:ok, _image} = Image.write(padded, validate_path)
     assert_images_equal(padded, validate_path)
   end
+
+  test "Image.Text.text with a :height option but no :width option" do
+    assert {:ok, _} = Image.Text.text("This is the text", height: 200, width: 200)
+  end
 end
