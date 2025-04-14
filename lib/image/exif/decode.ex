@@ -29,10 +29,13 @@ defmodule Image.Exif.Decode do
   def tag(:tiff, 0x8825, value), do: {:gps, value}
 
   def tag(:tiff, 0xC4A5, value), do: {:print_image_matching, value}
+  def tag(:tiff, 0xC7A1, value), do: {:camera_label, value}
 
   def tag(:exif, 0x0201, value), do: {:thumbnail_offset, value}
   def tag(:exif, 0x0202, value), do: {:thumbnail_size, value}
 
+  def tag(_, 0x013B, value), do: {:artist, trim(value)}
+  def tag(_, 0x8298, value), do: {:copyright, trim(value)}
   def tag(_, 0x829A, value), do: {:exposure_time, value}
   def tag(_, 0x829D, value), do: {:f_number, value}
   def tag(_, 0x8822, value), do: {:exposure_program, exposure_program(value)}
@@ -45,6 +48,7 @@ defmodule Image.Exif.Decode do
   def tag(_, 0x9000, value), do: {:exif_version, version(value)}
   def tag(_, 0x9003, value), do: {:datetime_original, date_time(value)}
   def tag(_, 0x9004, value), do: {:datetime_digitized, date_time(value)}
+  def tag(_, 0x9010, value), do: {:time_offset, value}
   def tag(_, 0x9011, value), do: {:datetime_original_offset, value}
   def tag(_, 0x9012, value), do: {:datetime_digitized_offset, value}
   def tag(_, 0x9101, value), do: {:component_configuration, component_configuration(value)}
@@ -59,6 +63,7 @@ defmodule Image.Exif.Decode do
   def tag(_, 0x9208, value), do: {:light_source, value}
   def tag(_, 0x9209, value), do: {:flash, flash(value)}
   def tag(_, 0x920A, value), do: {:focal_length, value}
+  def tag(_, 0x9211, value), do: {:image_number, value}
   def tag(_, 0x9214, value), do: {:subject_area, value}
   def tag(_, 0x927C, value), do: {:maker_note, value}
   def tag(_, 0x9286, value), do: {:user_comment, value}
@@ -98,15 +103,14 @@ defmodule Image.Exif.Decode do
   def tag(_, 0xA40B, value), do: {:device_setting_description, value}
   def tag(_, 0xA40C, value), do: {:subject_distance_range, subject_distance_range(value)}
   def tag(_, 0xA420, value), do: {:image_unique_id, value}
+  def tag(_, 0xA431, value), do: {:body_serial_number, value}
   def tag(_, 0xA432, value), do: {:lens_info, value}
   def tag(_, 0xA433, value), do: {:lens_make, value}
   def tag(_, 0xA434, value), do: {:lens_model, value}
   def tag(_, 0xA435, value), do: {:lens_serial_number, value}
+  def tag(_, 0xA436, value), do: {:image_title, value}
 
-  def tag(_, 0x8298, value), do: {:copyright, trim(value)}
-  def tag(_, 0x13B, value), do: {:artist, trim(value)}
-  def tag(_, 0x9010, value), do: {:time_offset, value}
-  def tag(_, 0xA431, value), do: {:body_serial_number, value}
+  def tag(_, 0xFDEA, value), do: {:lens, value}
 
   # http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/GPS.html
   Gps.fields()
