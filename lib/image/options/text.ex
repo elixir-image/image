@@ -204,11 +204,29 @@ defmodule Image.Options.Text do
     {:cont, Keyword.put(options, option, letter_spacing)}
   end
 
+  defp validate_option({:font_file, nil}, options) do
+    options =
+      options
+      |> Keyword.delete(:font_file)
+
+    {:cont, options}
+  end
+
+  # Deprecate :fontfile in favour of :font_file for consistency
+  defp validate_option({:font_file, fontfile}, options) when is_binary(fontfile) do
+    options =
+      options
+      |> Keyword.delete(:font_file)
+      |> Keyword.put(:fontfile, fontfile)
+
+    {:cont, options}
+  end
+
   defp validate_option({:fontfile, nil}, options) do
     {:cont, options}
   end
 
-  defp validate_option({:fontfile, fontfile}, options) when is_binary(fontfile) do
+  defp validate_option({:fontfile, font_file}, options) when is_binary(font_file) do
     {:cont, options}
   end
 

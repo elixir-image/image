@@ -4,11 +4,19 @@
 
 This is the changelog for Image version 0.59.1 released on April ______, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
+### Deprecation
+
+* The option `:fontfile` to `Image.Text.text/2` is deprecated in favour of `:font_file` to be compatible with other functions that use the same option name.
+
 ### Bug Fixes
 
 * Remove pattern matching on `Stream.t` in `Image.open/2`. Thanks to @dcrck for the PR. Closes #187.
 
 * Fix `Image.Text.text/2` when `:height` is specified but not `:width`. In this case an error is returned since `:height` can only be specified if `:width` is also specified. Thanks to @Neophen for the report. Closes #185.
+
+* Fix `Image.Text.text/2` when the option `:font_weight` is specified. The options `:font_weight` and `:letter_spacing` are implemented by wrapping the text in a [Pango markup](https://docs.gtk.org/Pango/pango_markup.html) `span` tag. If the `string` parameter starts with `<span` then these two options are ignored since this implies the user is taking full control of the markup. Closes #183.
+
+* Add option documentation for `:font_file` to `Image.Text.text/2` and note the requirement to also specify `:font` if `:font_file` is specified.
 
 ## Image 0.59.0
 

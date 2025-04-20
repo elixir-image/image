@@ -63,17 +63,19 @@ defmodule Image.Text do
     The default is "Helvetica". The system command `fc-list`
     can typically be used to see what fonts are available.
 
+  * `:font_file` is a path to any `.ttf` font file. If specfied,
+    the `:font` parameter is also required.
+
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
+
+  * `:font_weight` is one of `:ultralight`, `:light`, `:normal`, `:bold`,
+    `:ultrabold`, `:heavy` or an integer between `1` and `1_000`.
+    The default is `:normal` which is equivalent to `400`.
 
   * `:dpi` sets the resolution of the text generation. The
     default `72` which is suitable for screen output. `300`
     may be more appropriate for printed output.
-
-  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
-    The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
-    or an integer between `1` and `1_000`. The default is `:normal`
-    which is equivalent to `400`.
 
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
@@ -106,7 +108,7 @@ defmodule Image.Text do
 
   * `:background_fill_color` is the background fill color behind
     the text. The default is `:none` which indicates no
-    background. Note that if
+    background.
 
   * `:background_stroke_color` is the colour of the outline
     of the background. The default is "none",
@@ -149,6 +151,12 @@ defmodule Image.Text do
     [CSS color name](https://www.w3.org/wiki/CSS/Properties/color/keywords) or
     a six hexadecimal digit string prefixed with `#`. For example
     `#FF00FF` for the color "Fuchsia".
+
+  * The options `:font_weight` and `:letter_spacing` are implemented by
+    wrapping the text in a [Pango markup](https://docs.gtk.org/Pango/pango_markup.html) `span`
+    tag. If the `string` parameter starts with `<span` then these two
+    options are ignored since this implies the user is taking full control
+    of the markup.
 
   """
   @spec text(Phoenix.HTML.safe() | String.t(), Options.Text.t()) ::
@@ -215,27 +223,29 @@ defmodule Image.Text do
   See also the options for `Image.Text.simple_text/2` which
   is ultimately called by this function.
 
-  * `:font` is any font recognised on the host system.
+  * `:font` is any font name recognised on the host system.
     The default is "Helvetica". The system command `fc-list`
     can typically be used to see what fonts are available.
 
+  * `:font_file` is a path to any `.ttf` font file. If specfied,
+    the `:font` parameter is also required.
+
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
+
+  * `:font_weight` is one of `:ultralight`, `:light`, `:normal`, `:bold`,
+    `:ultrabold`, `:heavy` or an integer between `1` and `1_000`.
+    The default is `:normal` which is equivalent to `400`.
 
   * `:dpi` sets the resolution of the text generation. The
     default `72` which is suitable for screen output. `300`
     may be more appropriate for printed output.
 
-  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
-    The alternatives `:normal`, `:bold`, `:lighter`, `:bolder`,
-    or an integer between `1` and `1_000`. The default is `:normal`
-    which is equivalent to `400`.
-
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
     a background. A black background will be forced if a
-    `:background_fill_color` is not provided
+    `:background_fill_color` is not provided.
 
   * `:background_fill_opacity` is the opacity of the background fill.
     It is a float between `0.0` and `1.0` where `0.0` means transparent
@@ -262,7 +272,7 @@ defmodule Image.Text do
 
   * `:background_fill_color` is the background fill color behind
     the text. The default is `:none` which indicates no
-    background. Note that if
+    background.
 
   * `:background_stroke_color` is the colour of the outline
     of the background. The default is "none",
@@ -297,7 +307,7 @@ defmodule Image.Text do
 
   * `image` or
 
-  * raises an exception
+  * raises an exception.
 
   ### Notes
 
@@ -305,6 +315,12 @@ defmodule Image.Text do
     [CSS color name](https://www.w3.org/wiki/CSS/Properties/color/keywords) or
     a six hexadecimal digit string prefixed with `#`. For example
     `#FF00FF` for the color "Fuchsia".
+
+  * The options `:font_weight` and `:letter_spacing` are implemented by
+    wrapping the text in a [Pango markup](https://docs.gtk.org/Pango/pango_markup.html) `span`
+    tag. If the `string` parameter starts with `<span` then these two
+    options are ignored since this implies the user is taking full control
+    of the markup.
 
   """
   @spec text!(String.t(), Keyword.t()) :: Vimage.t() | no_return()
@@ -338,10 +354,6 @@ defmodule Image.Text do
     the text will be rendered transparently against
     a background.
 
-  * `:dpi` sets the resolution of the text generation. The
-    default `72` which is suitable for screen output. `300`
-    may be more appropriate for printed output.
-
   * `:width` is the maximum width of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
     and other options.
@@ -349,11 +361,6 @@ defmodule Image.Text do
   * `:height` is the maximum height of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
     and other options.
-
-  * `:font_size` is an integer font size in pixels. The
-    default is `50`. If set to `0`, the font size will
-    be calculated to fit the text within the specified `:width`
-    and `:height`.
 
   * `:justify` is a boolean indicating whether to justify text.
     The default is `false`.
@@ -365,10 +372,18 @@ defmodule Image.Text do
     The default is "Helvetica". The system command `fc-list`
     can typically be used to see what fonts are available.
 
-  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
-    The alternatives are `:normal`, `:bold`, `:lighter`, `:bolder`,
-    or an integer between `1` and `1_000`. The default is `:normal`
-    which is equivalent to `400`.
+  * `:font_weight` is one of `:ultralight`, `:light`, `:normal`, `:bold`,
+    `:ultrabold`, `:heavy` or an integer between `1` and `1_000`.
+    The default is `:normal` which is equivalent to `400`.
+
+  * `:font_size` is an integer font size in pixels. The
+    default is `50`. If set to `0`, the font size will
+    be calculated to fit the text within the specified `:width`
+    and `:height`.
+
+  * `:dpi` sets the resolution of the text generation. The
+    default `72` which is suitable for screen output. `300`
+    may be more appropriate for printed output.
 
   ### Returns
 
@@ -429,13 +444,6 @@ defmodule Image.Text do
     the text will be rendered transparently against
     a background.
 
-  * `:font_size` is an integer font size in pixels. The
-    default is `50`.
-
-  * `:dpi` sets the resolution of the text generation. The
-    default `72` which is suitable for screen output. `300`
-    may be more appropriate for printed output.
-
   * `:width` is the maximum width of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
     and other options.
@@ -443,11 +451,6 @@ defmodule Image.Text do
   * `:height` is the maximum height of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
     and other options.
-
-  * `:font_size` is an integer font size in pixels. The
-    default is `50`. If set to `0`, the font size will
-    be calculated to fit the text within the specified `:width`
-    and `:height`.
 
   * `:justify` is a boolean indicating whether to justify text.
     The default is `false`.
@@ -457,12 +460,20 @@ defmodule Image.Text do
 
   * `:font` is any font recognised on the host system.
     The default is "Helvetica". The system command `fc-list`
-    can be used to see what fonts are available.
+    can typically be used to see what fonts are available.
 
-  * `:font_weight` is the [font weight](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight).
-    The alternatives are `:normal`, `:bold`, `:lighter`, `:bolder`,
-    or an integer between `1` and `1_000`. The default is `:normal`
-    which is equivalent to `400`.
+  * `:font_weight` is one of `:ultralight`, `:light`, `:normal`, `:bold`,
+    `:ultrabold`, `:heavy` or an integer between `1` and `1_000`.
+    The default is `:normal` which is equivalent to `400`.
+
+  * `:font_size` is an integer font size in pixels. The
+    default is `50`. If set to `0`, the font size will
+    be calculated to fit the text within the specified `:width`
+    and `:height`.
+
+  * `:dpi` sets the resolution of the text generation. The
+    default `72` which is suitable for screen output. `300`
+    may be more appropriate for printed output.
 
   ### Returns
 
@@ -500,7 +511,7 @@ defmodule Image.Text do
   * `image` is any `t:Vimage.t/0` but is expected
     to be an image generated by `Image.Text.text/2`.
 
-  * `options` is a `t:Keyword.t/0` list of options
+  * `options` is a `t:Keyword.t/0` list of options.
 
   ### Options
 
@@ -851,10 +862,7 @@ defmodule Image.Text do
   end
 
   defp render_text(text, options) do
-    font_size =
-      if options.font_size > 0, do: " #{inspect(options.font_size)}", else: ""
-
-    font = options.font <> font_size
+    font = options.font <> font_size(options)
     height = options[:height]
     width = options[:width]
 
@@ -869,7 +877,7 @@ defmodule Image.Text do
       |> maybe_add_dpi(options[:dpi])
       |> Image.maybe_add_fontfile(options[:fontfile])
 
-    with {:ok, text} <- maybe_add_letter_spacing(text, options.letter_spacing),
+    with {:ok, text} <- maybe_add_pango_span(text, options),
          {:ok, {text_mask, _}} <- Operation.text(text, text_options),
          {:ok, color_layer} <- Image.new(text_mask, color: options.text_fill_color),
          {:ok, joined} <- Operation.bandjoin([color_layer, text_mask]),
@@ -882,6 +890,10 @@ defmodule Image.Text do
     end
   end
 
+  defp font_size(options) do
+    if options.font_size > 0, do: " #{inspect(options.font_size)}", else: ""
+  end
+
   defp maybe_add_height(options, nil), do: options
   defp maybe_add_height(options, height), do: Keyword.put(options, :height, height)
 
@@ -891,22 +903,43 @@ defmodule Image.Text do
   defp maybe_add_dpi(options, nil), do: options
   defp maybe_add_dpi(options, dpi), do: Keyword.put(options, :dpi, dpi)
 
+  @span_params [:letter_spacing, :font_weight]
+
   # If the text starts with a span then we assume the user is
   # determining the text format
-  defp maybe_add_letter_spacing("<span" <> _rest = text, _letter_spacing) do
+  defp maybe_add_pango_span("<span" <> _rest = text, _options) do
     {:ok, text}
   end
 
-  # If the spacing is normal, don't change the text
-  defp maybe_add_letter_spacing(text, :normal) do
-    {:ok, text}
+  defp maybe_add_pango_span(text, options) do
+    span_params =
+      @span_params
+      |> Enum.map(&span_param(&1, options[&1]))
+      |> Enum.reject(&is_nil/1)
+      |> Enum.join(" ")
+
+    if span_params == "" do
+      {:ok, text}
+    else
+      {:ok, "<span #{span_params}>#{text}</span>"}
+    end
   end
 
-  # pango letter_spacing is in 1/1024 of a point.
-  # We need to convert pixels to this unit.
-  defp maybe_add_letter_spacing(text, letter_spacing) do
-    letter_spacing = round(letter_spacing * 1024)
-    {:ok, "<span letter_spacing=\"#{letter_spacing}\">#{text}</span>"}
+  defp span_param(:letter_spacing, letter_spacing) when is_integer(letter_spacing) do
+    "letter_spacing='#{round(letter_spacing * 1024)}'"
+  end
+
+  defp span_param(:font_weight, :normal) do
+    nil
+  end
+
+  defp span_param(:font_weight, font_weight)
+      when is_atom(font_weight) or is_integer(font_weight) do
+    "font_weight='#{font_weight}'"
+  end
+
+  defp span_param(_, _) do
+    nil
   end
 
   defp location_from_options(image, :left, y, width, height) do
