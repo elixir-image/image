@@ -73,6 +73,7 @@ defmodule Image.Options.Text do
         options
         |> Map.new()
         |> ensure_background_color_if_transparent_text()
+        |> ensure_width_if_height_specified()
         |> wrap(:ok)
 
       other ->
@@ -311,6 +312,24 @@ defmodule Image.Options.Text do
     end
   end
 
+  defp ensure_width_if_height_specified(%{width: width, height: height} = options)
+      when is_integer(width) and is_integer(height) do
+    options
+  end
+
+  defp ensure_width_if_height_specified(%{width: nil, height: height})
+      when is_integer(height) do
+    {:error, ":width must be specified if :height is specified"}
+  end
+
+  defp ensure_width_if_height_specified(%{height: height}) when is_integer(height) do
+    {:error, ":width must be specified if :height is specified"}
+  end
+
+  defp ensure_width_if_height_specified(options) do
+    options
+  end
+
   defp convert_color(c) do
     c
     |> round()
@@ -319,6 +338,10 @@ defmodule Image.Options.Text do
   end
 
   @doc false
+  def wrap({:error, _} = error_return, _atom) do
+    error_return
+  end
+
   def wrap(term, atom) do
     {atom, term}
   end

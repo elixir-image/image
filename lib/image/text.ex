@@ -124,7 +124,8 @@ defmodule Image.Text do
 
   * `:height` is the maximum height of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
-    and other options.
+    and other options. `:height` may only be specified if `:width` is
+    also specified.
 
   * `:x` is the horizontal location of the text on its background.
     The value is either a non-negative integer or one of `:left`,
@@ -279,7 +280,8 @@ defmodule Image.Text do
 
   * `:height` is the maximum height of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
-    and other options.
+    and other options. `:height` may only be specified if `:width` is
+    also specified.
 
   * `:x` is the horizontal location of the text on its background.
     The value is either a non-negative integer or one of `:left`,

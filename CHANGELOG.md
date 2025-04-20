@@ -8,7 +8,7 @@ This is the changelog for Image version 0.59.1 released on April ______, 2025.  
 
 * Remove pattern matching on `Stream.t` in `Image.open/2`. Thanks to @dcrck for the PR. Closes #187.
 
-* Fix `Image.Text.text/2` when `:height` is specified but not `:width`. Thanks to @Neophen for the report. Closes #185.
+* Fix `Image.Text.text/2` when `:height` is specified but not `:width`. In this case an error is returned since `:height` can only be specified if `:width` is also specified. Thanks to @Neophen for the report. Closes #185.
 
 ## Image 0.59.0
 

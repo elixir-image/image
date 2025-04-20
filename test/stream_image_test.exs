@@ -1,8 +1,8 @@
 if match?({:module, _module}, Code.ensure_compiled(Plug)) do
   defmodule StreamImage.Test do
     use ExUnit.Case, async: true
-    use Plug.Test
 
+    import Plug.Test
     import Image.TestSupport
 
     setup do
