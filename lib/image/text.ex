@@ -63,15 +63,16 @@ defmodule Image.Text do
     The default is "Helvetica". The system command `fc-list`
     can typically be used to see what fonts are available.
 
-  * `:font_file` is a path to any `.ttf` font file. If specfied,
-    the `:font` parameter is also required.
-
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
 
   * `:font_weight` is one of `:ultralight`, `:light`, `:normal`, `:bold`,
     `:ultrabold`, `:heavy` or an integer between `1` and `1_000`.
     The default is `:normal` which is equivalent to `400`.
+
+  * `:font_file` is a path to any `.ttf` font file. If specfied,
+    the `:font` parameter is also required. Note that this option
+    is not supported on MacOS systems.
 
   * `:dpi` sets the resolution of the text generation. The
     default `72` which is suitable for screen output. `300`
@@ -227,11 +228,12 @@ defmodule Image.Text do
     The default is "Helvetica". The system command `fc-list`
     can typically be used to see what fonts are available.
 
-  * `:font_file` is a path to any `.ttf` font file. If specfied,
-    the `:font` parameter is also required.
-
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
+
+  * `:font_file` is a path to any `.ttf` font file. If specfied,
+    the `:font` parameter is also required. Note that this option
+    is not supported on MacOS systems.
 
   * `:font_weight` is one of `:ultralight`, `:light`, `:normal`, `:bold`,
     `:ultrabold`, `:heavy` or an integer between `1` and `1_000`.

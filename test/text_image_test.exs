@@ -247,7 +247,18 @@ defmodule TextImage.Test do
     assert_images_equal(padded, validate_path)
   end
 
-  test "Image.Text.text with a :height option but no :width option" do
-    assert {:ok, _} = Image.Text.text("This is the text", height: 200, width: 200)
+  test "Image.Text.text with a :height option but no :width option is an error" do
+    assert {:error, _} = Image.Text.text("This is the text", height: 200)
+  end
+
+  test "Image.Text.text with :font_weight" do
+    for weight <- [:normal, :bold, :ultrabold, :light, :ultralight] do
+      validate_path = validate_path("text/font_weight_#{weight}.tif")
+
+      {:ok, image} = Image.Text.text("Some text", font_weight: weight)
+      # {:ok, _image} = Image.write(image, validate_path)
+
+      assert_images_equal(image, validate_path)
+    end
   end
 end

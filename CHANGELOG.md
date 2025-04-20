@@ -2,7 +2,7 @@
 
 ## Image 0.59.1
 
-This is the changelog for Image version 0.59.1 released on April ______, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.59.1 released on April 21st, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Deprecation
 
@@ -17,6 +17,8 @@ This is the changelog for Image version 0.59.1 released on April ______, 2025.  
 * Fix `Image.Text.text/2` when the option `:font_weight` is specified. The options `:font_weight` and `:letter_spacing` are implemented by wrapping the text in a [Pango markup](https://docs.gtk.org/Pango/pango_markup.html) `span` tag. If the `string` parameter starts with `<span` then these two options are ignored since this implies the user is taking full control of the markup. Closes #183.
 
 * Add option documentation for `:font_file` to `Image.Text.text/2` and note the requirement to also specify `:font` if `:font_file` is specified.
+
+* Clarify that `Image.Text.text/2` option `:font_file` is not supported on MacOS. On that platform, only FontBook fonts are supported. It is known to work on Linux. The status on Windows is currently unknown by the author - feedback would be welcome.
 
 ## Image 0.59.0
 
