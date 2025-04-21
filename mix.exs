@@ -12,7 +12,7 @@ defmodule Image.MixProject do
       elixir: "~> 1.14",
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      source_url: "https://github.com/kipcole9/image",
+      source_url: "https://github.com/elixir-image/image",
       docs: docs(),
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
