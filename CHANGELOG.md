@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.59.2
+
+This is the changelog for Image version 0.59.1 released on April 21st, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fixes `Image.rounded/1` and `Image.squircle/1` when the image has an alpha band. Thanks to @Neophen for the report. Closes #182.
+
 ## Image 0.59.1
 
 This is the changelog for Image version 0.59.1 released on April 21st, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

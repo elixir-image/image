@@ -67,6 +67,38 @@ defmodule Image.Test do
     assert_images_equal(out_path, validate_path("Kip_small_squircle_mask.png"))
   end
 
+  test "Rounded Image with alpha", %{dir: dir} do
+    image = image_path("Kip_small.jpg")
+    validate_path = validate_path("Kip_small_alpha_rounded_mask.png")
+
+    {:ok, kip} = Vimage.new_from_file(image)
+    {:ok, kip} = Image.add_alpha(kip, 255)
+    {:ok, rounded} = Image.rounded(kip)
+
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    assert :ok = Vimage.write_to_file(rounded, out_path)
+
+    # {:ok, _} = Image.write(rounded, validate_path)
+
+    assert_images_equal(out_path, validate_path)
+  end
+
+  test "Squircled Image with alpha", %{dir: dir} do
+    image = image_path("Kip_small.jpg")
+    validate_path = validate_path("Kip_small_alpha_squircle_mask.png")
+
+    {:ok, kip} = Vimage.new_from_file(image)
+    {:ok, kip} = Image.add_alpha(kip, 255)
+    {:ok, squircled} = Image.squircle(kip)
+
+    out_path = Temp.path!(suffix: ".png", basedir: dir)
+    assert :ok = Vimage.write_to_file(squircled, out_path)
+
+    # {:ok, _} = Image.write(squircled, validate_path)
+
+    assert_images_equal(out_path, validate_path)
+  end
+
   test "Image composition", %{dir: dir} do
     image = image_path("lamborghini-forsennato-concept.jpg")
 

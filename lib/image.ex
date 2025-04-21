@@ -6049,16 +6049,26 @@ defmodule Image do
   * `{:error, reason}`
 
   """
-  @doc subject: "Generator"
+  @doc subject: "Mask"
 
   @spec rounded(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def rounded(%Vimage{} = image, options \\ []) do
+    use Image.Math
+
     options = Keyword.put_new(options, :radius, @default_round_corner_radius)
     width = width(image)
     height = height(image)
 
     {:ok, mask} = mask(:rounded_corners, width, height, options)
-    Operation.bandjoin([image, mask])
+
+    case split_alpha(image) do
+      {base_image, nil} ->
+        Operation.bandjoin([base_image, mask])
+
+      {base_image, alpha} ->
+        alpha = if_then_else!(mask == 0, mask, alpha)
+        Operation.bandjoin([base_image, alpha])
+    end
   end
 
   @doc """
@@ -6118,12 +6128,22 @@ defmodule Image do
 
   @spec squircle(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def squircle(%Vimage{} = image, options \\ []) do
+    use Image.Math
+
     options = Keyword.put_new(options, :radius, @default_squircle_radius)
     width = width(image)
     height = height(image)
 
     {:ok, mask} = mask(:squircle, width, height, options)
-    Operation.bandjoin([image, mask])
+
+    case split_alpha(image) do
+      {base_image, nil} ->
+        Operation.bandjoin([base_image, mask])
+
+      {base_image, alpha} ->
+        alpha = if_then_else!(mask == 0, mask, alpha)
+        Operation.bandjoin([base_image, alpha])
+    end
   end
 
   @doc """
