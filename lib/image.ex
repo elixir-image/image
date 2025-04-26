@@ -826,18 +826,15 @@ defmodule Image do
 
   defp do_open([path], options) do
     if File.exists?(path) do
-      options = build_option_string(options)
-      Vimage.new_from_file(path <> options)
+      Vimage.new_from_file(path, options)
     else
       {:error, :enoent}
     end
   end
 
-  defp do_open([path, open_options], options) do
+  defp do_open([path, _open_options], options) do
     if File.exists?(path) do
-      open_options = String.trim_trailing(open_options, "]")
-      options = build_option_string(open_options, options)
-      Vimage.new_from_file(path <> options)
+      Vimage.new_from_file(path, options)
     else
       {:error, :enoent}
     end
@@ -1527,19 +1524,14 @@ defmodule Image do
   end
 
   defp write_path([image_path], image, options) do
-    options = build_option_string(options)
-
-    case Vimage.write_to_file(image, image_path <> options) do
+    case Vimage.write_to_file(image, image_path, options) do
       :ok -> {:ok, image}
       other -> other
     end
   end
 
-  defp write_path([image_path, open_options], image, options) do
-    write_options = String.trim_trailing(open_options, "]")
-    options = build_option_string(write_options, options)
-
-    case Vimage.write_to_file(image, image_path <> options) do
+  defp write_path([image_path, _open_options], image, options) do
+    case Vimage.write_to_file(image, image_path, options) do
       :ok -> {:ok, image}
       other -> other
     end
@@ -11241,17 +11233,17 @@ defmodule Image do
     {atom, item}
   end
 
-  defp build_option_string(options, other_options) do
-    "[" <> options <> "," <> join_options(other_options) <> "]"
-  end
-
-  defp build_option_string(options) do
-    "[" <> join_options(options) <> "]"
-  end
-
-  defp join_options(options) do
-    Enum.map_join(options, ",", fn {k, v} -> "#{k}=#{v}" end)
-  end
+  # defp build_option_string(options, other_options) do
+  #   "[" <> options <> "," <> join_options(other_options) <> "]"
+  # end
+  #
+  # defp build_option_string(options) do
+  #   "[" <> join_options(options) <> "]"
+  # end
+  #
+  # defp join_options(options) do
+  #   Enum.map_join(options, ",", fn {k, v} -> "#{k}=#{v}" end)
+  # end
 
   defp file_exists?(path) do
     if File.exists?(path, [:raw]), do: {:ok, path}, else: {:error, :enoent}

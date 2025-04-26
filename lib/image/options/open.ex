@@ -94,8 +94,12 @@ defmodule Image.Options.Open do
 
   @failure_modes Map.keys(@fail_on_open)
 
-  @access [:sequential, :random]
-  @default_access :random
+  @access_map %{
+    sequential: :VIPS_ACCESS_SEQUENTIAL,
+    random: :VIPS_ACCESS_RANDOM
+  }
+
+  @default_access :VIPS_ACCESS_RANDOM
 
   def validate_options(options) do
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
@@ -107,7 +111,10 @@ defmodule Image.Options.Open do
     end
   end
 
-  def validate_option({:access, access}, options) when access in @access do
+  def validate_option({:access, access}, options) when is_map_key(@access_map, access) do
+    access = Map.fetch!(@access_map, access)
+    options = Keyword.put(options, :access, access)
+
     {:cont, options}
   end
 
