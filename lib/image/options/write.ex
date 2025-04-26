@@ -81,7 +81,10 @@ defmodule Image.Options.Write do
   defguard is_tiff(image_type) when image_type in [".tiff", ".tif"]
 
   @doc false
-  defguard is_heif(image_type) when image_type in [".heif", ".heic", ".avif"]
+  defguard is_heif(image_type) when image_type in [".heif", ".heic"]
+
+  @doc false
+  defguard is_avif(image_type) when image_type == ".avif"
 
   @doc false
   defguard is_gif(image_type) when image_type in [".gif", ".GIF"]
@@ -94,16 +97,20 @@ defmodule Image.Options.Write do
     ".tiff" => :tif,
     ".heif" => :heif,
     ".heic" => :heif,
-    ".avif" => :heif,
+    ".avif" => :avif,
     ".gif" => :gif,
     ".webp" => :webp
   }
 
   @heif_compression_map %{
     hevc: :VIPS_FOREIGN_HEIF_COMPRESSION_HEVC,
+    av1: :VIPS_FOREIGN_HEIF_COMPRESSION_AV1,
+  }
+
+  @avif_compression_map %{
+    av1: :VIPS_FOREIGN_HEIF_COMPRESSION_AV1,
     avc: :VIPS_FOREIGN_HEIF_COMPRESSION_AVC,
-    jpeg: :VIPS_FOREIGN_HEIF_COMPRESSION_JPEG,
-    av1: :VIPS_FOREIGN_HEIF_COMPRESSION_AV1
+    jpeg: :VIPS_FOREIGN_HEIF_COMPRESSION_JPEG
   }
 
   @suffix_keys Map.keys(@suffix_map)
@@ -192,6 +199,14 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
+  defp validate_option({:compression, compression}, options, image_type)
+       when is_avif(image_type) and is_map_key(@avif_compression_map, compression) do
+    vips_compression = Map.fetch!(@avif_compression_map, compression)
+    options = Keyword.put(options, :compression, vips_compression)
+
+    {:cont, options}
+  end
+
   # From: https://www.libvips.org/API/current/VipsForeignSave.html#vips-jpegsave
   # Applies only to jpeg save
   # For maximum compression with mozjpeg, a useful set of options is
@@ -234,7 +249,8 @@ defmodule Image.Options.Write do
   end
 
   # For webp, apply min-size, strip, and mixed (allow mixed encoding which might reduce file size)
-  defp validate_option({:minimize_file_size, true}, options, image_type) when is_heif(image_type) do
+  defp validate_option({:minimize_file_size, true}, options, image_type)
+      when is_heif(image_type) or is_avif(image_type) do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
@@ -316,7 +332,8 @@ defmodule Image.Options.Write do
   defp conform_effort(effort, ".png"), do: effort
 
   # Range 0..9
-  defp conform_effort(effort, image_type) when is_heif(image_type), do: effort - 1
+  defp conform_effort(effort, image_type) when is_heif(image_type) or is_avif(image_type),
+    do: effort - 1
 
   # Range 0..6
   defp conform_effort(effort, ".webp"), do: round(effort / 10 * 6)

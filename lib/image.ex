@@ -1388,11 +1388,12 @@ defmodule Image do
     The value must be in the range `1..10`, the default
     is `7`.
 
-  #### HEIF images
+  #### HEIF/HEIC and AVIF images
 
   * `:compression` is the compression strategy to
     be applied. The allowable values are `:hevc`,
-    `:avc`, `:jpeg` and `:av1`. The default is `:hevc`.
+    and `:av1` for HEIF/HEIC files, and `:avc`, `:av1`
+    and `:jpeg` for AVIF files.
 
   * `:effort` is an integer to adjust the level of CPU
     effort to reduce the file size.
@@ -1425,7 +1426,7 @@ defmodule Image do
   the supplied options.
 
   The valid image type option keys are `:jpg`, `.png`,
-  `:gif`, `:tif`, `:webp` and `:heif`.
+  `:gif`, `:tif`, `:webp`, `:heif` and `:avif.
 
   This makes it easier to define a general purpose image
   processing pipeline that can still apply specific
