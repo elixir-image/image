@@ -91,7 +91,7 @@ jobs:
     # Install latest libvips
     - name: Get latest version of libvips
       run: |
-        VIPS_LATEST_RELEASE="https://github.com/libvips/libvips/releases/download/v8.15.5/vips-8.15.5.tar.xz"
+        VIPS_LATEST_RELEASE="https://github.com/libvips/libvips/releases/download/v8.16.1/vips-8.16.1.tar.xz"
         echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
 
     - name: Cache libvips artifacts
