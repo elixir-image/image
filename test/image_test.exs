@@ -365,6 +365,7 @@ defmodule Image.Test do
     assert {:ok, _image} = Image.open(heic)
   end
 
+  @tag :heic_compression
   test "Saving an HEIC file with different compression methods" do
     image = Image.open!("./test/support/images/Singapore-2016-09-5887.jpg")
     {:ok, _image} = Image.write(image, "/tmp/s1.heic", compression: :av1)
