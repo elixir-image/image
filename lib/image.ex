@@ -1279,7 +1279,8 @@ defmodule Image do
     `File.stream!/3` or with `Stream.resource/3`, a
     `t:Plug.Conn.t/0` if `Plug` is configured or lastly,
     it can also be `:memory` in which case the image is
-    written to a binary.
+    written to a binary. Currently,`:memory` supports only
+    TIFF, JPEG and PNG formats.
 
   * `options` is a keyword list of options. The default is
     `[]`.

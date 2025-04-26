@@ -99,6 +99,13 @@ defmodule Image.Options.Write do
     ".webp" => :webp
   }
 
+  @heif_compression_map %{
+    hevc: :VIPS_FOREIGN_HEIF_COMPRESSION_HEVC,
+    avc: :VIPS_FOREIGN_HEIF_COMPRESSION_AVC,
+    jpeg: :VIPS_FOREIGN_HEIF_COMPRESSION_JPEG,
+    av1: :VIPS_FOREIGN_HEIF_COMPRESSION_AV1
+  }
+
   @suffix_keys Map.keys(@suffix_map)
   @suffix_values Map.values(@suffix_map) |> Enum.uniq()
 
@@ -174,6 +181,14 @@ defmodule Image.Options.Write do
 
   defp validate_option({:compression, compression}, options, image_type)
        when is_png(image_type) and compression in 1..9 do
+    {:cont, options}
+  end
+
+  defp validate_option({:compression, compression}, options, image_type)
+       when is_heif(image_type) and is_map_key(@heif_compression_map, compression) do
+    vips_compression = Map.fetch!(@heif_compression_map, compression)
+    options = Keyword.put(options, :compression, vips_compression)
+
     {:cont, options}
   end
 
