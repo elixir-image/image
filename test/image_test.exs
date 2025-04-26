@@ -368,7 +368,13 @@ defmodule Image.Test do
   test "Saving an HEIC file with different compression methods" do
     image = Image.open!("./test/support/images/Singapore-2016-09-5887.jpg")
     {:ok, _image} = Image.write(image, "/tmp/s1.heic", compression: :av1)
+
+    # This one fails in CI with "Unsupported compression"
     {:ok, _image} = Image.write(image, "/tmp/s1.heic", compression: :hevc)
+
+    # Currently these last two compression methods return the following error:
+    # {:error, "operation build: heifsave: Unsupported compression"}
+    # This is probably a build configuration issue.
 
     # {:ok, _image} = Image.write(image, "/tmp/s1.heic", compression: :jpeg)
     # {:ok, _image} = Image.write(image, "/tmp/s1.heic", compression: :avc)
