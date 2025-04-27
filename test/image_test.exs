@@ -368,13 +368,14 @@ defmodule Image.Test do
   @tag :heic_compression
   test "Saving an HEIC/AVIF file with different compression methods" do
     image = Image.open!("./test/support/images/Singapore-2016-09-5887.jpg")
-    {:ok, _image} = Image.write(image, "/tmp/s1.heic", compression: :av1)
-    {:ok, _image} = Image.write(image, "/tmp/s1.heic", compression: :hevc)
-    {:ok, _image} = Image.write(image, "/tmp/s1.heif", compression: :av1)
-    {:ok, _image} = Image.write(image, "/tmp/s1.heif", compression: :hevc)
 
-    {:ok, _image} = Image.write(image, "/tmp/s1.avif", compression: :jpeg)
-    {:ok, _image} = Image.write(image, "/tmp/s1.avif", compression: :av1)
-    {:ok, _image} = Image.write(image, "/tmp/s1.avif", compression: :avc)
+    assert {:ok, _image} = Image.write(image, "/tmp/s1.heic", compression: :av1)
+    assert {:ok, _image} = Image.write(image, "/tmp/s1.heic", compression: :hevc)
+    assert {:ok, _image} = Image.write(image, "/tmp/s1.heif", compression: :av1)
+    assert {:ok, _image} = Image.write(image, "/tmp/s1.heif", compression: :hevc)
+
+    assert {:ok, _image} = Image.write(image, "/tmp/s1.avif", compression: :jpeg)
+    assert {:ok, _image} = Image.write(image, "/tmp/s1.avif", compression: :av1)
+    assert {:ok, _image} = Image.write(image, "/tmp/s1.avif", compression: :avc)
   end
 end
