@@ -1426,7 +1426,7 @@ defmodule Image do
   the supplied options.
 
   The valid image type option keys are `:jpg`, `.png`,
-  `:gif`, `:tif`, `:webp`, `:heif` and `:avif.
+  `:gif`, `:tif`, `:webp`, `:heif` and `:avif`.
 
   This makes it easier to define a general purpose image
   processing pipeline that can still apply specific
