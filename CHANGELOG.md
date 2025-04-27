@@ -2,11 +2,11 @@
 
 ## Image 0.59.3
 
-This is the changelog for Image version 0.59.3 released on ______, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.59.3 released on April 27th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 
-* Fix `:compression` option handling for `Image.write/2` when the image type is `.heic`. Thanks to @olivermt for the report. Closes #189.
+* Fix `:compression` option handling for `Image.write/2` when the image type is `.heic` or `:avif`. Thanks to @olivermt for the report. Closes #189.
 
 ## Image 0.59.2
 
