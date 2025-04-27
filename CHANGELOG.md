@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.60.0
+
+This is the changelog for Image version 0.60.0 released on ______, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Add magic number for AVIF image binaries to `Image.open/2`.
+
 ## Image 0.59.3
 
 This is the changelog for Image version 0.59.3 released on April 27th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
