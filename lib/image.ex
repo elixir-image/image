@@ -768,21 +768,6 @@ defmodule Image do
     from_binary(image, options)
   end
 
-  # HEIC
-  def open(<<_box, _::size(32), "ftyp", type::binary(4), _::binary>> = image, options)
-      when type in ["heis", "hevc"] do
-    from_binary(image, options)
-  end
-
-  # SVG starting with either svg or xml tag
-  def open(<<"<svg ", _::binary>> = image, options) do
-    from_binary(image, options)
-  end
-
-  def open(<<"<?xml ", _::binary>> = image, options) do
-    from_binary(image, options)
-  end
-
   # 'heic': the usual HEIF images
   # 'heix': 10bit images, or anything that uses h265 with range extension
   # 'hevc', 'hevx': brands for image sequences
@@ -795,6 +780,15 @@ defmodule Image do
 
   def open(<<_::bytes-4, "ftyp", type::bytes-4, _rest::binary>> = image, options)
       when type in @heic_types do
+    from_binary(image, options)
+  end
+
+  # SVG starting with either svg or xml tag
+  def open(<<"<svg ", _::binary>> = image, options) do
+    from_binary(image, options)
+  end
+
+  def open(<<"<?xml ", _::binary>> = image, options) do
     from_binary(image, options)
   end
 
