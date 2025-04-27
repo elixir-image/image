@@ -768,6 +768,12 @@ defmodule Image do
     from_binary(image, options)
   end
 
+  # HEIC
+  def open(<<_box, _::size(32), "ftyp", type::binary(4), _::binary>> = image, options)
+      when type in ["heis", "hevc"] do
+    from_binary(image, options)
+  end
+
   # SVG starting with either svg or xml tag
   def open(<<"<svg ", _::binary>> = image, options) do
     from_binary(image, options)
@@ -785,7 +791,7 @@ defmodule Image do
   # 'hevm': multiview sequence
   # 'hevs': sc
 
-  @heic_types ["heic", "heix", "hevc", "hevx", "heim", "heis", "hevm", "hevs", "mif1"]
+  @heic_types ["heic", "heix", "hevc", "hevx", "heim", "heis", "hevm", "hevs", "mif1", "avif"]
 
   def open(<<_::bytes-4, "ftyp", type::bytes-4, _rest::binary>> = image, options)
       when type in @heic_types do
