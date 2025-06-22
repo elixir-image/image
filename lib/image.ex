@@ -1263,6 +1263,79 @@ defmodule Image do
     end
   end
 
+  if Code.ensure_loaded?(Req) do
+    @doc """
+    Opens an image as a stream from a [Req](https://github.com/wojtekmach/req) request.
+
+    The URL is retrieved by `Req.get!(url, into: :self)` which is then
+    wrapped in a `Stream.resource/3` and opened as an streaming image.
+
+    ### Arguments
+
+    * `url` is any URL representing an image.
+
+    ### Returns
+
+    * `{:ok, image}` or
+
+    * `{:error reason}`
+
+    ### Notes
+
+    * Due to the nature of the interaction between Req and Vix, error
+      responses from the embedded `Reg.get/2` are swallowed and a generic
+      `{:error, "Failed to find loader for the source"}` may be returned instead.
+
+    ### Example
+
+      url = "https://files.amoi.no/dog.webp"
+      Image.from_req_stream(url)
+      {:ok, %Vix.Vips.Image{ref: #Reference<0.3575018002.2188509222.143025>}}
+
+    """
+    @doc since: "0.60.0"
+
+    @spec from_req_stream(url :: binary()) ::
+      {:ok, image :: %Vimage{}} | {:error, error_message()}
+
+    def from_req_stream(url) do
+      body_stream =
+        Stream.resource(
+          fn ->
+            case Req.get(url, into: :self) do
+              {:ok, resp} -> resp
+              other -> IO.inspect(other)
+            end
+          end,
+          fn
+            {:done, resp} ->
+              {:halt, resp}
+
+            {:error, reason} ->
+              {:halt, {:error, reason}}
+
+            resp ->
+              case Req.parse_message(resp, receive do message -> message end) do
+                {:ok, chunks} ->
+                  data_chunks =
+                    chunks
+                    |> Enum.filter(&match?({:data, _}, &1))
+                    |> Enum.map(fn {:data, binary} -> binary end)
+
+                  if Enum.any?(chunks, &(&1 == :done)) do
+                    {data_chunks, {:done, resp}}
+                  else
+                    {data_chunks, resp}
+                  end
+              end
+          end,
+          &Req.cancel_async_response/1
+        )
+
+      Vix.Vips.Image.new_from_enum(body_stream)
+    end
+  end
+
   @doc """
   Write an image to a file, a stream, an enumerable or
   to memory.

@@ -4,9 +4,13 @@
 
 This is the changelog for Image version 0.60.0 released on ______, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
+### Bug Fixes
+
+* Improve the error messages for `Image.crop/5` when the crop bounding box is invalid. Closes #190.
+
 ### Enhancements
 
-* Add magic number for AVIF image binaries to `Image.open/2`.
+* Add `Image.from_req_stream/1` to open chunked images returned from [req](https://github.com/wojtekmach/req) as an image stream. Thanks to @akash-akya for the assistance.
 
 ## Image 0.59.3
 

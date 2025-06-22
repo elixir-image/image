@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.59.3"
+  @version "0.60.0-dev"
 
   @app_name "image"
 
@@ -66,6 +66,9 @@ defmodule Image.MixProject do
       # For streaming writes
       {:plug, "~> 1.13", optional: true},
 
+      # For streaming images via Req
+      {:req, "~> 0.4", optional: true},
+
       # Kino for rendering in Livebook
       if(Version.compare(System.version(), "1.13.0") in [:gt, :eq],
         do: {:kino, "~> 0.13", optional: true}
@@ -88,7 +91,6 @@ defmodule Image.MixProject do
       # For testing and benchmarking
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
       {:benchee, "~> 1.0", only: :dev, runtime: false, optional: true},
-      {:req, "~> 0.4", only: [:test, :dev], optional: true},
 
       # For release management
       {:ex_doc, "~> 0.18", only: [:release, :dev, :docs]},
