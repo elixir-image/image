@@ -1265,10 +1265,11 @@ defmodule Image do
 
   if Code.ensure_loaded?(Req) do
     @doc """
-    Opens an image as a stream from a [Req](https://github.com/wojtekmach/req) request.
+    Opens an image as a stream from a URL that will be retrieved
+    by [Req](https://github.com/wojtekmach/req) request.
 
     The URL is retrieved by `Req.get!(url, into: :self)` which is then
-    wrapped in a `Stream.resource/3` and opened as an streaming image.
+    wrapped in a `Stream.resource/3` and opened as a streaming image.
 
     ### Arguments
 
