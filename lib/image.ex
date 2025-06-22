@@ -226,6 +226,9 @@ defmodule Image do
   # Used by blur/3 and feather/2
   @default_blur_sigma Options.Blur.default_blur_sigma()
 
+  # Default req timeout for receiving async messages.
+  @default_req_timeout 5000
+
   # if the ratio between width and height differs
   # by less than this amount, consider the image
   # to be square
@@ -1273,7 +1276,16 @@ defmodule Image do
 
     ### Arguments
 
-    * `url` is any URL representing an image.
+    * `url` is any URL representing an image or a t:Req.Request.t/1
+
+    * `options` is a keyword list of options.
+
+    ### Options
+
+    * `:timeout` is an integer number of milliseconds upon which
+      the next chunk of the image stream is waited. If the timeout is
+      exceeded then an error is returned. The default is #{@default_req_timeout}
+      milliseconds.
 
     ### Returns
 
@@ -1289,34 +1301,30 @@ defmodule Image do
 
     ### Example
 
-      url = "https://files.amoi.no/dog.webp"
-      Image.from_req_stream(url)
-      {:ok, %Vix.Vips.Image{ref: #Reference<0.3575018002.2188509222.143025>}}
+        url = "https://files.amoi.no/dog.webp"
+        Image.from_req_stream(url)
+        {:ok, %Vix.Vips.Image{ref: #Reference<0.3575018002.2188509222.143025>}}
 
     """
     @doc since: "0.60.0"
 
-    @spec from_req_stream(url :: binary()) ::
+    @spec from_req_stream(url_or_request :: binary() | Req.Request.t()) ::
       {:ok, image :: %Vimage{}} | {:error, error_message()}
 
-    def from_req_stream(url) do
+    def from_req_stream(url_or_request, options \\ []) do
+      timeout = Keyword.get(options, :timeout, @default_req_timeout)
+
       body_stream =
         Stream.resource(
           fn ->
-            case Req.get(url, into: :self) do
-              {:ok, resp} -> resp
+            case Req.get(url_or_request, into: :self) do
+              {:ok, %Req.Response{status: 200} = resp} -> resp
               other -> other
             end
           end,
           fn
-            {:done, resp} ->
-              {:halt, resp}
-
-            {:error, reason} ->
-              {:halt, {:error, reason}}
-
-            resp ->
-              case Req.parse_message(resp, receive do message -> message end) do
+            %Req.Response{status: 200} = resp ->
+              case Req.parse_message(resp, get_req_message(timeout)) do
                 {:ok, chunks} ->
                   data_chunks =
                     chunks
@@ -1329,11 +1337,31 @@ defmodule Image do
                     {data_chunks, resp}
                   end
               end
+
+            {:done, resp} ->
+              {:halt, resp}
+
+            resp ->
+              {:halt, resp}
           end,
-          &Req.cancel_async_response/1
+          fn
+            %Req.Response{} = resp ->
+              Req.cancel_async_response(resp)
+            other ->
+              other
+          end
         )
 
       Vix.Vips.Image.new_from_enum(body_stream)
+    end
+  end
+
+  defp get_req_message(timeout) do
+    receive do
+      message -> message
+    after
+      timeout ->
+        {:error, :timed_out}
     end
   end
 

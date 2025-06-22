@@ -17,4 +17,8 @@ defmodule Image.Error do
   def exception(message) when is_binary(message) do
     %__MODULE__{message: message}
   end
+
+  def exception(other) do
+    other
+  end
 end
