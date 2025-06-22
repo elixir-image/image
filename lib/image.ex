@@ -1304,7 +1304,7 @@ defmodule Image do
           fn ->
             case Req.get(url, into: :self) do
               {:ok, resp} -> resp
-              other -> IO.inspect(other)
+              other -> other
             end
           end,
           fn
