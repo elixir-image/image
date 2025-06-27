@@ -820,7 +820,7 @@ defmodule Image.Math do
 
   ### Returns
 
-  * `{maximum, x_max, y_max, [{x_positions, y_positions}])`
+  * `{maximum, x_max, y_max, [{x, y}, ...])`
 
   """
   @spec top_n(image :: Vimage.t(), n :: non_neg_integer()) ::
@@ -853,7 +853,7 @@ defmodule Image.Math do
 
   ### Returns
 
-  * `{minimum, x_min, y_min, [{x_positions, y_positions}])`
+  * `{minimum, x_min, y_min, [{x, y}, ...])`
 
   """
   @spec bottom_n(image :: Vimage.t(), n :: non_neg_integer()) ::
@@ -887,7 +887,7 @@ defmodule Image.Math do
 
   ### Returns
 
-  * `{maximum, [{x_positions, y_positions}], maybe_overflow)`.  If
+  * `{maximum, [{x, y}, ...], maybe_overflow)`.  If
     `maybe_overflow` is set to `:maybe_overflow` its an indication
     that the number of coordinates is the same as the requested `:n`.
     Therefore it is possible - maybe even likely - that there are other
@@ -964,7 +964,7 @@ defmodule Image.Math do
 
   ### Returns
 
-  * `{minimum, [{x_positions, y_positions}], maybe_overflow)`.  If
+  * `{minimum, [{x, y}, ...], maybe_overflow)`.  If
     `maybe_overflow` is set to `:maybe_overflow` its an indication
     that the number of coordinates is the same as the requested `:n`.
     Therefore it is possible - maybe even likely - that there are other
