@@ -828,7 +828,7 @@ defmodule Image.Math do
             maximum :: float(),
             x_max :: non_neg_integer(),
             y_max :: non_neg_integer(),
-            max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...]
+            max_coordinates :: [Image.point(), ...]
           }
 
   def top_n(%Vimage{} = image, n \\ 10) when is_integer(n) do
@@ -861,7 +861,7 @@ defmodule Image.Math do
             minimim :: float(),
             x_max :: non_neg_integer(),
             y_max :: non_neg_integer(),
-            max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...]
+            max_coordinates :: [Image.point(), ...]
           }
 
   def bottom_n(%Vimage{} = image, n \\ 10) when is_integer(n) do
@@ -923,7 +923,7 @@ defmodule Image.Math do
   @spec maxpos(image :: Vimage.t(), n :: non_neg_integer()) ::
           {
             maximum :: number(),
-            max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...],
+            max_coordinates :: [Image.point(), ...],
             maybe_overflow :: :maybe_overflow | nil
           }
   @dialyzer {:nowarn_function, maxpos: 2}
@@ -975,7 +975,7 @@ defmodule Image.Math do
   @spec minpos(image :: Vimage.t(), n :: non_neg_integer()) ::
           {
             maximum :: number(),
-            max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...],
+            max_coordinates :: [Image.point(), ...],
             maybe_overflow :: :maybe_overflow | nil
           }
 
