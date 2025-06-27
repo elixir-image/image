@@ -833,7 +833,7 @@ defmodule Image.Math do
             max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...]
           }
 
-  def top_n(%Vimage{} = image, n \\ 10) when is_integer(n) and n > 0 do
+  def top_n(%Vimage{} = image, n \\ 10) when is_integer(n) do
     {:ok, {v, opts}} = Operation.max(image, size: n)
     {v, opts[:x], opts[:y], Enum.zip(opts[:"x-array"], opts[:"y-array"])}
   end
@@ -864,7 +864,7 @@ defmodule Image.Math do
             max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...]
           }
 
-  def bottom_n(%Vimage{} = image, n \\ 10) do
+  def bottom_n(%Vimage{} = image, n \\ 10) when is_integer(n) do
     {:ok, {v, opts}} = Operation.min(image, size: n)
     {v, opts[:x], opts[:y], Enum.zip(opts[:"x-array"], opts[:"y-array"])}
   end
@@ -925,7 +925,7 @@ defmodule Image.Math do
             maybe_overflow :: :maybe_overflow | nil
           }
   @dialyzer {:nowarn_function, maxpos: 2}
-  def maxpos(%Vimage{} = image, n \\ 10) do
+  def maxpos(%Vimage{} = image, n \\ 10) when is_integer(n) do
     band_format = Image.band_format(image)
     {:ok, {max, opts}} = Operation.max(image, size: n)
 
@@ -937,7 +937,7 @@ defmodule Image.Math do
 
     max = if match?({:u, _}, band_format), do: trunc(max), else: max
 
-    if length(coordinates) == size do
+    if length(coordinates) == n do
       {max, coordinates, :maybe_overflow}
     else
       {max, coordinates, nil}
@@ -979,7 +979,7 @@ defmodule Image.Math do
             maybe_overflow :: :maybe_overflow | nil
           }
 
-  def minpos(%Vimage{} = image, n \\ 10) do
+  def minpos(%Vimage{} = image, n \\ 10) when is_integer(n) do
     band_format = Image.band_format(image)
     {:ok, {min, opts}} = Operation.min(image, size: n)
 
@@ -991,7 +991,7 @@ defmodule Image.Math do
 
     min = if match?({:u, _}, band_format), do: trunc(min), else: min
 
-    if length(coordinates) == size do
+    if length(coordinates) == n do
       {min, coordinates, :maybe_overflow}
     else
       {min, coordinates, nil}
