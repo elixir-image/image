@@ -6,7 +6,13 @@ This is the changelog for Image version 0.60.0 released on ______, 2025.  For ol
 
 ### Breaking Changes
 
-* The return value from `Image.Math.maxpos/2` and `Image.Math.minpos/2` have changed. They will now return the form `{max, max_x, max_y, [{x_max_1, y_max_1}, {x_max_2, y_max_2}, ....]}`.
+* `Image.Math.maxpos/2` is renamed to `Image.Math.top_n/2` to better reflect its intent.
+
+* `Image.Math.minpos/2` is renamed to `Image.Math.bottom_n/2` to better reflect its intent.
+
+* The return value from `Image.Math.top_n/2` and `Image.Math.bottom_n/2` have changed. They will now return the form `{max, max_x, max_y, [{x_max_1, y_max_1}, {x_max_2, y_max_2}, ....]}`.
+
+* Adds
 
 ### Bug Fixes
 

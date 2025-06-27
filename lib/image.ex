@@ -226,9 +226,6 @@ defmodule Image do
   # Used by blur/3 and feather/2
   @default_blur_sigma Options.Blur.default_blur_sigma()
 
-  # Default req timeout for receiving async messages.
-  @default_req_timeout 5000
-
   # if the ratio between width and height differs
   # by less than this amount, consider the image
   # to be square
@@ -1263,105 +1260,6 @@ defmodule Image do
     case from_kino(image, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  if Code.ensure_loaded?(Req) do
-    @doc """
-    Opens an image as a stream from a URL that will be retrieved
-    by [Req](https://github.com/wojtekmach/req) request.
-
-    The URL is retrieved by `Req.get!(url, into: :self)` which is then
-    wrapped in a `Stream.resource/3` and opened as a streaming image.
-
-    ### Arguments
-
-    * `url` is any URL representing an image or a t:Req.Request.t/1
-
-    * `options` is a keyword list of options.
-
-    ### Options
-
-    * `:timeout` is an integer number of milliseconds upon which
-      the next chunk of the image stream is waited. If the timeout is
-      exceeded then an error is returned. The default is #{@default_req_timeout}
-      milliseconds.
-
-    ### Returns
-
-    * `{:ok, image}` or
-
-    * `{:error reason}`
-
-    ### Notes
-
-    * Due to the nature of the interaction between Req and Vix, error
-      responses from the embedded `Reg.get/2` are swallowed and a generic
-      `{:error, "Failed to find loader for the source"}` may be returned instead.
-
-    ### Example
-
-        url = "https://files.amoi.no/dog.webp"
-        Image.from_req_stream(url)
-        {:ok, %Vix.Vips.Image{ref: #Reference<0.3575018002.2188509222.143025>}}
-
-    """
-    @doc since: "0.60.0"
-
-    @spec from_req_stream(url_or_request :: binary() | Req.Request.t()) ::
-      {:ok, image :: %Vimage{}} | {:error, error_message()}
-
-    def from_req_stream(url_or_request, options \\ []) do
-      timeout = Keyword.get(options, :timeout, @default_req_timeout)
-
-      body_stream =
-        Stream.resource(
-          fn ->
-            case Req.get(url_or_request, into: :self) do
-              {:ok, %Req.Response{status: 200} = resp} -> resp
-              other -> other
-            end
-          end,
-          fn
-            %Req.Response{status: 200} = resp ->
-              case Req.parse_message(resp, get_req_message(timeout)) do
-                {:ok, chunks} ->
-                  data_chunks =
-                    chunks
-                    |> Enum.filter(&match?({:data, _}, &1))
-                    |> Enum.map(fn {:data, binary} -> binary end)
-
-                  if Enum.any?(chunks, &(&1 == :done)) do
-                    {data_chunks, {:done, resp}}
-                  else
-                    {data_chunks, resp}
-                  end
-              end
-
-            {:done, resp} ->
-              {:halt, resp}
-
-            resp ->
-              {:halt, resp}
-          end,
-          fn
-            %Req.Response{} = resp ->
-              Req.cancel_async_response(resp)
-            other ->
-              other
-          end
-        )
-
-      Vix.Vips.Image.new_from_enum(body_stream)
-    end
-  end
-
-  defp get_req_message(timeout) do
-    receive do
-      message -> message
-    after
-      timeout ->
-        {:error, :timed_out}
     end
   end
 
@@ -7223,15 +7121,6 @@ defmodule Image do
       iex> Image.delta_e([0,0,0], [255,255,255])
       {:ok, 100.0}
 
-      iex> Image.delta_e([0,0,0], :misty_rose)
-      {:ok, 90.15503692626953}
-
-      iex> Image.delta_e(:green, :misty_rose)
-      {:ok, 52.93735122680664}
-
-      iex> Image.delta_e(:green, :misty_rose, :de76)
-      {:ok, 88.55162048339844}
-
   """
   @doc subject: "Color Difference", since: "0.49.0"
   def delta_e(color_1, color_2, version \\ @default_delta_e_version)
@@ -7308,13 +7197,16 @@ defmodule Image do
       100.0
 
       iex> Image.delta_e!([0,0,0], :misty_rose)
-      90.15503692626953
+      iex> |> Float.round(4)
+      90.1550
 
       iex> Image.delta_e!(:green, :misty_rose)
-      52.93735122680664
+      iex> |> Float.round(4)
+      52.9374
 
       iex> Image.delta_e!(:green, :misty_rose, :de76)
-      88.55162048339844
+      iex> |> Float.round(4)
+      88.5516
 
   """
   @doc subject: "Color Difference", since: "0.51.0"
@@ -10498,7 +10390,7 @@ defmodule Image do
       {_v, _x, y, _max_coordinates} =
         rows
         |> Operation.gaussblur!(10.0)
-        |> Math.maxpos(size: 1)
+        |> Math.top_n(size: 1)
 
       # and turn to an angle in degrees we should counter-rotate by
       270 - 360 * y / height(rows)

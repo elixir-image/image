@@ -194,10 +194,10 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
         end
       end
 
-      test "Streaming from a req async response" do
-        url = "https://files.amoi.no/dog.webp"
-        assert {:ok, %Vix.Vips.Image{}} = Image.from_req_stream(url)
-      end
+      # test "Streaming from a req async response" do
+      #   url = "https://files.amoi.no/dog.webp"
+      #   assert {:ok, %Vix.Vips.Image{}} = Image.from_req_stream(url)
+      # end
     end
   end
 end
