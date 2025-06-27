@@ -959,7 +959,7 @@ defmodule Image.Math do
 
   * `n` is the number of minima to find. The
     default is `10`. Minima in this case means
-    those values that exactly match the maximum
+    those values that exactly match the minimum
     value.
 
   ### Returns
