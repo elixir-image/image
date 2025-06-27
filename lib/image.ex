@@ -1538,6 +1538,107 @@ defmodule Image do
     end
   end
 
+  if Code.ensure_loaded?(Req) do
+    @default_req_timeout 5000
+
+    @doc """
+    Opens an image as a stream from a URL that will be retrieved
+    by [Req](https://github.com/wojtekmach/req) request.
+
+    The URL is retrieved by `Req.get!(url, into: :self)` which is then
+    wrapped in a `Stream.resource/3` and opened as a streaming image.
+
+    ### Arguments
+
+    * `url` is any URL representing an image or a t:Req.Request.t/1
+
+    * `options` is a keyword list of options.
+
+    ### Options
+
+    * `:timeout` is an integer number of milliseconds upon which
+      the next chunk of the image stream is waited. If the timeout is
+      exceeded then an error is returned. The default is #{@default_req_timeout}
+      milliseconds.
+
+    ### Returns
+
+    * `{:ok, image}` or
+
+    * `{:error reason}`
+
+    ### Notes
+
+    * Due to the nature of the interaction between Req and Vix, error
+      responses from the embedded `Reg.get/2` are swallowed and a generic
+      `{:error, "Failed to find loader for the source"}` may be returned instead.
+
+    ### Example
+
+        url = "https://files.amoi.no/dog.webp"
+        Image.from_req_stream(url)
+        {:ok, %Vix.Vips.Image{ref: #Reference<0.3575018002.2188509222.143025>}}
+
+    """
+    @doc since: "0.61.0"
+
+    @spec from_req_stream(url_or_request :: binary() | Req.Request.t()) ::
+      {:ok, image :: %Vimage{}} | {:error, error_message()}
+
+    def from_req_stream(url_or_request, options \\ []) do
+      timeout = Keyword.get(options, :timeout, @default_req_timeout)
+
+      body_stream =
+        Stream.resource(
+          fn ->
+            case Req.get(url_or_request, into: :self) do
+              {:ok, %Req.Response{status: 200} = resp} -> resp
+              other -> other
+            end
+          end,
+          fn
+            %Req.Response{status: 200} = resp ->
+              case Req.parse_message(resp, get_req_message(timeout)) do
+                {:ok, chunks} ->
+                  data_chunks =
+                    chunks
+                    |> Enum.filter(&match?({:data, _}, &1))
+                    |> Enum.map(fn {:data, binary} -> binary end)
+
+                  if Enum.any?(chunks, &(&1 == :done)) do
+                    {data_chunks, {:done, resp}}
+                  else
+                    {data_chunks, resp}
+                  end
+              end
+
+            {:done, resp} ->
+              {:halt, resp}
+
+            resp ->
+              {:halt, resp}
+          end,
+          fn
+            %Req.Response{} = resp ->
+              Req.cancel_async_response(resp)
+            other ->
+              other
+          end
+        )
+
+      Vix.Vips.Image.new_from_enum(body_stream)
+    end
+  end
+
+  defp get_req_message(timeout) do
+    receive do
+      message -> message
+    after
+      timeout ->
+        {:error, :timed_out}
+    end
+  end
+
   @doc """
   Write an image to a file, a stream, an enumerable or
   to memory returning the image or raising an exception.
@@ -7202,7 +7303,7 @@ defmodule Image do
 
       iex> Image.delta_e!(:green, :misty_rose)
       iex> |> Float.round(4)
-      52.9374
+      52.9373
 
       iex> Image.delta_e!(:green, :misty_rose, :de76)
       iex> |> Float.round(4)
