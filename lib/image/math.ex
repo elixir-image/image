@@ -889,7 +889,7 @@ defmodule Image.Math do
 
   * `{maximum, [{x_positions, y_positions}], maybe_overflow)`.  If
     `maybe_overflow` is set to `:maybe_overflow` its an indication
-    that the number of coordinates is the same as the requested `:n`.
+    that the number of coordinates is the same as the requested `n`.
     Therefore it is possible - maybe even likely - that there are other
     coordinates that have the maximum value but have not been returned.
 
@@ -907,7 +907,7 @@ defmodule Image.Math do
       iex> |> Image.Math.maxpos()
       {255, [{2, 2}], nil}
 
-      # Since all pixels are :red and we want
+      # Since all pixels are red and we want
       # the coordinates of all the red pixels
       # we have an overlow: We retrieve only 3
       # maxima and they are all red. Perhaps
@@ -966,7 +966,7 @@ defmodule Image.Math do
 
   * `{minimum, [{x_positions, y_positions}], maybe_overflow)`.  If
     `maybe_overflow` is set to `:maybe_overflow` its an indication
-    that the number of coordinates is the same as the requested `:n`.
+    that the number of coordinates is the same as the requested `n`.
     Therefore it is possible - maybe even likely - that there are other
     coordinates that have the minimum value but have not been returned.
 
