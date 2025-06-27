@@ -10390,7 +10390,7 @@ defmodule Image do
       {_v, _x, y, _max_coordinates} =
         rows
         |> Operation.gaussblur!(10.0)
-        |> Math.top_n(size: 1)
+        |> Math.top_n(1)
 
       # and turn to an angle in degrees we should counter-rotate by
       270 - 360 * y / height(rows)

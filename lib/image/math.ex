@@ -806,6 +806,9 @@ defmodule Image.Math do
   @doc """
   Return the top `n` image maxima.
 
+  The function returns the coordinates of`:n`
+  largest values of the image.
+
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
@@ -814,7 +817,7 @@ defmodule Image.Math do
 
   ### Options
 
-  * `:size` is the number of maximums to find. The
+  * `:n` is the number of maximums to find. The
     default is `10`.
 
   ### Returns
@@ -822,7 +825,7 @@ defmodule Image.Math do
   * `{maximum, x_max, y_max, [{x_positions, y_positions}])`
 
   """
-  @spec top_n(Vimage.t(), Keyword.t()) ::
+  @spec top_n(image :: Vimage.t(), n :: non_neg_integer()) ::
           {
             maximum :: float(),
             x_max :: non_neg_integer(),
@@ -830,25 +833,22 @@ defmodule Image.Math do
             max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...]
           }
 
-  def top_n(%Vimage{} = image, options \\ []) do
-    size = Keyword.get(options, :size, 10)
-
-    {:ok, {v, opts}} = Operation.max(image, size: size)
+  def top_n(%Vimage{} = image, n \\ 10) when is_integer(n) and n > 0 do
+    {:ok, {v, opts}} = Operation.max(image, size: n)
     {v, opts[:x], opts[:y], Enum.zip(opts[:"x-array"], opts[:"y-array"])}
   end
 
   @doc """
   Return the bottom `n` image minima.
 
+  The function returns the coordinates of`:n`
+  smallest values of the image.
+
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `options` is a keyword list of options.
-
-  ### Options
-
-  * `:size` is the number of minima to find. The
+  * `n` is the number of minima to find. The
     default is `10`.
 
   ### Returns
@@ -856,7 +856,7 @@ defmodule Image.Math do
   * `{minimum, x_min, y_min, [{x_positions, y_positions}])`
 
   """
-  @spec bottom_n(Vimage.t(), Keyword.t()) ::
+  @spec bottom_n(image :: Vimage.t(), n :: non_neg_integer()) ::
           {
             minimim :: float(),
             x_max :: non_neg_integer(),
@@ -864,36 +864,35 @@ defmodule Image.Math do
             max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...]
           }
 
-  def bottom_n(%Vimage{} = image, options \\ []) do
-    size = Keyword.get(options, :size, 10)
-
-    {:ok, {v, opts}} = Operation.min(image, size: size)
+  def bottom_n(%Vimage{} = image, n \\ 10) do
+    {:ok, {v, opts}} = Operation.min(image, size: n)
     {v, opts[:x], opts[:y], Enum.zip(opts[:"x-array"], opts[:"y-array"])}
   end
 
   @doc """
-  Return the image maximum.
+  Return the image maxima.
+
+  This function retrieves the coordinates of the `n`
+  largest values then then filters them to return only
+  those coordinates that have the maximum value.
 
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `options` is a keyword list of options.
-
-  ### Options
-
-  * `:size` is the number of maxima to find. The
+  * `n` is the number of maxima to find. The
     default is `10`.
 
   ### Returns
 
   * `{maximum, [{x_positions, y_positions}], maybe_overflow)`.  If
     `maybe_overflow` is set to `:maybe_overflow` its an indication
-    that the number of coordinates is the same as the requested `:size`.
+    that the number of coordinates is the same as the requested `:n`.
     Therefore it is possible - maybe even likely - that there are other
     coordinates that have the maximum value but have not been returned.
 
   ### Example
+
     This example draws a red image with a single green pixel. We then
     look for all the coordinates that have a green pixel.
 
@@ -903,28 +902,32 @@ defmodule Image.Math do
       iex> image
       iex> |> Image.Math.==([0, 255, 0])
       iex> |> Image.band_and!()
-      iex> |> Image.Math.maxpos(size: n)
+      iex> |> Image.Math.maxpos()
       {255, [{2, 2}], nil}
 
+      # Since all pixels are :red and we want
+      # the coordinates of all the red pixels
+      # we have an overlow: We retrieve only 3
+      # maxima and they are all red. Perhaps
+      # the red of the image pixels are also red?
+      # Yes - they are!
       iex> Image.new!(2, 2, color: :red)
       iex> |> Image.Math.==([255, 0, 0])
       iex> |> Image.band_and!()
-      iex> |> Image.Math.maxpos(size: n)
+      iex> |> Image.Math.maxpos(3)
       {255, [{2, 2}], :maybe_overflow}
 
   """
-  @spec maxpos(Vimage.t(), Keyword.t()) ::
+  @spec maxpos(image :: Vimage.t(), n :: non_neg_integer()) ::
           {
             maximum :: number(),
             max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...],
             maybe_overflow :: :maybe_overflow | nil
           }
   @dialyzer {:nowarn_function, maxpos: 2}
-  def maxpos(%Vimage{} = image, options \\ []) do
-    size = Keyword.get(options, :size, 10)
+  def maxpos(%Vimage{} = image, n \\ 10) do
     band_format = Image.band_format(image)
-
-    {:ok, {max, opts}} = Operation.max(image, size: size)
+    {:ok, {max, opts}} = Operation.max(image, size: n)
 
     coordinates =
       Enum.zip_reduce([opts[:"out-array"], opts[:"x-array"], opts[:"y-array"]], [], fn
@@ -944,6 +947,10 @@ defmodule Image.Math do
   @doc """
   Return the image minima.
 
+  This function retrieves the coordinates of the `n`
+  smallest values then then filters them to return only
+  those coordinates that have the minimum value.
+
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
@@ -952,31 +959,29 @@ defmodule Image.Math do
 
   ### Options
 
-  * `:size` is the number of minima to find. The
+  * `:n` is the number of minima to find. The
     default is `10`.
 
   ### Returns
 
   * `{minimum, [{x_positions, y_positions}], maybe_overflow)`.  If
     `maybe_overflow` is set to `:maybe_overflow` its an indication
-    that the number of coordinates is the same as the requested `:size`.
+    that the number of coordinates is the same as the requested `:n`.
     Therefore it is possible - maybe even likely - that there are other
     coordinates that have the minimum value but have not been returned.
 
   """
   @dialyzer {:nowarn_function, minpos: 2}
-  @spec minpos(Vimage.t(), Keyword.t()) ::
+  @spec minpos(image :: Vimage.t(), n :: non_neg_integer()) ::
           {
             maximum :: number(),
             max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...],
             maybe_overflow :: :maybe_overflow | nil
           }
 
-  def minpos(%Vimage{} = image, options \\ []) do
-    size = Keyword.get(options, :size, 10)
+  def minpos(%Vimage{} = image, n \\ 10) do
     band_format = Image.band_format(image)
-
-    {:ok, {min, opts}} = Operation.min(image, size: size)
+    {:ok, {min, opts}} = Operation.min(image, size: n)
 
     coordinates =
       Enum.zip_reduce([opts[:"out-array"], opts[:"x-array"], opts[:"y-array"]], [], fn

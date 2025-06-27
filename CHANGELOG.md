@@ -2,17 +2,15 @@
 
 ## Image 0.60.0
 
-This is the changelog for Image version 0.60.0 released on ______, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.60.0 released on June 27th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Breaking Changes
 
-* `Image.Math.maxpos/2` is renamed to `Image.Math.top_n/2` to better reflect its intent.
+* `Image.Math.maxpos/2` is renamed to `Image.Math.top_n/2` to better reflect its intent. The keyword options argument is also replaced with a simple integer argument `n`.
 
-* `Image.Math.minpos/2` is renamed to `Image.Math.bottom_n/2` to better reflect its intent.
+* `Image.Math.minpos/2` is renamed to `Image.Math.bottom_n/2` to better reflect its intent. The keyword options argument is also replaced with a simple integer argument `n`.
 
-* The return value from `Image.Math.top_n/2` and `Image.Math.bottom_n/2` have changed. They will now return the form `{max, max_x, max_y, [{x_max_1, y_max_1}, {x_max_2, y_max_2}, ....]}`.
-
-* Adds
+* The return value from `Image.Math.top_n/2` and `Image.Math.bottom_n/2` have changed. They will now return the form `{max, max_x, max_y, [{x_max_1, y_max_1}, {x_max_2, y_max_2}, ...]}`.
 
 ### Bug Fixes
 
@@ -20,9 +18,9 @@ This is the changelog for Image version 0.60.0 released on ______, 2025.  For ol
 
 ### Enhancements
 
-* Add `Image.from_req_stream/1` to open chunked images returned from [req](https://github.com/wojtekmach/req) as an image stream. Thanks to @akash-akya for the assistance.
-
 * Add `Image.band_and/1`, `Image.band_or/1` and `Image.band_xor/1` to apply the appropriate boolean operation across the bands of an image.
+
+* Add new (and different) `Image.Math.maxpos/2` and `Image.Math.minpos/2` which return only coordinates whose values match the image maximum or minimum.
 
 ## Image 0.59.3
 
