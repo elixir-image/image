@@ -18,6 +18,8 @@ This is the changelog for Image version 0.60.0 released on June 27th, 2025.  For
 
 ### Enhancements
 
+* Add `Image.from_req_stream/1` to open chunked images returned from [req](https://github.com/wojtekmach/req) as an image stream. Thanks to @akash-akya for the assistance.
+
 * Add `Image.band_and/1`, `Image.band_or/1` and `Image.band_xor/1` to apply the appropriate boolean operation across the bands of an image.
 
 * Add new (and different) `Image.Math.maxpos/2` and `Image.Math.minpos/2` which return only coordinates whose values match the image maximum or minimum.
