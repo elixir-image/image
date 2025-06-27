@@ -113,6 +113,7 @@ defmodule Image.Test do
     assert_images_equal(out_path, validate_path("composite_with_gradient.png"))
   end
 
+  @tag :circular_gradient
   test "Circular Image Gradient 1", %{dir: dir} do
     use Image.Math
     validate_path = validate_path("radial_gradient_1.png")
