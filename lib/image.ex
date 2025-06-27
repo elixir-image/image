@@ -138,7 +138,7 @@ defmodule Image do
   y-axis (starting at 0 from the top).
 
   """
-  @type point :: {number(), number()}
+  @type point :: {x :: non_neg_integer(), y :: non_neg_integer()}
 
   @typedoc """
   The bounding box returned by find_time/2
