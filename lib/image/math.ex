@@ -813,12 +813,10 @@ defmodule Image.Math do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `options` is a keyword list of options.
-
-  ### Options
-
-  * `:n` is the number of maximums to find. The
-    default is `10`.
+  * `n` is the number of maxima to find. The
+    default is `10`. Maxima in this case means the
+    largest `n` values; They may not be equal to the
+    maximum.
 
   ### Returns
 
@@ -849,7 +847,9 @@ defmodule Image.Math do
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `n` is the number of minima to find. The
-    default is `10`.
+    default is `10`. Minima in this case means the
+    smallest `n` values; They may not be equal to the
+    minimum.
 
   ### Returns
 
@@ -881,7 +881,9 @@ defmodule Image.Math do
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `n` is the number of maxima to find. The
-    default is `10`.
+    default is `10`. Maxima in this case means
+    those values that exactly match the maximum
+    value.
 
   ### Returns
 
@@ -955,12 +957,10 @@ defmodule Image.Math do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `options` is a keyword list of options.
-
-  ### Options
-
-  * `:n` is the number of minima to find. The
-    default is `10`.
+  * `n` is the number of minima to find. The
+    default is `10`. Minima in this case means
+    those values that exactly match the maximum
+    value.
 
   ### Returns
 
