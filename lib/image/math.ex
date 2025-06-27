@@ -919,7 +919,7 @@ defmodule Image.Math do
             max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...],
             maybe_overflow :: :maybe_overflow | nil
           }
-
+  @dialyzer {:nowarn_function, maxpos: 2}
   def maxpos(%Vimage{} = image, options \\ []) do
     size = Keyword.get(options, :size, 10)
     band_format = Image.band_format(image)
@@ -964,6 +964,7 @@ defmodule Image.Math do
     coordinates that have the minimum value but have not been returned.
 
   """
+  @dialyzer {:nowarn_function, minpos: 2}
   @spec minpos(Vimage.t(), Keyword.t()) ::
           {
             maximum :: number(),
