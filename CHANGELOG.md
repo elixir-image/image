@@ -4,6 +4,10 @@
 
 This is the changelog for Image version 0.60.0 released on ______, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
+### Breaking Changes
+
+* The return value from `Image.Math.maxpos/2` and `Image.Math.minpos/2` have changed. They will now return the form `{max, max_x, max_y, [{x_max_1, y_max_1}, {x_max_2, y_max_2}, ....]}`.
+
 ### Bug Fixes
 
 * Improve the error messages for `Image.crop/5` when the crop bounding box is invalid. Closes #190.
@@ -11,6 +15,8 @@ This is the changelog for Image version 0.60.0 released on ______, 2025.  For ol
 ### Enhancements
 
 * Add `Image.from_req_stream/1` to open chunked images returned from [req](https://github.com/wojtekmach/req) as an image stream. Thanks to @akash-akya for the assistance.
+
+* Add `Image.band_and/1`, `Image.band_or/1` and `Image.band_xor/1` to apply the appropriate boolean operation across the bands of an image.
 
 ## Image 0.59.3
 

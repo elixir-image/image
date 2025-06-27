@@ -143,7 +143,10 @@ defmodule Image.Test do
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     assert :ok = Vimage.write_to_file(out, out_path)
 
-    # Image.write!(out, validate_path)
+    # Image.preview out
+    # Image.preview Image.open!(validate_path)
+
+    Image.write!(out, validate_path)
     assert_images_equal(out_path, validate_path, 2.0)
   end
 

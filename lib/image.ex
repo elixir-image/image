@@ -3301,8 +3301,8 @@ defmodule Image do
 
   Images are positioned within their `:horizontal_spacing` by
   `:vertical_spacing` box at `:vertical_align` of `:bottom`,
-  `:middle` or `:top``and by `:horizontal_align` of `:left`,
-  `:center` or `:righ`. The defaults are `:bottom`, `:left.
+  `:middle` or `:top` and by `:horizontal_align` of `:left`,
+  `:center` or `:right`. The defaults are `:bottom`, `:left`.
 
   """
   @spec join(image_list :: list(Vimage.t()), options :: Options.Join.join_options()) ::
@@ -7227,10 +7227,10 @@ defmodule Image do
       {:ok, 90.15503692626953}
 
       iex> Image.delta_e(:green, :misty_rose)
-      {:ok, 52.937347412109375}
+      {:ok, 52.93735122680664}
 
       iex> Image.delta_e(:green, :misty_rose, :de76)
-      {:ok, 88.5516128540039}
+      {:ok, 88.55162048339844}
 
   """
   @doc subject: "Color Difference", since: "0.49.0"
@@ -7311,10 +7311,10 @@ defmodule Image do
       90.15503692626953
 
       iex> Image.delta_e!(:green, :misty_rose)
-      52.937347412109375
+      52.93735122680664
 
       iex> Image.delta_e!(:green, :misty_rose, :de76)
-      88.5516128540039
+      88.55162048339844
 
   """
   @doc subject: "Color Difference", since: "0.51.0"
@@ -10443,7 +10443,9 @@ defmodule Image do
 
     ### Example
 
-        Image.fft!(image)
+        iex> "./test/support/images/Hong-Kong-2015-07-1998.jpg"
+        iex> |> Image.open!()
+        iex> |> Image.fft!()
 
     """
     @doc subject: "Operation"
@@ -10476,14 +10478,9 @@ defmodule Image do
 
     ### Returns
 
-    * `skew_angle` which is a float number
+    * `skew_angle` which is an estimated float number
       of degrees the image is tilted from the
       upright.
-
-    #### Example
-
-        skew_angle = skew_angle(image)
-        Image.rotate(image, skew_angle)
 
     """
     @dialyzer {:nowarn_function, {:skew_angle, 1}}
@@ -10498,10 +10495,10 @@ defmodule Image do
         |> to_rectangular_coordinates!()
         |> Operation.project!()
 
-      {_v, _x, y} =
+      {_v, _x, y, _max_coordinates} =
         rows
         |> Operation.gaussblur!(10.0)
-        |> Image.Math.maxpos()
+        |> Math.maxpos(size: 1)
 
       # and turn to an angle in degrees we should counter-rotate by
       270 - 360 * y / height(rows)
@@ -10656,6 +10653,159 @@ defmodule Image do
 
   def join_bands!(bands) when is_list(bands) do
     case join_bands(bands) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Boolean "and" the bands of an image together to
+  produce a single band image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, and_image}` where `and_image` a single band image that is the
+    result of boolean "and"ing the bands of `image` togther.
+
+  """
+  @doc subject: "Split and join", since: "0.60.0"
+
+  @spec band_and(image :: Vimage.t()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def band_and(image) do
+    Vix.Vips.Operation.bandbool(image, :VIPS_OPERATION_BOOLEAN_AND)
+  end
+
+  @doc """
+  Boolean "and" the bands of an image together to
+  produce a single band image or raises an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `and_image` where `and_image` a single band image that is the
+    result of boolean "and"ing the bands of `image` togther or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Split and join", since: "0.60.0"
+
+  @spec band_and!(image :: Vimage.t()) ::
+          Vimage.t() | no_return()
+
+  def band_and!(image) do
+    case band_and(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Boolean "or" the bands of an image together to
+  produce a single band image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, or_image}` where `or_image` a single band image that is the
+    result of boolean "or"ing the bands of `image` togther.
+
+  """
+  @doc subject: "Split and join", since: "0.60.0"
+
+  @spec band_or(image :: Vimage.t()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def band_or(image) do
+    Vix.Vips.Operation.bandbool(image, :VIPS_OPERATION_BOOLEAN_OR)
+  end
+
+  @doc """
+  Boolean "or" the bands of an image together to
+  produce a single band image or raises an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `or_image` where `or_image` a single band image that is the
+    result of boolean "or"ing the bands of `image` togther or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Split and join", since: "0.60.0"
+
+  @spec band_and!(image :: Vimage.t()) ::
+          Vimage.t() | no_return()
+
+  def band_or!(image) do
+    case band_or(image) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Boolean "exclusive or" the bands of an image together to
+  produce a single band image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, xor_image}` where `xor_image` a single band image that is the
+    result of boolean "exclusive or"ing the bands of `image` togther.
+
+  """
+  @doc subject: "Split and join", since: "0.60.0"
+
+  @spec band_xor(image :: Vimage.t()) ::
+          {:ok, Vimage.t()} | {:error, error_message()}
+
+  def band_xor(image) do
+    Vix.Vips.Operation.bandbool(image, :VIPS_OPERATION_BOOLEAN_EOR)
+  end
+
+  @doc """
+  Boolean "exclusive or" the bands of an image together to
+  produce a single band image or raises an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `xor_image` where `xor_image` a single band image that is the
+    result of boolean "exclusive or"ing the bands of `image` togther or
+
+  * raises an exception.
+
+  """
+  @doc subject: "Split and join", since: "0.60.0"
+
+  @spec band_xor!(image :: Vimage.t()) ::
+          Vimage.t() | no_return()
+
+  def band_xor!(image) do
+    case band_xor(image) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end

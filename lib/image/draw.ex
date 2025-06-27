@@ -103,7 +103,10 @@ defmodule Image.Draw do
   def point(%MutableImage{} = image, left, top, options) when is_point(left, top) do
     with {:ok, options} <- Options.Draw.validate_options(:point, options) do
       color = maybe_add_alpha(image, options.color)
-      MutableOperation.draw_rect(image, color, left, top, 1, 1)
+      case MutableOperation.draw_rect(image, color, left, top, 1, 1) do
+        :ok -> {:ok, image}
+        other -> other
+      end
     end
     |> maybe_wrap()
   end

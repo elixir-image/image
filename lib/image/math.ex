@@ -819,17 +819,22 @@ defmodule Image.Math do
 
   ### Returns
 
-  * `{:ok, maximum, x_position, y_position}`
+  * `{maximum, x_max, y_max, [{x_positions, y_positions}])`
 
   """
   @spec maxpos(Vimage.t(), Keyword.t()) ::
-          {maximum :: float(), x_positiom :: integer(), y_position :: integer()}
+          {
+            maximum :: float(),
+            x_max :: non_neg_integer(),
+            y_max :: non_neg_integer(),
+            max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...]
+          }
 
   def maxpos(%Vimage{} = image, options \\ []) do
     size = Keyword.get(options, :size, 10)
 
     {:ok, {v, opts}} = Operation.max(image, size: size)
-    {v, opts[:x], opts[:y]}
+    {v, opts[:x], opts[:y], Enum.zip(opts[:"x-array"], opts[:"y-array"])}
   end
 
   @doc """
@@ -848,17 +853,22 @@ defmodule Image.Math do
 
   ### Returns
 
-  * `{:ok, minimum, x_position, y_position}`
+  * `{minimum, x_min, y_min, [{x_positions, y_positions}])`
 
   """
   @spec minpos(Vimage.t(), Keyword.t()) ::
-          {minimum :: float(), x_positiom :: integer(), y_position :: integer()}
+          {
+            minimim :: float(),
+            x_max :: non_neg_integer(),
+            y_max :: non_neg_integer(),
+            max_coordinates :: [{x_positions :: integer(), y_positions :: integer()}, ...]
+          }
 
   def minpos(%Vimage{} = image, options \\ []) do
     size = Keyword.get(options, :size, 10)
 
     {:ok, {v, opts}} = Operation.min(image, size: size)
-    {v, opts[:x], opts[:y]}
+    {v, opts[:x], opts[:y], Enum.zip(opts[:"x-array"], opts[:"y-array"])}
   end
 
   @doc false
