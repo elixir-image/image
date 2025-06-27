@@ -146,7 +146,7 @@ defmodule Image.Test do
     # Image.preview out
     # Image.preview Image.open!(validate_path)
 
-    Image.write!(out, validate_path)
+    # Image.write!(out, validate_path)
     assert_images_equal(out_path, validate_path, 2.0)
   end
 
