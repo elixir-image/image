@@ -917,7 +917,7 @@ defmodule Image.Math do
       iex> |> Image.Math.==([255, 0, 0])
       iex> |> Image.band_and!()
       iex> |> Image.Math.maxpos(3)
-      {255, [{2, 2}], :maybe_overflow}
+      {255, [{0, 1}, {1, 0}, {0, 0}], :maybe_overflow}
 
   """
   @spec maxpos(image :: Vimage.t(), n :: non_neg_integer()) ::
