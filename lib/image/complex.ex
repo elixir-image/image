@@ -19,8 +19,8 @@ defmodule Image.Complex do
 
   def polar!(%Vimage{} = image) do
     case polar(image) do
-     {:ok, polar} -> polar
-     {:error, reason} -> raise Image.Error, reason
+      {:ok, polar} -> polar
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 

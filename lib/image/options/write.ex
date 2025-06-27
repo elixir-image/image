@@ -104,7 +104,7 @@ defmodule Image.Options.Write do
 
   @heif_compression_map %{
     hevc: :VIPS_FOREIGN_HEIF_COMPRESSION_HEVC,
-    av1: :VIPS_FOREIGN_HEIF_COMPRESSION_AV1,
+    av1: :VIPS_FOREIGN_HEIF_COMPRESSION_AV1
   }
 
   @avif_compression_map %{
@@ -250,7 +250,7 @@ defmodule Image.Options.Write do
 
   # For webp, apply min-size, strip, and mixed (allow mixed encoding which might reduce file size)
   defp validate_option({:minimize_file_size, true}, options, image_type)
-      when is_heif(image_type) or is_avif(image_type) do
+       when is_heif(image_type) or is_avif(image_type) do
     options =
       options
       |> Keyword.delete(:minimize_file_size)

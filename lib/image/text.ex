@@ -936,7 +936,7 @@ defmodule Image.Text do
   end
 
   defp span_param(:font_weight, font_weight)
-      when is_atom(font_weight) or is_integer(font_weight) do
+       when is_atom(font_weight) or is_integer(font_weight) do
     "font_weight='#{font_weight}'"
   end
 

@@ -331,12 +331,12 @@ defmodule Image.Options.Text do
   end
 
   defp ensure_width_if_height_specified(%{width: width, height: height} = options)
-      when is_integer(width) and is_integer(height) do
+       when is_integer(width) and is_integer(height) do
     options
   end
 
   defp ensure_width_if_height_specified(%{width: nil, height: height})
-      when is_integer(height) do
+       when is_integer(height) do
     {:error, ":width must be specified if :height is specified"}
   end
 
