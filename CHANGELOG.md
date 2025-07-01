@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.61.0
+
+This is the changelog for Image version 0.60.0 released on July 2nd, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds `Image.from_req_stream/2`. This function returns a `Vix.Vips.Image.t/0` from streaming a `Req` request using the `Req.get/2` option `into: :self`,
+
 ## Image 0.60.0
 
 This is the changelog for Image version 0.60.0 released on June 27th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
