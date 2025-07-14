@@ -1628,16 +1628,17 @@ defmodule Image do
 
       Vix.Vips.Image.new_from_enum(body_stream)
     end
-  end
 
-  defp get_req_message(timeout) do
-    receive do
-      message -> message
-    after
-      timeout ->
-        {:error, :timed_out}
+    defp get_req_message(timeout) do
+      receive do
+        message -> message
+      after
+        timeout ->
+          {:error, :timed_out}
+      end
     end
   end
+
 
   @doc """
   Write an image to a file, a stream, an enumerable or
