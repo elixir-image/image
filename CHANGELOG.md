@@ -1,8 +1,18 @@
 # Changelog
 
+## Image 0.62.0
+
+This is the changelog for Image version 0.62.0 released on August 7th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* `Image.histogram/1` is fixed to not normalize histogram entries. Therefore the histogram now returns correct pixel counts.
+
+* Added an example for `Image.histogram/1` to illustrate what data is returned and how to interpret it.
+
 ## Image 0.61.1
 
-This is the changelog for Image version 0.61.1 released on JJuly 14th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.61.1 released on July 14th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Bug Fixes
 

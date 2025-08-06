@@ -7145,7 +7145,7 @@ defmodule Image do
   Returns the histogram for an image.
 
   The histogram is returned as a `t:Vimage.t/0`
-  that is a 255 by 255 image with the same numbers of
+  that is a 255 by 1 pixel image with the same numbers of
   bands as the source image.
 
   ### Argument
@@ -7161,22 +7161,52 @@ defmodule Image do
   ### Notes
 
   The returned image is is organized
-  as a 256x256 pixel image with
+  as a 256x1 pixel image with
   the same number of bands as the original
   image.
 
-  Each pixel on the image returns the count
+  Each pixel on the image returns the *count*
   of pixels in the original image that are
   in that 1/256th part of the image.
+
+  Each band is separated into 1/256ths individually.
+  For an RGB image the first number of the
+  pixel element of the histogram is the count of the
+  number of pixels in the red band, the second the count
+  of pixels in the green band and the third a count of
+  the pixels in the blue band.
+
+  ### Example
+
+      iex> image = Image.new!(3, 3, color: [0, 128, 0])
+      iex> {:ok, _histogram} = Image.histogram(image)
+
+      # Here is the returned list (which is just a way of
+      # visualing the histogram). The first entry of `[9, 0, 9]`
+      # is saying "in the first 1/256th of values, there are 9 pixels
+      # in the red band and 9 pixels in the blue band". Later on,
+      # in the 128th entry, we can see there are 9 pixels in the green
+      # band and none in the red and blue bands.
+
+      histogram |> Image.to_nx!() |> Nx.to_list()
+      [
+        [
+          [9, 0, 9],
+          [0, 0, 0],
+          ...
+          [0, 9, 0],
+          ...
+          [0, 0, 0],
+          [0, 0, 0]
+        ]
+      ]
 
   """
   @doc subject: "Clusters", since: "0.3.0"
 
   @spec histogram(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def histogram(%Vimage{} = image) do
-    image
-    |> Operation.hist_find!()
-    |> Operation.hist_norm()
+    Operation.hist_find(image)
   end
 
   @delta_e_versions [:de76, :de00, :decmc]
