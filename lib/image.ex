@@ -1583,7 +1583,7 @@ defmodule Image do
     @doc since: "0.61.0"
 
     @spec from_req_stream(url_or_request :: binary() | Req.Request.t()) ::
-      {:ok, image :: %Vimage{}} | {:error, error_message()}
+            {:ok, image :: %Vimage{}} | {:error, error_message()}
 
     def from_req_stream(url_or_request, options \\ []) do
       timeout = Keyword.get(options, :timeout, @default_req_timeout)
@@ -1621,6 +1621,7 @@ defmodule Image do
           fn
             %Req.Response{} = resp ->
               Req.cancel_async_response(resp)
+
             other ->
               other
           end
@@ -1638,7 +1639,6 @@ defmodule Image do
       end
     end
   end
-
 
   @doc """
   Write an image to a file, a stream, an enumerable or
@@ -9172,6 +9172,58 @@ defmodule Image do
     case reduce_noise(image, window_size) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Returns an image as a nested list of pixels.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, list}` where `list` is a list of rows where is row is a list
+    of pixels and each pixel is a list of numbers. Each pixel will have
+    1 to 4 numbers depending on the number of bands in the image.
+
+  * `{:error, reason}`
+
+  ### Notes
+
+  This function is intended primary for debugging purposes.
+
+  It renders the image to memory as a binary (therefore executing a full
+  image pipeline) and then decomposes the binary into a list of lists.
+
+  As a result it can consume considerable amounst of memory and time
+  for anything other than small images.
+
+  ### Example
+
+      iex> image = Image.new!(3, 4, color: :green)
+      iex> Image.to_list(image)
+      {:ok,
+       [
+         [[0, 128, 0], [0, 128, 0], [0, 128, 0]],
+         [[0, 128, 0], [0, 128, 0], [0, 128, 0]],
+         [[0, 128, 0], [0, 128, 0], [0, 128, 0]],
+         [[0, 128, 0], [0, 128, 0], [0, 128, 0]]
+       ]}
+
+  """
+  @doc subject: "Matrix", since: "0.62.0"
+
+  @spec to_list(image :: Vimage.t()) ::
+    {:ok, list()} | {:error, error_message()}
+
+  def to_list(%Vimage{} = image) do
+    with {:ok, tensor} <- Vix.Vips.Image.write_to_tensor(image),
+         %{data: binary, type: type, shape: {_height, width, bands}} = tensor,
+         {:ok, pixels} <- Image.Pixels.pixels_from_binary(binary, type, bands) do
+      rows = Enum.chunk_every(pixels, width)
+      {:ok, rows}
     end
   end
 

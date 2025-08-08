@@ -2,11 +2,21 @@
 
 ## Image 0.62.0
 
-This is the changelog for Image version 0.62.0 released on August 7th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.62.0 released on ____, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Breaking Change
+
+* `Image.histogram/1` previously normalized the results which meant that the pixel counts for each bucket could not be resolved. The function no longer normalises the histogram so the raw pixel counts per bucket are retained.
 
 ### Bug Fixes
 
-* `Image.histogram/1` is fixed to not normalize histogram entries. Therefore the histogram now returns correct pixel counts.
+* `Image.histogram/1` is fixed to *not* normalize histogram entries. Therefore the histogram now returns correct pixel counts.
+
+* Fix `Image.Text.add_background_padding/2` when the padding is derived from a base image.
+
+### Enhancements
+
+* Add `Image.to_list/1` to return an image as a nested list.
 
 * Added an example for `Image.histogram/1` to illustrate what data is returned and how to interpret it.
 

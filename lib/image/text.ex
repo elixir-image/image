@@ -670,7 +670,7 @@ defmodule Image.Text do
   end
 
   def add_background_padding(%Vimage{} = image, %{} = options) do
-    [padding_left, padding_top] = options.padding
+    [padding_left, padding_top] = padding_from_options(image, options.padding)
 
     options =
       options
@@ -747,6 +747,16 @@ defmodule Image.Text do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
+  end
+
+  defp padding_from_options(image, %Vimage{} = base_image) do
+    padding_left = div(Image.width(base_image) - Image.width(image), 2)
+    padding_top = div(Image.height(base_image) - Image.height(image), 2)
+    [padding_left, padding_top]
+  end
+
+  defp padding_from_options(_image, [_padding_left, _padding_top] = padding) do
+    padding
   end
 
   @doc """

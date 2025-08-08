@@ -188,11 +188,10 @@ defmodule Image.Options.Text do
     {:cont, Keyword.put(options, option, [padding, padding])}
   end
 
-  defp validate_option({:padding = option, %Vimage{} = image}, options) do
-    padding_left = div(Image.width(image), 2)
-    padding_top = div(Image.height(image), 2)
-
-    {:cont, Keyword.put(options, option, [padding_left, padding_top])}
+  # If padding is related to a base image we defer calculating it
+  # until we know the size of the text image.
+  defp validate_option({:padding, %Vimage{}}, options) do
+    {:cont, options}
   end
 
   defp validate_option({:letter_spacing, :normal}, options) do
