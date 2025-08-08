@@ -140,7 +140,7 @@ defmodule Image.Test do
       |> multiply!(finish)
       |> add!(multiply!(d, -1) |> add!(1) |> multiply!(start))
 
-    {:ok, out} = Operation.copy(out, interpretation: :VIPS_INTERPRETATION_LAB)
+    {:ok, out} = Operation.copy(out, interpretation: :VIPS_INTERPRETATION_sRGB)
 
     out_path = Temp.path!(suffix: ".png", basedir: dir)
     assert :ok = Vimage.write_to_file(out, out_path)
