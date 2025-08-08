@@ -2,7 +2,7 @@
 
 ## Image 0.62.0
 
-This is the changelog for Image version 0.62.0 released on ____, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.62.0 released on August 8th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Breaking Change
 
