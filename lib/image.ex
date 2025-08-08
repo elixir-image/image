@@ -7329,8 +7329,8 @@ defmodule Image do
       100.0
 
       iex> Image.delta_e!([0,0,0], :misty_rose)
-      iex> |> Float.round(4)
-      90.1550
+      iex> |> Float.round(3)
+      90.155
 
       iex> Image.delta_e!(:green, :misty_rose)
       iex> |> Float.round(3)

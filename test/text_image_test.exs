@@ -51,7 +51,7 @@ defmodule TextImage.Test do
 
     # |> Image.preview()
 
-    Image.write(final_image, validate_path)
+    # Image.write(final_image, validate_path)
     assert_images_equal(final_image, validate_path)
   end
 
