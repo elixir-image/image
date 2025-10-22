@@ -1,5 +1,15 @@
 # Changelog
 
+## Image 0.62.1
+
+This is the changelog for Image version 0.62.1 released on October 23rd, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix decoding EXIF component configuration if the value is invalid. Fixes #194. Thanks to @ethangunderson for the report.
+
+* Fix `Image.minimize_metadata/1` when the image does not have an author or copyright field.
+
 ## Image 0.62.0
 
 This is the changelog for Image version 0.62.0 released on August 8th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
