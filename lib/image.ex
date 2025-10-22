@@ -1084,18 +1084,18 @@ defmodule Image do
   * `options` is a keyword list of options. See `Image.open/2`
     for the list of applicable options.
 
-  ### Notes
-
-  This function is typically *not* the best way to open
-  an image. It requires that the entire image
-  is already loaded into memory which, for most use cases,
-  doest not scale well and consumes far more memory than
-  necessary.
-
-  Since `libvips` is a streaming on-demand architecture,
-  it is most likely that a simple `Image.open/2` call will
-  deliver better resource utilitsation and equal or better
-  performance.
+  > #### Note {: .info}
+  >
+  > This function is typically *not* the best way to open
+  > an image. It requires that the entire image
+  > is already loaded into memory which, for most use cases,
+  > doest not scale well and consumes far more memory than
+  > necessary.
+  >
+  > Since `libvips` is a streaming on-demand architecture,
+  > it is most likely that a simple `Image.open/2` call will
+  > deliver better resource utilitsation and equal or better
+  > performance.
 
   ### Returns
 
