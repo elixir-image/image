@@ -6345,8 +6345,9 @@ defmodule Image do
   size due to the removal of most EXIF and all
   IPTC and XMP metadata.
 
-  Note that the minimized metadata is only materialized when
-  the minimized image is saved to a file.
+  > #### Note {: .info}
+  >
+  > the minimized metadata is only materialized when the minimized image is saved.
 
   ### Arguments
 
@@ -6363,14 +6364,26 @@ defmodule Image do
 
   @spec minimize_metadata(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
   def minimize_metadata(%Vimage{} = image) do
-    with {:ok, exif} <- exif(image),
-         {:ok, image} <- remove_metadata(image) do
-      Vimage.mutate(image, fn mut_img ->
-        if exif[:copyright], do: Exif.put_metadata(mut_img, :copyright, exif[:copyright])
-        if exif[:artist], do: Exif.put_metadata(mut_img, :artist, exif[:artist])
-        :ok
-      end)
+    case exif(image) do
+      {:ok, exif} ->
+        image
+        |> remove_metadata!()
+        |> put_copyright_and_artist(exif)
+
+      {:error, "No such field"} ->
+        remove_metadata(image)
+
+      other ->
+        other
     end
+  end
+
+  defp put_copyright_and_artist(image, exif) do
+    Vimage.mutate(image, fn mut_img ->
+      if exif[:copyright], do: Exif.put_metadata(mut_img, :copyright, exif[:copyright])
+      if exif[:artist], do: Exif.put_metadata(mut_img, :artist, exif[:artist])
+      :ok
+    end)
   end
 
   @doc """
