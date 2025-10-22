@@ -6337,7 +6337,9 @@ defmodule Image do
   with intellectual property concerns in mind
   this function will keep the artist and
   copyright fields if they exist in the original
-  image.
+  image EXIF. Creator/Author/Artist and Copyright in
+  other fields like IPTC and XMP are not considered
+  in the current implementation.
 
   On a 1000x500px image exported from Adobe Lightroom
   with metadata intact, removing the metadata
