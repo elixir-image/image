@@ -23,4 +23,14 @@ defmodule Image.ExitTest do
 
     assert {:ok, %{copyright: nil, image_description: nil}} = Image.exif(image)
   end
+
+  test "No exif data" do
+    image = Image.new!(10, 10)
+    assert {:error, "No such field"} = Image.exif(image)
+  end
+
+  test "Minimizing metadata on an image with no exif" do
+    image = Image.new!(10, 10)
+    assert {:ok, _image} = Image.minimize_metadata(image)
+  end
 end
