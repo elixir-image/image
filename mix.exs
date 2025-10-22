@@ -21,13 +21,21 @@ defmodule Image.MixProject do
       package: package(),
       aliases: aliases(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      preferred_cli_env: preferred_cli_env(),
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
         plt_add_apps: ~w(mix nx plug evision bumblebee ex_unit)a
       ],
       compilers: Mix.compilers()
     ]
+    |> Keyword.merge(maybe_add_preferred_cli())
+  end
+
+  defp maybe_add_preferred_cli() do
+    if Version.compare(System.version(), "1.19.0-dev") == :lt do
+      [preferred_cli_env: cli()]
+    else
+      []
+    end
   end
 
   defp description do
@@ -207,7 +215,8 @@ defmodule Image.MixProject do
     |> List.to_integer()
   end
 
-  defp preferred_cli_env() do
+  @doc false
+  def cli() do
     []
   end
 

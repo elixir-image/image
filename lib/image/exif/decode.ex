@@ -201,10 +201,14 @@ defmodule Image.Exif.Decode do
   @comp_conf {"-", "Y", "Cb", "Cr", "R", "G", "B"}
 
   @spec component_configuration([non_neg_integer()]) :: binary()
-  defp component_configuration(list) do
-    list
+  defp component_configuration(components) when is_list(components) do
+    components
     |> Enum.map(&elem(@comp_conf, &1))
     |> Enum.join(",")
+  end
+
+  defp component_configuration(components) do
+    "Unknown #{inspect components}"
   end
 
   @spec metering_mode(non_neg_integer()) :: binary()

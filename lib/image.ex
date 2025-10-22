@@ -6366,8 +6366,8 @@ defmodule Image do
     with {:ok, exif} <- exif(image),
          {:ok, image} <- remove_metadata(image) do
       Vimage.mutate(image, fn mut_img ->
-        :ok = Exif.put_metadata(mut_img, :copyright, exif.copyright)
-        :ok = Exif.put_metadata(mut_img, :artist, exif.artist)
+        if exif[:copyright], Exif.put_metadata(mut_img, :copyright, exif[:copyright])
+        if exif[:artist], do: Exif.put_metadata(mut_img, :artist, exif[:artist])
       end)
     end
   end
