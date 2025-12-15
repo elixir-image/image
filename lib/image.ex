@@ -6453,7 +6453,7 @@ defmodule Image do
     in an image can be returned with a call to
     `Vix.Vips.Image.header_field_names/1`.
 
-  * Errors removing metadata fields is not propagated
+  * Errors removing metadata fields are not propagated
     into the return for this function. Errors might occur
     when attempting to remove metadata fields that
     do not exist in the image.
@@ -6517,7 +6517,7 @@ defmodule Image do
     in an image can be returned with a call to
     `Vix.Vips.Image.header_field_names/1`.
 
-  * Errors removing metadata fields is not propagated
+  * Errors removing metadata fields are not propagated
     into the return for this function. Errors might occur
     when attempting to remove metadata fields that
     do not exist in the image.
