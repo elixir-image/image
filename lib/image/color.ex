@@ -173,8 +173,11 @@ defmodule Image.Color do
       iex> Image.Color.rgb_to_hex(:green)
       {:ok, "#008000"}
 
-      iex> Image.Color.rgb_to_hex([10,20,30])
-      {:ok, "#A141E"}
+      iex> Image.Color.rgb_to_hex([10, 20, 30])
+      {:ok, "#0A141E"}
+
+      iex> Image.Color.rgb_to_hex([12, 12, 13])
+      {:ok, "#0C0C0D"}
 
   """
   def rgb_to_hex(color) do
@@ -219,12 +222,10 @@ defmodule Image.Color do
     "#" <> to_hex(r) <> to_hex(g) <> to_hex(b)
   end
 
-  defp to_hex(i) when i >= 10 do
-    Integer.to_string(i, 16)
-  end
-
   defp to_hex(i) do
-    "0" <> Integer.to_string(i, 16)
+    i
+    |> Integer.to_string(16)
+    |> String.pad_leading(2, "0")
   end
 
   @doc """
