@@ -12,6 +12,8 @@ This is the changelog for Image version 0.63.0 released on January 19th, 2026.  
 
 * Fix compiler warnings on Elixir 1.20.
 
+* Fix RGB to hex conversion. Thanks to @akoutmos for the issue and PR. Closes #196.
+
 ## Image 0.62.1
 
 This is the changelog for Image version 0.62.1 released on October 23rd, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
