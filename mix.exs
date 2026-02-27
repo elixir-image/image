@@ -159,7 +159,7 @@ defmodule Image.MixProject do
         "LICENSE.md",
         "CHANGELOG.md"
       ],
-      formatters: ["html"],
+      formatters: ["html", "markdown"],
       groups_for_modules: groups_for_modules(),
       groups_for_docs: groups_for_docs(),
       skip_undefined_reference_warnings_on: ["changelog", "CHANGELOG.md"]
