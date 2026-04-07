@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.64.0
+
+This is the changelog for Image version 0.64.0 released on April 7th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* `Image.dominant_color/2` now accepts a `:method` option of either `:histogram` (the existing default) or `:imagequant`. The `:imagequant` method routes through `libimagequant` (via `vips_gifsave_buffer`) and returns a palette of `{r, g, b}` tuples ordered by perceptual importance. New `:effort` and `:dither` options tune the quantiser. See `guides/performance.md` for a comparison of the two methods.
+
 ## Image 0.63.0
 
 This is the changelog for Image version 0.63.0 released on January 19th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

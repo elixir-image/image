@@ -260,6 +260,17 @@ defmodule Image do
   # to return in dominant_color/2
   @dominant_top_n 1
 
+  # Default method used by dominant_color/2
+  @dominant_method :histogram
+
+  # Default libimagequant effort (1-10) used when method: :imagequant
+  @dominant_effort 7
+
+  # Default libimagequant dithering amount used when method: :imagequant.
+  # Zero preserves palette colors exactly (no error-diffused output),
+  # which is what we want when extracting a palette.
+  @dominant_dither 0.0
+
   # For erode/2 and dilate/2 this is acceptable
   # range for the radius parameter.
   @rank_radius_range 1..100
@@ -6957,7 +6968,22 @@ defmodule Image do
   end
 
   @doc """
-  Returns the dominant sRGB color of an image.
+  Returns the dominant sRGB color(s) of an image.
+
+  Two methods are supported for identifying dominant
+  colors:
+
+  * `:histogram` (default) uses a coarse 3D RGB histogram
+    (via `vips_hist_find_ndim`) and returns the centre of
+    the most populated bins. It is fast and has no external
+    dependencies beyond libvips itself.
+
+  * `:imagequant` asks libvips to quantise the image with
+    `libimagequant` (via `vips_gifsave_buffer`) and returns
+    the resulting palette ordered by perceptual importance.
+    This generally yields visually better dominant colors
+    on photographic images, at the cost of running the
+    quantiser.
 
   ### Arguments
 
@@ -6967,27 +6993,48 @@ defmodule Image do
 
   ### Options
 
+  * `:method` is either `:histogram` or `:imagequant`.
+    The default is `#{inspect(@dominant_method)}`.
+
   * `:bins` is an integer number of color
     frequency bins the image is divided into.
+    Only used when `method: :histogram`.
     The default is `#{@dominant_bins}`.
 
   * `:top_n` returns the top `n` most
     dominant colors in the image. The default
-    is `#{@dominant_top_n}`.
+    is `#{@dominant_top_n}`. When `method: :imagequant`,
+    `:top_n` is rounded up to the next power of two
+    (clamped to the range `2..256`) to select the GIF
+    palette bitdepth; the returned list is then truncated
+    to `:top_n` entries.
+
+  * `:effort` is an integer in the range `1..10` that
+    controls the libimagequant CPU effort. Only used when
+    `method: :imagequant`. The default is `#{@dominant_effort}`.
+
+  * `:dither` is a float in the range `0.0..1.0` that
+    controls the libimagequant dithering amount. Only used
+    when `method: :imagequant`. The default is `#{@dominant_dither}`
+    (no dithering, which preserves the palette colors exactly).
 
   ### Returns
 
-  * `{:ok, [r, g, b]}` or
+  * `{:ok, [r, g, b]}` when `method: :histogram` and `top_n: 1`, or
 
-  * `{:error, reason}`
+  * `{:ok, [[r, g, b], ...]}` when `method: :histogram` and `top_n > 1`, or
+
+  * `{:ok, [{r, g, b}, ...]}` when `method: :imagequant`, or
+
+  * `{:error, reason}`.
 
   ### Notes
 
   * `image` will be converted to the `:srgb` colorspace
     and the dominant color will be returned as an sRGB
-    list.
+    value.
 
-  ### Example
+  ### Examples
 
       iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
       iex> Image.dominant_color(image)
@@ -6997,21 +7044,42 @@ defmodule Image do
       iex> Image.dominant_color(image)
       {:ok, [88, 88, 88]}
 
+      iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+      iex> {:ok, palette} = Image.dominant_color(image, method: :imagequant, top_n: 4)
+      iex> length(palette)
+      4
+      iex> Enum.all?(palette, fn {r, g, b} -> r in 0..255 and g in 0..255 and b in 0..255 end)
+      true
+
   """
   @doc subject: "Image info", since: "0.3.0"
 
   @spec dominant_color(image :: Vimage.t(), options :: Keyword.t()) ::
-          {:ok, Color.rgb_color() | [Color.rgb_color()]} | {:error, error_message()}
+          {:ok, Color.rgb_color() | [Color.rgb_color()] | [{0..255, 0..255, 0..255}]}
+          | {:error, error_message()}
 
   def dominant_color(%Vimage{} = image, options \\ []) do
-    bins = Keyword.get(options, :bins, @dominant_bins)
+    method = Keyword.get(options, :method, @dominant_method)
     count = Keyword.get(options, :top_n, @dominant_top_n)
 
     with {:ok, image} <- to_colorspace(image, :srgb) do
-      if has_alpha?(image) do
-        dominant_color_alpha(image, bins, count)
-      else
-        dominant_color_no_alpha(image, bins, count)
+      case method do
+        :histogram ->
+          bins = Keyword.get(options, :bins, @dominant_bins)
+
+          if has_alpha?(image) do
+            dominant_color_alpha(image, bins, count)
+          else
+            dominant_color_no_alpha(image, bins, count)
+          end
+
+        :imagequant ->
+          effort = Keyword.get(options, :effort, @dominant_effort)
+          dither = Keyword.get(options, :dither, @dominant_dither)
+          dominant_color_imagequant(image, count, effort, dither)
+
+        other ->
+          {:error, "Invalid :method option. Expected :histogram or :imagequant. Got #{inspect(other)}."}
       end
     end
   end
@@ -7028,17 +7096,14 @@ defmodule Image do
 
   ### Options
 
-  * `:bins` is an integer number of color
-    frequency bins the image is divided into.
-    The default is `#{@dominant_bins}`.
-
-  * `:top_n` returns the top `n` most
-    dominant colors in the image. The default
-    is `#{@dominant_top_n}`.
+  See `dominant_color/2` for the full list of options,
+  including `:method` for selecting between the `:histogram`
+  and `:imagequant` backends.
 
   ### Returns
 
-  * `{:ok, [r, g, b]}` or
+  * The dominant color (see `dominant_color/2` for the
+    shape of the return value), or
 
   * raises an exception.
 
@@ -7063,7 +7128,7 @@ defmodule Image do
   @doc subject: "Image info", since: "0.43.0"
 
   @spec dominant_color!(image :: Vimage.t(), options :: Keyword.t()) ::
-          Color.rgb_color() | no_return()
+          Color.rgb_color() | [Color.rgb_color()] | [{0..255, 0..255, 0..255}] | no_return()
   def dominant_color!(%Vimage{} = image, options \\ []) do
     case dominant_color(image, options) do
       {:ok, dominant_color} -> dominant_color
@@ -7145,6 +7210,71 @@ defmodule Image do
 
       {:ok, sorted_by_descending_frequency}
     end
+  end
+
+  # Extract dominant colors using libimagequant via vips_gifsave_buffer.
+  #
+  # libvips does not expose vips_quantise as a standalone operation, so we
+  # ask it to write a quantised GIF to an in-memory buffer and then read the
+  # resulting Global Color Table back out. libimagequant orders palette
+  # entries by perceptual importance, so the returned list is already sorted
+  # from most to least dominant.
+  defp dominant_color_imagequant(image, count, effort, dither) do
+    image =
+      if has_alpha?(image) do
+        flatten!(image)
+      else
+        image
+      end
+
+    bitdepth = dominant_bitdepth(count)
+
+    with {:ok, buffer} <-
+           Operation.gifsave_buffer(image,
+             bitdepth: bitdepth,
+             effort: effort,
+             dither: dither
+           ),
+         {:ok, palette} <- parse_gif_global_color_table(buffer) do
+      {:ok, Enum.take(palette, count)}
+    end
+  end
+
+  # Map a desired number of colors to a GIF bitdepth (1..8), rounding up to
+  # the next power of two. libvips rejects bitdepth 0, so we clamp to 1.
+  defp dominant_bitdepth(count) when is_integer(count) and count > 0 do
+    count
+    |> max(2)
+    |> min(256)
+    |> :math.log2()
+    |> :math.ceil()
+    |> trunc()
+    |> max(1)
+    |> min(8)
+  end
+
+  # Parse the Global Color Table from a GIF buffer produced by vips_gifsave.
+  # See https://www.w3.org/Graphics/GIF/spec-gif89a.txt §18 (Logical Screen
+  # Descriptor) for the header layout used here.
+  defp parse_gif_global_color_table(
+         <<"GIF", _version::binary-size(3), _w::16-little, _h::16-little, packed::8, _bg::8,
+           _aspect::8, rest::binary>>
+       ) do
+    gct_flag = Bitwise.bsr(packed, 7) |> Bitwise.band(1)
+    gct_size_code = Bitwise.band(packed, 0x07)
+
+    if gct_flag == 1 do
+      gct_entries = Bitwise.bsl(1, gct_size_code + 1)
+      gct_bytes = gct_entries * 3
+      <<gct::binary-size(^gct_bytes), _::binary>> = rest
+      {:ok, for(<<r::8, g::8, b::8 <- gct>>, do: {r, g, b})}
+    else
+      {:error, "GIF buffer does not contain a Global Color Table"}
+    end
+  end
+
+  defp parse_gif_global_color_table(_other) do
+    {:error, "Could not parse GIF buffer produced by libvips"}
   end
 
   defp alpha_black_pixel_count(alpha) do
