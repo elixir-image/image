@@ -4,17 +4,17 @@ defmodule Image.Options.Compare do
 
   """
   import Image, only: :macros
-  alias Image.Color
+  alias Image.Pixel
 
   @typedoc """
   Options applicable to `Image.compare/3`.
 
   """
   @type compare_option ::
-          {:color, Color.t() | :auto}
+          {:color, Pixel.t() | :auto}
           | {:threshold, non_neg_integer()}
-          | {:greater_than, Color.t()}
-          | {:less_than, Color.t()}
+          | {:greater_than, Pixel.t()}
+          | {:less_than, Pixel.t()}
           | {:sigma, float()}
           | {:min_amplitude, float()}
 
@@ -47,10 +47,10 @@ defmodule Image.Options.Compare do
   Validate the options for `Image.compare/3`.
 
   """
-  def validate_options(options) when is_list(options) do
+  def validate_options(image, options) when is_list(options) do
     options = Keyword.merge(default_options(), options)
 
-    case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
+    case Enum.reduce_while(options, options, &validate_option(&1, image, &2)) do
       {:error, value} ->
         {:error, value}
 
@@ -59,32 +59,33 @@ defmodule Image.Options.Compare do
     end
   end
 
-  defp validate_option({:metric, metric}, options) when metric in @valid_metrics do
+  defp validate_option({:metric, metric}, _image, options) when metric in @valid_metrics do
     {:cont, options}
   end
 
-  defp validate_option({:saturation, saturation}, options) when is_multiplier(saturation) do
+  defp validate_option({:saturation, saturation}, _image, options)
+       when is_multiplier(saturation) do
     {:cont, options}
   end
 
-  defp validate_option({:brightness, brightness}, options) when is_multiplier(brightness) do
+  defp validate_option({:brightness, brightness}, _image, options)
+       when is_multiplier(brightness) do
     {:cont, options}
   end
 
-  defp validate_option({:difference_boost, difference_boost}, options)
+  defp validate_option({:difference_boost, difference_boost}, _image, options)
        when is_multiplier(difference_boost) do
     {:cont, options}
   end
 
-  defp validate_option({:difference_color, color} = option, options) do
-    case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color} -> {:cont, Keyword.put(options, :difference_color, color)}
-      {:ok, color} -> {:cont, Keyword.put(options, :difference_color, color)}
-      _other -> {:halt, invalid_option(option)}
+  defp validate_option({:difference_color, color} = option, image, options) do
+    case Pixel.to_pixel(image, color) do
+      {:ok, pixel} -> {:cont, Keyword.put(options, :difference_color, pixel)}
+      _other -> {:halt, {:error, invalid_option(option)}}
     end
   end
 
-  defp validate_option(option, _options) do
+  defp validate_option(option, _image, _options) do
     {:halt, {:error, invalid_option(option)}}
   end
 

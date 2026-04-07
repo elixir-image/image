@@ -5,46 +5,46 @@ defmodule Image.Options.Draw do
 
   """
 
-  alias Image.Color
+  alias Image.Pixel
   alias Image.CombineMode
 
   @type circle ::
           [
             {:fill, boolean()}
-            | {:color, Color.t()}
+            | {:color, Pixel.t()}
           ]
           | map()
 
   @type rect ::
           [
             {:fill, boolean()}
-            | {:color, Color.t()}
+            | {:color, Pixel.t()}
             | {:stroke_width, pos_integer()}
           ]
           | map()
 
   @type point ::
           [
-            {:color, Color.t()}
+            {:color, Pixel.t()}
           ]
           | map()
 
   @type flood ::
           [
             {:equal, boolean()}
-            | {:color, Color.t()}
+            | {:color, Pixel.t()}
           ]
           | map()
 
   @type mask ::
           [
-            {:color, Color.t()}
+            {:color, Pixel.t()}
           ]
           | map()
 
   @type line ::
           [
-            {:color, Color.t()}
+            {:color, Pixel.t()}
           ]
           | map()
 
@@ -119,15 +119,15 @@ defmodule Image.Options.Draw do
   Validate the options for `Image.Draw`.
 
   """
-  def validate_options(_type, %{} = options) do
+  def validate_options(_image, _type, %{} = options) do
     {:ok, options}
   end
 
-  def validate_options(type, options) do
+  def validate_options(image, type, options) do
     options = Keyword.merge(default_options(type), options)
 
     options =
-      case Enum.reduce_while(options, options, &validate_option(type, &1, &2)) do
+      case Enum.reduce_while(options, options, &validate_option(image, type, &1, &2)) do
         {:error, value} ->
           {:error, value}
 
@@ -146,7 +146,7 @@ defmodule Image.Options.Draw do
     end
   end
 
-  defp validate_option(type, {:fill, fill}, options) when type in [:circle, :rect] do
+  defp validate_option(_image, type, {:fill, fill}, options) when type in [:circle, :rect] do
     if fill do
       {:cont, Keyword.put(options, :fill, true)}
     else
@@ -154,19 +154,18 @@ defmodule Image.Options.Draw do
     end
   end
 
-  defp validate_option(type, {:color, color}, options)
+  defp validate_option(image, type, {:color, color}, options)
        when type in [:mask, :point, :circle, :rect, :line, :flood] do
-    case Color.rgb_color(color) do
-      {:ok, color} ->
-        rgb = if Keyword.keyword?(color), do: Keyword.fetch!(color, :rgb), else: color
-        {:cont, Keyword.put(options, :color, rgb)}
+    case Pixel.to_pixel(image, color) do
+      {:ok, pixel} ->
+        {:cont, Keyword.put(options, :color, pixel)}
 
       {:error, reason} ->
         {:halt, {:error, reason}}
     end
   end
 
-  defp validate_option(:flood, {:equal, equal}, options) do
+  defp validate_option(_image, :flood, {:equal, equal}, options) do
     if equal do
       {:cont, Keyword.put(options, :equal, true)}
     else
@@ -174,7 +173,7 @@ defmodule Image.Options.Draw do
     end
   end
 
-  defp validate_option(:image, {:mode, mode}, options) do
+  defp validate_option(_image, :image, {:mode, mode}, options) do
     case Image.CombineMode.validate(mode) do
       {:ok, mode} ->
         {:cont, Keyword.put(options, :mode, mode)}
@@ -184,13 +183,13 @@ defmodule Image.Options.Draw do
     end
   end
 
-  defp validate_option(type, {:stroke_width, stroke_width}, options)
+  defp validate_option(_image, type, {:stroke_width, stroke_width}, options)
        when type in [:rect, :circle]
        when is_integer(stroke_width) and stroke_width > 0 do
     {:cont, options}
   end
 
-  defp validate_option(type, {option, value}, _options) do
+  defp validate_option(_image, type, {option, value}, _options) do
     {:halt, {:error, invalid_option(type, option, value)}}
   end
 

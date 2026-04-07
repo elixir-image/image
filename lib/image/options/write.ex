@@ -7,8 +7,9 @@ defmodule Image.Options.Write do
   # Map the keyword option to the
   # Vix option.
 
-  alias Image.Color
-  import Color, only: [is_inbuilt_profile: 1, is_color: 1]
+  alias Image.{ICCProfile, Pixel}
+  import ICCProfile, only: [is_inbuilt: 1]
+  import Pixel, only: [is_pixel: 1]
 
   @typedoc "Options for writing an image to a file with `Image.write/2`."
   @type image_write_options :: [
@@ -275,20 +276,20 @@ defmodule Image.Options.Write do
   end
 
   defp validate_option({:icc_profile, profile}, options, _image_type)
-       when is_inbuilt_profile(profile) or is_binary(profile) do
+       when is_inbuilt(profile) or is_binary(profile) do
     options =
       options
       |> Keyword.delete(:icc_profile)
       |> Keyword.put(:profile, to_string(profile))
 
-    if Color.known_icc_profile?(profile) do
+    if ICCProfile.known?(profile) do
       {:cont, options}
     else
       {:halt, {:error, "The color profile #{inspect(profile)} is not known"}}
     end
   end
 
-  defp validate_option({:background, background}, options, _image_type) when is_color(background) do
+  defp validate_option({:background, background}, options, _image_type) when is_pixel(background) do
     {:cont, options}
   end
 

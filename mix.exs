@@ -57,6 +57,10 @@ defmodule Image.MixProject do
     [
       # libvips bindings
       {:vix, "~> 0.33"},
+
+      # Color science: conversions, gamut mapping, parsing.
+      # Will progressively replace Image.Color.
+      {:color, path: "../color"},
       # {:vix, github: "akash-akya/vix", branch: "dev"},
       # {:vix, github: "akash-akya/vix"},
       # {:vix, path: "../vix"},
@@ -135,9 +139,9 @@ defmodule Image.MixProject do
 
   def links do
     %{
-      "GitHub" => "https://github.com/kipcole9/image",
-      "Readme" => "https://github.com/kipcole9/image/blob/v#{@version}/README.md",
-      "Changelog" => "https://github.com/kipcole9/image/blob/v#{@version}/CHANGELOG.md",
+      "GitHub" => "https://github.com/elixir-image/image",
+      "Readme" => "https://github.com/elixir-image/image/blob/v#{@version}/README.md",
+      "Changelog" => "https://github.com/elixir-image/image/blob/v#{@version}/CHANGELOG.md",
       "Vix" => "https://github.com/akash-akya/vix",
       "libvips" => "https://www.libvips.org",
       "eVision (OpenCV)" => "https://github.com/cocoa-xu/evision"

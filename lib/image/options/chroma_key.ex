@@ -3,7 +3,7 @@ defmodule Image.Options.ChromaKey do
   Options and option validation for `Image.chroma_key/2`.
 
   """
-  alias Image.Color
+  alias Image.Pixel
 
   @typedoc """
   Options applicable to Image.chroma_key/2
@@ -11,10 +11,10 @@ defmodule Image.Options.ChromaKey do
   """
   @type chroma_key_options ::
           [
-            {:color, Color.t() | :auto}
+            {:color, Pixel.t() | :auto}
             | {:threshold, non_neg_integer()}
-            | {:greater_than, Color.t()}
-            | {:less_than, Color.t()}
+            | {:greater_than, Pixel.t()}
+            | {:less_than, Pixel.t()}
             | {:sigma, float()}
             | {:min_amplitude, float()}
           ]
@@ -24,10 +24,10 @@ defmodule Image.Options.ChromaKey do
   Validate the options for `Image.chroma_key/2`.
 
   """
-  def validate_options(options) when is_list(options) do
+  def validate_options(image, options) when is_list(options) do
     options = Keyword.merge(default_options(), options)
 
-    case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
+    case Enum.reduce_while(options, options, &validate_option(&1, image, &2)) do
       {:error, value} ->
         {:error, value}
 
@@ -36,37 +36,37 @@ defmodule Image.Options.ChromaKey do
     end
   end
 
-  def validate_options(%{} = options) do
+  def validate_options(_image, %{} = options) do
     {:ok, options}
   end
 
-  defp validate_option({:color, :auto}, options) do
+  defp validate_option({:color, :auto}, _image, options) do
     {:cont, options}
   end
 
-  defp validate_option({key, color} = option, options)
+  defp validate_option({key, color} = option, image, options)
        when key in [:greater_than, :less_than, :color] do
-    case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color} -> {:cont, Keyword.put(options, key, color)}
-      {:ok, color} -> {:cont, Keyword.put(options, key, color)}
-      _other -> {:halt, invalid_option(option)}
+    case Pixel.to_pixel(image, color) do
+      {:ok, pixel} -> {:cont, Keyword.put(options, key, pixel)}
+      _other -> {:halt, {:error, invalid_option(option)}}
     end
   end
 
-  defp validate_option({:threshold, threshold}, options)
+  defp validate_option({:threshold, threshold}, _image, options)
        when is_integer(threshold) and threshold >= 0 do
     {:cont, options}
   end
 
-  defp validate_option({:sigma, sigma}, options) when is_number(sigma) and sigma > 0 do
+  defp validate_option({:sigma, sigma}, _image, options) when is_number(sigma) and sigma > 0 do
     {:cont, options}
   end
 
-  defp validate_option({:min_amplitude, min_amplitude}, options) when is_float(min_amplitude) do
+  defp validate_option({:min_amplitude, min_amplitude}, _image, options)
+       when is_float(min_amplitude) do
     {:cont, Keyword.put(options, :min_amplitude, min_amplitude)}
   end
 
-  defp validate_option(option, _options) do
+  defp validate_option(option, _image, _options) do
     {:halt, {:error, invalid_option(option)}}
   end
 

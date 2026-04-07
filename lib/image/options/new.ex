@@ -3,7 +3,7 @@ defmodule Image.Options.New do
   Options for new images.
 
   """
-  alias Image.{Color, BandFormat, Interpretation}
+  alias Image.{Pixel, BandFormat, Interpretation}
 
   @type t :: [
           {:bands, pos_integer()}

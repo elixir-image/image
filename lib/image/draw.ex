@@ -91,7 +91,7 @@ defmodule Image.Draw do
 
   def point(%Vimage{} = image, left, top, options)
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 do
-    with {:ok, options} <- Options.Draw.validate_options(:point, options) do
+    with {:ok, options} <- Options.Draw.validate_options(image, :point, options) do
       color = maybe_add_alpha(image, options.color)
 
       Vimage.mutate(image, fn mut_img ->
@@ -101,7 +101,7 @@ defmodule Image.Draw do
   end
 
   def point(%MutableImage{} = image, left, top, options) when is_point(left, top) do
-    with {:ok, options} <- Options.Draw.validate_options(:point, options) do
+    with {:ok, options} <- Options.Draw.validate_options(image, :point, options) do
       color = maybe_add_alpha(image, options.color)
 
       case MutableOperation.draw_rect(image, color, left, top, 1, 1) do
@@ -240,7 +240,7 @@ defmodule Image.Draw do
 
   def rect(%image_type{} = image, left, top, width, height, options)
       when is_image(image_type) and is_box(left, top, width, height) do
-    with {:ok, options} <- Options.Draw.validate_options(:rect, options) do
+    with {:ok, options} <- Options.Draw.validate_options(image, :rect, options) do
       %{stroke_width: stroke_width, fill: fill} = options
       color = maybe_add_alpha(image, options.color)
       rect(image, left, top, width, height, color, stroke_width, fill)
@@ -433,7 +433,7 @@ defmodule Image.Draw do
 
   def circle(%image_type{} = image, cx, cy, radius, options \\ [])
       when is_image(image_type) and is_circle(cx, cy, radius) do
-    with {:ok, options} <- Options.Draw.validate_options(:circle, options) do
+    with {:ok, options} <- Options.Draw.validate_options(image, :circle, options) do
       %{stroke_width: stroke_width, fill: fill, color: color} = options
       color = maybe_add_alpha(image, color)
       circle(image, cx, cy, radius, color, stroke_width, fill)
@@ -605,7 +605,7 @@ defmodule Image.Draw do
   def line(%Vimage{} = image, x1, y1, x2, y2, options)
       when is_integer(x1) and is_integer(y1) and x1 >= 0 and y1 >= 0 and
              is_integer(x2) and is_integer(y2) and x2 >= 0 and y2 >= 0 do
-    with {:ok, options} <- Options.Draw.validate_options(:line, options) do
+    with {:ok, options} <- Options.Draw.validate_options(image, :line, options) do
       Image.mutate(image, fn mut_img ->
         line(mut_img, x1, y1, x2, y2, options)
       end)
@@ -616,7 +616,7 @@ defmodule Image.Draw do
   def line(%MutableImage{} = image, x1, y1, x2, y2, options)
       when is_integer(x1) and is_integer(y1) and x1 >= 0 and y1 >= 0 and
              is_integer(x2) and is_integer(y2) and x2 >= 0 and y2 >= 0 do
-    with {:ok, options} <- Options.Draw.validate_options(:line, options) do
+    with {:ok, options} <- Options.Draw.validate_options(image, :line, options) do
       color = maybe_add_alpha(image, options.color)
       :ok = MutableOperation.draw_line(image, color, x1, y1, x2, y2)
       {:ok, image}
@@ -759,7 +759,7 @@ defmodule Image.Draw do
 
   def image(%MutableImage{} = image, %Vimage{} = sub_image, top, left, options)
       when is_integer(top) and is_integer(left) and top >= 0 and left >= 0 do
-    with {:ok, options} <- Options.Draw.validate_options(:image, options) do
+    with {:ok, options} <- Options.Draw.validate_options(image, :image, options) do
       :ok = MutableOperation.draw_image(image, sub_image, top, left, Map.to_list(options))
       {:ok, image}
     end
@@ -901,7 +901,7 @@ defmodule Image.Draw do
 
   def flood(%image_type{} = image, left, top, options \\ [])
       when is_image(image_type) and is_point(left, top) do
-    with {:ok, options} <- Options.Draw.validate_options(:flood, options) do
+    with {:ok, options} <- Options.Draw.validate_options(image, :flood, options) do
       color = maybe_add_alpha(image, options.color)
       flood(image, left, top, color, options.equal)
     end
@@ -1015,7 +1015,7 @@ defmodule Image.Draw do
 
   def mask(%Vimage{} = image, %Vimage{} = mask, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
-    with {:ok, options} <- Options.Draw.validate_options(:mask, options) do
+    with {:ok, options} <- Options.Draw.validate_options(image, :mask, options) do
       color = maybe_add_alpha(image, options.color)
 
       Image.mutate(image, fn mut_img ->
@@ -1027,7 +1027,7 @@ defmodule Image.Draw do
 
   def mask(%MutableImage{} = image, %Vimage{} = mask, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
-    with {:ok, options} <- Options.Draw.validate_options(:mask, options) do
+    with {:ok, options} <- Options.Draw.validate_options(image, :mask, options) do
       color = maybe_add_alpha(image, options.color)
       :ok = MutableOperation.draw_mask(image, color, mask, x, y)
       {:ok, image}
@@ -1059,7 +1059,7 @@ defmodule Image.Draw do
   def smudge(%Vimage{} = image, left, top, width, height, options)
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0
       when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
-    with {:ok, _options} <- Options.Draw.validate_options(:smudge, options) do
+    with {:ok, _options} <- Options.Draw.validate_options(image, :smudge, options) do
       Image.mutate(image, fn mut_img ->
         MutableOperation.draw_smudge(mut_img, left, top, width, height)
       end)
@@ -1070,7 +1070,7 @@ defmodule Image.Draw do
   def smudge(%MutableImage{} = image, left, top, width, height, options)
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0
       when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
-    with {:ok, _options} <- Options.Draw.validate_options(:smudge, options) do
+    with {:ok, _options} <- Options.Draw.validate_options(image, :smudge, options) do
       :ok = MutableOperation.draw_smudge(image, left, top, width, height)
       {:ok, image}
     end

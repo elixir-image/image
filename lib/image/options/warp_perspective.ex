@@ -4,7 +4,7 @@ defmodule Image.Options.WarpPerspective do
 
   """
   alias Vix.Vips.Image, as: Vimage
-  alias Image.Color
+  alias Image.Pixel
 
   @typedoc """
   Options for Image.warp_perspective/4.
@@ -17,7 +17,7 @@ defmodule Image.Options.WarpPerspective do
 
   """
   @type warp_perspective_option :: [
-          {:background, Color.t() | :average}
+          {:background, Pixel.t() | :average}
           | {:extend_mode, extend_mode()}
         ]
 
@@ -64,11 +64,10 @@ defmodule Image.Options.WarpPerspective do
     end
   end
 
-  defp validate_option({:background, color} = option, _image, options) do
-    case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color} -> {:cont, Keyword.put(options, :background, color)}
-      {:ok, color} -> {:cont, Keyword.put(options, :backgrouond, color)}
-      _other -> {:halt, invalid_option(option)}
+  defp validate_option({:background, color} = option, image, options) do
+    case Pixel.to_pixel(image, color) do
+      {:ok, pixel} -> {:cont, Keyword.put(options, :background, pixel)}
+      _other -> {:halt, {:error, invalid_option(option)}}
     end
   end
 

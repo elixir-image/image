@@ -2057,7 +2057,7 @@ defmodule Image do
   def chroma_mask(image, options \\ [])
 
   def chroma_mask(%Vimage{} = image, options) when is_list(options) do
-    with {:ok, options} <- Options.ChromaKey.validate_options(options) do
+    with {:ok, options} <- Options.ChromaKey.validate_options(image, options) do
       chroma_mask(image, options)
     end
   end
@@ -2208,7 +2208,7 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def chroma_key(%Vimage{} = image, options \\ []) do
-    with {:ok, options} <- Options.ChromaKey.validate_options(options),
+    with {:ok, options} <- Options.ChromaKey.validate_options(image, options),
          {:ok, mask} <- chroma_mask(image, options),
          {:ok, flattened} <- flatten(image) do
       Operation.bandjoin([flattened, mask])
@@ -3320,7 +3320,7 @@ defmodule Image do
           {:ok, joined_image :: Vimage.t()} | {:error, error_message()}
 
   def join(image_list, options \\ []) when is_list(image_list) do
-    with {:ok, options} <- Options.Join.validate_options(options) do
+    with {:ok, options} <- Options.Join.validate_options(hd(image_list), options) do
       Operation.arrayjoin(image_list, options)
     end
   end
@@ -5410,7 +5410,7 @@ defmodule Image do
   end
 
   defp find_trim_to_color(image, options) do
-    with {:ok, options} <- Options.Trim.validate_options(options) do
+    with {:ok, options} <- Options.Trim.validate_options(image, options) do
       background = maybe_calculate_color(image, options.background)
       threshold = options.threshold
 
@@ -5434,9 +5434,12 @@ defmodule Image do
   end
 
   defp find_trim_to_alpha({_other_bands, alpha}, _image, options) when not is_nil(alpha) do
-    options = Keyword.put(options, :background, [0, 0, 0])
+    # find_trim runs against the (1-band) alpha channel itself, so the
+    # background must be encoded for that single-band image, not the
+    # original multi-band one.
+    options = Keyword.put(options, :background, :black)
 
-    with {:ok, options} <- Options.Trim.validate_options(options) do
+    with {:ok, options} <- Options.Trim.validate_options(alpha, options) do
       case Operation.find_trim(alpha,
              background: options.background,
              threshold: options.threshold
@@ -10381,7 +10384,7 @@ defmodule Image do
   @spec compare(Vimage.t(), Vimage.t(), Keyword.t()) ::
           {:ok, number, Vimage.t()} | {:error, error_message()}
   def compare(%Vimage{} = image_1, %Vimage{} = image_2, options \\ []) when is_list(options) do
-    with {:ok, options} <- Options.Compare.validate_options(options),
+    with {:ok, options} <- Options.Compare.validate_options(image_1, options),
          {:ok, image_1} <- Image.flatten(image_1),
          {:ok, image_2} <- Image.flatten(image_2),
          {:ok, difference} <- image_difference(image_1, image_2),

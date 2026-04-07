@@ -4,7 +4,7 @@ defmodule Image.Options.Meme do
 
   """
 
-  alias Image.Color
+  alias Image.Pixel
 
   @typedoc "Valid font weights"
   @type font_weight :: :ultralight | :light | :normal | :bold | :ultrabold | :heavy
@@ -18,8 +18,8 @@ defmodule Image.Options.Meme do
             {:text, String.t()}
             | {:font, String.t()}
             | {:weight, font_weight()}
-            | {:color, Color.t()}
-            | {:outline_color, Color.t()}
+            | {:color, Pixel.t()}
+            | {:outline_color, Pixel.t()}
             | {:justify, boolean()}
             | {:transform, text_transform()}
             | {:width, pos_integer()}
@@ -116,10 +116,9 @@ defmodule Image.Options.Meme do
   end
 
   defp validate_option({key, color} = option, options) when key in [:color, :outline_color] do
-    case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color} -> {:cont, Keyword.put(options, key, color)}
-      {:ok, color} -> {:cont, Keyword.put(options, key, color)}
-      _other -> {:halt, invalid_option(option)}
+    case Pixel.to_srgb(color) do
+      {:ok, pixel} -> {:cont, Keyword.put(options, key, Enum.take(pixel, 3))}
+      _other -> {:halt, {:error, invalid_option(option)}}
     end
   end
 

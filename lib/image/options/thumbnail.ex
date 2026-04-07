@@ -5,9 +5,9 @@ defmodule Image.Options.Thumbnail do
   """
 
   alias Image.Options.Crop
-  alias Image.Color
+  alias Image.ICCProfile
 
-  import Color, only: [is_inbuilt_profile: 1]
+  import ICCProfile, only: [is_inbuilt: 1]
   import Image, only: [is_size: 1]
 
   @typedoc """
@@ -17,8 +17,8 @@ defmodule Image.Options.Thumbnail do
   @type thumbnail_options :: [
           {:autorotate, boolean()}
           | {:intent, Image.render_intent()}
-          | {:export_icc_profile, Color.icc_profile()}
-          | {:import_icc_profile, Color.icc_profile()}
+          | {:export_icc_profile, ICCProfile.t()}
+          | {:import_icc_profile, ICCProfile.t()}
           | {:linear, boolean()}
           | {:resize, resize_dimension()}
           | {:height, pos_integer()}
@@ -100,13 +100,13 @@ defmodule Image.Options.Thumbnail do
   end
 
   defp validate_option({:import_icc_profile, profile}, options)
-       when is_inbuilt_profile(profile) or is_binary(profile) do
+       when is_inbuilt(profile) or is_binary(profile) do
     options =
       options
       |> Keyword.delete(:import_icc_profile)
       |> Keyword.put(:"import-profile", to_string(profile))
 
-    if Image.Color.known_icc_profile?(profile) do
+    if ICCProfile.known?(profile) do
       {:cont, options}
     else
       {:halt, {:error, "The color profile #{inspect(profile)} is not known"}}
@@ -114,13 +114,13 @@ defmodule Image.Options.Thumbnail do
   end
 
   defp validate_option({:export_icc_profile, profile}, options)
-       when is_inbuilt_profile(profile) or is_binary(profile) do
+       when is_inbuilt(profile) or is_binary(profile) do
     options =
       options
       |> Keyword.delete(:export_icc_profile)
       |> Keyword.put(:"export-profile", to_string(profile))
 
-    if Image.Color.known_icc_profile?(profile) do
+    if ICCProfile.known?(profile) do
       {:cont, options}
     else
       {:halt, {:error, "The color profile #{inspect(profile)} is not known"}}

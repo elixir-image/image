@@ -3,15 +3,15 @@ defmodule Image.Options.Embed do
   Options and option validation for `Image.embed/4`.
 
   """
-  alias Image.Color
+  alias Image.Pixel
 
   @typedoc """
   Options applicable to `Image.embed/4`.
 
   """
   @type embed_option ::
-          {:background_color, Color.t() | :average}
-          | {:background_transparency, Color.transparency()}
+          {:background_color, Pixel.t() | :average}
+          | {:background_transparency, Pixel.transparency()}
           | {:extend_mode, extend_mode()}
           | {:x, non_neg_integer() | :center}
           | {:y, non_neg_integer() | :center}
@@ -72,13 +72,13 @@ defmodule Image.Options.Embed do
     end
   end
 
-  defp validate_option({:background_color, color} = option, _image, _width, _height, options) do
-    case Color.validate_color(color) do
-      {:ok, color} ->
-        {:cont, Keyword.put(options, :background_color, color)}
+  defp validate_option({:background_color, color} = option, image, _width, _height, options) do
+    case Pixel.to_pixel(image, color) do
+      {:ok, pixel} ->
+        {:cont, Keyword.put(options, :background_color, pixel)}
 
       _other ->
-        {:halt, invalid_option(option)}
+        {:halt, {:error, invalid_option(option)}}
     end
   end
 
@@ -89,12 +89,12 @@ defmodule Image.Options.Embed do
          _height,
          options
        ) do
-    case Color.validate_transparency(transparency) do
+    case Pixel.transparency(transparency) do
       {:ok, transparency} ->
         {:cont, Keyword.put(options, :background_transparency, transparency)}
 
       _other ->
-        {:halt, invalid_option(option)}
+        {:halt, {:error, invalid_option(option)}}
     end
   end
 

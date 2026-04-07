@@ -3,7 +3,7 @@ defmodule Image.Options.Join do
   Options and option validation for `Image.join/2`.
 
   """
-  alias Image.Color
+  alias Image.Pixel
 
   @typedoc """
   Options applicable to `Image.join/2`.
@@ -14,7 +14,7 @@ defmodule Image.Options.Join do
           | {:horizontal_spacing, non_neg_integer()}
           | {:vertical_align, :top | :center | :bottom}
           | {:horizontal_align, :left | :center | :right}
-          | {:background_color, Color.t() | nil}
+          | {:background_color, Pixel.t() | nil}
           | {:shim, non_neg_integer()}
           | {:across, pos_integer()}
 
@@ -61,10 +61,10 @@ defmodule Image.Options.Join do
   Validate the options for `Image.join/2`.
 
   """
-  def validate_options(options) when is_list(options) do
+  def validate_options(image, options) when is_list(options) do
     options = Keyword.merge(default_options(), options)
 
-    case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
+    case Enum.reduce_while(options, options, &validate_option(&1, image, &2)) do
       {:error, value} ->
         {:error, value}
 
@@ -75,66 +75,63 @@ defmodule Image.Options.Join do
 
   # Docs say default vertical spacing is 1 but that produces
   # incorrect results. So we delete the option instead.
-  defp validate_option({:vertical_spacing, 0}, options) do
+  defp validate_option({:vertical_spacing, 0}, _image, options) do
     {:cont, Keyword.delete(options, :vertical_spacing)}
   end
 
-  defp validate_option({:vertical_spacing, vertical_spacing}, options)
+  defp validate_option({:vertical_spacing, vertical_spacing}, _image, options)
        when is_integer(vertical_spacing) and vertical_spacing > 0 do
     {:cont, replace_option(options, :vertical_spacing, :vspacing, vertical_spacing)}
   end
 
   # Docs say default horizontal spacing is 1 but that produces
   # incorrect results. So we delete the option instead.
-  defp validate_option({:horizontal_spacing, 0}, options) do
+  defp validate_option({:horizontal_spacing, 0}, _image, options) do
     {:cont, Keyword.delete(options, :horizontal_spacing)}
   end
 
-  defp validate_option({:horizontal_spacing, horizontal_spacing}, options)
+  defp validate_option({:horizontal_spacing, horizontal_spacing}, _image, options)
        when is_integer(horizontal_spacing) and horizontal_spacing > 0 do
     {:cont, replace_option(options, :horizontal_spacing, :hspacing, horizontal_spacing)}
   end
 
-  defp validate_option({:vertical_align, vertical_align}, options)
+  defp validate_option({:vertical_align, vertical_align}, _image, options)
        when vertical_align in [:bottom, :middle, :high] do
     {:cont,
      replace_option(options, :vertical_align, :valign, Map.get(@alignment_map, vertical_align))}
   end
 
-  defp validate_option({:horizontal_align, horizontal_align}, options)
+  defp validate_option({:horizontal_align, horizontal_align}, _image, options)
        when horizontal_align in [:left, :centre, :right] do
     {:cont,
      replace_option(options, :horizontal_align, :halign, Map.get(@alignment_map, horizontal_align))}
   end
 
-  defp validate_option({:background_color, nil}, options) do
+  defp validate_option({:background_color, nil}, _image, options) do
     {:cont, Keyword.delete(options, :background_color)}
   end
 
-  defp validate_option({:background_color, color} = option, options) do
-    case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color} ->
-        {:cont, replace_option(options, :background_color, :background, color)}
-
-      {:ok, color} ->
-        {:cont, replace_option(options, :background_color, :background, color)}
+  defp validate_option({:background_color, color} = option, image, options) do
+    case Pixel.to_pixel(image, color) do
+      {:ok, pixel} ->
+        {:cont, replace_option(options, :background_color, :background, pixel)}
 
       _other ->
-        {:halt, invalid_option(option)}
+        {:halt, {:error, invalid_option(option)}}
     end
   end
 
-  defp validate_option({:shim, shim}, options)
+  defp validate_option({:shim, shim}, _image, options)
        when is_integer(shim) and shim >= 0 do
     {:cont, options}
   end
 
-  defp validate_option({:across, across}, options)
+  defp validate_option({:across, across}, _image, options)
        when is_integer(across) and across > 0 do
     {:cont, options}
   end
 
-  defp validate_option(option, _options) do
+  defp validate_option(option, _image, _options) do
     {:halt, {:error, invalid_option(option)}}
   end
 
