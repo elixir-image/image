@@ -369,17 +369,55 @@ defmodule Image.Test do
     assert {:ok, _image} = Image.open(heic)
   end
 
-  @tag :heic_compression
-  test "Saving an HEIC/AVIF file with different compression methods" do
-    image = Image.open!("./test/support/images/Singapore-2016-09-5887.jpg")
+  # The HEIC/AVIF compression tests below probe libvips at compile
+  # time. Encoders that the bundled libheif was not built with are
+  # skipped automatically; this keeps the suite green on systems
+  # where libheif lacks one of HEVC, AV1, JPEG, or AVC.
 
-    assert {:ok, _image} = Image.write(image, "/tmp/s1.heic", compression: :av1)
-    assert {:ok, _image} = Image.write(image, "/tmp/s1.heic", compression: :hevc)
-    assert {:ok, _image} = Image.write(image, "/tmp/s1.heif", compression: :av1)
-    assert {:ok, _image} = Image.write(image, "/tmp/s1.heif", compression: :hevc)
+  describe "Saving an HEIC/AVIF file with different compression methods" do
+    setup do
+      {:ok, image: Image.open!("./test/support/images/Singapore-2016-09-5887.jpg")}
+    end
 
-    assert {:ok, _image} = Image.write(image, "/tmp/s1.avif", compression: :jpeg)
-    assert {:ok, _image} = Image.write(image, "/tmp/s1.avif", compression: :av1)
-    assert {:ok, _image} = Image.write(image, "/tmp/s1.avif", compression: :avc)
+    @av1_supported Image.TestSupport.heif_compression_supported?(:av1)
+    @hevc_supported Image.TestSupport.heif_compression_supported?(:hevc)
+    @jpeg_supported Image.TestSupport.heif_compression_supported?(:jpeg)
+    @avc_supported Image.TestSupport.heif_compression_supported?(:avc)
+
+    if @av1_supported do
+      test ".heic with av1", %{image: image} do
+        assert {:ok, _} = Image.write(image, "/tmp/s1.heic", compression: :av1)
+      end
+
+      test ".heif with av1", %{image: image} do
+        assert {:ok, _} = Image.write(image, "/tmp/s1.heif", compression: :av1)
+      end
+
+      test ".avif with av1", %{image: image} do
+        assert {:ok, _} = Image.write(image, "/tmp/s1.avif", compression: :av1)
+      end
+    end
+
+    if @hevc_supported do
+      test ".heic with hevc", %{image: image} do
+        assert {:ok, _} = Image.write(image, "/tmp/s1.heic", compression: :hevc)
+      end
+
+      test ".heif with hevc", %{image: image} do
+        assert {:ok, _} = Image.write(image, "/tmp/s1.heif", compression: :hevc)
+      end
+    end
+
+    if @jpeg_supported do
+      test ".avif with jpeg", %{image: image} do
+        assert {:ok, _} = Image.write(image, "/tmp/s1.avif", compression: :jpeg)
+      end
+    end
+
+    if @avc_supported do
+      test ".avif with avc", %{image: image} do
+        assert {:ok, _} = Image.write(image, "/tmp/s1.avif", compression: :avc)
+      end
+    end
   end
 end

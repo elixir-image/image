@@ -6,6 +6,47 @@ defmodule Image.TestSupport do
   @validate_path Path.join(__DIR__, "validate")
   @acceptable_similarity 1.1
 
+  # Probe libvips at compile time to discover which HEIF compression
+  # encoders are actually built into the bundled libheif. The libvips
+  # build always exposes `heifsave`, but the underlying libheif may
+  # have been built without one or more of HEVC / AV1 / JPEG / AVC,
+  # in which case those encoders return "Unsupported compression" at
+  # runtime.
+  @probe_image %{} && Vix.Vips.Operation.black!(2, 2)
+  @heif_compressions [
+    av1: :VIPS_FOREIGN_HEIF_COMPRESSION_AV1,
+    hevc: :VIPS_FOREIGN_HEIF_COMPRESSION_HEVC,
+    jpeg: :VIPS_FOREIGN_HEIF_COMPRESSION_JPEG,
+    avc: :VIPS_FOREIGN_HEIF_COMPRESSION_AVC
+  ]
+  @supported_heif_compressions for {short, vips_atom} <- @heif_compressions,
+                                   match?(
+                                     {:ok, _},
+                                     try do
+                                       Vix.Vips.Operation.heifsave_buffer(@probe_image,
+                                         compression: vips_atom
+                                       )
+                                     rescue
+                                       _ -> :error
+                                     end
+                                   ),
+                                   into: MapSet.new(),
+                                   do: short
+
+  @doc """
+  Returns the set of HEIF compression encoders that the bundled
+  libvips/libheif actually supports. Probed once at compile time.
+  """
+  def supported_heif_compressions, do: @supported_heif_compressions
+
+  @doc """
+  Returns true if the given HEIF compression atom (`:av1`, `:hevc`,
+  `:jpeg`, `:avc`) is supported by the linked libvips/libheif.
+  """
+  def heif_compression_supported?(compression) do
+    MapSet.member?(@supported_heif_compressions, compression)
+  end
+
   @dialyzer {:nowarn_function, {:assert_files_equal, 2}}
   def assert_files_equal(expected, result) do
     assert File.read!(expected) == File.read!(result)
