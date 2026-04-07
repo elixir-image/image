@@ -53,3 +53,10 @@ mise.toml
 
 # Don't add the lensfun DTD to the repo
 lensfun-database.dtd
+
+# Failed tests
+test/support/did_not_match/
+
+# Claude
+CLAUDE.md
+.claude

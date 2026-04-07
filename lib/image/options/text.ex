@@ -4,18 +4,18 @@ defmodule Image.Options.Text do
 
   """
 
-  alias Image.Color
+  alias Image.Pixel
   alias Vix.Vips.Image, as: Vimage
 
   @type t :: [
           {:font, String.t()}
           | {:font_size, pos_integer()}
           | {:dpi, pos_integer()}
-          | {:text_fill_color, Color.t()}
+          | {:text_fill_color, Pixel.t()}
           | {:text_stroke_width, pos_integer()}
           | {:font_weigtht, atom()}
-          | {:background_fill_color, Color.t()}
-          | {:background_stroke_color, Color.t()}
+          | {:background_fill_color, Pixel.t()}
+          | {:background_stroke_color, Pixel.t()}
           | {:background_stroke_width, pos_integer()}
           | {:background_stroke_opacity, float()}
           | {:background_fill_opacity, float()}
@@ -261,7 +261,7 @@ defmodule Image.Options.Text do
   @doc false
   def validate_color(option, color, options) do
     cond do
-      (is_binary(color) or is_atom(color)) && Map.get(Color.color_map(), Color.normalize(color)) ->
+      (is_binary(color) or is_atom(color)) && match?({:ok, _}, Color.CSSNames.lookup(color)) ->
         {:cont, options}
 
       match?(<<"#", _rest::bytes-6>>, color) ->

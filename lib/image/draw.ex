@@ -12,7 +12,7 @@ defmodule Image.Draw do
 
   alias Vix.Vips.Image, as: Vimage
   alias Vix.Vips.{MutableImage, MutableOperation}
-  alias Image.Color
+  alias Image.Pixel
   alias Image.Options
 
   import Image, only: :macros
@@ -65,8 +65,7 @@ defmodule Image.Draw do
     band. The color can also be supplied as a CSS color
     name as a string or atom. For example: `:misty_rose`.
     Lastly, it can also be supplied as a hex string of
-    the form `#rrggbb`. See `Image.Color.color_map/0` and
-    `Image.Color.rgb_color/1`.
+    the form `#rrggbb`. See `Color.new/2` from the Color library.
 
   ### Returns
 
@@ -200,8 +199,7 @@ defmodule Image.Draw do
     band. The color can also be supplied as a CSS color
     name as a string or atom. For example: `:misty_rose`.
     Lastly, it can also be supplied as a hex string of
-    the form `#rrggbb`. See `Image.Color.color_map/0` and
-    `Image.Color.rgb_color/1`.
+    the form `#rrggbb`. See `Color.new/2` from the Color library.
 
   * `:fill` is a boolean indicating whether the
     rectangle is to be filled with `:color`. The
@@ -318,8 +316,7 @@ defmodule Image.Draw do
     band. The color can also be supplied as a CSS color
     name as a string or atom. For example: `:misty_rose`.
     Lastly, it can also be supplied as a hex string of
-    the form `#rrggbb`. See `Image.Color.color_map/0` and
-    `Image.Color.rgb_color/1`.
+    the form `#rrggbb`. See `Color.new/2` from the Color library.
 
   * `:fill` is a boolean indicating whether the
     rectangle is to be filled with `:color`. The
@@ -396,8 +393,7 @@ defmodule Image.Draw do
     band. The color can also be supplied as a CSS color
     name as a string or atom. For example: `:misty_rose`.
     Lastly, it can also be supplied as a hex string of
-    the form `#rrggbb`. See `Image.Color.color_map/0` and
-    `Image.Color.rgb_color/1`.
+    the form `#rrggbb`. See `Color.new/2` from the Color library.
 
   * `:fill` is a boolean indicating whether the
     rectangle is to be filled with `:color`. The
@@ -510,8 +506,7 @@ defmodule Image.Draw do
     band. The color can also be supplied as a CSS color
     name as a string or atom. For example: `:misty_rose`.
     Lastly, it can also be supplied as a hex string of
-    the form `#rrggbb`. See `Image.Color.color_map/0` and
-    `Image.Color.rgb_color/1`.
+    the form `#rrggbb`. See `Color.new/2` from the Color library.
 
   * `:fill` is a boolean indicating whether the
     rectangle is to be filled with `:color`. The
@@ -576,8 +571,7 @@ defmodule Image.Draw do
     band. The color can also be supplied as a CSS color
     name as a string or atom. For example: `:misty_rose`.
     Lastly, it can also be supplied as a hex string of
-    the form `#rrggbb`. See `Image.Color.color_map/0` and
-    `Image.Color.rgb_color/1`.
+    the form `#rrggbb`. See `Color.new/2` from the Color library.
 
   ### Returns
 
@@ -657,8 +651,7 @@ defmodule Image.Draw do
     band. The color can also be supplied as a CSS color
     name as a string or atom. For example: `:misty_rose`.
     Lastly, it can also be supplied as a hex string of
-    the form `#rrggbb`. See `Image.Color.color_map/0` and
-    `Image.Color.rgb_color/1`.
+    the form `#rrggbb`. See `Color.new/2` from the Color library.
 
   ### Returns
 
@@ -724,8 +717,7 @@ defmodule Image.Draw do
     band. The color can also be supplied as a CSS color
     name as a string or atom. For example: `:misty_rose`.
     Lastly, it can also be supplied as a hex string of
-    the form `#rrggbb`. See `Image.Color.color_map/0` and
-    `Image.Color.rgb_color/1`.
+    the form `#rrggbb`. See `Color.new/2` from the Color library.
 
   ### Returns
 
@@ -802,8 +794,7 @@ defmodule Image.Draw do
     band. The color can also be supplied as a CSS color
     name as a string or atom. For example: `:misty_rose`.
     Lastly, it can also be supplied as a hex string of
-    the form `#rrggbb`. See `Image.Color.color_map/0` and
-    `Image.Color.rgb_color/1`.
+    the form `#rrggbb`. See `Color.new/2` from the Color library.
 
   ### Returns
 
@@ -874,8 +865,7 @@ defmodule Image.Draw do
     band. The color can also be supplied as a CSS color
     name as a string or atom. For example: `:misty_rose`.
     Lastly, it can also be supplied as a hex string of
-    the form `#rrggbb`. See `Image.Color.color_map/0` and
-    `Image.Color.rgb_color/1`.
+    the form `#rrggbb`. See `Color.new/2` from the Color library.
 
   ### Returns
 
@@ -962,8 +952,7 @@ defmodule Image.Draw do
     band. The color can also be supplied as a CSS color
     name as a string or atom. For example: `:misty_rose`.
     Lastly, it can also be supplied as a hex string of
-    the form `#rrggbb`. See `Image.Color.color_map/0` and
-    `Image.Color.rgb_color/1`.
+    the form `#rrggbb`. See `Color.new/2` from the Color library.
 
   ### Returns
 
@@ -1079,12 +1068,12 @@ defmodule Image.Draw do
 
   ## Helpers
 
-  @spec maybe_add_alpha(Vimage.t() | MutableImage.t(), Color.t()) :: Color.t()
+  @spec maybe_add_alpha(Vimage.t() | MutableImage.t(), Pixel.t()) :: Pixel.t()
 
   @doc false
   def maybe_add_alpha(image, color) when length(color) == 3 do
     if has_alpha?(image) do
-      List.insert_at(color, -1, Color.max_opacity())
+      List.insert_at(color, -1, Pixel.max_opacity())
     else
       color
     end

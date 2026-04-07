@@ -684,7 +684,7 @@ defmodule Image.Text do
     background_fill_color =
       options
       |> Map.get(:background_fill_color)
-      |> Image.Color.rgba_color!(opacity)
+      |> background_to_rgba(opacity)
 
     image =
       if Image.has_alpha?(image), do: image, else: Image.add_alpha!(image, :transparent)
@@ -692,6 +692,20 @@ defmodule Image.Text do
     Operation.embed(image, padding_left, padding_top, width, height,
       background: background_fill_color
     )
+  end
+
+  # Resolve a text background colour into an RGBA pixel in 0..255.
+  # Honours the `:none` / `:transparent` aliases (which always yield a
+  # fully transparent black, regardless of the opacity option) so that
+  # the default text background remains invisible.
+  defp background_to_rgba(color, _opacity) when color in [:none, :transparent] do
+    [0, 0, 0, 0]
+  end
+
+  defp background_to_rgba(color, opacity)
+       when is_float(opacity) and opacity >= 0.0 and opacity <= 1.0 do
+    [r, g, b | _] = Image.Pixel.to_srgb!(color)
+    [r, g, b, round(255 * opacity)]
   end
 
   @doc """

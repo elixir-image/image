@@ -94,11 +94,30 @@ defmodule Image.Options.New do
     {:cont, options}
   end
 
+  defp validate_option({:color, color}, options) when is_integer(color) do
+    {:cont, Keyword.put(options, :color, color)}
+  end
+
+  # A pre-encoded numeric list (any length 1..5) is passed through
+  # untouched. This is the path used internally by callers that
+  # already produced a pixel for a particular interpretation
+  # (Image.if_then_else, Image.replace_color, k-means, etc).
+  defp validate_option({:color, color}, options)
+       when is_list(color) and length(color) >= 1 and length(color) <= 5 do
+    if Enum.all?(color, &is_number/1) do
+      {:cont, Keyword.put(options, :color, color)}
+    else
+      case Pixel.to_srgb(color) do
+        {:ok, pixel} -> {:cont, Keyword.put(options, :color, pixel)}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end
+  end
+
   defp validate_option({:color, color}, options) do
-    case Color.rgb_color(color) do
-      {:ok, color} ->
-        rgb = if Keyword.keyword?(color), do: Keyword.fetch!(color, :rgb), else: color
-        {:cont, Keyword.put(options, :color, rgb)}
+    case Pixel.to_srgb(color) do
+      {:ok, pixel} ->
+        {:cont, Keyword.put(options, :color, pixel)}
 
       {:error, reason} ->
         {:halt, {:error, reason}}

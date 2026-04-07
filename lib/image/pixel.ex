@@ -172,14 +172,72 @@ defmodule Image.Pixel do
         ) :: {:ok, [number()]} | {:error, String.t()}
   def to_pixel(image, color, options \\ [])
 
+  # If the input is already a list of numbers whose length matches the
+  # image's band count AND whose values are all in the natural pixel
+  # range for the image's interpretation, treat it as a pre-encoded
+  # pixel and pass it through unchanged. This is the back-compat path
+  # for callers that already speak the image's interpretation
+  # natively (Image.if_then_else, k-means clusters, gradient defaults,
+  # etc).
+  def to_pixel(%Vimage{} = image, color, _options)
+      when is_list(color) and length(color) > 0 do
+    bands = Vimage.bands(image)
+    interpretation = Image.colorspace(image)
+
+    if length(color) == bands and pre_encoded?(color, interpretation) do
+      {:ok, color}
+    else
+      do_to_pixel_vimage(image, color, [])
+    end
+  end
+
   def to_pixel(%Vimage{} = image, color, options) do
+    do_to_pixel_vimage(image, color, options)
+  end
+
+  def to_pixel(%MutableImage{} = image, color, _options)
+      when is_list(color) and length(color) > 0 do
+    {:ok, {_w, _h, bands}} = MutableImage.shape(image)
+
+    if length(color) == bands and pre_encoded?(color, :srgb) do
+      {:ok, color}
+    else
+      do_to_pixel_mutable(image, color, [])
+    end
+  end
+
+  def to_pixel(%MutableImage{} = image, color, options) do
+    do_to_pixel_mutable(image, color, options)
+  end
+
+  # A list is already encoded for the image's interpretation if the
+  # values sit in the natural range of that interpretation.
+  defp pre_encoded?(list, interpretation)
+       when interpretation in [:srgb, :rgb, :cmyk, :hsv, :bw, :multiband] do
+    Enum.all?(list, fn v -> is_integer(v) and v >= 0 and v <= 255 end)
+  end
+
+  defp pre_encoded?(list, interpretation) when interpretation in [:rgb16, :grey16] do
+    Enum.all?(list, fn v -> is_integer(v) and v >= 0 and v <= 65_535 end)
+  end
+
+  defp pre_encoded?(list, interpretation) when interpretation in [:lab, :labs, :lch, :scrgb, :xyz] do
+    # Float-valued interpretations: if the caller sent floats at all,
+    # trust them; integer lists in these spaces are almost always a
+    # mis-use and we should convert instead.
+    Enum.all?(list, &is_float/1)
+  end
+
+  defp pre_encoded?(_list, _interpretation), do: false
+
+  defp do_to_pixel_vimage(image, color, options) do
     interpretation = Image.colorspace(image)
     bands = Vimage.bands(image)
     has_alpha = Vimage.has_alpha?(image)
     do_to_pixel(interpretation, bands, has_alpha, color, options)
   end
 
-  def to_pixel(%MutableImage{} = image, color, options) do
+  defp do_to_pixel_mutable(image, color, options) do
     {:ok, {_w, _h, bands}} = MutableImage.shape(image)
     {:ok, has_alpha} = MutableImage.has_alpha?(image)
     # MutableImage does not expose an interpretation accessor, so we
@@ -345,6 +403,16 @@ defmodule Image.Pixel do
   defp resolve(:none), do: {:ok, %Color.SRGB{r: 0.0, g: 0.0, b: 0.0, alpha: 0.0}}
   defp resolve(:transparent), do: {:ok, %Color.SRGB{r: 0.0, g: 0.0, b: 0.0, alpha: 0.0}}
   defp resolve(:opaque), do: {:ok, %Color.SRGB{r: 0.0, g: 0.0, b: 0.0, alpha: 1.0}}
+
+  # Image historically accepts a single integer or float as a uniform
+  # grey value. Promote it to a 3-channel sRGB so the rest of the
+  # pipeline doesn't have to special-case scalars.
+  defp resolve(int) when is_integer(int) and int in 0..255,
+    do: {:ok, %Color.SRGB{r: int / 255, g: int / 255, b: int / 255, alpha: nil}}
+
+  defp resolve(float) when is_float(float) and float >= 0.0 and float <= 1.0,
+    do: {:ok, %Color.SRGB{r: float, g: float, b: float, alpha: nil}}
+
   defp resolve(other), do: Color.new(other)
 
   # When the image has only one color channel (greyscale), force a

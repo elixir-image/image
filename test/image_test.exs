@@ -6,7 +6,6 @@ defmodule Image.Test do
 
   doctest Image
   doctest Image.Classification
-  doctest Image.Color
   doctest Image.BandFormat
   doctest Image.Blurhash
   doctest Image.Math

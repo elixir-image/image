@@ -3,14 +3,14 @@ defmodule Image.Options.RadialGradient do
   Options and option validation for `Image.radial_gradient/3`.
 
   """
-  alias Image.Color
+  alias Image.Pixel
 
   @typedoc """
   Options applicable to `Image.radial_gradient/3`.
   """
   @type radial_gradient_option ::
-          {:start_color, Color.rgb_color()}
-          | {:finish_color, Color.rgb_color()}
+          {:start_color, Pixel.t()}
+          | {:finish_color, Pixel.t()}
           | {:feather, pos_integer()}
           | {:radius, number()}
 
@@ -40,13 +40,18 @@ defmodule Image.Options.RadialGradient do
     end
   end
 
-  defp validate_option({key, color} = option, options)
-       when key in [:start_color, :finish_color] do
-    case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color} -> {:cont, Keyword.put(options, key, color)}
-      {:ok, color} -> {:cont, Keyword.put(options, key, color)}
-      _other -> {:halt, invalid_option(option)}
+  defp validate_option({key, color}, options)
+       when key in [:start_color, :finish_color] and is_list(color) and length(color) in [3, 4] do
+    if Enum.all?(color, &is_number/1) do
+      {:cont, Keyword.put(options, key, ensure_alpha(color))}
+    else
+      resolve_gradient_color(key, color, options)
     end
+  end
+
+  defp validate_option({key, color}, options)
+       when key in [:start_color, :finish_color] do
+    resolve_gradient_color(key, color, options)
   end
 
   defp validate_option({:radius, angle}, options) when is_number(angle) do
@@ -60,6 +65,21 @@ defmodule Image.Options.RadialGradient do
   defp validate_option(option, _options) do
     {:halt, {:error, invalid_option(option)}}
   end
+
+  defp resolve_gradient_color(key, color, options) do
+    case Pixel.to_srgb(color) do
+      {:ok, pixel} ->
+        {:cont, Keyword.put(options, key, ensure_alpha(pixel))}
+
+      _other ->
+        {:halt, {:error, invalid_option({key, color})}}
+    end
+  end
+
+  # Gradient math operates on RGBA, so opaque sRGB inputs need an
+  # explicit alpha appended.
+  defp ensure_alpha([_, _, _] = rgb), do: rgb ++ [255]
+  defp ensure_alpha([_, _, _, _] = rgba), do: rgba
 
   defp invalid_option(option) do
     "Invalid option or option value: #{inspect(option)}"

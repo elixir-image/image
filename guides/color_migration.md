@@ -4,9 +4,11 @@ This is a working plan, not yet a finished migration. It captures what `Image.Co
 
 ## Status
 
-* `{:color, path: "../color"}` is declared in `mix.exs` and the project compiles cleanly against it.
-* **Phase 1 complete.** `Image.Pixel` and `Image.ICCProfile` exist with full doctest and unit-test coverage (44 tests passing). No `Image.Color` call sites have been changed yet — the two namespaces coexist and the full Image test suite still passes (the only failures are pre-existing environmental ones: minio, camera, HEIC support).
-* `ChromaGreen` / `ChromaBlue` are already present upstream in `Color.CSSNames`.
+* **Migration complete.** `Image.Color` has been deleted, along with `priv/color/*.csv`. All 13+ option validators have been routed through `Image.Pixel.to_pixel/3` and the `lib/image.ex` direct call sites have been updated. The `:color` library is a dependency via `{:color, path: "../color"}`.
+
+* All non-environmental tests pass. The 8 remaining failures are pre-existing: minio streaming (no minio server), video (no camera), HEIC compression (build-time flag).
+
+* `ChromaGreen` / `ChromaBlue` are present upstream in `Color.CSSNames`.
 
 ## What `Image.Color` does today
 

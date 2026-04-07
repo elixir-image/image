@@ -127,7 +127,6 @@ defmodule Image.MixProject do
       links: links(),
       files: [
         "lib",
-        "priv/color",
         "priv/fonts",
         "mix.exs",
         "README*",
@@ -157,6 +156,8 @@ defmodule Image.MixProject do
       extras: [
         "README.md",
         "guides/thumbnailing.md",
+        "guides/performance.md",
+        "guides/color_migration.md",
         "livebook/image_edge_masking.livemd",
         "livebook/color_clustering.livemd",
         "livebook/segment_anything.livemd",

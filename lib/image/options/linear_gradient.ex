@@ -3,14 +3,14 @@ defmodule Image.Options.LinearGradient do
   Options and option validation for `Image.linear_gradient/2`.
 
   """
-  alias Image.Color
+  alias Image.Pixel
 
   @typedoc """
   Options applicable to `Image.linear_gradient/2`.
   """
   @type linear_gradient_option ::
-          {:start_color, Color.rgb_color()}
-          | {:finish_color, Color.rgb_color()}
+          {:start_color, Pixel.t()}
+          | {:finish_color, Pixel.t()}
           | {:angle, number()}
 
   @typedoc """
@@ -38,13 +38,21 @@ defmodule Image.Options.LinearGradient do
     end
   end
 
-  defp validate_option({key, color} = option, options)
-       when key in [:start_color, :finish_color] do
-    case Color.rgb_color(color) do
-      {:ok, hex: _hex, rgb: color} -> {:cont, Keyword.put(options, key, color)}
-      {:ok, color} -> {:cont, Keyword.put(options, key, color)}
-      _other -> {:halt, invalid_option(option)}
+  # A pre-encoded RGBA list (e.g. the defaults below) is passed
+  # through unchanged so callers can supply integer/float pixel
+  # values directly.
+  defp validate_option({key, color}, options)
+       when key in [:start_color, :finish_color] and is_list(color) and length(color) in [3, 4] do
+    if Enum.all?(color, &is_number/1) do
+      {:cont, Keyword.put(options, key, ensure_alpha(color))}
+    else
+      resolve_gradient_color(key, color, options)
     end
+  end
+
+  defp validate_option({key, color}, options)
+       when key in [:start_color, :finish_color] do
+    resolve_gradient_color(key, color, options)
   end
 
   # Angle is conformed to be between 0 and 360 degrees
@@ -58,9 +66,24 @@ defmodule Image.Options.LinearGradient do
     {:halt, {:error, invalid_option(option)}}
   end
 
+  defp resolve_gradient_color(key, color, options) do
+    case Pixel.to_srgb(color) do
+      {:ok, pixel} ->
+        {:cont, Keyword.put(options, key, ensure_alpha(pixel))}
+
+      _other ->
+        {:halt, {:error, invalid_option({key, color})}}
+    end
+  end
+
   defp invalid_option(option) do
     "Invalid option or option value: #{inspect(option)}"
   end
+
+  # Gradient math operates on RGBA, so opaque sRGB inputs need an
+  # explicit alpha appended.
+  defp ensure_alpha([_, _, _] = rgb), do: rgb ++ [255]
+  defp ensure_alpha([_, _, _, _] = rgba), do: rgba
 
   defp default_options do
     [

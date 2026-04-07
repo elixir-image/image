@@ -19,12 +19,20 @@ defmodule Image do
   alias Vix.Vips.MutableImage
   alias Vix.Vips.Image, as: Vimage
 
-  alias Image.{Exif, Xmp, Complex, Options, Color, Interpretation, BlendMode, BandFormat}
+  alias Image.{
+    Exif,
+    Xmp,
+    Complex,
+    Options,
+    Pixel,
+    Interpretation,
+    BlendMode,
+    BandFormat
+  }
   alias Image.Options.{Resize, Thumbnail, Compose, Open, ChromaKey}
   alias Image.Math
   alias Image.Draw
 
-  import Image.Color, only: :macros
 
   @typedoc """
   THe structure of an image returned from `Kino.Input.read/1`
@@ -56,7 +64,7 @@ defmodule Image do
   Represents either in image, or a color
   that is used to fill a new image
   """
-  @type image_or_color :: Vimage.t() | Color.t()
+  @type image_or_color :: Vimage.t() | Pixel.t()
 
   @typedoc """
   The valid rendering intent values. For all
@@ -326,11 +334,26 @@ defmodule Image do
 
   @doc """
   Guards whether a term might be reasonably interpreted
-  as an image pixel.
+  as an image pixel — that is, *not* a `Vix.Vips.Image` or
+  `Vix.Vips.MutableImage`, but anything else `Color.new/2`
+  (or `Image.Pixel.to_pixel/3`) could turn into a pixel.
+
+  Accepts numbers, lists, atoms (CSS named colours),
+  binary inputs (hex strings, named colours), and `Color.*`
+  structs. `Vix.Vips.Image` / `Vix.Vips.MutableImage` are
+  explicitly excluded so callers can dispatch between
+  "image" and "color" arguments cleanly.
 
   """
   @doc subject: "Guard"
-  defguard is_pixel(value) when is_number(value) or is_list(value)
+  defguard is_pixel(value)
+           when is_number(value) or
+                  (is_list(value) and length(value) >= 1 and length(value) <= 5) or
+                  is_binary(value) or
+                  (is_atom(value) and value not in [nil, true, false]) or
+                  (is_struct(value) and
+                     not is_struct(value, Vix.Vips.Image) and
+                     not is_struct(value, Vix.Vips.MutableImage))
 
   @doc """
   Guards whether a value is a percentage as representeed
@@ -379,7 +402,7 @@ defmodule Image do
     band. The default is `0`, meaning black. The color
     can also be supplied as a CSS color name as a
     string or atom. For example: `:misty_rose`. See
-    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+    `Color.new/2` from the Color library.
 
   * `:bands` defines the number of bands (channels)
     to be created. The default is the number of bands of
@@ -487,7 +510,7 @@ defmodule Image do
     band. The default is `0`, meaning black. The color
     can also be supplied as a CSS color name as a
     string or atom. For example: `:misty_rose`. See
-    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+    `Color.new/2` from the Color library.
 
   * `:format` defines the format of the image. The
     default is `{:u, 8}`.
@@ -608,7 +631,7 @@ defmodule Image do
     band. The default is `0`, meaning black. The color
     can also be supplied as a CSS color name as a
     string or atom. For example: `:misty_rose`. See
-    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+    `Color.new/2` from the Color library.
 
   * `:format` defines the format of the image. The
     default is `{:u, 8}`.
@@ -1807,12 +1830,12 @@ defmodule Image do
     formed by the relation operations such as `Image.Math.greater_than/2`.
 
   * `if_image_or_color` is either an `t:Vimage.t/0` or
-    a `t:Image.Color.t/0`. If a color is provided then
+    a `t:Image.Pixel.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
 
   * `else_image_or_color` is either an `t:Vimage.t/0` or
-    a `t:Image.Color.t/0`. If a color is provided then
+    a `t:Image.Pixel.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
 
@@ -1871,17 +1894,32 @@ defmodule Image do
   end
 
   def if_then_else(%Vimage{} = condition_image, if_color, else_image_or_color, options)
-      when is_color(if_color) do
-    with {:ok, if_color} <- Color.validate_color(if_color),
-         {:ok, if_image} <- new(condition_image, color: if_color) do
+      when is_pixel(if_color) do
+    # Encode the colour against the other branch if it is an image
+    # (so that the synthesised if_image has the right shape and
+    # interpretation); otherwise fall back to the condition image.
+    target =
+      case else_image_or_color do
+        %Vimage{} = vimage -> vimage
+        _ -> condition_image
+      end
+
+    with {:ok, if_color} <- Pixel.to_pixel(target, if_color),
+         {:ok, if_image} <- new(target, color: if_color) do
       if_then_else(condition_image, if_image, else_image_or_color, options)
     end
   end
 
   def if_then_else(%Vimage{} = condition_image, if_image_or_color, else_color, options)
-      when is_color(else_color) do
-    with {:ok, else_color} <- Color.validate_color(else_color),
-         {:ok, else_image} <- new(condition_image, color: else_color) do
+      when is_pixel(else_color) do
+    target =
+      case if_image_or_color do
+        %Vimage{} = vimage -> vimage
+        _ -> condition_image
+      end
+
+    with {:ok, else_color} <- Pixel.to_pixel(target, else_color),
+         {:ok, else_image} <- new(target, color: else_color) do
       if_then_else(condition_image, if_image_or_color, else_image, options)
     end
   end
@@ -1900,12 +1938,12 @@ defmodule Image do
     formed by the relation operations such as `Image.Math.greater_than/2`.
 
   * `if_image_or_color` is either an `t:Vimage.t/0` or
-    a `t:Image.Color.t/0`. If a color is provided then
+    a `t:Image.Pixel.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
 
   * `else_image_or_color` is either an `t:Vimage.t/0` or
-    a `t:Image.Color.t/0`. If a color is provided then
+    a `t:Image.Pixel.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
 
@@ -1976,7 +2014,7 @@ defmodule Image do
 
   @doc subject: "Operation", since: "0.13.0"
 
-  @spec chroma_color(image :: Vimage.t()) :: Color.t()
+  @spec chroma_color(image :: Vimage.t()) :: Pixel.t()
   def chroma_color(%Vimage{} = image) do
     with {:ok, flattened} <- flatten(image),
          {:ok, cropped} <- Image.crop(flattened, 0, 0, 10, 10) do
@@ -2710,7 +2748,7 @@ defmodule Image do
   """
   @doc since: "0.27.0"
 
-  @spec average(Vimage.t()) :: Color.t() | {:error, error_message}
+  @spec average(Vimage.t()) :: Pixel.t() | {:error, error_message}
   def average(%Vimage{} = image) do
     with {:ok, flattened} <- flatten(image) do
       for i <- band_range(flattened) do
@@ -2747,7 +2785,7 @@ defmodule Image do
   """
   @doc since: "0.27.0"
 
-  @spec average!(Vimage.t()) :: Color.t() | no_return()
+  @spec average!(Vimage.t()) :: Pixel.t() | no_return()
   def average!(%Vimage{} = image) do
     case average(image) do
       {:error, reason} -> raise Image.Error, reason
@@ -2834,7 +2872,7 @@ defmodule Image do
     band. The default is `0`, meaning black. The color
     can also be supplied as a CSS color name as a
     string or atom. For example: `:misty_rose`. See
-    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+    `Color.new/2` from the Color library.
 
   ### Note
 
@@ -2855,7 +2893,7 @@ defmodule Image do
   """
   @doc subject: "Operation", since: "0.13.0"
 
-  @spec add_alpha!(image :: Vimage.t(), alpha_image :: Vimage.t() | Image.Color.t()) ::
+  @spec add_alpha!(image :: Vimage.t(), alpha_image :: Vimage.t() | Image.Pixel.t()) ::
           Vimage.t() | no_return()
 
   def add_alpha!(%Vimage{} = image, alpha_image) do
@@ -3285,7 +3323,7 @@ defmodule Image do
     band. The default is `0`, meaning black. The color
     can also be supplied as a CSS color name as a
     string or atom. For example: `:misty_rose`. See
-    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+    `Color.new/2` from the Color library.
 
   * `:shim` is the number of pixels of spacing between
     images in the grid. The default is `0`.
@@ -3364,7 +3402,7 @@ defmodule Image do
     band. The default is `0`, meaning black. The color
     can also be supplied as a CSS color name as a
     string or atom. For example: `:misty_rose`. See
-    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+    `Color.new/2` from the Color library.
 
   * `:shim` is the number of pixels of spacing between
     images in the grid. The default is `0`.
@@ -4984,8 +5022,8 @@ defmodule Image do
     It can also be supplied as a hex string of
     the form `#rrggbb`. The default is `:black`. `:background` can
     also be set to `:average` in which case the background will be
-    the average color of the base image. See also `Image.Color.color_map/0`
-    and `Image.Color.rgb_color/1`.
+    the average color of the base image. See also `Color.new/2`
+    from the Color library.
 
   * `:background_transparency` defines the transparency of the
     `:background` pixels when `image` has an alpha band.
@@ -5100,7 +5138,7 @@ defmodule Image do
     color can also be supplied as a CSS color name as a string or
     atom. For example: `:misty_rose`. It can also be supplied as a
     hex string of the form `#rrggbb`. The default is `:black`.
-    See also `Image.Color.color_map/0` and `Image.Color.validate_color/1`.
+    See also `Color.new/2` from the Color library.
 
   There are two strategies available for selecting the
   color or color range to be replaced: the
@@ -5144,7 +5182,7 @@ defmodule Image do
   """
   @doc since: "0.30.0", subject: "Color"
 
-  @spec replace_color(Vimage.t(), ChromaKey.chroma_key_options() | [{:replace_with, Color.t()}]) ::
+  @spec replace_color(Vimage.t(), ChromaKey.chroma_key_options() | [{:replace_with, Pixel.t()}]) ::
           {:ok, Vimage.t()} | {:error, error_message()}
 
   def replace_color(%Vimage{} = image, options \\ []) do
@@ -5153,7 +5191,7 @@ defmodule Image do
     xres = Vix.Vips.Image.xres(image)
     yres = Vix.Vips.Image.yres(image)
 
-    with {:ok, to_color} <- Color.validate_color(to_color),
+    with {:ok, to_color} <- Pixel.to_pixel(image, to_color),
          {:ok, chroma_mask} <- chroma_mask(image, options),
          {:ok, inverted} <- Operation.invert(chroma_mask),
          {:ok, blend} = if_then_else(inverted, to_color, image, blend: blend) do
@@ -5183,7 +5221,7 @@ defmodule Image do
     color can also be supplied as a CSS color name as a string or
     atom. For example: `:misty_rose`. It can also be supplied as a
     hex string of the form `#rrggbb`. The default is `:black`.
-    See also `Image.Color.color_map/0` and `Image.Color.validate_color/1`.
+    See also `Color.new/2` from the Color library.
 
   There are two strategies available for selecting the
   color or color range to be replaced: the
@@ -5227,7 +5265,7 @@ defmodule Image do
   """
   @doc since: "0.30.0", subject: "Color"
 
-  @spec replace_color!(Vimage.t(), ChromaKey.chroma_key_options() | [{:replace_with, Color.t()}]) ::
+  @spec replace_color!(Vimage.t(), ChromaKey.chroma_key_options() | [{:replace_with, Pixel.t()}]) ::
           Vimage.t() | no_return()
 
   def replace_color!(%Vimage{} = image, options \\ []) do
@@ -5549,9 +5587,12 @@ defmodule Image do
   def flatten(%Vimage{} = image, options \\ []) do
     background_color = Keyword.get(options, :background_color, :black)
 
-    with {:ok, background_color} <- Color.validate_color(background_color) do
+    with {:ok, background_color} <- Pixel.to_pixel(image, background_color) do
       if has_alpha?(image) do
-        Vix.Vips.Operation.flatten(image, background: background_color)
+        # Flatten strips alpha and replaces it with the background; the
+        # background must therefore be the opaque colour part only.
+        bands = Vix.Vips.Image.bands(image) - 1
+        Vix.Vips.Operation.flatten(image, background: Enum.take(background_color, bands))
       else
         {:ok, image}
       end
@@ -7058,7 +7099,7 @@ defmodule Image do
   @doc subject: "Image info", since: "0.3.0"
 
   @spec dominant_color(image :: Vimage.t(), options :: Keyword.t()) ::
-          {:ok, Color.rgb_color() | [Color.rgb_color()] | [{0..255, 0..255, 0..255}]}
+          {:ok, Pixel.t() | [Pixel.t()] | [{0..255, 0..255, 0..255}]}
           | {:error, error_message()}
 
   def dominant_color(%Vimage{} = image, options \\ []) do
@@ -7131,7 +7172,7 @@ defmodule Image do
   @doc subject: "Image info", since: "0.43.0"
 
   @spec dominant_color!(image :: Vimage.t(), options :: Keyword.t()) ::
-          Color.rgb_color() | [Color.rgb_color()] | [{0..255, 0..255, 0..255}] | no_return()
+          Pixel.t() | [Pixel.t()] | [{0..255, 0..255, 0..255}] | no_return()
   def dominant_color!(%Vimage{} = image, options \\ []) do
     case dominant_color(image, options) do
       {:ok, dominant_color} -> dominant_color
@@ -7380,7 +7421,7 @@ defmodule Image do
     The color can also be supplied as a CSS color name as a
     string or atom. For example: `:misty_rose`. Lastly, the
     color can be supplied as a hex string like `#ffe4e1`. See
-    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+    `Color.new/2` from the Color library.
 
   * `color_2` which is specified in the same manner as `color_1`.
 
@@ -7418,8 +7459,8 @@ defmodule Image do
 
   def delta_e(color_1, color_2, version) do
     with {:ok, version} <- validate_delta_e_version(version),
-         {:ok, color_1} <- Color.validate_color(color_1),
-         {:ok, color_2} <- Color.validate_color(color_2) do
+         {:ok, color_1} <- Pixel.to_srgb(color_1),
+         {:ok, color_2} <- Pixel.to_srgb(color_2) do
       color_1_image = new!(1, 1, color: color_1)
       color_2_image = new!(1, 1, color: color_2)
 
@@ -7455,7 +7496,7 @@ defmodule Image do
     The color can also be supplied as a CSS color name as a
     string or atom. For example: `:misty_rose`. Lastly, the
     color can be supplied as a hex string like `#ffe4e1`. See
-    `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+    `Color.new/2` from the Color library.
 
   * `color_2` which is specified in the same manner as `color_1`.
 
@@ -7599,20 +7640,23 @@ defmodule Image do
     @doc subject: "Clusters", since: "0.49.0"
 
     @spec k_means(image :: Vimage.t(), options :: Keyword.t()) ::
-            {:ok, list(Color.t())} | {:error, error_message()}
+            {:ok, list(Pixel.t())} | {:error, error_message()}
 
     def k_means(%Vimage{} = image, options \\ []) do
       options = Keyword.put_new(options, :num_clusters, @default_clusters)
       original_colorspace = Image.colorspace(image)
 
-      with {:ok, lab_image} <- Image.to_colorspace(image, :srgb) do
+      with {:ok, srgb_image} <- Image.to_colorspace(image, :srgb),
+           {:ok, target_image} <-
+             Image.new(1, 1, color: :black, interpretation: original_colorspace) do
         k_means =
-          lab_image
+          srgb_image
           |> Image.Scholar.k_means(options)
           |> Map.fetch!(:clusters)
           |> Nx.to_list()
+          |> Enum.map(fn rgb -> Enum.map(rgb, &round/1) end)
           |> Enum.sort()
-          |> Enum.map(&Color.convert!(&1, :srgb, original_colorspace))
+          |> Enum.map(fn rgb -> Pixel.to_pixel!(target_image, rgb) end)
 
         {:ok, k_means}
       end
@@ -7706,7 +7750,7 @@ defmodule Image do
     @doc subject: "Clusters", since: "0.49.0"
 
     @spec k_means!(image :: Vimage.t(), options :: Keyword.t()) ::
-            list(Color.t()) | no_return()
+            list(Pixel.t()) | no_return()
 
     def k_means!(%Vimage{} = image, options \\ []) do
       case k_means(image, options) do
@@ -7865,7 +7909,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.3.0"
 
   @spec get_pixel(Vimage.t(), non_neg_integer(), non_neg_integer()) ::
-          {:ok, Color.rgb_color()} | {:error, error_message()}
+          {:ok, Pixel.t()} | {:error, error_message()}
 
   def get_pixel(%Vimage{} = image, x, y) do
     band_format = Image.band_format(image)
@@ -7914,7 +7958,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.26.0"
 
   @spec get_pixel!(Vimage.t(), non_neg_integer(), non_neg_integer()) ::
-          Color.rgb_color() | no_return()
+          Pixel.t() | no_return()
 
   def get_pixel!(%Vimage{} = image, x, y) do
     case get_pixel(image, x, y) do
@@ -9149,7 +9193,7 @@ defmodule Image do
       curve = logistic_curve_rhs(vibrance)
 
       with_colorspace(image, :lch, fn image ->
-        g5 = Color.max_rgb() * image[1] / threshold
+        g5 = 255 * image[1] / threshold
         chroma = threshold * Operation.maplut!(g5, curve)
         Image.join_bands([image[0], chroma, image[2]])
       end)
@@ -9240,7 +9284,7 @@ defmodule Image do
     use Image.Math
     k = k - 1.0
     h1 = Operation.identity!() * 1.0
-    h2 = Color.max_rgb()
+    h2 = 255
     h3 = 6.0 * h1 / h2
     h4 = 2.0 / (1.0 + exp!(-h3)) - 1.0
 
@@ -9683,7 +9727,7 @@ defmodule Image do
       It can also be supplied as a hex string of the form `#rrggbb`.
       The default is `:black`. `:background` can also be set to `:average`
       in which case the background will be the average color of the base
-      image. See also `Image.Color.color_map/0` and `Image.Color.rgb_color/1`.
+      image. See also `Color.new/2` from the Color library.
 
     * `:extend_mode` determines how any additional pixels
       are generated. The values are:
@@ -9724,8 +9768,8 @@ defmodule Image do
             {:ok, Vimage.t()} | {:error, error_message()}
 
     def warp_perspective(%Vimage{} = image, source, destination, options \\ []) do
-      with {:ok, options} <- Options.WarpPerspective.validate_options(image, options),
-           {:ok, flattened} <- flatten(image),
+      with {:ok, flattened} <- flatten(image),
+           {:ok, options} <- Options.WarpPerspective.validate_options(flattened, options),
            {:ok, transform_map} <- transform_matrix(flattened, source, destination) do
         Operation.mapim(flattened, transform_map, options)
       end
@@ -9761,8 +9805,7 @@ defmodule Image do
       It can also be supplied as a hex string of
       the form `#rrggbb`. The default is `:black`. `:background` can
       also be set to `:average` in which case the background will be
-      the average color of the base image. See also `Image.Color.color_map/0`
-      and `Image.Color.rgb_color/1`.
+      the average color of the base image. See also `Color.new/2` from the Color library.
 
     * `:extend_mode` determines how any additional pixels
       are generated. The values are:
@@ -9835,8 +9878,7 @@ defmodule Image do
       It can also be supplied as a hex string of
       the form `#rrggbb`. The default is `:black`. `:background` can
       also be set to `:average` in which case the background will be
-      the average color of the base image. See also `Image.Color.color_map/0`
-      and `Image.Color.rgb_color/1`.
+      the average color of the base image. See also `Color.new/2` from the Color library.
 
     * `:extend_mode` determines how any additional pixels
       are generated. The values are:
@@ -9919,8 +9961,7 @@ defmodule Image do
       It can also be supplied as a hex string of
       the form `#rrggbb`. The default is `:black`. `:background` can
       also be set to `:average` in which case the background will be
-      the average color of the base image. See also `Image.Color.color_map/0`
-      and `Image.Color.rgb_color/1`.
+      the average color of the base image. See also `Color.new/2` from the Color library.
 
     * `:extend_mode` determines how any additional pixels
       are generated. The values are:

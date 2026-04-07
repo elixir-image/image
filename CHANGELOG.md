@@ -4,9 +4,31 @@
 
 This is the changelog for Image version 0.64.0 released on April 7th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
+### Breaking Changes
+
+* `Image.Color` has been removed. Color handling now lives in two new modules and one new dependency:
+
+  * `Image.Pixel` — `to_pixel/3` resolves any colour input (atom, hex string, named colour, numeric list, `Color.*` struct) into a pixel matching the **interpretation, value range, and band layout** of a target image. This fixes a long-standing bug where colour arguments were treated as raw 8-bit sRGB regardless of the image's actual colour space (so `:red` against a Lab image would yield `[255, 0, 0]` instead of Lab red `[53.24, 80.09, 67.20]`). Every option validator that accepts a colour now routes through `Image.Pixel.to_pixel/3`. `Image.Pixel` also exposes `to_srgb/1`, `transparency/1`, the `is_pixel/1` defguard, and the `t/0` type.
+
+  * `Image.ICCProfile` — the libvips ICC profile helpers (`inbuilt/0`, `known?/1`, `is_inbuilt/1`, `t/0`).
+
+  * The new `:color` dependency — a full-featured colour science library (`Color.new/2`, `Color.convert/2,3`, `Color.SRGB.parse/1`, `Color.CSSNames`, all the major colour spaces, gamut mapping, ICC rendering intents). Hex parsing now supports `#RGB`, `#RGBA`, `#RRGGBB`, and `#RRGGBBAA`.
+
+* The `Image.Color.t/0`, `Image.Color.rgb_color/0`, `Image.Color.transparency/0`, and `Image.Color.icc_profile/0` types have been replaced with `Image.Pixel.t/0`, `Image.Pixel.transparency/0`, and `Image.ICCProfile.t/0`.
+
+* `priv/color/css_colors.csv` and `priv/color/additional_colors.csv` have been removed; the named-colour list lives in `Color.CSSNames` upstream (which already includes `ChromaGreen` and `ChromaBlue` for drop-in compatibility).
+
+* See `guides/color_migration.md` for the full migration plan and rationale.
+
 ### Enhancements
 
 * `Image.dominant_color/2` now accepts a `:method` option of either `:histogram` (the existing default) or `:imagequant`. The `:imagequant` method routes through `libimagequant` (via `vips_gifsave_buffer`) and returns a palette of `{r, g, b}` tuples ordered by perceptual importance. New `:effort` and `:dither` options tune the quantiser. See `guides/performance.md` for a comparison of the two methods.
+
+* Colour arguments to drawing, embedding, trimming, gradient, chroma key, comparison, warp-perspective, meme, replace-colour, flatten, and `if_then_else` operations are now correctly converted to the target image's colour space. Drawing `:red` on a Lab image now produces actual Lab red, not the bytes `[255, 0, 0]` reinterpreted as Lab.
+
+* New `Image.Pixel` and `Image.ICCProfile` modules. `Image.Pixel.to_pixel/3` is the canonical way to turn any user-friendly colour input into a libvips-ready pixel for a particular image; `Image.Pixel.to_srgb/1` is the image-independent equivalent for callers (SVG renderers, gradients) that need a fixed sRGB output.
+
+* The `:color` library is now a dependency of `:image`. It will progressively become the canonical colour science layer for the project.
 
 ## Image 0.63.0
 
