@@ -1,10 +1,29 @@
 # Changelog
 
-## Image 0.67.0
+## Image 0.64.0
+
+This is the changelog for Image version 0.64.0 released on April 9th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+The primary intent of this release is to stablise the code in readiness for a 1.0 release. Deprecated code has been removed, a standardised color model introduced (via the new library [color](https://hex.pm/packages/color)) and objective classification and detection has been removed to a new `image_detection` library.
 
 ### Breaking Changes
 
-* **`Image.Classification` and `Image.Generation` have moved to a new sibling package, [`:image_detection`](https://hex.pm/packages/image_detection).** The two modules keep their fully-qualified names (`Image.Classification` and `Image.Generation`) so that existing call sites continue to work — they just live in a different OTP application now. To restore the previous functionality, add `:image_detection` to your `mix.exs`:
+* Five long-deprecated functions have been removed:
+  * `Image.interpretation/1` — use `Image.colorspace/1`.
+  * `Image.type/1` (was `format/1`) — use `Image.band_format/1`.
+  * `Image.convert_to_mask/1` — use `Image.convert_alpha_to_mask/1`.
+  * `Image.convert_to_mask!/1` — use `Image.convert_alpha_to_mask!/1`.
+  * `Image.map_pages/2` — use `Image.map_join_pages/2`.
+  
+* `Image.Color` has been removed. Color handling now lives in two new modules and one new dependency:
+
+  * `Image.Pixel` — `to_pixel/3` resolves any colour input (atom, hex string, named colour, numeric list, `Color.*` struct) into a pixel matching the **interpretation, value range, and band layout** of a target image. This fixes a long-standing bug where colour arguments were treated as raw 8-bit sRGB regardless of the image's actual colour space (so `:red` against a Lab image would yield `[255, 0, 0]` instead of Lab red `[53.24, 80.09, 67.20]`). Every option validator that accepts a colour now routes through `Image.Pixel.to_pixel/3`. `Image.Pixel` also exposes `to_srgb/1`, `transparency/1`, the `is_pixel/1` defguard, and the `t/0` type.
+
+  * `Image.ICCProfile` — the libvips ICC profile helpers (`inbuilt/0`, `known?/1`, `is_inbuilt/1`, `t/0`).
+
+  * The new `:color` dependency — a full-featured colour science library (`Color.new/2`, `Color.convert/2,3`, `Color.SRGB.parse/1`, `Color.CSSNames`, all the major colour spaces, gamut mapping, ICC rendering intents). Hex parsing now supports `#RGB`, `#RGBA`, `#RRGGBB`, and `#RRGGBBAA`.
+  
+* `Image.Classification` and `Image.Generation` have moved to a new sibling package, [`:image_detection`](https://hex.pm/packages/image_detection). The two modules keep their fully-qualified names (`Image.Classification` and `Image.Generation`) so that existing call sites continue to work — they just live in a different OTP application now. To restore the previous functionality, add `:image_detection` to your `mix.exs`:
 
       def deps do
         [
@@ -15,29 +34,9 @@
         ]
       end
 
-* **`:bumblebee` is no longer a dependency of `:image`.** It is brought in transitively only when you add `:image_detection`. The `:nx`, `:nx_image`, `:scholar`, `:exla`, and `:rustler` optional deps stay in `:image` because `Image.to_nx/2`, `Image.from_nx/1`, `Image.k_means/2`, and a few internal pipelines still use them.
+* `:bumblebee` is no longer a dependency of `:image`. It is brought in transitively only when you add `:image_detection`. The `:nx`, `:nx_image`, `:scholar`, `:exla`, and `:rustler` optional deps stay in `:image` because `Image.to_nx/2`, `Image.from_nx/1`, `Image.k_means/2`, and a few internal pipelines still use them.
 
-* **`Image.bumblebee_configured?/0` has been removed.** It is replaced by `ImageDetection.bumblebee_configured?/0` which lives in the new package.
-
-* **`Image.Application` no longer autostarts the classification or generation services.** That responsibility moved to `ImageDetection.Application`, which manages its own `ImageDetection.Supervisor`. Both services default to `autostart: false` in the new package — you opt in via `config :image_detection, :classifier, autostart: true` (or `:generator`).
-
-* **`config :image, :classifier` and `config :image, :generator` no longer have any effect.** Move them to `config :image_detection, :classifier` / `:generator` in your `runtime.exs` (or equivalent).
-
-* The `doctest Image.Classification` line has been removed from `test/image_test.exs` since the module is no longer part of `:image`.
-
-### Enhancements
-
-* `:image` no longer pulls `:bumblebee` (or its transitive deps) into the dependency graph. For users who don't need ML-backed classification/generation, the install footprint shrinks substantially. The Hex tarball is unchanged in size, but the dependency tree is much lighter.
-
-* The `image_detection` package's `bumblebee_configured?/0` predicate only checks for `Nx` and `Bumblebee` at compile time; the Nx backend (e.g. `:exla`) is now a runtime-only requirement. Users who want to compile against `image_detection` no longer have to install EXLA on their build machine.
-
-## Image 0.66.0
-
-This release replaces the eVision-backed video frame extraction with an FFmpeg-backed implementation via `:xav`.
-
-### Breaking Changes
-
-* **`Image.Video` is now backed by [Xav](https://hex.pm/packages/xav)** (a thin Elixir wrapper around FFmpeg) instead of `:evision` / OpenCV. The public API surface is largely unchanged but the underlying type, options, and a few semantic details have moved:
+* `Image.Video` is now backed by [Xav](https://hex.pm/packages/xav) (a thin Elixir wrapper around FFmpeg) instead of `:evision` / OpenCV. The public API surface is largely unchanged but the underlying type, options, and a few semantic details have moved:
 
   * The video struct is now `%Image.Video{}` (with fields `:reader`, `:source`, `:fps`, `:duration_seconds`, `:frame_count`, `:width`, `:height`) rather than `%Evision.VideoCapture{}`. Pattern-match on the new struct module if your code does so.
 
@@ -53,86 +52,19 @@ This release replaces the eVision-backed video frame extraction with an FFmpeg-b
 
   * Image and audio frames are decoded by FFmpeg + libswscale rather than by OpenCV's videoio backend. Pixel-exact comparisons against fixtures generated by the previous version will not match; the test fixture `test/support/validate/video/video_sample_frame_0.png` has been regenerated.
 
-* **`:xav` is now an optional dependency.** Add it to your `mix.exs` if you use `Image.Video`:
+* `:xav` is now an optional dependency. It requires FFmpeg ≥ 6.0 to be installed on the system. Add it to your `mix.exs` if you use `Image.Video`:
 
       {:xav, "~> 0.10", optional: true}
 
-  Xav requires FFmpeg ≥ 6.0 on the system.
+* `:evision` is no longer needed for `Image.Video`. It is still required for `Image.QRcode` and for the `Image.to_evision/2` / `Image.from_evision/1` interop helpers, which are unchanged. The README's optional-dependency table reflects the new split.
 
-* **`:evision` is no longer needed for `Image.Video`.** It is still required for `Image.QRcode` and for the `Image.to_evision/2` / `Image.from_evision/1` interop helpers, which are unchanged. The README's optional-dependency table reflects the new split.
-
-### Enhancements
-
-* `Image.Video` now supports HTTP/HTTPS/RTSP/RTMP URLs as video sources for free, since FFmpeg supports them natively.
-
-* `Image.xav_configured?/0` is the new compile-time predicate that gates the `Image.Video` module (analogous to `Image.evision_configured?/0` and `Image.bumblebee_configured?/0`).
-
-* The `Image.Video.frame_to_image/1` helper exposes the raw `Xav.Frame` → `Vix.Vips.Image.t()` conversion (used internally by `image_from_video/2` and `stream!/2`). Useful if you have a frame from elsewhere in the Xav ecosystem and want to bring it into `Image`.
-
-## Image 0.65.0
-
-This release prepares the library for a 1.0 tag. It is dominated by API hygiene rather than new features.
-
-### Breaking Changes
-
-* **`Image.Error` is now a structured public exception.** It carries `:reason` (atom or `{atom, value}` tuple), `:operation`, `:path`, `:value`, and a derived `:message`. Every fallible function in the library now returns `{:ok, value}` or `{:error, %Image.Error{}}` — bare-string error tuples have been eliminated. Bang variants raise the same struct. The new `Image.Error.wrap/2` helper attaches structured context to a raw libvips or `File.*` error. Pattern-match on `:reason` instead of scraping `:message`:
+* `Image.Error` is now a structured public exception. It carries `:reason` (atom or `{atom, value}` tuple), `:operation`, `:path`, `:value`, and a derived `:message`. Every fallible function in the library now returns `{:ok, value}` or `{:error, %Image.Error{}}` — bare-string error tuples have been eliminated. Bang variants raise the same struct. The new `Image.Error.wrap/2` helper attaches structured context to a raw libvips or `File.*` error. Pattern-match on `:reason` instead of scraping `:message`:
 
       case Image.open(path) do
         {:ok, image} -> ...
         {:error, %Image.Error{reason: :enoent}} -> not_found_handler()
         {:error, %Image.Error{} = err} -> raise err
       end
-
-* **The `@type error_message :: term()` alias on `Image` has been removed** in favour of `@type error :: Image.Error.t()`. All `@spec` lines across the library that previously referenced `Image.error_message()` (or the bare `error_message` form inside `image.ex`) now reference `Image.error()`.
-
-* **The dangerous fall-through in `Image.Error.exception/1` has been removed.** Previously, `raise Image.Error, %{}` evaluated to `raise %{}` and crashed with `BadStructError`. The fallback now wraps any unknown shape in a real struct.
-
-* **Five long-deprecated functions have been removed:**
-  * `Image.interpretation/1` — use `Image.colorspace/1`.
-  * `Image.type/1` (was `format/1`) — use `Image.band_format/1`.
-  * `Image.convert_to_mask/1` — use `Image.convert_alpha_to_mask/1`.
-  * `Image.convert_to_mask!/1` — use `Image.convert_alpha_to_mask!/1`.
-  * `Image.map_pages/2` — use `Image.map_join_pages/2`.
-
-* **`Image.Application` no longer defines a sibling `Image.SetSafeLoader` module.** The single-function helper has been collapsed into a private `Image.Application.set_safe_loader/0`. The `VIPS_BLOCK_UNTRUSTED` behaviour is unchanged.
-
-### Enhancements
-
-* **Doctest coverage for the most-used modules.** `Image.Draw`, `Image.Text`, `Image.Exif`, `Image.Social`, `Image.YUV`, and `Image.QRcode` now have inline doctests. Total doctests rose from 88 to 110.
-
-* **Dialyzer is now clean.** The `lib/image/text.ex` `embed` background contract violation, the `Image.distort/3` `if_then_else!` typing mismatch, and the `xmp/1` spec gap are all fixed. CI's lint cell runs `mix dialyzer` with zero warnings.
-
-* **README rewritten** with Features, Supported Elixir/OTP, Quick Start, optional dependencies, security considerations, and License sections. The dependency line now reflects the current major version.
-
-* **`Image.Pixels`, `Image.Complex`, `Image.Pixel`, and `Image.Xmp`** got specs added for their public surface (the internal-only modules remain `@moduledoc false`).
-
-* **`Image.ICCProfile` doc clarification** explaining that "built-in" means libvips' own bundled profiles — `:image` does not ship `.icc` files.
-
-* **New `Errors` and `Pixels` doc-module groups** in the generated docs.
-
-* **`lib/image/color.ex`** (the empty zero-byte phantom file from the colour migration) has been deleted.
-
-* **`Image.exif/1`** now wraps the underlying libvips `"No such field"` error in `%Image.Error{reason: "No such field"}` so consumers can pattern-match.
-
-## Image 0.64.0
-
-This is the changelog for Image version 0.64.0 released on April 7th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
-
-### Breaking Changes
-
-* `Image.Color` has been removed. Color handling now lives in two new modules and one new dependency:
-
-  * `Image.Pixel` — `to_pixel/3` resolves any colour input (atom, hex string, named colour, numeric list, `Color.*` struct) into a pixel matching the **interpretation, value range, and band layout** of a target image. This fixes a long-standing bug where colour arguments were treated as raw 8-bit sRGB regardless of the image's actual colour space (so `:red` against a Lab image would yield `[255, 0, 0]` instead of Lab red `[53.24, 80.09, 67.20]`). Every option validator that accepts a colour now routes through `Image.Pixel.to_pixel/3`. `Image.Pixel` also exposes `to_srgb/1`, `transparency/1`, the `is_pixel/1` defguard, and the `t/0` type.
-
-  * `Image.ICCProfile` — the libvips ICC profile helpers (`inbuilt/0`, `known?/1`, `is_inbuilt/1`, `t/0`).
-
-  * The new `:color` dependency — a full-featured colour science library (`Color.new/2`, `Color.convert/2,3`, `Color.SRGB.parse/1`, `Color.CSSNames`, all the major colour spaces, gamut mapping, ICC rendering intents). Hex parsing now supports `#RGB`, `#RGBA`, `#RRGGBB`, and `#RRGGBBAA`.
-
-* The `Image.Color.t/0`, `Image.Color.rgb_color/0`, `Image.Color.transparency/0`, and `Image.Color.icc_profile/0` types have been replaced with `Image.Pixel.t/0`, `Image.Pixel.transparency/0`, and `Image.ICCProfile.t/0`.
-
-* `priv/color/css_colors.csv` and `priv/color/additional_colors.csv` have been removed; the named-colour list lives in `Color.CSSNames` upstream (which already includes `ChromaGreen` and `ChromaBlue` for drop-in compatibility).
-
-* See `guides/color_migration.md` for the full migration plan and rationale.
 
 ### Enhancements
 
@@ -142,7 +74,13 @@ This is the changelog for Image version 0.64.0 released on April 7th, 2026.  For
 
 * New `Image.Pixel` and `Image.ICCProfile` modules. `Image.Pixel.to_pixel/3` is the canonical way to turn any user-friendly colour input into a libvips-ready pixel for a particular image; `Image.Pixel.to_srgb/1` is the image-independent equivalent for callers (SVG renderers, gradients) that need a fixed sRGB output.
 
-* The `:color` library is now a dependency of `:image`. It will progressively become the canonical colour science layer for the project.
+* The `:color` library is now a dependency of `:image`. It is now the canonical colour science layer for the project.
+
+* `Image.Video` now supports HTTP/HTTPS/RTSP/RTMP URLs as video sources for free, since FFmpeg supports them natively.
+
+* `Image.xav_configured?/0` is the new compile-time predicate that gates the `Image.Video` module (analogous to `Image.evision_configured?/0` and `Image.bumblebee_configured?/0`).
+
+* The `Image.Video.frame_to_image/1` helper exposes the raw `Xav.Frame` → `Vix.Vips.Image.t()` conversion (used internally by `image_from_video/2` and `stream!/2`). Useful if you have a frame from elsewhere in the Xav ecosystem and want to bring it into `Image`.
 
 ## Image 0.63.0
 
