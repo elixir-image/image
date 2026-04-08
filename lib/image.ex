@@ -39,10 +39,10 @@ defmodule Image do
   when the input field is a `Kino.Input.image/1` type.
   """
   @type kino_image :: %{
-          file_ref: binary(),
-          width: pos_integer(),
-          height: pos_integer(),
-          format: :rgb
+          required(:file_ref) => {:file, binary()} | binary(),
+          required(:format) => :rgb | :png,
+          optional(:width) => pos_integer(),
+          optional(:height) => pos_integer()
         }
 
   @typedoc """
