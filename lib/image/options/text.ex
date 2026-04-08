@@ -261,7 +261,7 @@ defmodule Image.Options.Text do
   @doc false
   def validate_color(option, color, options) do
     cond do
-      (is_binary(color) or is_atom(color)) && match?({:ok, _}, Color.CSSNames.lookup(color)) ->
+      (is_binary(color) or is_atom(color)) && match?({:ok, _}, Color.CSS.Names.lookup(color)) ->
         {:cont, options}
 
       match?(<<"#", _rest::bytes-6>>, color) ->

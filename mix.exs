@@ -61,7 +61,7 @@ defmodule Image.MixProject do
       # {:vix, path: "../vix"},
 
       # Color science: conversions, gamut mapping, parsing.
-      {:color, github: "elixir-image/color"},
+      {:color, "~> 0.3"},
 
       # FFmpeg bindings, used by Image.Video for video frame
       # extraction, seeking, and streaming.
@@ -91,7 +91,7 @@ defmodule Image.MixProject do
       # and Scholar for k-means clustering. Image classification
       # and image generation moved to the `:image_detection`
       # package along with the `:bumblebee` dependency.
-      {:nx, "~> 0.10", optional: true},
+      {:nx, "~> 0.11", optional: true},
       {:nx_image, "~> 0.1", optional: true},
       {:scholar, "~> 0.3", optional: true},
       {:exla, "~> 0.9", optional: true},
