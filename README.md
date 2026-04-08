@@ -1,119 +1,64 @@
 # Image
 
-`Image` is a fast, memory-efficient image processing library for
-Elixir. It is a high-level wrapper around
-[Vix](https://hex.pm/packages/vix), the Elixir bindings for the
-[libvips](https://www.libvips.org) C library, and provides an
-idiomatic functional API for image manipulation, drawing, text
-rendering, EXIF/XMP metadata, video frame extraction (via
-Xav/FFmpeg), QR code encoding and decoding (via eVision),
-blurhash, perceptual hashing, and many other image-related
-operations.
+`Image` is a fast, memory-efficient image processing library for Elixir. It is a high-level wrapper around [Vix](https://hex.pm/packages/vix), the Elixir bindings for the [libvips](https://www.libvips.org) C library, and provides an idiomatic functional API for image manipulation, drawing, text rendering, EXIF/XMP metadata, video frame extraction (via Xav/FFmpeg), QR code encoding and decoding (via eVision), blurhash, perceptual hashing, and many other image-related operations.
 
-Machine-learning features (object detection, image
-classification, image generation) live in the companion
-[`image_detection`](https://hex.pm/packages/image_detection)
-library, which depends on `:image` and pulls in
-[Bumblebee](https://hex.pm/packages/bumblebee) and
-[Nx](https://hex.pm/packages/nx) as its own optional
-dependencies.
+Machine-learning features (object detection, image classification, image generation) live in the companion [`image_detection`](https://hex.pm/packages/image_detection) library, which depends on `:image` and pulls in [Bumblebee](https://hex.pm/packages/bumblebee) and [Nx](https://hex.pm/packages/nx) as its own optional dependencies.
 
-In a simple resize benchmark, `Image` is approximately 2 to 3 times
-faster than [Mogrify](https://hex.pm/packages/mogrify) and uses
-about 5 times less memory.
+In a simple resize benchmark, `Image` is approximately 2 to 3 times faster than [Mogrify](https://hex.pm/packages/mogrify) and uses about 5 times less memory.
 
 Documentation can be found at <https://hexdocs.pm/image>.
 
 ## Features
 
-* **Image processing** — open, write, resize, thumbnail, crop, embed,
-  rotate, flip, flatten, trim, replace colour, chroma key, warp
-  perspective, distort, blur (Gaussian, box, bilateral), sharpen,
-  modulate, vibrance, tone map, local contrast, equalize, blend,
-  composite, mask, dilate / erode, edge detect.
+* **Image processing** — open, write, resize, thumbnail, crop, embed, rotate, flip, flatten, trim, replace colour, chroma key, warp perspective, distort, blur (Gaussian, box, bilateral), sharpen, modulate, vibrance, tone map, local contrast, equalize, blend, composite, mask, dilate / erode, edge detect.
 
-* **Drawing** — `Image.Draw` provides points, rectangles, circles,
-  lines, masks, flood fill, image overlay, smudge.
+* **Drawing** — `Image.Draw` provides points, rectangles, circles, lines, masks, flood fill, image overlay, smudge.
 
-* **Text rendering** — `Image.Text` produces antialiased text overlays
-  with full Pango markup support, font selection, alignment,
-  background fills, stroke, and per-character control.
+* **Text rendering** — `Image.Text` produces antialiased text overlays with full Pango markup support, font selection, alignment, background fills, stroke, and per-character control.
 
-* **Colour management** — colour arguments accept atoms, hex strings,
-  CSS named colours, hex shorthand, `#RRGGBBAA`, `Color.*` structs,
-  CSS Color 4 / 5 functions (`rgb()`, `hsl()`, `lab()`, `oklch()`,
-  `color-mix()`, relative colour syntax via `from`, `none` keyword,
-  `calc()`), and are converted to the **target image's interpretation**
-  via `Image.Pixel.to_pixel/3`. The same colour string draws correctly
-  on sRGB, Lab, scRGB, CMYK, 16-bit, and greyscale images.
+* **Colour management** — colour arguments accept atoms, hex strings, CSS named colours, hex shorthand, `#RRGGBBAA`, `Color.*` structs, CSS Color 4 / 5 functions (`rgb()`, `hsl()`, `lab()`, `oklch()`, `color-mix()`, relative colour syntax via `from`, `none` keyword, `calc()`), and are converted to the **target image's interpretation** via `Image.Pixel.to_pixel/3`. The same colour string draws correctly on sRGB, Lab, scRGB, CMYK, 16-bit, and greyscale images.
 
-* **Colour spaces** — `Image.colorspace/1`, `Image.to_colorspace/2`,
-  and full conversion between sRGB / scRGB / Lab / LCh / CMYK / HSV /
-  XYZ / B&W / 16-bit RGB.
+* **Colour spaces** — `Image.colorspace/1`, `Image.to_colorspace/2`, and full conversion between sRGB / scRGB / Lab / LCh / CMYK / HSV / XYZ / B&W / 16-bit RGB.
 
-* **Dominant colour and palette extraction** — `Image.dominant_color/2`
-  with two methods: a fast 3D-histogram (default) and an
-  imagequant-backed perceptual quantiser. See
-  [`guides/performance.md`](guides/performance.md) for benchmarks.
+* **Dominant colour and palette extraction** — `Image.dominant_color/2` with two methods: a fast 3D-histogram (default) and an imagequant-backed perceptual quantiser. See [`guides/performance.md`](guides/performance.md) for benchmarks.
 
-* **K-means clustering** — `Image.k_means/2` (when `:scholar` is
-  available) returns the dominant colour palette extracted by
-  unsupervised clustering.
+* **K-means clustering** — `Image.k_means/2` (when `:scholar` is available) returns the dominant colour palette extracted by unsupervised clustering.
 
-* **Histogram operations** — `Image.histogram/1`, `Image.equalize/2`,
-  per-band statistics, percentile, mean, median.
+* **Histogram operations** — `Image.histogram/1`, `Image.equalize/2`, per-band statistics, percentile, mean, median.
 
-* **Metadata** — `Image.exif/1` for EXIF, `Image.Xmp.extract_xmp/1` for
-  XMP, plus `Image.minimize_metadata/1` to strip metadata while
-  retaining the artist and copyright fields.
+* **Metadata** — `Image.exif/1` for EXIF, `Image.Xmp.extract_xmp/1` for XMP, plus `Image.minimize_metadata/1` to strip metadata while retaining the artist and copyright fields.
 
-* **ICC colour profiles** — `Image.ICCProfile` for libvips' built-in
-  profiles (`:srgb`, `:cmyk`, `:p3`) and arbitrary `.icc` files.
+* **ICC colour profiles** — `Image.ICCProfile` for libvips' built-in profiles (`:srgb`, `:cmyk`, `:p3`) and arbitrary `.icc` files.
 
-* **Image streaming** — open and write directly from `File.Stream`s,
-  Plug `Conn`s, in-memory binaries, and S3 sources.
+* **Image streaming** — open and write directly from `File.Stream`s, Plug `Conn`s, in-memory binaries, and S3 sources.
 
-* **Optional ML integrations** —
-  * `Image.Video` (frame extraction, seek, webcam) via
-    [Xav](https://hex.pm/packages/xav), an Elixir wrapper around
-    FFmpeg. Requires FFmpeg ≥ 6.0 on the system.
-  * `Image.QRcode` (encode + decode) via
-    [eVision](https://hex.pm/packages/evision).
+* **Optional ML integrations** — each is compiled only when its optional dependency is present:
+
+  * `Image.Video` (frame extraction, seek, webcam) via [Xav](https://hex.pm/packages/xav), an Elixir wrapper around FFmpeg. Requires FFmpeg ≥ 6.0 on the system.
+
+  * `Image.QRcode` (encode + decode) via [eVision](https://hex.pm/packages/evision).
+
   * `Image.k_means` via [Scholar](https://hex.pm/packages/scholar).
+
   * `Image.to_nx/2` / `Image.from_nx/1` via [Nx](https://hex.pm/packages/nx).
-  * **Object detection, image classification, and image
-    generation** live in the separate
-    [`:image_detection`](https://hex.pm/packages/image_detection)
-    package. Add it alongside `:image` in your `mix.exs` to get
-    `Image.Detection`, `Image.Classification`, and
-    `Image.Generation` (which depend on `:axon_onnx` and
-    [Bumblebee](https://hex.pm/packages/bumblebee) respectively).
 
-* **Hashing** — perceptual difference hash (`Image.dhash/2`),
-  blurhash encode/decode (`Image.Blurhash`), Hamming distance.
+  * **Object detection, image classification, and image generation** live in the separate [`:image_detection`](https://hex.pm/packages/image_detection) package. Add it alongside `:image` in your `mix.exs` to get `Image.Detection`, `Image.Classification`, and `Image.Generation` (which depend on `:axon_onnx` and [Bumblebee](https://hex.pm/packages/bumblebee) respectively).
 
-* **YUV interop** — `Image.YUV` for raw YUV file/binary I/O in
-  C420/C422/C444 chroma subsampling and BT.601/BT.709 colour spaces.
+* **Hashing** — perceptual difference hash (`Image.dhash/2`), blurhash encode/decode (`Image.Blurhash`), Hamming distance.
 
-* **Kino integration** — `Image.Kino` renders images in
-  [Livebook](https://livebook.dev) without manual conversion.
+* **YUV interop** — `Image.YUV` for raw YUV file/binary I/O in C420/C422/C444 chroma subsampling and BT.601/BT.709 colour spaces.
 
-* **Social media presets** — `Image.Social` with the standard image
-  sizes for Twitter, Facebook, Instagram, LinkedIn, Pinterest, YouTube,
-  Snapchat, and TikTok.
+* **Kino integration** — `Image.Kino` renders images in [Livebook](https://livebook.dev) without manual conversion.
 
-* **Bundled fonts** — ships the Impact font for meme rendering so
-  `Image.meme/3` works out of the box.
+* **Social media presets** — `Image.Social` with the standard image sizes for Twitter, Facebook, Instagram, LinkedIn, Pinterest, YouTube, Snapchat, and TikTok.
 
-* **Structured errors** — every fallible function returns
-  `{:ok, value}` or `{:error, %Image.Error{}}`. The error struct
-  carries `:reason` (atom or `{atom, value}`), `:operation`, `:path`,
-  `:value`, and a derived `:message`. Bang variants raise the same
-  struct.
+* **Bundled fonts** — ships the Impact font for meme rendering so `Image.meme/3` works out of the box.
+
+* **Structured errors** — every fallible function returns `{:ok, value}` or `{:error, %Image.Error{}}`. The error struct carries `:reason` (atom or `{atom, value}`), `:operation`, `:path`, `:value`, and a derived `:message`. Bang variants raise the same struct.
 
 ## Supported Elixir and OTP releases
 
-`Image` is tested on the following matrix:
+`Image` is tested and supported on the following matrix:
 
 | Elixir | OTP |
 |---|---|
@@ -121,11 +66,6 @@ Documentation can be found at <https://hexdocs.pm/image>.
 | 1.18 | 26, 27 |
 | 1.19 | 26, 27, 28 |
 | 1.20-rc | 27, 28 |
-
-The minimum supported version is **Elixir 1.17 / OTP 26**. The CI
-matrix runs `mix format --check-formatted`, `mix compile
---warnings-as-errors`, the full test suite, and `mix dialyzer` (lint
-cell only) on every cell.
 
 ## Quick start
 
@@ -263,6 +203,36 @@ Then set `VIX_COMPILATION_MODE=PLATFORM_PROVIDED_LIBVIPS` at compile
 time and at runtime. See the [Vix documentation](https://hexdocs.pm/vix)
 for the full list.
 
+## Installing FFmpeg (for `Image.Video`)
+
+`Image.Video` is powered by [Xav](https://hex.pm/packages/xav), which wraps the FFmpeg C libraries as a NIF. FFmpeg itself is not bundled — you need to install the FFmpeg development packages (version 4.x – 7.x) on the system where `:image` is compiled *and* where it runs.
+
+`Image.Video` and the `:xav` optional dependency only compile when these libraries are present. Projects that don't use video don't need to install anything here.
+
+```bash
+# macOS (Apple Silicon)
+brew install pkg-config ffmpeg
+
+# macOS (Intel)
+brew install ffmpeg
+
+# Debian / Ubuntu
+apt install libavcodec-dev libavformat-dev libavutil-dev \
+            libswscale-dev libavdevice-dev
+
+# Fedora / RHEL
+dnf install pkg-config ffmpeg-devel ffmpeg-libs
+```
+
+Note: Fedora's default repositories don't ship FFmpeg. Enable
+[RPM Fusion](https://rpmfusion.org/) first with
+`dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm`
+before installing `ffmpeg-devel`.
+
+Windows is not currently supported by Xav. See the
+[Xav installation guide](https://github.com/elixir-webrtc/xav/blob/main/INSTALL.md)
+for the upstream source of these commands and any updates.
+
 ## Optional dependencies
 
 `Image` is small and self-contained at its core. The following
@@ -288,13 +258,12 @@ is conditionally compiled. Add only the deps you actually use.
 debugging, concurrency, memory leak detection, and security. Each
 has a sensible default; the most commonly tuned ones:
 
-* `VIPS_BLOCK_UNTRUSTED=TRUE` (set automatically when the `:image`
-  application starts) prevents libvips from loading untrusted format
-  loaders.
-* `VIPS_CONCURRENCY=N` caps the libvips thread pool. Default is
-  the system core count. Lower it if image processing is competing
-  with other workloads.
+* `VIPS_BLOCK_UNTRUSTED=TRUE` (set automatically when the `:image` application starts) prevents libvips from loading untrusted format loaders.
+
+* `VIPS_CONCURRENCY=N` caps the libvips thread pool. Default is the system core count. Lower it if image processing is competing with other workloads.
+
 * `VIPS_LEAK=true` enables libvips' memory leak reporter.
+
 * `G_DEBUG=fatal-criticals` aborts on the first GLib critical.
 
 You can also set the concurrency programmatically with
@@ -334,23 +303,13 @@ suppressing stderr will also hide real FFmpeg errors.
 
 ## Security considerations
 
-* `libvips` and the underlying loaders are written in C; a malicious
-  input has the potential to crash the BEAM if libvips itself crashes.
-  In comparison to ImageMagick (638+ CVEs across its history),
-  libvips has had a much smaller attack surface (~8 CVEs, all
-  promptly fixed).
+* `libvips` and the underlying loaders are written in C; a malicious input has the potential to crash the BEAM if libvips itself crashes. In comparison to ImageMagick (638+ CVEs across its history), libvips has had a much smaller attack surface (~8 CVEs, all promptly fixed).
 
-* The `:image` application sets `VIPS_BLOCK_UNTRUSTED=TRUE` on start
-  unless the user has set it explicitly. This blocks libvips from
-  loading the more dangerous format loaders.
+* The `:image` application sets `VIPS_BLOCK_UNTRUSTED=TRUE` on start unless the user has set it explicitly. This blocks libvips from loading the more dangerous format loaders.
 
-* When displaying user-supplied images on a web page, sanitise
-  EXIF / XMP metadata before passing it to a browser — embedded
-  HTML in metadata fields is a known vector.
+* When displaying user-supplied images on a web page, sanitise EXIF / XMP metadata before passing it to a browser — embedded HTML in metadata fields is a known vector.
 
-* Image processing is CPU-intensive and the default libvips
-  concurrency equals the host core count. For multi-tenant
-  workloads, lower `VIPS_CONCURRENCY` to avoid CPU starvation.
+* Image processing is CPU-intensive and the default libvips concurrency equals the host core count. For multi-tenant workloads, lower `VIPS_CONCURRENCY` to avoid CPU starvation.
 
 ## License
 
