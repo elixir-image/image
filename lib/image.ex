@@ -1195,117 +1195,119 @@ defmodule Image do
     end
   end
 
-  @doc """
-  Returns an image from a [Kino](https://hex.pm/packages/kino) image
-  input.
+  if match?({:module, _module}, Code.ensure_compiled(Kino)) do
+    @doc """
+    Returns an image from a [Kino](https://hex.pm/packages/kino) image
+    input.
 
-  ### Arguments
+    ### Arguments
 
-  * `image` is a a map returned from `Kino.Input.read(image)`
-    via a `Kino.Input.image/1` input field. The data will have
-    the following fields:
+    * `image` is a a map returned from `Kino.Input.read(image)`
+      via a `Kino.Input.image/1` input field. The data will have
+      the following fields:
 
-    * `:file_ref` which contains a file reference to the image. It can be dereferenced
-      into a path with `Kino.Input.file_path/1`
-    * `:width` which is the width of the image in pixels
-    * `:height` which is the height of the image in pixels
-    * `:format` which is the image band format which must be `:rgb` or `:png`.
+      * `:file_ref` which contains a file reference to the image. It can be dereferenced
+        into a path with `Kino.Input.file_path/1`
+      * `:width` which is the width of the image in pixels
+      * `:height` which is the height of the image in pixels
+      * `:format` which is the image band format which must be `:rgb` or `:png`.
 
-  * `options` is a keyword list of options that is passed to `Image.open/2`
-    in the case of a `:png` image.
+    * `options` is a keyword list of options that is passed to `Image.open/2`
+      in the case of a `:png` image.
 
-  ### Notes
+    ### Notes
 
-  * This function requires at least Kino v0.11.0 which in turn requires
-    at least Livebook v0.11.0.
+    * This function is only defined when the optional dependency
+      `:kino` (v0.11.0 or later) is configured in `mix.exs`.
 
-  * For image type of `:rgb`, the image is required to contain raw pixel data
-    that is in unsigned 8-bit rgb format.
+    * For image type of `:rgb`, the image is required to contain raw pixel data
+      that is in unsigned 8-bit rgb format.
 
-  * For image type of `:png`, the image can by any format and it will be
-    opened with `Image.open/2`. Any options are passed to `Image.open/2`.
+    * For image type of `:png`, the image can by any format and it will be
+      opened with `Image.open/2`. Any options are passed to `Image.open/2`.
 
-  ### Returns
+    ### Returns
 
-  * `{:ok, image}` or
+    * `{:ok, image}` or
 
-  * `{:error, reason}`
+    * `{:error, reason}`
 
-  """
-  @doc since: "0.27.0"
+    """
+    @doc since: "0.27.0"
 
-  @spec from_kino(image :: kino_image(), options :: Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, error()}
+    @spec from_kino(image :: kino_image(), options :: Keyword.t()) ::
+            {:ok, Vimage.t()} | {:error, error()}
 
-  @kino_bands 3
-  @kino_format :VIPS_FORMAT_UCHAR
+    @kino_bands 3
+    @kino_format :VIPS_FORMAT_UCHAR
 
-  def from_kino(kino_image, options \\ [])
+    def from_kino(kino_image, options \\ [])
 
-  def from_kino(%{file_ref: ref, width: width, height: height, format: :rgb}, _options) do
-    file_path = apply(Kino.Input, :file_path, [ref])
+    def from_kino(%{file_ref: ref, width: width, height: height, format: :rgb}, _options) do
+      file_path = Kino.Input.file_path(ref)
 
-    with {:ok, binary} <- File.read(file_path) do
-      Vix.Vips.Image.new_from_binary(binary, width, height, @kino_bands, @kino_format)
+      with {:ok, binary} <- File.read(file_path) do
+        Vix.Vips.Image.new_from_binary(binary, width, height, @kino_bands, @kino_format)
+      end
     end
-  end
 
-  def from_kino(%{file_ref: ref, format: :png}, options) do
-    file_path = apply(Kino.Input, :file_path, [ref])
-    open(file_path, options)
-  end
+    def from_kino(%{file_ref: ref, format: :png}, options) do
+      file_path = Kino.Input.file_path(ref)
+      open(file_path, options)
+    end
 
-  @doc """
-  Returns an image from a [Kino](https://hex.pm/packages/kino) image
-  input or raises an exception.
+    @doc """
+    Returns an image from a [Kino](https://hex.pm/packages/kino) image
+    input or raises an exception.
 
-  ### Arguments
+    ### Arguments
 
-  * `image` is a a map returned from `Kino.Input.read(image)`
-    via a `Kino.Input.image/1` input field. The data will have
-    the following fields:
+    * `image` is a a map returned from `Kino.Input.read(image)`
+      via a `Kino.Input.image/1` input field. The data will have
+      the following fields:
 
-    * `:file_ref` which contains a file reference to the image. It can be dereferenced
-      into a path with `Kino.Input.file_path/1`
-    * `:width` which is the width of the image in pixels
-    * `:height` which is the height of the image in pixels
-    * `:format` which is the image band format which must be `:rgb` or `:png`.
+      * `:file_ref` which contains a file reference to the image. It can be dereferenced
+        into a path with `Kino.Input.file_path/1`
+      * `:width` which is the width of the image in pixels
+      * `:height` which is the height of the image in pixels
+      * `:format` which is the image band format which must be `:rgb` or `:png`.
 
-  * `options` is a keyword list of options
+    * `options` is a keyword list of options
 
-  ### Options
+    ### Options
 
-  * `options` is a keyword list of options that is passed to `Image.open/2`
-    in the case of a `:png` image.
+    * `options` is a keyword list of options that is passed to `Image.open/2`
+      in the case of a `:png` image.
 
-  ### Notes
+    ### Notes
 
-  * This function requires at least Kino v0.11.0 which in turn requires
-    at least Livebook v0.11.0.
+    * This function is only defined when the optional dependency
+      `:kino` (v0.11.0 or later) is configured in `mix.exs`.
 
-  * For image type of `:rgb`, the image is required to contain raw pixel data
-    that is in unsigned 8-bit rgb format.
+    * For image type of `:rgb`, the image is required to contain raw pixel data
+      that is in unsigned 8-bit rgb format.
 
-  * For image type of `:png`, the image can by any format and it will be
-    opened with `Image.open/2`. Any options are passed to `Image.open/2`.
+    * For image type of `:png`, the image can by any format and it will be
+      opened with `Image.open/2`. Any options are passed to `Image.open/2`.
 
-  ### Returns
+    ### Returns
 
-  * `image` or
+    * `image` or
 
-  * raises an exception.
+    * raises an exception.
 
-  """
-  @doc since: "0.27.0"
+    """
+    @doc since: "0.27.0"
 
-  @spec from_kino!(image :: kino_image(), options :: Keyword.t()) ::
-          Vimage.t() | no_return()
+    @spec from_kino!(image :: kino_image(), options :: Keyword.t()) ::
+            Vimage.t() | no_return()
 
-  def from_kino!(%{file_ref: _ref, format: format} = image, options \\ [])
-      when format in [:rgb, :png] do
-    case from_kino(image, options) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
+    def from_kino!(%{file_ref: _ref, format: format} = image, options \\ [])
+        when format in [:rgb, :png] do
+      case from_kino(image, options) do
+        {:ok, image} -> image
+        {:error, reason} -> raise Image.Error, reason
+      end
     end
   end
 
@@ -7589,7 +7591,10 @@ defmodule Image do
        "Version must be one of #{inspect(@delta_e_versions)}"}
   end
 
-  if Code.ensure_loaded?(Scholar.Cluster.KMeans) do
+  # The Scholar-backed k-means and reduce-colors functions also
+  # rely on `Image.to_nx!/1` (defined inside the `Nx` fence below)
+  # and on `Nx.to_list/1`, so we require Nx to be loaded as well.
+  if Code.ensure_loaded?(Scholar.Cluster.KMeans) and Code.ensure_loaded?(Nx) do
     @default_clusters 16
 
     @doc """

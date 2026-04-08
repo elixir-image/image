@@ -91,10 +91,11 @@ defmodule Image.MixProject do
       # and Scholar for k-means clustering. Image classification
       # and image generation moved to the `:image_detection`
       # package along with the `:bumblebee` dependency.
-      {:nx, "~> 0.11", optional: true},
+      {:nx, "~> 0.11.0", optional: true},
+      {:exla, "0.11.0", optional: true},
+      {:fine, "0.1.4", optional: true},
       {:nx_image, "~> 0.1", optional: true},
       {:scholar, "~> 0.3", optional: true},
-      {:exla, "~> 0.9", optional: true},
       {:rustler, "> 0.0.0", optional: true},
 
       # For testing and benchmarking
@@ -152,7 +153,6 @@ defmodule Image.MixProject do
         "guides/color_migration.md",
         "livebook/image_edge_masking.livemd",
         "livebook/color_clustering.livemd",
-        "livebook/segment_anything.livemd",
         "LICENSE.md",
         "CHANGELOG.md"
       ],

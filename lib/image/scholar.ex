@@ -1,4 +1,5 @@
-if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) do
+if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
+     match?({:module, _module}, Code.ensure_compiled(Nx)) do
   defmodule Image.Scholar do
     import Nx
 

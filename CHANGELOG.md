@@ -36,6 +36,8 @@ The primary intent of this release is to stablise the code in readiness for a 1.
 
 * `:bumblebee` is no longer a dependency of `:image`. It is configured in the new library `image_detection`.
 
+* The `livebook/segment_anything.livemd` notebook has also moved to `image_detection/livebooks/segment_anything.livemd`, since the Segment Anything Model (SAM) pipeline relies on the same ONNX / Nx toolchain as the other detection modules. The `:image` HexDocs extras no longer reference it.
+
 * `Image.Video` is now backed by [Xav](https://hex.pm/packages/xav) (a thin Elixir wrapper around FFmpeg) instead of `:evision` / OpenCV. The public API surface is largely unchanged but the underlying type, options, and a few semantic details have moved:
 
   * The video struct is now `%Image.Video{}` (with fields `:reader`, `:source`, `:fps`, `:duration_seconds`, `:frame_count`, `:width`, `:height`) rather than `%Evision.VideoCapture{}`. Pattern-match on the new struct module if your code does so.

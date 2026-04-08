@@ -5,10 +5,18 @@ Elixir. It is a high-level wrapper around
 [Vix](https://hex.pm/packages/vix), the Elixir bindings for the
 [libvips](https://www.libvips.org) C library, and provides an
 idiomatic functional API for image manipulation, drawing, text
-rendering, EXIF/XMP metadata, classification (via Bumblebee),
-video frame extraction (via Xav/FFmpeg), QR code encoding and decoding (via eVision),
-video frame extraction, blurhash, perceptual hashing, and many
-other image-related operations.
+rendering, EXIF/XMP metadata, video frame extraction (via
+Xav/FFmpeg), QR code encoding and decoding (via eVision),
+blurhash, perceptual hashing, and many other image-related
+operations.
+
+Machine-learning features (object detection, image
+classification, image generation) live in the companion
+[`image_detection`](https://hex.pm/packages/image_detection)
+library, which depends on `:image` and pulls in
+[Bumblebee](https://hex.pm/packages/bumblebee) and
+[Nx](https://hex.pm/packages/nx) as its own optional
+dependencies.
 
 In a simple resize benchmark, `Image` is approximately 2 to 3 times
 faster than [Mogrify](https://hex.pm/packages/mogrify) and uses
@@ -266,11 +274,10 @@ optional dependencies enable specific features:
 | `:scholar` | `Image.k_means/2` |
 | `:xav` | `Image.Video` (FFmpeg-backed frame extraction) |
 | `:evision` | `Image.QRcode`, `Image.to_evision/2`, `Image.from_evision/1` |
-| `:image_detection` | `Image.Detection`, `Image.Classification`, `Image.Generation` (object detection, classification, image generation — pulls Bumblebee, Nx, Axon as transitive deps) |
+| `:image_detection` | `Image.Detection`, `Image.Classification`, `Image.Generation` (object detection, classification, image generation — pulls Bumblebee, Nx, Axon as its own transitive deps) |
 | `:plug` | streaming via `Plug.Conn` |
 | `:req` | streaming over HTTP |
 | `:kino` | `Image.Kino` (Livebook integration) |
-| `:exla` | EXLA backend for Nx-based features |
 
 Each is detected at compile time; the corresponding `Image` module
 is conditionally compiled. Add only the deps you actually use.
