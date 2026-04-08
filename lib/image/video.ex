@@ -144,7 +144,7 @@ if Image.evision_configured?() do
 
     """
     @spec open(filename_or_stream :: Path.t() | stream_id(), Options.Video.open_options()) ::
-            {:ok, VideoCapture.t()} | {:error, Image.error_message()}
+            {:ok, VideoCapture.t()} | {:error, Image.error()}
 
     def open(filename, options \\ [])
 
@@ -155,10 +155,18 @@ if Image.evision_configured?() do
             {:ok, video}
 
           %VideoCapture{isOpened: false} ->
-            {:error, "Could not open video #{inspect(filename)}"}
+            {:error,
+             %Image.Error{
+               message: "Could not open video #{inspect(filename)}",
+               reason: "Could not open video #{inspect(filename)}"
+             }}
 
           error ->
-            {:error, "Could not open video #{inspect(filename)}. Error #{inspect(error)}"}
+            {:error,
+             %Image.Error{
+               message: "Could not open video #{inspect(filename)}. Error #{inspect(error)}",
+               reason: "Could not open video #{inspect(filename)}. Error #{inspect(error)}"
+             }}
         end
       end
     end
@@ -170,10 +178,18 @@ if Image.evision_configured?() do
             {:ok, video}
 
           %VideoCapture{isOpened: false} ->
-            {:error, "Could not open camera #{inspect(camera)}"}
+            {:error,
+             %Image.Error{
+               message: "Could not open camera #{inspect(camera)}",
+               reason: "Could not open camera #{inspect(camera)}"
+             }}
 
           error ->
-            {:error, "Could not open the camera. Error #{inspect(error)}"}
+            {:error,
+             %Image.Error{
+               message: "Could not open the camera. Error #{inspect(error)}",
+               reason: "Could not open the camera. Error #{inspect(error)}"
+             }}
         end
       end
     end
@@ -263,14 +279,18 @@ if Image.evision_configured?() do
 
     """
     @spec close(VideoCapture.t()) ::
-            {:ok, VideoCapture.t()} | {:error, Image.error_message()}
+            {:ok, VideoCapture.t()} | {:error, Image.error()}
     def close(%VideoCapture{} = video) do
       case VideoCapture.release(video) do
         %VideoCapture{} = video ->
           {:ok, video}
 
         error ->
-          {:error, "Could not close video. Error #{inspect(error)}"}
+          {:error,
+           %Image.Error{
+             message: "Could not close video. Error #{inspect(error)}",
+             reason: "Could not close video. Error #{inspect(error)}"
+           }}
       end
     end
 
@@ -462,18 +482,26 @@ if Image.evision_configured?() do
         iex> {:ok, video} = Image.Video.open("./test/support/video/video_sample.mp4")
         iex> {:ok, _image} = Image.Video.seek(video, frame: 0)
         iex> {:ok, _image} = Image.Video.seek(video, millisecond: 1_000)
-        iex> Image.Video.seek(video, frame: -1)
-        {:error, "Offset for :frame must be a non-negative integer. Found -1"}
+        iex> {:error, %Image.Error{reason: :negative_offset}} = Image.Video.seek(video, frame: -1)
+        iex> :ok
+        :ok
 
     """
     @spec seek(VideoCapture.t(), seek_options()) ::
-            {:ok, VideoCapture.t()} | {:error, Image.error_message()}
+            {:ok, VideoCapture.t()} | {:error, Image.error()}
 
     def seek(%VideoCapture{isOpened: true, frame_count: frame_count} = video, [{:frame, frame}])
         when is_frame(frame, frame_count) do
       case VideoCapture.set(video, Constant.cv_CAP_PROP_POS_FRAMES(), frame) do
-        true -> {:ok, video}
-        false -> {:error, "Could not seek to the frame offset #{inspect(frame)}."}
+        true ->
+          {:ok, video}
+
+        false ->
+          {:error,
+           %Image.Error{
+             message: "Could not seek to the frame offset #{inspect(frame)}.",
+             reason: "Could not seek to the frame offset #{inspect(frame)}."
+           }}
       end
     end
 
@@ -482,25 +510,40 @@ if Image.evision_configured?() do
         ])
         when is_valid_millis(millis, frame_count, fps) do
       case VideoCapture.set(video, Constant.cv_CAP_PROP_POS_MSEC(), millis) do
-        true -> {:ok, video}
-        false -> {:error, "Could not seek to the millisecond offset #{inspect(millis)}."}
+        true ->
+          {:ok, video}
+
+        false ->
+          {:error,
+           %Image.Error{
+             message: "Could not seek to the millisecond offset #{inspect(millis)}.",
+             reason: "Could not seek to the millisecond offset #{inspect(millis)}."
+           }}
       end
     end
 
     def seek(%VideoCapture{isOpened: true}, [{unit, offset}])
         when unit in [:frame, :millisecond] and offset < 0 do
-      {:error,
-       "Offset for #{inspect(unit)} must be a non-negative integer. Found #{inspect(offset)}"}
+      message =
+        "Offset for #{inspect(unit)} must be a non-negative integer. Found #{inspect(offset)}"
+
+      {:error, %Image.Error{reason: :negative_offset, value: offset, message: message}}
     end
 
     def seek(%VideoCapture{isOpened: true}, [{unit, offset}])
         when unit in [:frame, :millisecond] and is_integer(offset) do
-      {:error, "Offset for #{inspect(unit)} is too large"}
+      {:error,
+       %Image.Error{
+         reason: :frame_out_of_range,
+         message: "Offset for #{inspect(unit)} is too large"
+       }}
     end
 
     def seek(%VideoCapture{isOpened: true}, options) do
-      {:error,
-       "Options must be either `frame: frame_offet` or `millisecond: millisecond_offset`. Found #{inspect(options)}"}
+      message =
+        "Options must be either `frame: frame_offet` or `millisecond: millisecond_offset`. Found #{inspect(options)}"
+
+      {:error, %Image.Error{reason: :invalid_seek_options, value: options, message: message}}
     end
 
     def seek(%VideoCapture{isOpened: false}, _options) do
@@ -584,7 +627,7 @@ if Image.evision_configured?() do
 
     """
     @spec scrub(VideoCapture.t(), frames :: pos_integer) ::
-            {:ok, pos_integer()} | {:error, Image.error_message()}
+            {:ok, pos_integer()} | {:error, Image.error()}
 
     def scrub(%VideoCapture{isOpened: true} = video, frames)
         when is_integer(frames) and frames > 0 do
@@ -648,14 +691,14 @@ if Image.evision_configured?() do
         iex> {:ok, _image} = Image.Video.image_from_video(video)
         iex> {:ok, _image} = Image.Video.image_from_video(video, frame: 0)
         iex> {:ok, _image} = Image.Video.image_from_video(video, millisecond: 1_000)
-        iex> Image.Video.image_from_video(video, frame: -1)
-        {:error, "Offset for :frame must be a non-negative integer. Found -1"}
-        iex> Image.Video.image_from_video(video, frame: 500)
-        {:error, "Offset for :frame is too large"}
+        iex> {:error, %Image.Error{reason: :negative_offset}} = Image.Video.image_from_video(video, frame: -1)
+        iex> {:error, %Image.Error{reason: :frame_out_of_range}} = Image.Video.image_from_video(video, frame: 500)
+        iex> :ok
+        :ok
 
     """
     @spec image_from_video(VideoCapture.t(), seek_options()) ::
-            {:ok, Vimage.t()} | {:error, Image.error_message()}
+            {:ok, Vimage.t()} | {:error, Image.error()}
 
     def image_from_video(video, options \\ [])
 
@@ -663,7 +706,12 @@ if Image.evision_configured?() do
       with %Evision.Mat{} = cv_image <- VideoCapture.read(video) do
         Image.from_evision(cv_image)
       else
-        error -> {:error, "Could not extract the frame. Error #{inspect(error)}."}
+        error ->
+          {:error,
+           %Image.Error{
+             message: "Could not extract the frame. Error #{inspect(error)}.",
+             reason: "Could not extract the frame. Error #{inspect(error)}."
+           }}
       end
     end
 

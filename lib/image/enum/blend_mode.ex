@@ -141,10 +141,10 @@ defmodule Image.BlendMode do
       {:ok, :VIPS_BLEND_MODE_XOR}
 
       iex> Image.BlendMode.validate_blend_mode :woops
-      {:error, {:error, "Unknown blend mode. Found :woops"}}
+      {:error, {:error, %Image.Error{message: "Unknown blend mode. Found :woops", reason: "Unknown blend mode. Found :woops"}}}
 
   """
-  @spec validate_blend_mode(t() | nil) :: {:ok, atom()} | {:error, Image.error_message()}
+  @spec validate_blend_mode(t() | nil) :: {:ok, atom()} | {:error, Image.error()}
   def validate_blend_mode(nil) do
     {:ok, default_blend_mode()}
   end
@@ -171,6 +171,10 @@ defmodule Image.BlendMode do
   end
 
   defp unknown_blend_mode_error(blend_mode) do
-    {:error, "Unknown blend mode. Found #{inspect(blend_mode)}"}
+    {:error,
+     %Image.Error{
+       message: "Unknown blend mode. Found #{inspect(blend_mode)}",
+       reason: "Unknown blend mode. Found #{inspect(blend_mode)}"
+     }}
   end
 end

@@ -2,13 +2,32 @@ defmodule Image.ICCProfile do
   @moduledoc """
   Helpers for the ICC color profiles known to libvips.
 
-  libvips ships with a small set of built-in profiles (`:srgb`,
-  `:cmyk`, `:p3`) and can also load arbitrary `.icc` files from disk.
-  This module is a thin wrapper around `Vix.Vips.Operation.profile_load/1`
-  plus the list of built-ins.
+  ## What "built-in" means
 
-  This is the home for the ICC-related helpers that used to live in
-  `Image.Color`.
+  libvips ships with a small set of built-in colour profile *names*
+  (`:srgb`, `:cmyk`, `:p3`). They are loaded by libvips itself on
+  demand from its own profile collection — `:image` does *not* ship
+  any `.icc` files. The four atoms are simply the names libvips
+  recognises and resolves to its own internal profiles when you pass
+  them to a vips operation that takes a profile.
+
+  Anything else (the `t:Path.t/0` form) is treated as a path to an
+  `.icc` file on disk. Absolute paths are used as-is. Relative paths
+  are resolved against the libvips profile search path. The path is
+  validated by attempting to load it with
+  `Vix.Vips.Operation.profile_load/1`.
+
+  ## API summary
+
+  * `inbuilt/0` returns the four built-in atoms.
+  * `is_inbuilt/1` is a `defguard` for the same set.
+  * `known?/1` returns `true` for any built-in *or* any loadable file
+    path. Use it to validate user-supplied profile arguments.
+
+  ## Migration
+
+  This module is the new home for the ICC-related helpers that used
+  to live in `Image.Color`. The contracts are unchanged.
 
   """
 

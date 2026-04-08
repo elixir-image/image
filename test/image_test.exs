@@ -9,6 +9,8 @@ defmodule Image.Test do
   doctest Image.BandFormat
   doctest Image.Blurhash
   doctest Image.Math
+  doctest Image.Social
+  doctest Image.YUV
 
   setup do
     Temp.track!()

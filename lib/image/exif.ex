@@ -51,6 +51,23 @@ defmodule Image.Exif do
   @copyright_header "exif-ifd0-Copyright"
   @artist_header "exif-ifd0-Artist"
 
+  @doc """
+  Returns the libvips header field name for a known EXIF field
+  alias.
+
+  ### Examples
+
+      iex> Image.Exif.field(:artist)
+      "exif-ifd0-Artist"
+
+      iex> Image.Exif.field(:copyright)
+      "exif-ifd0-Copyright"
+
+      iex> Image.Exif.field("anything-else")
+      "anything-else"
+
+  """
+  @spec field(:artist | :copyright | atom() | String.t()) :: String.t()
   def field(:artist), do: @artist_header
   def field(:copyright), do: @copyright_header
   def field(other), do: to_string(other)
@@ -60,6 +77,7 @@ defmodule Image.Exif do
     case Vix.Vips.Image.header_value(image, field(header)) do
       {:ok, value} -> {:ok, value}
       {:error, "No such field"} -> {:ok, nil}
+      {:error, %Image.Error{reason: "No such field"}} -> {:ok, nil}
     end
   end
 

@@ -68,7 +68,12 @@ defmodule Image.Options.Embed do
         {:cont, options}
 
       {:error, reason} ->
-        {:halt, {:error, "Could not get the image average: #{inspect(reason)}"}}
+        {:halt,
+         {:error,
+          %Image.Error{
+            message: "Could not get the image average: #{inspect(reason)}",
+            reason: "Could not get the image average: #{inspect(reason)}"
+          }}}
     end
   end
 
@@ -218,7 +223,11 @@ defmodule Image.Options.Embed do
   end
 
   defp offset_error(_dim, value) when value < 0 do
-    {:error, "The canvas image must be larger than the image being embedded in it"}
+    {:error,
+     %Image.Error{
+       message: "The canvas image must be larger than the image being embedded in it",
+       reason: "The canvas image must be larger than the image being embedded in it"
+     }}
   end
 
   defp offset_error(dim, value) do

@@ -140,7 +140,7 @@ if Image.bumblebee_configured?() do
 
     """
     @spec classifier(configuration :: Keyword.t()) ::
-            {Nx.Serving, Keyword.t()} | {:error, Image.error_message()}
+            {Nx.Serving, Keyword.t()} | {:error, Image.error()}
     def classifier(classifier \\ Application.get_env(:image, :classifier, [])) do
       Application.ensure_all_started(:exla)
       classifier = Keyword.merge(@default_classifier, classifier)
@@ -216,7 +216,7 @@ if Image.bumblebee_configured?() do
     @doc since: "0.18.0"
 
     @spec classify(image :: Vimage.t(), Keyword.t()) ::
-            %{predictions: [%{label: String.t(), score: float()}]} | {:error, Image.error_message()}
+            %{predictions: [%{label: String.t(), score: float()}]} | {:error, Image.error()}
 
     def classify(%Vimage{} = image, options \\ []) do
       backend = Keyword.get(options, :backend, Nx.default_backend())
@@ -269,7 +269,7 @@ if Image.bumblebee_configured?() do
     @doc since: "0.18.0"
 
     @spec labels(image :: Vimage.t(), options :: Keyword.t()) ::
-            [String.t()] | {:error, Image.error_message()}
+            [String.t()] | {:error, Image.error()}
 
     def labels(%Vimage{} = image, options \\ []) do
       {min_score, options} = Keyword.pop(options, :min_score, @min_score)

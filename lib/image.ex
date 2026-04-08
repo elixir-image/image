@@ -29,10 +29,10 @@ defmodule Image do
     BlendMode,
     BandFormat
   }
+
   alias Image.Options.{Resize, Thumbnail, Compose, Open, ChromaKey}
   alias Image.Math
   alias Image.Draw
-
 
   @typedoc """
   THe structure of an image returned from `Kino.Input.read/1`
@@ -61,10 +61,11 @@ defmodule Image do
   @type image_data :: Path.t() | File.Stream.t() | binary() | Enumerable.t()
 
   @typedoc """
-  Represents either in image, or a color
-  that is used to fill a new image
+  Represents either an image or a color value used to fill a new
+  image. The colour form accepts everything `Image.Pixel.to_pixel/3`
+  understands plus a bare numeric value (treated as a uniform grey).
   """
-  @type image_or_color :: Vimage.t() | Pixel.t()
+  @type image_or_color :: Vimage.t() | Pixel.t() | number()
 
   @typedoc """
   The valid rendering intent values. For all
@@ -108,12 +109,16 @@ defmodule Image do
   @type render_intent :: :perceptual | :relative | :saturation | :absolute
 
   @typedoc """
-  Error messages returned by `libvips`
+  The error half of every `{:ok, _} | {:error, _}` tuple returned by
+  this library is an `Image.Error` struct. The struct carries a
+  structured `:reason` (atom or `{atom, value}` tuple), an optional
+  `:operation`, `:path`, and `:value`, plus a derived `:message`.
 
-  Typically a string.
+  See `Image.Error` for the full set of reason atoms and the pattern
+  for matching on them.
 
   """
-  @type error_message :: term()
+  @type error :: Image.Error.t()
 
   @typedoc """
   A pixel is represented as a list of number values or
@@ -438,7 +443,7 @@ defmodule Image do
   @doc subject: "Load and save"
 
   @spec new(width :: pos_integer(), height :: pos_integer()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def new(width, height)
       when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
@@ -446,7 +451,7 @@ defmodule Image do
   end
 
   @spec new(image :: %Vimage{}, options :: Options.New.t()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def new(%Vimage{} = image, options) do
     {width, height, bands} = Image.shape(image)
@@ -458,7 +463,7 @@ defmodule Image do
   @doc subject: "Load and save"
 
   @spec new(width :: pos_integer(), height :: pos_integer(), options :: Options.New.t()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def new(width, height, options)
       when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
@@ -597,7 +602,7 @@ defmodule Image do
   @doc subject: "Load and save", since: "0.1.13"
 
   @spec new(image :: %Vimage{}) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def new(%Vimage{} = image) do
     new(image, [])
@@ -758,7 +763,7 @@ defmodule Image do
   @doc subject: "Load and save"
 
   @spec open(path_or_stream_or_binary :: image_data(), options :: Open.image_open_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def open(path_or_stream_or_binary, options \\ [])
 
@@ -860,17 +865,24 @@ defmodule Image do
 
   defp do_open([path], options) do
     if File.exists?(path) do
-      Vimage.new_from_file(path, options)
+      vix_open(path, options)
     else
-      {:error, :enoent}
+      {:error, Image.Error.wrap(:enoent, operation: :open, path: path)}
     end
   end
 
   defp do_open([path, _open_options], options) do
     if File.exists?(path) do
-      Vimage.new_from_file(path, options)
+      vix_open(path, options)
     else
-      {:error, :enoent}
+      {:error, Image.Error.wrap(:enoent, operation: :open, path: path)}
+    end
+  end
+
+  defp vix_open(path, options) do
+    case Vimage.new_from_file(path, options) do
+      {:ok, image} -> {:ok, image}
+      {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :open, path: path)}
     end
   end
 
@@ -1042,7 +1054,7 @@ defmodule Image do
   @doc subject: "Load and save", since: "0.32.0"
 
   @spec from_svg(svg :: binary(), options :: Open.image_open_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def from_svg(svg, options \\ []) when is_binary(svg) do
     case Operation.svgload_buffer(svg, options) do
@@ -1141,7 +1153,7 @@ defmodule Image do
   @doc subject: "Load and save", since: "0.7.0"
 
   @spec from_binary(binary :: binary(), options :: Open.image_open_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def from_binary(binary, options \\ []) when is_binary(binary) do
     with {:ok, options} <- Options.Open.validate_options(options) do
@@ -1223,7 +1235,7 @@ defmodule Image do
   @doc since: "0.27.0"
 
   @spec from_kino(image :: kino_image(), options :: Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   @kino_bands 3
   @kino_format :VIPS_FORMAT_UCHAR
@@ -1480,14 +1492,14 @@ defmodule Image do
             image_path :: Path.t() | Plug.Conn.t() | Enumerable.t() | File.Stream.t() | :memory,
             options :: Options.Write.image_write_options()
           ) ::
-            {:ok, Vimage.t()} | {:ok, binary()} | {:ok, Plug.Conn.t()} | {:error, error_message()}
+            {:ok, Vimage.t()} | {:ok, binary()} | {:ok, Plug.Conn.t()} | {:error, error()}
   else
     @spec write(
             image :: Vimage.t(),
             image_path :: Path.t() | Enumerable.t() | File.Stream.t() | :memory,
             options :: Options.Write.image_write_options()
           ) ::
-            {:ok, Vimage.t()} | {:ok, binary()} | {:error, error_message()}
+            {:ok, Vimage.t()} | {:ok, binary()} | {:error, error()}
   end
 
   @doc subject: "Load and save"
@@ -1605,7 +1617,7 @@ defmodule Image do
 
     * Due to the nature of the interaction between Req and Vix, error
       responses from the embedded `Reg.get/2` are swallowed and a generic
-      `{:error, "Failed to find loader for the source"}` may be returned instead.
+      `{:error, %Image.Error{message: "Failed to find loader for the source", reason: "Failed to find loader for the source"}}` may be returned instead.
 
     ### Example
 
@@ -1617,7 +1629,7 @@ defmodule Image do
     @doc since: "0.61.0"
 
     @spec from_req_stream(url_or_request :: binary() | Req.Request.t()) ::
-            {:ok, image :: %Vimage{}} | {:error, error_message()}
+            {:ok, image :: %Vimage{}} | {:error, error()}
 
     def from_req_stream(url_or_request, options \\ []) do
       timeout = Keyword.get(options, :timeout, @default_req_timeout)
@@ -1879,7 +1891,7 @@ defmodule Image do
           else_image :: image_or_color(),
           options :: Keyword.t()
         ) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def if_then_else(condition_image, if_image_or_color, else_image_or_color, options \\ [])
 
@@ -2090,7 +2102,7 @@ defmodule Image do
   @doc subject: "Mask", since: "0.13.0"
 
   @spec chroma_mask(image :: Vimage.t(), options :: ChromaKey.chroma_key_options() | map()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def chroma_mask(image, options \\ [])
 
@@ -2243,7 +2255,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.13.0"
 
   @spec chroma_key(image :: Vimage.t(), options :: ChromaKey.chroma_key_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def chroma_key(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.ChromaKey.validate_options(image, options),
@@ -2350,7 +2362,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.13.0"
 
   @spec blur(image :: Vimage.t(), options :: Options.Blur.blur_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def blur(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Blur.validate_options(options) do
@@ -2493,7 +2505,7 @@ defmodule Image do
   @doc since: "0.35.0"
 
   @spec sharpen(image :: Vimage.t(), options :: Options.Sharpen.sharpen_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def sharpen(image, options \\ []) do
     with {:ok, options} <- Options.Sharpen.validate_options(options) do
@@ -2650,7 +2662,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.13.0"
 
   @spec feather(image :: Vimage.t(), options :: Options.Blur.blur_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def feather(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Blur.validate_options(options) do
@@ -2669,7 +2681,11 @@ defmodule Image do
           |> wrap(:ok)
 
         true ->
-          {:error, "Image has no alpha band and is not a single band image"}
+          {:error,
+           %Image.Error{
+             message: "Image has no alpha band and is not a single band image",
+             reason: "Image has no alpha band and is not a single band image"
+           }}
       end
     end
   end
@@ -2748,7 +2764,7 @@ defmodule Image do
   """
   @doc since: "0.27.0"
 
-  @spec average(Vimage.t()) :: Pixel.t() | {:error, error_message}
+  @spec average(Vimage.t()) :: Pixel.t() | {:error, error()}
   def average(%Vimage{} = image) do
     with {:ok, flattened} <- flatten(image) do
       for i <- band_range(flattened) do
@@ -2823,15 +2839,23 @@ defmodule Image do
   @doc subject: "Operation", since: "0.13.0"
 
   @spec add_alpha(image :: Vimage.t(), alpha_image :: Vimage.t() | transparency()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def add_alpha(%Vimage{} = image, %Vimage{} = alpha_image) do
     cond do
       has_alpha?(image) ->
-        {:error, "Image already has an alpha band"}
+        {:error,
+         %Image.Error{
+           message: "Image already has an alpha band",
+           reason: "Image already has an alpha band"
+         }}
 
       bands(alpha_image) > 1 ->
-        {:error, "Alpha image has more than one band"}
+        {:error,
+         %Image.Error{
+           message: "Alpha image has more than one band",
+           reason: "Alpha image has more than one band"
+         }}
 
       true ->
         Operation.bandjoin([image, alpha_image])
@@ -3059,7 +3083,7 @@ defmodule Image do
           overlay_image :: Vimage.t(),
           options :: Options.Compose.t()
         ) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def compose(base_image, overlay_image_or_images, options \\ [])
 
@@ -3079,7 +3103,7 @@ defmodule Image do
           image_list :: composition_list(),
           options :: Options.Compose.t()
         ) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def compose(%Vimage{} = base_image, image_list, _options) when is_list(image_list) do
     width = Image.width(base_image)
@@ -3355,7 +3379,7 @@ defmodule Image do
 
   """
   @spec join(image_list :: list(Vimage.t()), options :: Options.Join.join_options()) ::
-          {:ok, joined_image :: Vimage.t()} | {:error, error_message()}
+          {:ok, joined_image :: Vimage.t()} | {:error, error()}
 
   def join(image_list, options \\ []) when is_list(image_list) do
     with {:ok, options} <- Options.Join.validate_options(hd(image_list), options) do
@@ -3511,7 +3535,7 @@ defmodule Image do
   @doc subject: "Generator", since: "0.13.0"
 
   @spec meme(image :: Vimage.t(), headline :: String.t(), options :: Options.Meme.meme_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def meme(%Vimage{} = image, headline, options \\ []) when is_binary(headline) do
     with {:ok, options} <- Options.Meme.validate_options(image, options),
@@ -3747,7 +3771,7 @@ defmodule Image do
   """
   @doc subject: "Metadata"
 
-  @spec exif(Vimage.t()) :: {:ok, map()} | {:error, error_message()}
+  @spec exif(Vimage.t()) :: {:ok, map()} | {:error, error()}
   def exif(%Vimage{} = image) do
     with {:ok, exif_blob} <- Vimage.header_value(image, "exif-data"),
          <<"Exif"::binary, 0::16, exif::binary>> <- exif_blob do
@@ -3755,8 +3779,11 @@ defmodule Image do
       |> Exif.extract_exif()
       |> wrap(:ok)
     else
-      false -> {:error, "Invalid Exif data"}
-      other -> other
+      false ->
+        {:error, %Image.Error{reason: :invalid_exif, message: "Invalid Exif data"}}
+
+      {:error, raw} ->
+        {:error, Image.Error.wrap(raw, operation: :exif)}
     end
   end
 
@@ -3778,7 +3805,7 @@ defmodule Image do
   """
   @doc subject: "Metadata"
 
-  @spec xmp(Vimage.t()) :: {:ok, map()}
+  @spec xmp(Vimage.t()) :: {:ok, map()} | {:error, error()}
   def xmp(%Vimage{} = image) do
     with {:ok, xmp_blob} <- Vimage.header_value_as_string(image, "xmp-data"),
          {:ok, xmp_binary} <- Base.decode64(xmp_blob) do
@@ -3786,6 +3813,12 @@ defmodule Image do
       |> SweetXml.parse(dtd: :none)
       |> Xmp.extract_xmp()
       |> wrap(:ok)
+    else
+      :error ->
+        {:error, %Image.Error{reason: :invalid_xmp, message: "XMP payload is not base64-encoded"}}
+
+      {:error, raw} ->
+        {:error, Image.Error.wrap(raw, operation: :xmp)}
     end
   end
 
@@ -4015,21 +4048,6 @@ defmodule Image do
     |> Image.Interpretation.decode_interpretation()
   end
 
-  @deprecated "Use Image.colorspace/0 instead"
-  @doc false
-
-  def interpretation(%Vimage{} = image) do
-    colorspace(image)
-  end
-
-  @deprecated "Use Image.band_format/1"
-  @doc false
-
-  @spec type(image :: Vimage.t()) :: Image.BandFormat.t()
-  def type(%Vimage{} = image) do
-    band_format(image)
-  end
-
   @doc """
   Flip an image horizontally or vertically.
 
@@ -4050,7 +4068,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec flip(image :: Vimage.t(), direction :: :vertical | :horizontal) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def flip(%Vimage{} = image, :vertical) do
     Operation.flip(image, :VIPS_DIRECTION_VERTICAL)
@@ -4135,7 +4153,7 @@ defmodule Image do
   @doc subject: "Resize", since: "0.13.0"
 
   @spec resize(Vimage.t(), scale :: number(), options :: Resize.resize_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def resize(%Vimage{} = image, scale, options \\ []) when scale >= 0 do
     with {:ok, options} <- Resize.validate_options(options) do
@@ -4234,7 +4252,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.14.0"
 
   @spec pixelate(image :: Vimage.t(), scale :: number()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def pixelate(%Vimage{} = image, scale \\ @pixelate_scale) when is_number(scale) and scale > 0 do
     image
@@ -4373,7 +4391,7 @@ defmodule Image do
   @doc subject: "Resize"
 
   @spec thumbnail(Vimage.t(), length :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def thumbnail(image_or_path, length, options \\ [])
 
@@ -4384,7 +4402,7 @@ defmodule Image do
   end
 
   @spec thumbnail(Path.t(), length :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def thumbnail(image_path, length, options) when is_binary(image_path) and is_size(length) do
     with {:ok, options} <- Thumbnail.validate_options(options),
@@ -4400,7 +4418,7 @@ defmodule Image do
           dimensions :: binary(),
           options :: Thumbnail.thumbnail_options()
         ) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def thumbnail(image_or_path, dimensions, options) when is_binary(dimensions) do
     with {:ok, length, options} <- Thumbnail.validate_dimensions(dimensions, options) do
@@ -4456,7 +4474,7 @@ defmodule Image do
          {:ok, _path} <- file_exists?(image_path) do
       Operation.thumbnail!(image_path, length, options)
     else
-      {:error, :enoent} -> raise Image.Error, {:enoent, image_path}
+      {:error, %Image.Error{} = error} -> raise error
     end
   end
 
@@ -4517,7 +4535,7 @@ defmodule Image do
   @doc subject: "Generator"
 
   @spec avatar(Vimage.t(), options :: Options.Avatar.avatar_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def avatar(image, options \\ [])
 
@@ -4724,7 +4742,7 @@ defmodule Image do
           width :: pos_integer(),
           height :: pos_integer()
         ) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def crop(%Vimage{} = image, left, top, width, height) do
     total_height = height(image)
@@ -4775,7 +4793,7 @@ defmodule Image do
   """
   @doc subject: "Crop", since: "0.28.0"
 
-  @spec crop(Vimage.t(), quadrilateral()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec crop(Vimage.t(), quadrilateral()) :: {:ok, Vimage.t()} | {:error, error()}
   def crop(%Vimage{} = image, [top_left, top_right, bottom_right, bottom_left] = quadrilateral)
       when is_rectangle(top_left, top_right, bottom_right, bottom_left) do
     [{left, top}, _, {bottom_right_x, bottom_right_y}, _] = quadrilateral
@@ -4785,7 +4803,11 @@ defmodule Image do
   end
 
   def crop(%Vimage{} = _image, quadrilateral) do
-    {:error, "Invalid crop bounding box. Found #{inspect(quadrilateral)}"}
+    {:error,
+     %Image.Error{
+       message: "Invalid crop bounding box. Found #{inspect(quadrilateral)}",
+       reason: "Invalid crop bounding box. Found #{inspect(quadrilateral)}"
+     }}
   end
 
   @doc """
@@ -4927,7 +4949,7 @@ defmodule Image do
   @doc subject: "Crop", since: "0.27.0"
 
   @spec center_crop(image :: Vimage.t(), width :: pos_integer(), height :: pos_integer()) ::
-          {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def center_crop(%Vimage{} = image, width, height) do
     crop(image, :center, :middle, width, height)
@@ -5065,7 +5087,7 @@ defmodule Image do
           height :: non_neg_integer(),
           options :: Options.Embed.embed_options()
         ) ::
-          {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def embed(image, width, height, options \\ []) do
     with {:ok, options} <- Options.Embed.validate_options(image, width, height, options) do
@@ -5183,7 +5205,7 @@ defmodule Image do
   @doc since: "0.30.0", subject: "Color"
 
   @spec replace_color(Vimage.t(), ChromaKey.chroma_key_options() | [{:replace_with, Pixel.t()}]) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def replace_color(%Vimage{} = image, options \\ []) do
     {to_color, options} = Keyword.pop(options, :replace_with, :black)
@@ -5323,7 +5345,7 @@ defmodule Image do
   @doc subject: "Resize", since: "0.23.0"
 
   @spec trim(image :: Vimage.t(), options :: Options.Trim.trim_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def trim(%Vimage{} = image, options \\ []) do
     case find_trim(image, options) do
@@ -5435,7 +5457,7 @@ defmodule Image do
   @doc subject: "Resize", since: "0.56.0"
 
   @spec find_trim(image :: Vimage.t(), options :: Options.Trim.trim_options()) ::
-          {:ok, bounding_box()} | {:error, error_message()}
+          {:ok, bounding_box()} | {:error, error()}
 
   def find_trim(%Vimage{} = image, options \\ []) do
     case Keyword.pop(options, :background) do
@@ -5583,7 +5605,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.23.0"
 
   @spec flatten(image :: Vimage.t(), options :: Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
   def flatten(%Vimage{} = image, options \\ []) do
     background_color = Keyword.get(options, :background_color, :black)
 
@@ -5688,7 +5710,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.23.0"
 
   @spec dilate(image :: Vimage.t(), radius :: pos_integer) ::
-          {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def dilate(image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
     radius = radius + radius * 2
@@ -5783,7 +5805,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.23.0"
 
   @spec erode(image :: Vimage.t(), radius :: pos_integer()) ::
-          {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def erode(image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
     radius = radius + radius * 2
@@ -5892,7 +5914,7 @@ defmodule Image do
           angle :: float(),
           options :: Options.Rotate.rotation_options()
         ) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def rotate(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
     with {:ok, options} <- Options.Rotate.validate_options(options) do
@@ -5977,7 +5999,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec autorotate(image :: Vimage.t()) ::
-          {:ok, {Vimage.t(), map()}} | {:error, error_message()}
+          {:ok, {Vimage.t(), map()}} | {:error, error()}
 
   def autorotate(%Vimage{} = image) do
     case Operation.autorot(image) do
@@ -6049,7 +6071,7 @@ defmodule Image do
   @dialyzer {:nowarn_function, {:ripple, 1}}
   @doc subject: "Operation"
 
-  @spec ripple(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec ripple(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def ripple(%Vimage{} = image) do
     use Image.Math
 
@@ -6133,7 +6155,7 @@ defmodule Image do
   """
   @doc subject: "Mask"
 
-  @spec circle(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec circle(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def circle(%Vimage{} = image, _options \\ []) do
     width = width(image)
     height = height(image)
@@ -6202,7 +6224,7 @@ defmodule Image do
   """
   @doc subject: "Mask"
 
-  @spec rounded(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec rounded(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def rounded(%Vimage{} = image, options \\ []) do
     use Image.Math
 
@@ -6277,7 +6299,7 @@ defmodule Image do
   """
   @doc subject: "Generator"
 
-  @spec squircle(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec squircle(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def squircle(%Vimage{} = image, options \\ []) do
     use Image.Math
 
@@ -6419,7 +6441,7 @@ defmodule Image do
   """
   @doc subject: "Metadata"
 
-  @spec minimize_metadata(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec minimize_metadata(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def minimize_metadata(%Vimage{} = image) do
     case exif(image) do
       {:ok, exif} ->
@@ -6427,7 +6449,7 @@ defmodule Image do
         |> remove_metadata!()
         |> put_copyright_and_artist(exif)
 
-      {:error, "No such field"} ->
+      {:error, %Image.Error{reason: "No such field"}} ->
         remove_metadata(image)
 
       other ->
@@ -6523,7 +6545,7 @@ defmodule Image do
   @doc subject: "Metadata"
 
   @spec remove_metadata(Vimage.t(), list(binary() | atom())) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def remove_metadata(image, fields \\ [])
 
@@ -6667,14 +6689,14 @@ defmodule Image do
 
   @doc subject: "Generator"
 
-  @spec linear_gradient(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec linear_gradient(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
 
   def linear_gradient(%Vimage{} = image) do
     linear_gradient(image, [])
   end
 
   @spec linear_gradient(Vimage.t(), options :: Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def linear_gradient(%Vimage{} = image, options) do
     width = Image.width(image)
@@ -6684,14 +6706,14 @@ defmodule Image do
   end
 
   @spec linear_gradient(width :: pos_integer(), height :: pos_integer()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def linear_gradient(width, height) do
     linear_gradient(width, height, [])
   end
 
   @spec linear_gradient(width :: pos_integer(), height :: pos_integer(), options :: Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def linear_gradient(width, height, options)
       when is_number(width) and width > 0 and is_number(height) and height > 0 do
@@ -6926,7 +6948,7 @@ defmodule Image do
           height :: pos_integer(),
           options :: Options.RadialGradient.radial_gradient_options()
         ) ::
-          {:ok, %Vimage{}} | {:error, error_message()}
+          {:ok, %Vimage{}} | {:error, error()}
 
   def radial_gradient(width, height, options \\ []) do
     use Image.Math
@@ -7100,7 +7122,7 @@ defmodule Image do
 
   @spec dominant_color(image :: Vimage.t(), options :: Keyword.t()) ::
           {:ok, Pixel.t() | [Pixel.t()] | [{0..255, 0..255, 0..255}]}
-          | {:error, error_message()}
+          | {:error, error()}
 
   def dominant_color(%Vimage{} = image, options \\ []) do
     method = Keyword.get(options, :method, @dominant_method)
@@ -7123,7 +7145,13 @@ defmodule Image do
           dominant_color_imagequant(image, count, effort, dither)
 
         other ->
-          {:error, "Invalid :method option. Expected :histogram or :imagequant. Got #{inspect(other)}."}
+          {:error,
+           %Image.Error{
+             message:
+               "Invalid :method option. Expected :histogram or :imagequant. Got #{inspect(other)}.",
+             reason:
+               "Invalid :method option. Expected :histogram or :imagequant. Got #{inspect(other)}."
+           }}
       end
     end
   end
@@ -7313,12 +7341,20 @@ defmodule Image do
       <<gct::binary-size(^gct_bytes), _::binary>> = rest
       {:ok, for(<<r::8, g::8, b::8 <- gct>>, do: {r, g, b})}
     else
-      {:error, "GIF buffer does not contain a Global Color Table"}
+      {:error,
+       %Image.Error{
+         message: "GIF buffer does not contain a Global Color Table",
+         reason: "GIF buffer does not contain a Global Color Table"
+       }}
     end
   end
 
   defp parse_gif_global_color_table(_other) do
-    {:error, "Could not parse GIF buffer produced by libvips"}
+    {:error,
+     %Image.Error{
+       message: "Could not parse GIF buffer produced by libvips",
+       reason: "Could not parse GIF buffer produced by libvips"
+     }}
   end
 
   defp alpha_black_pixel_count(alpha) do
@@ -7394,7 +7430,7 @@ defmodule Image do
   """
   @doc subject: "Clusters", since: "0.3.0"
 
-  @spec histogram(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec histogram(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def histogram(%Vimage{} = image) do
     Operation.hist_find(image)
   end
@@ -7445,6 +7481,11 @@ defmodule Image do
 
   """
   @doc subject: "Color Difference", since: "0.49.0"
+  @spec delta_e(
+          color_1 :: Vimage.t() | Pixel.t(),
+          color_2 :: Vimage.t() | Pixel.t(),
+          version :: :de76 | :de00 | :cmc
+        ) :: {:ok, float()} | {:error, error()}
   def delta_e(color_1, color_2, version \\ @default_delta_e_version)
 
   def delta_e(%Vimage{} = image_1, color_2, version) do
@@ -7640,7 +7681,7 @@ defmodule Image do
     @doc subject: "Clusters", since: "0.49.0"
 
     @spec k_means(image :: Vimage.t(), options :: Keyword.t()) ::
-            {:ok, list(Pixel.t())} | {:error, error_message()}
+            {:ok, list(Pixel.t())} | {:error, error()}
 
     def k_means(%Vimage{} = image, options \\ []) do
       options = Keyword.put_new(options, :num_clusters, @default_clusters)
@@ -7909,7 +7950,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.3.0"
 
   @spec get_pixel(Vimage.t(), non_neg_integer(), non_neg_integer()) ::
-          {:ok, Pixel.t()} | {:error, error_message()}
+          {:ok, Pixel.t()} | {:error, error()}
 
   def get_pixel(%Vimage{} = image, x, y) do
     band_format = Image.band_format(image)
@@ -8030,7 +8071,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.7.0"
 
   @spec mutate(Vimage.t(), (MutableImage.t() -> any())) ::
-          {:ok, Vimage.t()} | {:ok, {Vimage.t(), term()}} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:ok, {Vimage.t(), term()}} | {:error, error()}
 
   def mutate(%Vimage{} = image, fun) when is_function(fun, 1) do
     case Vimage.mutate(image, fun) do
@@ -8069,7 +8110,7 @@ defmodule Image do
   @doc subject: "Color"
 
   @spec to_colorspace(Vimage.t(), Interpretation.t()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def to_colorspace(%Vimage{} = image, colorspace) do
     with {:ok, colorspace} <- Interpretation.validate_interpretation(colorspace) do
@@ -8132,7 +8173,7 @@ defmodule Image do
   @dialyzer {:nowarn_function, {:to_polar_coordinates, 1}}
   @doc subject: "Operation"
 
-  @spec to_polar_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec to_polar_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def to_polar_coordinates(%Vimage{} = image) do
     use Image.Math
 
@@ -8201,7 +8242,7 @@ defmodule Image do
   @dialyzer {:nowarn_function, {:to_rectangular_coordinates, 1}}
   @doc subject: "Operation"
 
-  @spec to_rectangular_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec to_rectangular_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def to_rectangular_coordinates(%Vimage{} = image) do
     use Image.Math
 
@@ -8214,7 +8255,6 @@ defmodule Image do
     xy = xy * [1.0, 360.0 / height]
 
     {:ok, index} = Complex.rectangular(xy)
-
 
     index = index * scale / 2.0
     index = index + [width / 2.0, height / 2.0]
@@ -8287,7 +8327,7 @@ defmodule Image do
   @doc subject: "Basic Adjustments"
 
   @spec brightness(image :: Vimage.t(), brightness :: float()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
   def brightness(%Vimage{} = image, brightness) when is_multiplier(brightness) do
     without_alpha_band(image, fn image ->
       with_colorspace(image, :lch, fn i ->
@@ -8374,7 +8414,7 @@ defmodule Image do
   @doc subject: "Basic Adjustments"
 
   @spec contrast(image :: Vimage.t(), contrast :: float()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def contrast(%Vimage{} = image, contrast) when is_multiplier(contrast) do
     use Image.Math
@@ -8462,7 +8502,7 @@ defmodule Image do
   @doc since: "0.42.0"
   @doc subject: "Basic Adjustments"
 
-  @spec invert(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec invert(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def invert(%Vimage{} = image) do
     Vix.Vips.Operation.invert(image)
   end
@@ -8550,7 +8590,7 @@ defmodule Image do
   @doc subject: "Basic Adjustments"
 
   @spec modulate(image :: Vimage.t(), options :: Options.Modulate.modulate_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def modulate(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Modulate.validate_options(options) do
@@ -8663,7 +8703,7 @@ defmodule Image do
   @doc subject: "Basic Adjustments"
 
   @spec equalize(image :: Vimage.t(), bands :: Options.Equalize.equalize_option()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def equalize(image, bands \\ :all)
 
@@ -8855,7 +8895,7 @@ defmodule Image do
   @doc subject: "Basic Adjustments"
 
   @spec apply_tone_curve(image :: Vimage.t(), options :: Options.ToneCurve.tone_curve_options()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def apply_tone_curve(%Vimage{} = image, options \\ []) do
     with {:ok, lut} <- tone_curve(image, options) do
@@ -9003,7 +9043,7 @@ defmodule Image do
           image :: Vimage.t(),
           options :: Options.LocalContrast.local_contrast_options()
         ) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def local_contrast(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.LocalContrast.validate_options(options) do
@@ -9091,7 +9131,7 @@ defmodule Image do
   @doc subject: "Basic Adjustments"
 
   @spec saturation(image :: Vimage.t(), saturation :: float()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
   def saturation(%Vimage{} = image, saturation) when is_multiplier(saturation) do
     with_colorspace(image, :lch, fn i ->
       Image.Math.multiply(i, [1.0, saturation, 1.0])
@@ -9183,7 +9223,7 @@ defmodule Image do
           vibrance :: float(),
           options :: Options.Vibrance.vibrance_options()
         ) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def vibrance(%Vimage{} = image, vibrance, options \\ []) when is_multiplier(vibrance) do
     use Image.Math
@@ -9325,7 +9365,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec reduce_noise(image :: Vimage.t(), window_size :: pos_integer()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def reduce_noise(%Vimage{} = image, window_size \\ @default_median_window_size) do
     Operation.rank(image, window_size, window_size, div(window_size * window_size, 2))
@@ -9411,7 +9451,7 @@ defmodule Image do
   @doc subject: "Matrix", since: "0.62.0"
 
   @spec to_list(image :: Vimage.t()) ::
-    {:ok, list()} | {:error, error_message()}
+          {:ok, list()} | {:error, error()}
 
   def to_list(%Vimage{} = image) do
     with {:ok, tensor} <- Vix.Vips.Image.write_to_tensor(image),
@@ -9479,7 +9519,7 @@ defmodule Image do
     @doc subject: "Matrix", since: "0.5.0"
 
     @spec to_nx(image :: Vimage.t(), options :: Keyword.t()) ::
-            {:ok, Nx.Tensor.t()} | {:error, error_message()}
+            {:ok, Nx.Tensor.t()} | {:error, error()}
 
     def to_nx(%Vimage{} = image, options \\ []) do
       {to_shape, options} = Keyword.pop(options, :shape, @default_shape)
@@ -9621,7 +9661,7 @@ defmodule Image do
     """
     @doc subject: "Matrix", since: "0.5.0"
 
-    @spec from_nx(tensor :: Nx.Tensor.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+    @spec from_nx(tensor :: Nx.Tensor.t()) :: {:ok, Vimage.t()} | {:error, error()}
     def from_nx(tensor) when is_struct(tensor, Nx.Tensor) do
       with {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
         case Nx.shape(tensor) do
@@ -9765,7 +9805,7 @@ defmodule Image do
             destination :: quadrilateral(),
             Options.WarpPerspective.t()
           ) ::
-            {:ok, Vimage.t()} | {:error, error_message()}
+            {:ok, Vimage.t()} | {:error, error()}
 
     def warp_perspective(%Vimage{} = image, source, destination, options \\ []) do
       with {:ok, flattened} <- flatten(image),
@@ -9921,7 +9961,7 @@ defmodule Image do
             source :: quadrilateral(),
             Options.WarpPerspective.t()
           ) ::
-            {:ok, quadrilateral(), Vimage.t()} | {:error, error_message()}
+            {:ok, quadrilateral(), Vimage.t()} | {:error, error()}
 
     def straighten_perspective(%Vimage{} = image, source, options \\ []) do
       with [{sx1, sy1}, {sx2, _sy2}, {_sx3, _sy3}, {_sx4, sy4}] <- source do
@@ -10046,7 +10086,7 @@ defmodule Image do
     @doc subject: "Distortion", since: "0.57.0"
 
     @spec distort(image :: Vimage.t(), source :: list(point()), destination :: list(point())) ::
-            {:ok, Vimage.t()} | {:error, error_message}
+            {:ok, Vimage.t()} | {:error, error()}
 
     def distort(%Vimage{} = image, [{_x1, _y1} | _] = source, [{_x2, _y2} | _] = destination)
         when length(source) == length(destination) do
@@ -10109,7 +10149,7 @@ defmodule Image do
             source :: quadrilateral(),
             destination :: quadrilateral()
           ) ::
-            {:ok, transform_matrix :: Vimage.t()} | {:error, error_message()}
+            {:ok, transform_matrix :: Vimage.t()} | {:error, error()}
 
     def transform_matrix(image, source, destination) do
       with [{sx1, sy1}, {sx2, sy2}, {sx3, sy3}, {sx4, sy4}] <- source,
@@ -10328,7 +10368,7 @@ defmodule Image do
   """
   @doc subject: "Operation", since: "0.28.0"
 
-  @spec map(Vimage.t(), Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec map(Vimage.t(), Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def map(%Vimage{} = image, %Vimage{} = transformation_matrix, options \\ []) do
     with {:ok, options} <- Options.WarpPerspective.validate_options(image, options) do
       Operation.mapim(image, transformation_matrix, options)
@@ -10423,7 +10463,7 @@ defmodule Image do
   @doc subject: "Operation"
 
   @spec compare(Vimage.t(), Vimage.t(), Keyword.t()) ::
-          {:ok, number, Vimage.t()} | {:error, error_message()}
+          {:ok, number, Vimage.t()} | {:error, error()}
   def compare(%Vimage{} = image_1, %Vimage{} = image_2, options \\ []) when is_list(options) do
     with {:ok, options} <- Options.Compare.validate_options(image_1, options),
          {:ok, image_1} <- Image.flatten(image_1),
@@ -10476,7 +10516,11 @@ defmodule Image do
   end
 
   defp compare_by_metric(_image_1, _image_2, _difference, metric) do
-    {:error, "Invalid metric #{inspect(metric)}. Value metrics are :ae, :mse and :rmse"}
+    {:error,
+     %Image.Error{
+       message: "Invalid metric #{inspect(metric)}. Value metrics are :ae, :mse and :rmse",
+       reason: "Invalid metric #{inspect(metric)}. Value metrics are :ae, :mse and :rmse"
+     }}
   end
 
   defp image_difference(image_1, image_2) do
@@ -10558,7 +10602,7 @@ defmodule Image do
   @doc subject: "Metadata", since: "0.6.0"
 
   @spec dhash(image :: Vimage.t(), hash_size :: pos_integer()) ::
-          {:ok, image_hash()} | {:error, error_message()}
+          {:ok, image_hash()} | {:error, error()}
 
   def dhash(%Vimage{} = image, hash_size_bits \\ 64)
       when is_integer(hash_size_bits) and hash_size_bits > 0 do
@@ -10633,7 +10677,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.6.0"
 
   @spec hamming_distance(image_1 :: Vimage.t(), image_2 :: Vimage.t(), hash_size :: pos_integer()) ::
-          {:ok, non_neg_integer()} | {:error, error_message()}
+          {:ok, non_neg_integer()} | {:error, error()}
 
   def hamming_distance(image_1, image_2, hash_size \\ 64)
 
@@ -10646,7 +10690,7 @@ defmodule Image do
   end
 
   @spec hamming_distance(image_hash(), image_hash()) ::
-          {:ok, non_neg_integer()} | {:error, error_message()}
+          {:ok, non_neg_integer()} | {:error, error()}
 
   def hamming_distance(hash_1, hash_2, hash_size)
       when is_binary(hash_1) and is_binary(hash_2) and is_integer(hash_size) and hash_size > 0 do
@@ -10685,7 +10729,7 @@ defmodule Image do
     """
     @doc subject: "Operation"
 
-    @spec fft(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+    @spec fft(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
     def fft(%Vimage{} = image) do
       image
       |> to_colorspace!(:bw)
@@ -10793,20 +10837,14 @@ defmodule Image do
   """
   @doc subject: "Mask"
 
-  @spec convert_alpha_to_mask(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec convert_alpha_to_mask(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def convert_alpha_to_mask(%Vimage{} = image) do
     if alpha_band = alpha_band(image) do
       {:ok, mask} = Operation.extract_band(image, alpha_band)
       Operation.invert(mask)
     else
-      {:error, "Image has no alpha band"}
+      {:error, %Image.Error{message: "Image has no alpha band", reason: "Image has no alpha band"}}
     end
-  end
-
-  @deprecated "Use convert_alpha_to_mask/1 instead"
-  @doc false
-  def convert_to_mask(%Vimage{} = image) do
-    convert_alpha_to_mask(image)
   end
 
   @doc """
@@ -10836,12 +10874,6 @@ defmodule Image do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
-  end
-
-  @deprecated "Use convert_alpha_to_mask!/1 instead"
-  @doc false
-  def convert_to_mask!(%Vimage{} = image) do
-    convert_alpha_to_mask!(image)
   end
 
   @doc """
@@ -10889,7 +10921,7 @@ defmodule Image do
   @doc subject: "Split and join", since: "0.53.0"
 
   @spec join_bands(image_list :: [Vimage.t()]) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def join_bands(bands) when is_list(bands) do
     Operation.bandjoin(bands)
@@ -10943,7 +10975,7 @@ defmodule Image do
   @doc subject: "Split and join", since: "0.60.0"
 
   @spec band_and(image :: Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def band_and(image) do
     Vix.Vips.Operation.bandbool(image, :VIPS_OPERATION_BOOLEAN_AND)
@@ -10994,7 +11026,7 @@ defmodule Image do
   @doc subject: "Split and join", since: "0.60.0"
 
   @spec band_or(image :: Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def band_or(image) do
     Vix.Vips.Operation.bandbool(image, :VIPS_OPERATION_BOOLEAN_OR)
@@ -11045,7 +11077,7 @@ defmodule Image do
   @doc subject: "Split and join", since: "0.60.0"
 
   @spec band_xor(image :: Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def band_xor(image) do
     Vix.Vips.Operation.bandbool(image, :VIPS_OPERATION_BOOLEAN_EOR)
@@ -11168,7 +11200,7 @@ defmodule Image do
   """
   @doc since: "0.30.0", subject: "Operation"
 
-  @spec cast(Vimage.t(), BandFormat.t()) :: {:ok, Vimage.t()} | {:error, error_message()}
+  @spec cast(Vimage.t(), BandFormat.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def cast(%Vimage{} = image, band_format) do
     with {:ok, band_format} <- BandFormat.validate(band_format) do
       Operation.cast(image, band_format)
@@ -11231,9 +11263,9 @@ defmodule Image do
 
   @spec without_alpha_band(
           Vimage.t(),
-          (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})
+          (Vimage.t() -> {:ok, Vimage.t()} | {:error, error()})
         ) ::
-          {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def without_alpha_band(%Vimage{} = image, fun) when is_function(fun, 1) do
     {without_alpha, alpha} = split_alpha(image)
@@ -11273,12 +11305,12 @@ defmodule Image do
   @spec with_colorspace(
           Vimage.t(),
           colorspace :: Interpretation.t(),
-          (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})
+          (Vimage.t() -> {:ok, Vimage.t()} | {:error, error()})
         ) ::
-          {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def with_colorspace(image, colorspace, fun) do
-    original_colorspace = interpretation(image)
+    original_colorspace = colorspace(image)
 
     with {:ok, converted} <- to_colorspace(image, colorspace) do
       case fun.(converted) do
@@ -11323,9 +11355,9 @@ defmodule Image do
   @spec with_band_format(
           Vimage.t(),
           band_format :: BandFormat.t(),
-          (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message})
+          (Vimage.t() -> {:ok, Vimage.t()} | {:error, error()})
         ) ::
-          {:ok, Vimage.t()} | {:error, error_message}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def with_band_format(image, band_format, fun) do
     original_band_format = band_format(image)
@@ -11376,25 +11408,19 @@ defmodule Image do
       # If an image isn't opened with `pages: :all` then only
       # the first page of an image is loaded.
       iex> image_2 = Image.open!("./test/support/images/animated.webp")
-      iex> Image.map_join_pages(image_2, &Image.equalize/1)
-      {:error, "Image does not have a page-height header. " <>
-        "Perhaps the image wasn't opened with the `pages: :all` option or " <>
-        "libvips wasn't built with libwebp-dev/libgif-dev configured? " <>
-        "Run `vips --vips-config` from the command line to check."}
+      iex> {:error, %Image.Error{reason: :missing_page_height}} = Image.map_join_pages(image_2, &Image.equalize/1)
+      iex> :ok
+      :ok
 
   """
   @doc since: "0.39.0", subject: "Operation"
 
-  @spec map_join_pages(Vimage.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error_message()})) ::
-          {:ok, Vimage.t()} | {:error, error_message()}
+  @spec map_join_pages(Vimage.t(), (Vimage.t() -> {:ok, Vimage.t()} | {:error, error()})) ::
+          {:ok, Vimage.t()} | {:error, error()}
 
   def map_join_pages(%Vimage{} = image, fun) when is_function(fun, 1) do
     map_join_pages(image, fun, pages(image))
   end
-
-  @doc false
-  @deprecated "Use Image.map_join_pages/2"
-  defdelegate map_pages(image, fun), to: __MODULE__, as: :map_join_pages
 
   # There is only one page - a normal image
   # So just invoke the given function.
@@ -11418,7 +11444,11 @@ defmodule Image do
           {:ok, updated_image}
 
         {:error, reason} ->
-          {:error, "Could not set the page-height header. Reason: #{inspect(reason)}"}
+          {:error,
+           %Image.Error{
+             message: "Could not set the page-height header. Reason: #{inspect(reason)}",
+             reason: "Could not set the page-height header. Reason: #{inspect(reason)}"
+           }}
       end
     end
   end
@@ -11429,11 +11459,13 @@ defmodule Image do
         {:ok, page_height}
 
       {:error, _reason} ->
-        {:error,
-         "Image does not have a page-height header. " <>
-           "Perhaps the image wasn't opened with the `pages: :all` option or " <>
-           "libvips wasn't built with libwebp-dev/libgif-dev configured? " <>
-           "Run `vips --vips-config` from the command line to check."}
+        message =
+          "Image does not have a page-height header. " <>
+            "Perhaps the image wasn't opened with the `pages: :all` option or " <>
+            "libvips wasn't built with libwebp-dev/libgif-dev configured? " <>
+            "Run `vips --vips-config` from the command line to check."
+
+        {:error, %Image.Error{reason: :missing_page_height, message: message}}
     end
   end
 
@@ -11444,8 +11476,16 @@ defmodule Image do
       {:ok, page_n} = Operation.extract_area(image, 0, page_height * (n - 1), width, page_height)
 
       case fun.(page_n) do
-        {:ok, new_page_n} -> {:cont, {:ok, [new_page_n | acc]}}
-        {:error, reason} -> {:halt, {:error, "Page #{n} returned #{inspect(reason)}"}}
+        {:ok, new_page_n} ->
+          {:cont, {:ok, [new_page_n | acc]}}
+
+        {:error, reason} ->
+          {:halt,
+           {:error,
+            %Image.Error{
+              message: "Page #{n} returned #{inspect(reason)}",
+              reason: "Page #{n} returned #{inspect(reason)}"
+            }}}
       end
     end)
   end
@@ -11482,7 +11522,7 @@ defmodule Image do
   """
   @doc since: "0.44.0", subject: "Operation"
 
-  @spec extract_pages(Vimage.t()) :: {:ok, [Vimage.t()]} | {:error, error_message()}
+  @spec extract_pages(Vimage.t()) :: {:ok, [Vimage.t()]} | {:error, error()}
 
   def extract_pages(%Vimage{} = image) do
     width = width(image)
@@ -11491,8 +11531,16 @@ defmodule Image do
       result =
         Enum.reduce_while(1..pages(image), {:ok, []}, fn n, {:ok, acc} ->
           case Operation.extract_area(image, 0, page_height * (n - 1), width, page_height) do
-            {:ok, new_page_n} -> {:cont, {:ok, [new_page_n | acc]}}
-            {:error, reason} -> {:halt, {:error, "Page #{n} returned #{inspect(reason)}"}}
+            {:ok, new_page_n} ->
+              {:cont, {:ok, [new_page_n | acc]}}
+
+            {:error, reason} ->
+              {:halt,
+               {:error,
+                %Image.Error{
+                  message: "Page #{n} returned #{inspect(reason)}",
+                  reason: "Page #{n} returned #{inspect(reason)}"
+                }}}
           end
         end)
 
@@ -11552,7 +11600,7 @@ defmodule Image do
   @doc subject: "Display", since: "0.13.0"
 
   @spec preview(Vimage.t() | {:ok, Vimage.t()}) ::
-          Vimage.t() | {:ok, Vimage.t()} | {:error, error_message()}
+          Vimage.t() | {:ok, Vimage.t()} | {:error, error()}
 
   def preview(%Vimage{} = image) do
     with {:ok, "iTerm2"} <- supported_terminal(System.get_env("LC_TERMINAL")) do
@@ -11605,7 +11653,7 @@ defmodule Image do
   """
   @doc subject: "Display", since: "0.13.0"
 
-  @spec p(Vimage.t()) :: Vimage.t() | {:error, error_message()}
+  @spec p(Vimage.t()) :: Vimage.t() | {:error, error()}
   def p(image) do
     preview(image)
   end
@@ -11767,7 +11815,11 @@ defmodule Image do
   # end
 
   defp file_exists?(path) do
-    if File.exists?(path, [:raw]), do: {:ok, path}, else: {:error, :enoent}
+    if File.exists?(path, [:raw]) do
+      {:ok, path}
+    else
+      {:error, Image.Error.wrap(:enoent, path: path)}
+    end
   end
 
   defp xy_offset(%Vimage{} = _image, _overlay, x, y)
@@ -11830,8 +11882,13 @@ defmodule Image do
 
       other ->
         {:error,
-         "Only images with three bands can be transferred to eVision. " <>
-           "Found an image of shape #{inspect(other)}"}
+         %Image.Error{
+           reason: :wrong_band_count,
+           value: other,
+           message:
+             "Only images with three bands can be transferred to eVision. " <>
+               "Found an image of shape #{inspect(other)}"
+         }}
     end
   end
 

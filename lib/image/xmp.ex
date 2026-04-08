@@ -7,6 +7,22 @@ defmodule Image.Xmp do
 
   import SweetXml
 
+  @doc """
+  Extracts an XMP metadata blob into an Elixir map.
+
+  ### Arguments
+
+  * `xmp` is either the raw XMP XML payload as a string, or a parsed
+    `SweetXml` xml element. This is the form libvips returns from
+    `Vix.Vips.Image.header_value(image, "xmp-data")`.
+
+  ### Returns
+
+  * A map keyed by atom field names (`:artist`, `:keywords`,
+    `:created_at`, `:rating`, …) with the parsed values.
+
+  """
+  @spec extract_xmp(binary() | tuple()) :: map()
   def extract_xmp(xmp) do
     SweetXml.xpath(xmp, ~x"//x:xmpmeta",
       artist: ~x".//dc:creator/rdf:Seq/rdf:li/text()"s |> transform_by(&maybe_nil/1),

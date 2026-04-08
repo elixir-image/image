@@ -83,7 +83,7 @@ defmodule Image.Blurhash do
   @doc subject: "Operation", since: "0.44.0"
 
   @spec encode(image :: Vimage.t(), options :: Keyword.t()) ::
-          {:ok, String.t()} | {:error, Image.error_message()}
+          {:ok, String.t()} | {:error, Image.error()}
 
   def encode(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Image.Options.Blurhash.validate_options(image, options),
@@ -124,7 +124,7 @@ defmodule Image.Blurhash do
       iex> {:ok, _image} = Image.Blurhash.decode(blurhash, 400, 200)
 
       iex> Image.Blurhash.decode("nonsense", 400, 200)
-      {:error, "Invalid blurhash"}
+      {:error, %Image.Error{message: "Invalid blurhash", reason: "Invalid blurhash"}}
 
   """
 
@@ -134,7 +134,7 @@ defmodule Image.Blurhash do
   @doc subject: "Operation", since: "0.44.0"
 
   @spec decode(blurhash :: String.t(), width :: pos_integer(), height :: pos_integer()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def decode(blurhash, width, height)
       when is_binary(blurhash) and is_integer(width) and is_integer(height) and width > 0 and

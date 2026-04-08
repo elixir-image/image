@@ -245,12 +245,12 @@ defmodule Image.Math do
     boolean_rshift!(a, b)
   end
 
-  @spec exp(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec exp(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def exp(image) do
     Operation.math(image, :VIPS_OPERATION_MATH_EXP)
   end
 
-  @spec abs(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec abs(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def abs(%Vimage{} = image) do
     Operation.abs(image)
   end
@@ -260,7 +260,7 @@ defmodule Image.Math do
     {:ok, Kernel.abs(number)}
   end
 
-  @spec max(Vimage.t()) :: {:ok, float()} | {:error, Image.error_message()}
+  @spec max(Vimage.t()) :: {:ok, float()} | {:error, Image.error()}
   def max(%Vimage{} = image) do
     case Operation.max(image) do
       {:ok, {max, _}} -> {:ok, max}
@@ -268,7 +268,7 @@ defmodule Image.Math do
     end
   end
 
-  @spec min(Vimage.t()) :: {:ok, float()} | {:error, Image.error_message()}
+  @spec min(Vimage.t()) :: {:ok, float()} | {:error, Image.error()}
   def min(%Vimage{} = image) do
     case Operation.min(image) do
       {:ok, {min, _}} -> {:ok, min}
@@ -277,14 +277,14 @@ defmodule Image.Math do
   end
 
   @spec pow(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def pow(%Vimage{} = image, %Vimage{} = image2) do
     Operation.math2(image, image2, :VIPS_OPERATION_MATH2_POW)
   end
 
   @spec pow(Vimage.t(), number()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def pow(%Vimage{} = image, value) when is_number(value) do
     Operation.math2_const(image, :VIPS_OPERATION_MATH2_POW, [value])
@@ -315,17 +315,17 @@ defmodule Image.Math do
     {:ok, :math.sin(other)}
   end
 
-  @spec add(Vimage.t(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec add(Vimage.t(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def add(%Vimage{} = image, %Vimage{} = image2) do
     Operation.add(image, image2)
   end
 
-  @spec add(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec add(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def add(%Vimage{} = image, value) when is_number(value) do
     add(image, [value])
   end
 
-  @spec add(Vimage.t(), [number(), ...]) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec add(Vimage.t(), [number(), ...]) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def add(%Vimage{} = image, value) when is_list(value) do
     Operation.linear(image, [1.0], value)
   end
@@ -339,22 +339,22 @@ defmodule Image.Math do
     {:ok, Kernel.+(a, b)}
   end
 
-  @spec subtract(Vimage.t(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec subtract(Vimage.t(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def subtract(%Vimage{} = image, %Vimage{} = image2) do
     Operation.subtract(image, image2)
   end
 
-  @spec subtract(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec subtract(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def subtract(%Vimage{} = image, value) when is_number(value) do
     subtract(image, [value])
   end
 
-  @spec subtract(Vimage.t(), [number()]) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec subtract(Vimage.t(), [number()]) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def subtract(%Vimage{} = image, value) when is_list(value) do
     Operation.linear(image, [1.0], Enum.map(value, &(-&1)))
   end
 
-  @spec subtract(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec subtract(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def subtract(value, %Vimage{} = image) when is_number(value) do
     image
     |> multiply!(-1)
@@ -367,22 +367,22 @@ defmodule Image.Math do
     {:ok, Kernel.-(a, b)}
   end
 
-  @spec multiply(Vimage.t(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec multiply(Vimage.t(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def multiply(%Vimage{} = image, %Vimage{} = image2) do
     Operation.multiply(image, image2)
   end
 
-  @spec multiply(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec multiply(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def multiply(%Vimage{} = image, value) when is_number(value) do
     multiply(image, [value])
   end
 
-  @spec multiply(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec multiply(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def multiply(value, %Vimage{} = image) when is_number(value) do
     multiply(image, [value])
   end
 
-  @spec multiply(Vimage.t(), list()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec multiply(Vimage.t(), list()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def multiply(%Vimage{} = image, value) when is_list(value) do
     Operation.linear(image, value, [0.0])
   end
@@ -392,25 +392,25 @@ defmodule Image.Math do
     {:ok, Kernel.*(a, b)}
   end
 
-  @spec divide(Vimage.t(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec divide(Vimage.t(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def divide(%Vimage{} = image, %Vimage{} = image2) do
     Operation.divide(image, image2)
   end
 
-  @spec divide(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec divide(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def divide(%Vimage{} = image, value) when is_number(value) do
     divide(image, [value])
   end
 
   # See https://github.com/libvips/libvips/blob/master/cplusplus/VImage.cpp#L1062-L1066
-  @spec divide(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec divide(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def divide(value, %Vimage{} = image) when is_number(value) do
     image
     |> pow!(-1.0)
     |> multiply(value)
   end
 
-  @spec divide(Vimage.t(), [number()]) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec divide(Vimage.t(), [number()]) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def divide(%Vimage{} = image, value) when is_list(value) do
     Operation.linear(image, Enum.map(value, &(1.0 / &1)), [0.0])
   end
@@ -421,84 +421,84 @@ defmodule Image.Math do
   end
 
   @spec less_than(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def less_than(%Vimage{} = image, %Vimage{} = other) do
     Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_LESS)
   end
 
   @spec less_than(Vimage.t(), Image.pixel()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def less_than(%Vimage{} = image, other) when is_pixel(other) do
     Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_LESS, List.wrap(other))
   end
 
   @spec less_than_or_equal(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def less_than_or_equal(%Vimage{} = image, %Vimage{} = other) do
     Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_LESSEQ)
   end
 
   @spec less_than_or_equal(Vimage.t(), Image.pixel()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def less_than_or_equal(%Vimage{} = image, other) when is_pixel(other) do
     Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_LESSEQ, List.wrap(other))
   end
 
   @spec greater_than(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def greater_than(%Vimage{} = image, %Vimage{} = other) do
     Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_MORE)
   end
 
   @spec greater_than(Vimage.t(), Image.pixel()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def greater_than(%Vimage{} = image, other) when is_pixel(other) do
     Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_MORE, List.wrap(other))
   end
 
   @spec greater_than_or_equal(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def greater_than_or_equal(%Vimage{} = image, %Vimage{} = other) do
     Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_MOREEQ)
   end
 
   @spec greater_than_or_equal(Vimage.t(), Image.pixel()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def greater_than_or_equal(%Vimage{} = image, other) when is_pixel(other) do
     Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_MOREEQ, List.wrap(other))
   end
 
   @spec equal(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def equal(%Vimage{} = image, %Vimage{} = other) do
     Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_EQUAL)
   end
 
   @spec equal(Vimage.t(), Image.pixel()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def equal(%Vimage{} = image, other) when is_pixel(other) do
     Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_EQUAL, List.wrap(other))
   end
 
   @spec not_equal(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def not_equal(%Vimage{} = image, %Vimage{} = other) do
     Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_NOTEQ)
   end
 
   @spec not_equal(Vimage.t(), Image.pixel()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def not_equal(%Vimage{} = image, other) when is_pixel(other) do
     Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_NOTEQ, List.wrap(other))
@@ -508,7 +508,7 @@ defmodule Image.Math do
   def less_than!(%Vimage{} = image, value) do
     case less_than(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -521,7 +521,7 @@ defmodule Image.Math do
   def less_than_or_equal!(%Vimage{} = image, value) do
     case less_than_or_equal(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -534,7 +534,7 @@ defmodule Image.Math do
   def greater_than!(%Vimage{} = image, value) do
     case greater_than(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -547,7 +547,7 @@ defmodule Image.Math do
   def greater_than_or_equal!(%Vimage{} = image, value) do
     case greater_than_or_equal(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -560,7 +560,7 @@ defmodule Image.Math do
   def equal!(%Vimage{} = image, value) do
     case equal(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -573,7 +573,7 @@ defmodule Image.Math do
   def not_equal!(%Vimage{} = image, value) do
     case not_equal(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -586,7 +586,7 @@ defmodule Image.Math do
   def add!(%Vimage{} = image, value) do
     case add(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -594,7 +594,7 @@ defmodule Image.Math do
   def add!(value, %Vimage{} = image) do
     case add(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -607,7 +607,7 @@ defmodule Image.Math do
   def subtract!(%Vimage{} = image, value) do
     case subtract(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -615,7 +615,7 @@ defmodule Image.Math do
   def subtract!(value, %Vimage{} = image) when is_number(value) do
     case subtract(value, image) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -628,7 +628,7 @@ defmodule Image.Math do
   def multiply!(%Vimage{} = image, value) do
     case multiply(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -636,7 +636,7 @@ defmodule Image.Math do
   def multiply!(value, %Vimage{} = image) do
     case multiply(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -649,7 +649,7 @@ defmodule Image.Math do
   def divide!(%Vimage{} = image, value) do
     case divide(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -657,7 +657,7 @@ defmodule Image.Math do
   def divide!(value, %Vimage{} = image) do
     case divide(value, image) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -670,7 +670,7 @@ defmodule Image.Math do
   def exp!(image) do
     case exp(image) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -678,7 +678,7 @@ defmodule Image.Math do
   def abs!(image) do
     case abs(image) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -686,7 +686,7 @@ defmodule Image.Math do
   def max!(image) do
     case max(image) do
       {:ok, float} -> float
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -694,7 +694,7 @@ defmodule Image.Math do
   def min!(image) do
     case min(image) do
       {:ok, float} -> float
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -702,7 +702,7 @@ defmodule Image.Math do
   def pow!(%Vimage{} = image, value) do
     case pow(image, value) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -717,7 +717,7 @@ defmodule Image.Math do
   def cos!(%Vimage{} = image) do
     case cos(image) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -727,14 +727,14 @@ defmodule Image.Math do
   def sin!(%Vimage{} = image) do
     case sin(image) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
   ### Logical operations
 
   @spec boolean_and(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
   def boolean_and(%Vimage{} = image_1, %Vimage{} = image_2) do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_AND)
   end
@@ -743,12 +743,12 @@ defmodule Image.Math do
   def boolean_and!(%Vimage{} = image_1, %Vimage{} = image_2) do
     case boolean_and(image_1, image_2) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
   @spec boolean_or(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
   def boolean_or(%Vimage{} = image_1, %Vimage{} = image_2) do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_OR)
   end
@@ -757,12 +757,12 @@ defmodule Image.Math do
   def boolean_or!(%Vimage{} = image_1, %Vimage{} = image_2) do
     case boolean_or(image_1, image_2) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
   @spec boolean_xor(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
   def boolean_xor(%Vimage{} = image_1, %Vimage{} = image_2) do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_EOR)
   end
@@ -771,12 +771,12 @@ defmodule Image.Math do
   def boolean_xor!(%Vimage{} = image_1, %Vimage{} = image_2) do
     case boolean_xor(image_1, image_2) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
   @spec boolean_lshift(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
   def boolean_lshift(%Vimage{} = image_1, %Vimage{} = image_2) do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_LSHIFT)
   end
@@ -785,12 +785,12 @@ defmodule Image.Math do
   def boolean_lshift!(%Vimage{} = image_1, %Vimage{} = image_2) do
     case boolean_lshift(image_1, image_2) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
   @spec boolean_rshift(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
   def boolean_rshift(%Vimage{} = image_1, %Vimage{} = image_2) do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_RSHIFT)
   end
@@ -799,7 +799,7 @@ defmodule Image.Math do
   def boolean_rshift!(%Vimage{} = image_1, %Vimage{} = image_2) do
     case boolean_rshift(image_1, image_2) do
       {:ok, image} -> image
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 

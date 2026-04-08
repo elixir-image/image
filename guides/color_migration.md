@@ -229,13 +229,13 @@ The validator now needs the target image (it didn't before), so the validator en
 
 The bug fix lands here: every option validator now produces pixel values in the right interpretation. Existing tests against sRGB images will not change behavior; tests against Lab / scRGB / CMYK images will now produce the colors the user actually asked for.
 
-`Image.Color.rgb_color/1` and `Image.Color.validate_color/1` are deprecated with `@deprecated`, but they keep working as thin wrappers around `Color.new/2 + Color.convert(_, Color.SRGB)`.
+`Image.Color.rgb_color/1` and `Image.Color.validate_color/1` are deprecated with `@deprecated`, but they keep working as thin wrappers around `Color.new/2` + `Color.convert/2` (with `Color.SRGB` as the target).
 
 ### Phase 3 — Replace internal conversions
 
 Files changed:
 
-* `lib/image.ex` — the four `Color.validate_color/1` call sites (`if_then_else`, `replace_color`, `flatten`, `compare/2`), the `Color.convert!` site in `k_means`, the `Color.convert!` site in `compare_colors`, and the `dominant_color` paths if they need to round-trip through Lab.
+* `lib/image.ex` — the four `Color`-style `validate_color/1` call sites (`if_then_else`, `replace_color`, `flatten`, `compare/2`), the `Color.convert!` site in `k_means`, the `Color.convert!` site in `compare_colors`, and the `dominant_color` paths if they need to round-trip through Lab.
 * `lib/image/color.ex` — `convert/4`, `convert!/4`, `convert/2 (image)`, `sort/2`, `compare_colors/3` are reimplemented as wrappers over `Color.convert/2,3` and marked `@deprecated`. The custom `:hlv` ordering moves into a private helper inside `Image` (it is image-specific).
 
 The CSV-driven `@color_map`/`@css_color`/`@greyscale_color_map` module attributes go away. `priv/color/css_colors.csv` is deleted (its content is in `Color.CSSNames`). `priv/color/additional_colors.csv` is reduced to `ChromaGreen, ChromaBlue` only — and, ideally, those move into `Color.CSSNames` upstream so the file disappears entirely. The `Transparent`/`Opaque` "color" entries are deleted (they were only ever transparency aliases mis-modelled as colors).
@@ -248,10 +248,10 @@ Type aliases:
 
 | Old | New | Notes |
 |---|---|---|
-| `Image.Color.t/0` | `Image.Pixel.t/0` | union of: a `Color.*` struct, an integer/float list (3..5), a hex string, a CSS atom |
-| `Image.Color.rgb_color/0` | `Image.Pixel.rgb_color/0` or `[number()]` | most call sites can drop this entirely |
-| `Image.Color.transparency/0` | `Image.Pixel.transparency/0` | unchanged shape |
-| `Image.Color.icc_profile/0` | `Image.ICCProfile.t/0` | unchanged shape |
+| `Image.Color.t/0` | `t:Image.Pixel.t/0` | union of: a `Color.*` struct, an integer/float list (3..5), a hex string, a CSS atom |
+| `Image.Color.rgb_color/0` | `[number()]` | use a bare list type — most call sites can drop the dedicated alias entirely |
+| `Image.Color.transparency/0` | `t:Image.Pixel.transparency/0` | unchanged shape |
+| `Image.Color.icc_profile/0` | `t:Image.ICCProfile.t/0` | unchanged shape |
 
 A handful of `@spec` lines change. Where the old type was used inside `lib/image/options/*.ex` typespecs, they switch to `Image.Pixel.t()`.
 
@@ -274,8 +274,8 @@ In the next minor release after the deprecation cycle:
 |---|---|---|
 | `Image.Color` module | deprecated in phase 2, deleted in phase 5 | Breaking — but `@deprecated` warns first |
 | Color in non-sRGB images | **bug fixed** — color args are converted to the image's interpretation | Behavior change, almost certainly the change a user would want |
-| Public typespec `Image.Color.t/0` | renamed to `Image.Pixel.t/0` | Breaking for downstream typespecs |
-| Public typespec `Image.Color.icc_profile/0` | renamed to `Image.ICCProfile.t/0` | Breaking for downstream typespecs |
+| Public typespec `Image.Color.t/0` | renamed to `t:Image.Pixel.t/0` | Breaking for downstream typespecs |
+| Public typespec `Image.Color.icc_profile/0` | renamed to `t:Image.ICCProfile.t/0` | Breaking for downstream typespecs |
 | `Image.Color.color_map/0`, `rgb_color/1`, `validate_color/1`, `rgb_to_hex/1`, `hex_to_rgb/1`, `convert/4`, `sort/2` | deprecated wrappers for one release, then removed | Breaking after phase 5 |
 | `Image.dominant_color/2` return shape | unchanged on the integer-list path; the `:imagequant` path still returns `{r, g, b}` tuples | None |
 | Hex/named color parsing | now via `Color.SRGB.parse/1` — supports `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`, named colors. The current parser is `#RRGGBB` only | **Improvement**, no break |

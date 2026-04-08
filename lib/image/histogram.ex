@@ -99,7 +99,7 @@ defmodule Image.Histogram do
   @doc subject: "Histogram"
 
   @spec as_svg(Vimage.t(), Options.Histogram.histogram_options()) ::
-          {:ok, String.t()} | {:error, Image.error_message()}
+          {:ok, String.t()} | {:error, Image.error()}
 
   def as_svg(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Histogram.validate_options(options),
@@ -222,7 +222,7 @@ defmodule Image.Histogram do
   @doc subject: "Histogram"
 
   @spec as_image(Vimage.t(), Options.Histogram.histogram_options()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def as_image(%Vimage{} = image, options \\ []) do
     case as_svg(image, options) do

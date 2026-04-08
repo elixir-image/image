@@ -81,7 +81,7 @@ defmodule Image.Shape do
   @doc since: "1.27.0"
 
   @spec rect(width :: pos_integer(), height :: pos_integer(), options :: Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def rect(width, height, options \\ []) do
     with {:ok, options} <- Image.Options.Shape.validate_polygon_options(options) do
@@ -229,7 +229,7 @@ defmodule Image.Shape do
 
   """
   @spec polygon(points :: path(), options :: Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def polygon(points, options \\ [])
 
@@ -274,7 +274,7 @@ defmodule Image.Shape do
   end
 
   @spec polygon(sides :: pos_integer(), options :: Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def polygon(sides, options) when is_integer(sides) and sides > 2 do
     {radius, options} = Keyword.pop(options, :radius, @default_radius)
@@ -420,7 +420,7 @@ defmodule Image.Shape do
 
   """
   @spec star(points :: pos_integer(), options :: Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def star(points \\ @default_star_points, options \\ []) when points > 3 do
     {inner_radius, options} = Keyword.pop(options, :inner_radius, @default_star_inner_radius)
@@ -532,7 +532,7 @@ defmodule Image.Shape do
   @doc since: "1.38.0"
 
   @spec circle(radius :: pos_integer(), options :: Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def circle(radius, options \\ []) when is_integer(radius) and radius > 0 do
     with {:ok, options} <- Image.Options.Shape.validate_polygon_options(options) do
@@ -645,7 +645,7 @@ defmodule Image.Shape do
   @doc since: "1.38.0"
 
   @spec ellipse(x_radius :: pos_integer(), y_radius :: pos_integer(), options :: Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def ellipse(x_radius, y_radius, options \\ [])
       when is_integer(x_radius) and x_radius > 0 and is_integer(y_radius) and y_radius > 0 do
@@ -775,7 +775,7 @@ defmodule Image.Shape do
           y2 :: pos_integer(),
           options :: Keyword.t()
         ) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def line(x1, y1, x2, y2, options \\ [])
       when is_integer(x1) and x1 >= 0 and is_integer(y1) and y1 >= 0 and is_integer(x2) and x2 >= 0 and

@@ -4,6 +4,8 @@ defmodule Image.Draw.Test do
 
   alias Vix.Vips.Image, as: Vimage
 
+  doctest Image.Draw
+
   test "mutating draw a rectangle on a white image" do
     {:ok, image} = Vix.Vips.Operation.black!(500, 500, bands: 3) |> Vix.Vips.Operation.invert()
 

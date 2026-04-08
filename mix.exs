@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.64.0"
+  @version "0.65.0"
 
   @app_name "image"
 
@@ -182,6 +182,8 @@ defmodule Image.MixProject do
 
   defp groups_for_modules do
     [
+      Errors: [Image.Error],
+      Pixels: [Image.Pixel, Image.ICCProfile, Image.Pixels],
       Exif: [Image.Exif],
       Xmp: [Image.Xmp],
       Kino: [Image.Kino],

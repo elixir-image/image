@@ -1,5 +1,50 @@
 # Changelog
 
+## Image 0.65.0
+
+This release prepares the library for a 1.0 tag. It is dominated by API hygiene rather than new features.
+
+### Breaking Changes
+
+* **`Image.Error` is now a structured public exception.** It carries `:reason` (atom or `{atom, value}` tuple), `:operation`, `:path`, `:value`, and a derived `:message`. Every fallible function in the library now returns `{:ok, value}` or `{:error, %Image.Error{}}` — bare-string error tuples have been eliminated. Bang variants raise the same struct. The new `Image.Error.wrap/2` helper attaches structured context to a raw libvips or `File.*` error. Pattern-match on `:reason` instead of scraping `:message`:
+
+      case Image.open(path) do
+        {:ok, image} -> ...
+        {:error, %Image.Error{reason: :enoent}} -> not_found_handler()
+        {:error, %Image.Error{} = err} -> raise err
+      end
+
+* **The `@type error_message :: term()` alias on `Image` has been removed** in favour of `@type error :: Image.Error.t()`. All `@spec` lines across the library that previously referenced `Image.error_message()` (or the bare `error_message` form inside `image.ex`) now reference `Image.error()`.
+
+* **The dangerous fall-through in `Image.Error.exception/1` has been removed.** Previously, `raise Image.Error, %{}` evaluated to `raise %{}` and crashed with `BadStructError`. The fallback now wraps any unknown shape in a real struct.
+
+* **Five long-deprecated functions have been removed:**
+  * `Image.interpretation/1` — use `Image.colorspace/1`.
+  * `Image.type/1` (was `format/1`) — use `Image.band_format/1`.
+  * `Image.convert_to_mask/1` — use `Image.convert_alpha_to_mask/1`.
+  * `Image.convert_to_mask!/1` — use `Image.convert_alpha_to_mask!/1`.
+  * `Image.map_pages/2` — use `Image.map_join_pages/2`.
+
+* **`Image.Application` no longer defines a sibling `Image.SetSafeLoader` module.** The single-function helper has been collapsed into a private `Image.Application.set_safe_loader/0`. The `VIPS_BLOCK_UNTRUSTED` behaviour is unchanged.
+
+### Enhancements
+
+* **Doctest coverage for the most-used modules.** `Image.Draw`, `Image.Text`, `Image.Exif`, `Image.Social`, `Image.YUV`, and `Image.QRcode` now have inline doctests. Total doctests rose from 88 to 110.
+
+* **Dialyzer is now clean.** The `lib/image/text.ex` `embed` background contract violation, the `Image.distort/3` `if_then_else!` typing mismatch, and the `xmp/1` spec gap are all fixed. CI's lint cell runs `mix dialyzer` with zero warnings.
+
+* **README rewritten** with Features, Supported Elixir/OTP, Quick Start, optional dependencies, security considerations, and License sections. The dependency line now reflects the current major version.
+
+* **`Image.Pixels`, `Image.Complex`, `Image.Pixel`, and `Image.Xmp`** got specs added for their public surface (the internal-only modules remain `@moduledoc false`).
+
+* **`Image.ICCProfile` doc clarification** explaining that "built-in" means libvips' own bundled profiles — `:image` does not ship `.icc` files.
+
+* **New `Errors` and `Pixels` doc-module groups** in the generated docs.
+
+* **`lib/image/color.ex`** (the empty zero-byte phantom file from the colour migration) has been deleted.
+
+* **`Image.exif/1`** now wraps the underlying libvips `"No such field"` error in `%Image.Error{reason: "No such field"}` so consumers can pattern-match.
+
 ## Image 0.64.0
 
 This is the changelog for Image version 0.64.0 released on April 7th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

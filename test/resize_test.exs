@@ -51,7 +51,8 @@ defmodule Image.Resize.Test do
     end
 
     test "Returns an error tuple if path is not found" do
-      assert {:error, :enoent} = Image.thumbnail("some-non-existing-path", 200)
+      assert {:error, %Image.Error{reason: :enoent}} =
+               Image.thumbnail("some-non-existing-path", 200)
     end
 
     @tag :full

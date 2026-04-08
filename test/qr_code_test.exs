@@ -2,6 +2,8 @@ defmodule Image.QRcode.Test do
   use ExUnit.Case, async: true
   import Image.TestSupport
 
+  doctest Image.QRcode
+
   test "QR code detection and decoding" do
     {:ok, image} = Image.open(image_path("qrcode/qr_code_con.png"))
 
@@ -17,15 +19,14 @@ defmodule Image.QRcode.Test do
   test "QR code detection fails unless the image has three bands" do
     {:ok, image} = Image.open(image_path("qrcode/qrcode_orig.png"))
 
-    assert Image.QRcode.decode(image) ==
-             {:error,
-              "Only images with three bands can be transferred to eVision. Found an image of shape {440, 440, 2}"}
+    assert {:error, %Image.Error{message: message}} = Image.QRcode.decode(image)
+    assert message =~ "Only images with three bands can be transferred to eVision"
   end
 
   test "QR code detection when there is no qrcode in the image" do
     {:ok, image} = Image.open(image_path("Kip_small.png"))
 
-    assert Image.QRcode.decode(image) == {:error, "No QRcode detected in the image"}
+    assert {:error, %Image.Error{reason: :no_qrcode}} = Image.QRcode.decode(image)
   end
 
   test "QR code encoding and roundtrip validation" do

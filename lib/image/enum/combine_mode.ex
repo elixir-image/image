@@ -17,6 +17,10 @@ defmodule Image.CombineMode do
   def validate(:last), do: {:ok, VIPS_COMBINE_MODE_LAST}
 
   def validate(other) do
-    {:error, "Invalid combine mode #{inspect(other)}. The valid modes are :set, :add or :last"}
+    {:error,
+     %Image.Error{
+       message: "Invalid combine mode #{inspect(other)}. The valid modes are :set, :add or :last",
+       reason: "Invalid combine mode #{inspect(other)}. The valid modes are :set, :add or :last"
+     }}
   end
 end

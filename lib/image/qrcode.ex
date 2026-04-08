@@ -50,6 +50,17 @@ if Image.evision_configured?() do
 
     * `{:error, reason}`
 
+    ### Examples
+
+        iex> {:ok, image} = Image.QRcode.encode("hello world")
+        iex> Image.bands(image)
+        3
+
+        iex> {:ok, image} = Image.QRcode.encode("This is a string")
+        iex> {:ok, "This is a string"} = Image.QRcode.decode(image)
+        iex> :ok
+        :ok
+
     """
 
     @doc since: "0.13.0"
@@ -134,10 +145,18 @@ if Image.evision_configured?() do
           {:ok, string}
 
         {"", %Evision.Mat{}, {:error, "empty matrix"}} ->
-          {:error, "QRcode detected but could not be decoded"}
+          {:error,
+           %Image.Error{
+             reason: :qrcode_undecodable,
+             message: "QRcode detected but could not be decoded"
+           }}
 
         {"", {:error, "empty matrix"}, {:error, "empty matrix"}} ->
-          {:error, "No QRcode detected in the image"}
+          {:error,
+           %Image.Error{
+             reason: :no_qrcode,
+             message: "No QRcode detected in the image"
+           }}
       end
     end
   end

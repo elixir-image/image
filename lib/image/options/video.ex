@@ -106,15 +106,29 @@ if Image.evision_configured?() do
 
     def validate_open_options(backend: backend) when is_atom(backend) do
       case Map.fetch(known_backends(), backend) do
-        {:ok, backend} -> {:ok, backend}
-        :error -> {:error, "Invalid or unknown backend #{inspect(backend)}"}
+        {:ok, backend} ->
+          {:ok, backend}
+
+        :error ->
+          {:error,
+           %Image.Error{
+             message: "Invalid or unknown backend #{inspect(backend)}",
+             reason: "Invalid or unknown backend #{inspect(backend)}"
+           }}
       end
     end
 
     def validate_open_options(backend: backend) when is_integer(backend) do
       case Map.has_key?(inverted_known_backends(), backend) do
-        true -> {:ok, backend}
-        false -> {:error, "Invalid or unknown backend #{inspect(backend)}"}
+        true ->
+          {:ok, backend}
+
+        false ->
+          {:error,
+           %Image.Error{
+             message: "Invalid or unknown backend #{inspect(backend)}",
+             reason: "Invalid or unknown backend #{inspect(backend)}"
+           }}
       end
     end
 

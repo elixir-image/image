@@ -2,7 +2,11 @@ defmodule Image.Pixels do
   @moduledoc false
 
   def pixels_from_binary(_binary, _type, bands) when bands not in 1..4 do
-    {:error, "Only images with 1..4 bands are supported. Found #{inspect(bands)}"}
+    {:error,
+     %Image.Error{
+       message: "Only images with 1..4 bands are supported. Found #{inspect(bands)}",
+       reason: "Only images with 1..4 bands are supported. Found #{inspect(bands)}"
+     }}
   end
 
   def pixels_from_binary(binary, {:u, 8}, bands) do
@@ -229,7 +233,11 @@ defmodule Image.Pixels do
   end
 
   def pixels_from_binary(_binary, type, _bands) do
-    {:error, "Unsupported image type for pixels_from_binary/3. Found #{inspect(type)}"}
+    {:error,
+     %Image.Error{
+       message: "Unsupported image type for pixels_from_binary/3. Found #{inspect(type)}",
+       reason: "Unsupported image type for pixels_from_binary/3. Found #{inspect(type)}"
+     }}
   end
 
   defp wrap(item, atom) do

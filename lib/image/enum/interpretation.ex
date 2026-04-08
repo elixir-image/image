@@ -73,7 +73,7 @@ defmodule Image.Interpretation do
       {:ok, :VIPS_INTERPRETATION_sRGB}
 
       iex> Image.Interpretation.validate_interpretation(:unknown)
-      {:error, "Unknown interpretation. Found :unknown"}
+      {:error, %Image.Error{message: "Unknown interpretation. Found :unknown", reason: "Unknown interpretation. Found :unknown"}}
 
   """
   def validate_interpretation(interpretation) when interpretation in @vips_interpretation do

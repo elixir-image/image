@@ -119,7 +119,11 @@ defmodule Image.Options.Compose do
   end
 
   def get_x(_image, _prev_x, _prev_width, x, _dx, _baseline) do
-    {:error, "Invalid value for :x, found #{inspect(x)}"}
+    {:error,
+     %Image.Error{
+       message: "Invalid value for :x, found #{inspect(x)}",
+       reason: "Invalid value for :x, found #{inspect(x)}"
+     }}
   end
 
   @doc false
@@ -168,7 +172,11 @@ defmodule Image.Options.Compose do
   end
 
   def get_y(_image, _prev_y, _prev_height, y, _dy, _baseline) do
-    {:error, "Invalid value for :y, found #{inspect(y)}"}
+    {:error,
+     %Image.Error{
+       message: "Invalid value for :y, found #{inspect(y)}",
+       reason: "Invalid value for :y, found #{inspect(y)}"
+     }}
   end
 
   def default_composit_options do

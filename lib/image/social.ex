@@ -116,17 +116,31 @@ defmodule Image.Social do
   The values are all of the form "WxH" where `W` is the
   width in pixels and `H` is the height in pixels.
 
+  ### Examples
+
+      iex> sizes = Image.Social.media_sizes()
+      iex> Map.has_key?(sizes, :twitter)
+      true
+
+      iex> sizes = Image.Social.media_sizes()
+      iex> get_in(sizes, [:youtube, :thumbnail])
+      "1280x720"
+
   """
   def media_sizes do
     @social_sizes
   end
 
   @doc """
-  Returns a list of known social
-  platforms.
+  Returns a list of known social platforms.
 
-  ### Example
+  ### Examples
 
+      iex> :twitter in Image.Social.known_platforms()
+      true
+
+      iex> :instagram in Image.Social.known_platforms()
+      true
 
   """
   @spec known_platforms :: [platform()]
@@ -148,8 +162,13 @@ defmodule Image.Social do
   * A list of images uses available for the
     platform.
 
-  ### Example
+  ### Examples
 
+      iex> :profile in Image.Social.image_usages(:twitter)
+      true
+
+      iex> :thumbnail in Image.Social.image_usages(:youtube)
+      true
 
   """
   @spec image_usages(platform()) :: [image_usage()]
@@ -220,7 +239,7 @@ defmodule Image.Social do
 
   """
   @spec resize(Vimage.t(), platform(), Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def resize(image, platform, options \\ [])
 

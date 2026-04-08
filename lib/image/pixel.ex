@@ -221,7 +221,8 @@ defmodule Image.Pixel do
     Enum.all?(list, fn v -> is_integer(v) and v >= 0 and v <= 65_535 end)
   end
 
-  defp pre_encoded?(list, interpretation) when interpretation in [:lab, :labs, :lch, :scrgb, :xyz] do
+  defp pre_encoded?(list, interpretation)
+       when interpretation in [:lab, :labs, :lch, :scrgb, :xyz] do
     # Float-valued interpretations: if the caller sent floats at all,
     # trust them; integer lists in these spaces are almost always a
     # mis-use and we should convert instead.
@@ -272,7 +273,7 @@ defmodule Image.Pixel do
   def to_pixel!(image, color, options \\ []) do
     case to_pixel(image, color, options) do
       {:ok, pixel} -> pixel
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -310,7 +311,7 @@ defmodule Image.Pixel do
       {:ok, [255, 0, 0]}
 
   """
-  @spec to_srgb(color :: t()) :: {:ok, [0..255]} | {:error, String.t()}
+  @spec to_srgb(color :: t()) :: {:ok, [0..255]} | {:error, Image.Error.t() | term()}
   def to_srgb(color) do
     with {:ok, source_struct} <- resolve(color),
          {:ok, %Color.SRGB{r: r, g: g, b: b, alpha: alpha}} <-
@@ -333,7 +334,7 @@ defmodule Image.Pixel do
   def to_srgb!(color) do
     case to_srgb(color) do
       {:ok, pixel} -> pixel
-      {:error, reason} -> raise ArgumentError, reason
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -372,7 +373,7 @@ defmodule Image.Pixel do
       {:ok, 200}
 
   """
-  @spec transparency(value :: transparency()) :: {:ok, 0..255} | {:error, String.t()}
+  @spec transparency(value :: transparency()) :: {:ok, 0..255} | {:error, Image.Error.t()}
   def transparency(:none), do: {:ok, @min_opacity}
   def transparency(:transparent), do: {:ok, @min_opacity}
   def transparency(:opaque), do: {:ok, @max_opacity}
@@ -381,7 +382,14 @@ defmodule Image.Pixel do
   def transparency(float) when is_float(float) and float >= 0.0 and float <= 1.0,
     do: {:ok, round(@max_opacity * float)}
 
-  def transparency(other), do: {:error, "Invalid transparency value: #{inspect(other)}"}
+  def transparency(other) do
+    {:error,
+     %Image.Error{
+       reason: :invalid_transparency,
+       value: other,
+       message: "Invalid transparency value: #{inspect(other)}"
+     }}
+  end
 
   @doc """
   The maximum opacity value (255).

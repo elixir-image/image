@@ -98,7 +98,11 @@ defmodule Image.BandFormat do
   def validate(format) do
     case Map.get(band_format_map(), format) do
       nil ->
-        {:error, "Invalid band format. Found #{inspect(format)}"}
+        {:error,
+         %Image.Error{
+           message: "Invalid band format. Found #{inspect(format)}",
+           reason: "Invalid band format. Found #{inspect(format)}"
+         }}
 
       format ->
         {:ok, format}
@@ -165,7 +169,11 @@ defmodule Image.BandFormat do
   def nx_format(format) when is_atom(format) do
     case Map.get(inverse_band_format_map(), format) do
       nil ->
-        {:error, "Invalid band format. Found #{inspect(format)}"}
+        {:error,
+         %Image.Error{
+           message: "Invalid band format. Found #{inspect(format)}",
+           reason: "Invalid band format. Found #{inspect(format)}"
+         }}
 
       format ->
         {:ok, format}

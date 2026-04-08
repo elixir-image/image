@@ -159,9 +159,19 @@ defmodule Image.Text do
     options are ignored since this implies the user is taking full control
     of the markup.
 
+  ### Examples
+
+      iex> {:ok, text_image} = Image.Text.text("hello", font_size: 24)
+      iex> Image.bands(text_image)
+      4
+
+      iex> {:ok, _} = Image.Text.text("ok", text_fill_color: :red)
+      iex> :ok
+      :ok
+
   """
   @spec text(Phoenix.HTML.safe() | String.t(), Options.Text.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def text(string, options \\ []) when is_list(options) do
     with {:ok, options} <- Options.Text.validate_options(options),
@@ -400,8 +410,14 @@ defmodule Image.Text do
     a six hexadecimal digit string prefixed with `#`. For example
     `#FF00FF` for the color "Fuchsia".
 
+  ### Examples
+
+      iex> {:ok, image} = Image.Text.simple_text("hi", font_size: 24)
+      iex> Image.bands(image)
+      4
+
   """
-  @spec simple_text(String.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error_message()}
+  @spec simple_text(String.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def simple_text(string, options \\ [])
 
   def simple_text(string, options) when is_list(options) do
@@ -540,7 +556,7 @@ defmodule Image.Text do
 
   """
   @spec add_background(Vimage.t(), Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
   def add_background(image, options \\ [])
 
   def add_background(%Vimage{} = image, options) when is_list(options) do
@@ -659,7 +675,7 @@ defmodule Image.Text do
 
   """
   @spec add_background_padding(Vimage.t(), Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def add_background_padding(image, options \\ [])
 
@@ -685,6 +701,7 @@ defmodule Image.Text do
       options
       |> Map.get(:background_fill_color)
       |> background_to_rgba(opacity)
+      |> Enum.map(&(&1 * 1.0))
 
     image =
       if Image.has_alpha?(image), do: image, else: Image.add_alpha!(image, :transparent)
@@ -810,7 +827,7 @@ defmodule Image.Text do
 
   """
   @spec add_background_border(Vimage.t(), Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
   def add_background_border(image, options \\ [])
 
   def add_background_border(%Vimage{} = image, options) when is_list(options) do
@@ -1002,12 +1019,20 @@ defmodule Image.Text do
 
   defp location_from_options(_image, x_location, _y, nil, _height)
        when x_location in [:center, :right] do
-    {:error, ":center and :right cannot be specified unless :width is also specified"}
+    {:error,
+     %Image.Error{
+       message: ":center and :right cannot be specified unless :width is also specified",
+       reason: ":center and :right cannot be specified unless :width is also specified"
+     }}
   end
 
   defp location_from_options(_image, _x, y_location, _width, nil)
        when y_location in [:middle, :bottom] do
-    {:error, ":middle and :bottom cannot be specified unless :height is also specified"}
+    {:error,
+     %Image.Error{
+       message: ":middle and :bottom cannot be specified unless :height is also specified",
+       reason: ":middle and :bottom cannot be specified unless :height is also specified"
+     }}
   end
 
   defp location_from_options(image, x, y, width, nil) when is_integer(width) do

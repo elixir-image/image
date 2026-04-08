@@ -75,6 +75,18 @@ defmodule Image.Draw do
 
   * or `{:error, reason}`
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :white)
+      iex> {:ok, with_dot} = Image.Draw.point(image, 5, 5, color: :red)
+      iex> Image.shape(with_dot)
+      {10, 10, 3}
+
+      iex> image = Image.new!(10, 10, color: :white)
+      iex> {:ok, with_dot} = Image.Draw.point(image, 5, 5, color: :red)
+      iex> Image.get_pixel!(with_dot, 5, 5)
+      [255, 0, 0]
+
   """
   @doc since: "0.7.0"
 
@@ -84,7 +96,7 @@ defmodule Image.Draw do
           non_neg_integer(),
           Options.Draw.point()
         ) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def point(image, left, top, options \\ [])
 
@@ -221,6 +233,18 @@ defmodule Image.Draw do
 
   * `{:error, reason}`.
 
+  ### Examples
+
+      iex> image = Image.new!(20, 20, color: :white)
+      iex> {:ok, with_rect} = Image.Draw.rect(image, 4, 4, 10, 10, color: :red)
+      iex> Image.get_pixel!(with_rect, 8, 8)
+      [255, 0, 0]
+
+      iex> image = Image.new!(20, 20, color: :white)
+      iex> {:ok, with_rect} = Image.Draw.rect(image, 4, 4, 10, 10, color: :red, fill: false, stroke_width: 2)
+      iex> Image.shape(with_rect)
+      {20, 20, 3}
+
   """
   @doc since: "0.7.0"
 
@@ -232,7 +256,7 @@ defmodule Image.Draw do
           pos_integer(),
           Options.Draw.rect()
         ) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def rect(image, left, top, width, height, options \\ [])
 
@@ -415,6 +439,13 @@ defmodule Image.Draw do
 
   * or `{:error, reason}`
 
+  ### Examples
+
+      iex> image = Image.new!(20, 20, color: :white)
+      iex> {:ok, with_circle} = Image.Draw.circle(image, 10, 10, 5, color: :red)
+      iex> Image.get_pixel!(with_circle, 10, 10)
+      [255, 0, 0]
+
   """
   @doc since: "0.7.0"
 
@@ -425,7 +456,7 @@ defmodule Image.Draw do
           non_neg_integer(),
           Options.Draw.circle()
         ) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def circle(%image_type{} = image, cx, cy, radius, options \\ [])
       when is_image(image_type) and is_circle(cx, cy, radius) do
@@ -581,6 +612,13 @@ defmodule Image.Draw do
 
   * or `{:error, reason}`
 
+  ### Examples
+
+      iex> image = Image.new!(20, 20, color: :white)
+      iex> {:ok, with_line} = Image.Draw.line(image, 0, 0, 19, 19, color: :red)
+      iex> Image.get_pixel!(with_line, 0, 0)
+      [255, 0, 0]
+
   """
   @doc since: "0.7.0"
 
@@ -592,7 +630,7 @@ defmodule Image.Draw do
           non_neg_integer(),
           Options.Draw.line()
         ) ::
-          {:ok, Vimage.t() | MutableImage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t() | MutableImage.t()} | {:error, Image.error()}
 
   def line(image, x1, y1, x2, y2, options \\ [])
 
@@ -737,7 +775,7 @@ defmodule Image.Draw do
           non_neg_integer(),
           Options.Draw.image()
         ) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def image(image, sub_image, top, left, options \\ [])
 
@@ -887,7 +925,7 @@ defmodule Image.Draw do
           non_neg_integer(),
           Options.Draw.flood()
         ) ::
-          {:ok, {Vimage.t(), box()}} | {:error, Image.error_message()}
+          {:ok, {Vimage.t(), box()}} | {:error, Image.error()}
 
   def flood(%image_type{} = image, left, top, options \\ [])
       when is_image(image_type) and is_point(left, top) do
@@ -998,7 +1036,7 @@ defmodule Image.Draw do
         ) ::
           {:ok,
            {Vimage.t(), [height: integer(), width: integer(), top: integer(), left: integer()]}}
-          | {:error, Image.error_message()}
+          | {:error, Image.error()}
 
   def mask(image, mask, x, y, options \\ [])
 
@@ -1041,7 +1079,7 @@ defmodule Image.Draw do
           pos_integer(),
           Options.Draw.smudge()
         ) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def smudge(image, left, top, width, height, options \\ [])
 

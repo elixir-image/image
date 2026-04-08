@@ -123,7 +123,11 @@ defmodule Image.Options.Write do
         validate_options("", options)
 
       _other ->
-        {:error, "The option :suffix must be provided. Example: suffix: \".jpg\""}
+        {:error,
+         %Image.Error{
+           message: "The option :suffix must be provided. Example: suffix: \".jpg\"",
+           reason: "The option :suffix must be provided. Example: suffix: \".jpg\""
+         }}
     end
   end
 
@@ -285,7 +289,12 @@ defmodule Image.Options.Write do
     if ICCProfile.known?(profile) do
       {:cont, options}
     else
-      {:halt, {:error, "The color profile #{inspect(profile)} is not known"}}
+      {:halt,
+       {:error,
+        %Image.Error{
+          message: "The color profile #{inspect(profile)} is not known",
+          reason: "The color profile #{inspect(profile)} is not known"
+        }}}
     end
   end
 
@@ -322,7 +331,11 @@ defmodule Image.Options.Write do
   end
 
   defp merge_image_type_options(_options, suffix) do
-    {:error, "Unknown image type #{inspect(suffix)}"}
+    {:error,
+     %Image.Error{
+       message: "Unknown image type #{inspect(suffix)}",
+       reason: "Unknown image type #{inspect(suffix)}"
+     }}
   end
 
   defp delete_all_type_options(options) do
@@ -340,7 +353,8 @@ defmodule Image.Options.Write do
   defp conform_effort(effort, ".webp"), do: round(effort / 10 * 6)
 
   defp image_type_from("", "") do
-    {:error, "Cannot determine image type"}
+    {:error,
+     %Image.Error{message: "Cannot determine image type", reason: "Cannot determine image type"}}
   end
 
   defp image_type_from("", suffix) do

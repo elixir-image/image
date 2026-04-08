@@ -40,7 +40,7 @@ defmodule Image.Options.WarpPerspective do
 
   """
   @spec validate_options(Vimage.t(), Keyword.t()) ::
-          {:ok, Keyword.t()} | {:error, Image.error_message()}
+          {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(image, options) when is_list(options) do
     options = Keyword.merge(default_options(), options)
 
@@ -60,7 +60,12 @@ defmodule Image.Options.WarpPerspective do
         {:cont, options}
 
       {:error, reason} ->
-        {:halt, {:error, "Could not get the image average: #{inspect(reason)}"}}
+        {:halt,
+         {:error,
+          %Image.Error{
+            message: "Could not get the image average: #{inspect(reason)}",
+            reason: "Could not get the image average: #{inspect(reason)}"
+          }}}
     end
   end
 

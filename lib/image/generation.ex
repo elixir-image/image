@@ -216,7 +216,11 @@ if Image.bumblebee_configured?() do
     def text_to_image(prompt, options \\ [])
 
     def text_to_image("", _options) do
-      {:error, "No prompt was provided to guide image generation"}
+      {:error,
+       %Image.Error{
+         message: "No prompt was provided to guide image generation",
+         reason: "No prompt was provided to guide image generation"
+       }}
     end
 
     def text_to_image(prompt, options) when is_binary(prompt) and is_list(options) do

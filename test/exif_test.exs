@@ -2,6 +2,8 @@ defmodule Image.ExitTest do
   use ExUnit.Case, async: true
   import Image.TestSupport
 
+  doctest Image.Exif
+
   test "Exif extract when exif blob but no exif tags" do
     image = image_path("description_no_exif.jpg")
     {:ok, image} = Image.open(image, access: :random)
@@ -26,7 +28,7 @@ defmodule Image.ExitTest do
 
   test "No exif data" do
     image = Image.new!(10, 10)
-    assert {:error, "No such field"} = Image.exif(image)
+    assert {:error, %Image.Error{reason: "No such field"}} = Image.exif(image)
   end
 
   test "Minimizing metadata on an image with no exif" do

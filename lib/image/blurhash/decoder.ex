@@ -69,14 +69,18 @@ defmodule Image.Blurhash.Decoder do
         end)
 
       if rest != "" do
-        {:error, "Unexpected number of blurhash components"}
+        {:error,
+         %Image.Error{
+           message: "Unexpected number of blurhash components",
+           reason: "Unexpected number of blurhash components"
+         }}
       else
         {r, g, b} = dc
         matrix = [{{0, 0}, {r, g, b}} | ac_values]
         {:ok, matrix}
       end
     catch
-      {:error, _} -> {:error, "Invalid blurhash"}
+      {:error, _} -> {:error, %Image.Error{message: "Invalid blurhash", reason: "Invalid blurhash"}}
     end
   end
 

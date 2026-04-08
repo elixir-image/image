@@ -87,6 +87,32 @@ defmodule Image.YUV do
   @valid_colorspace [:bt601, :bt709]
 
   @doc """
+  Returns the list of YUV chroma-subsampling encodings supported by
+  this module.
+
+  ### Examples
+
+      iex> Image.YUV.valid_encodings()
+      [:C444, :C422, :C420]
+
+  """
+  @spec valid_encodings() :: [:C444 | :C422 | :C420]
+  def valid_encodings, do: @valid_encodings
+
+  @doc """
+  Returns the list of YUV → RGB conversion colorspaces supported by
+  this module.
+
+  ### Examples
+
+      iex> Image.YUV.valid_colorspaces()
+      [:bt601, :bt709]
+
+  """
+  @spec valid_colorspaces() :: [:bt601 | :bt709]
+  def valid_colorspaces, do: @valid_colorspace
+
+  @doc """
   Converts the raw YUV data in a `.yuv` file
   into an RGB image.
 
@@ -127,7 +153,7 @@ defmodule Image.YUV do
           encoding :: yuv_encoding(),
           colorspace :: yuv_colorspace()
         ) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def new_from_file(path, width, height, encoding, colorspace \\ :bt601)
       when encoding in @valid_encodings and colorspace in @valid_colorspace do
@@ -176,7 +202,7 @@ defmodule Image.YUV do
           encoding :: yuv_encoding(),
           colorspace :: yuv_colorspace()
         ) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def new_from_binary(binary, width, height, encoding, colorspace \\ :bt601)
       when encoding in @valid_encodings and colorspace in @valid_colorspace do
@@ -216,7 +242,7 @@ defmodule Image.YUV do
           encoding :: yuv_encoding(),
           colorspace :: yuv_colorspace()
         ) ::
-          :ok | {:error, Image.error_message()}
+          :ok | {:error, Image.error()}
 
   def write_to_file(%Vimage{} = image, path, encoding, colorspace \\ :bt601) do
     with {:ok, binary} <- write_to_binary(image, encoding, colorspace) do
@@ -251,7 +277,7 @@ defmodule Image.YUV do
           encoding :: yuv_encoding(),
           colorspace :: yuv_colorspace()
         ) ::
-          {:ok, binary()} | {:error, Image.error_message()}
+          {:ok, binary()} | {:error, Image.error()}
 
   def write_to_binary(%Vimage{} = image, encoding, colorspace \\ :bt601) do
     with {:ok, [y, u, v]} <- to_yuv(image, encoding, colorspace) do
@@ -278,7 +304,7 @@ defmodule Image.YUV do
   @doc since: "0.41.0"
 
   @spec to_rgb(image :: Vimage.t(), colorspace :: yuv_colorspace()) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def to_rgb(%Vimage{} = image, colorspace) when colorspace in @valid_colorspace do
     with {:ok, transform} <- Vimage.new_from_list(@to_rgb[colorspace]),
@@ -325,7 +351,7 @@ defmodule Image.YUV do
           encoding :: yuv_encoding,
           colorspace :: yuv_colorspace()
         ) ::
-          {:ok, Vimage.t()} | {:error, Image.error_message()}
+          {:ok, Vimage.t()} | {:error, Image.error()}
 
   def to_rgb([y, u, v], width, height, :C444, colorspace) do
     use Image.Math
@@ -384,7 +410,7 @@ defmodule Image.YUV do
   @doc since: "0.41.0"
 
   @spec to_yuv(image :: Vimage.t(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
-          {:ok, yuv_list()} | {:error, Image.error_message()}
+          {:ok, yuv_list()} | {:error, Image.error()}
 
   def to_yuv(image, encoding, colorspace \\ :bt601)
 
@@ -420,13 +446,13 @@ defmodule Image.YUV do
 
   * `{:ok, [y, u, v]}` or
 
-  * `{:error, Image.error_message()}`.
+  * `{:error, Image.error()}`.
 
   """
   @doc since: "0.41.0"
 
   @spec encode(image :: Vimage.t(), encoding :: yuv_encoding()) ::
-          {:ok, yuv_list()} | {:errpr, Image.error_message()}
+          {:ok, yuv_list()} | {:errpr, Image.error()}
 
   def encode(%Vimage{} = image, :C444) do
     with {:ok, y} = Vimage.write_to_binary(image[0]),
@@ -486,7 +512,11 @@ defmodule Image.YUV do
         {:ok, [y, u, v]}
 
       _other ->
-        {:error, "Could not decode raw YUV data as 4:4:4"}
+        {:error,
+         %Image.Error{
+           message: "Could not decode raw YUV data as 4:4:4",
+           reason: "Could not decode raw YUV data as 4:4:4"
+         }}
     end
   end
 
@@ -499,7 +529,11 @@ defmodule Image.YUV do
         {:ok, [y, u, v]}
 
       _other ->
-        {:error, "Could not decode raw YUV data as 4:2:2"}
+        {:error,
+         %Image.Error{
+           message: "Could not decode raw YUV data as 4:2:2",
+           reason: "Could not decode raw YUV data as 4:2:2"
+         }}
     end
   end
 
@@ -512,7 +546,11 @@ defmodule Image.YUV do
         {:ok, [y, u, v]}
 
       _other ->
-        {:error, "Could not decode raw YUV data as 4:2:0"}
+        {:error,
+         %Image.Error{
+           message: "Could not decode raw YUV data as 4:2:0",
+           reason: "Could not decode raw YUV data as 4:2:0"
+         }}
     end
   end
 

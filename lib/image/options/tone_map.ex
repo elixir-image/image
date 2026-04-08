@@ -66,13 +66,25 @@ defmodule Image.Options.ToneCurve do
       options ->
         cond do
           options[:black_point] >= options[:white_point] ->
-            {:error, "White_point must be greater than black_point"}
+            {:error,
+             %Image.Error{
+               message: "White_point must be greater than black_point",
+               reason: "White_point must be greater than black_point"
+             }}
 
           options[:shadow_point] >= options[:mid_point] ->
-            {:error, "Mid_point must be greater than shadow_point"}
+            {:error,
+             %Image.Error{
+               message: "Mid_point must be greater than shadow_point",
+               reason: "Mid_point must be greater than shadow_point"
+             }}
 
           options[:mid_point] >= options[:highlight_point] ->
-            {:error, "Highlight_point must be greater than mid_point"}
+            {:error,
+             %Image.Error{
+               message: "Highlight_point must be greater than mid_point",
+               reason: "Highlight_point must be greater than mid_point"
+             }}
 
           {} ->
             {:ok, Map.new(options)}

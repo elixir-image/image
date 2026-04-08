@@ -1,9 +1,8 @@
 defmodule Image.Application do
   @moduledoc false
 
-  # This env var, if set, will prevent `libvips`
-  # from loading untrusted loaders.  We set this to
-  # true if it is not otherwise set.
+  # This env var, if set, will prevent `libvips` from loading
+  # untrusted loaders.  We set this to true if it is not otherwise set.
   # See https://github.com/kipcole9/image/issues/9
   @untrusted_env_var "VIPS_BLOCK_UNTRUSTED"
 
@@ -12,7 +11,7 @@ defmodule Image.Application do
 
   @doc false
   def start(_type, _args) do
-    Image.SetSafeLoader.set(@untrusted_env_var)
+    set_safe_loader()
 
     Supervisor.start_link(
       children(Code.ensure_loaded?(Bumblebee)),
@@ -57,16 +56,15 @@ defmodule Image.Application do
     |> Application.get_env(service, autostart: start?)
     |> Keyword.get(:autostart)
   end
-end
 
-defmodule Image.SetSafeLoader do
-  @moduledoc false
-
-  def set(env_var) do
-    unless System.get_env(env_var) do
-      System.put_env(env_var, "TRUE")
+  # Sets `VIPS_BLOCK_UNTRUSTED=TRUE` in the environment unless the user
+  # has already set it themselves. Prevents libvips from loading
+  # untrusted format loaders, which is the secure default.
+  defp set_safe_loader do
+    unless System.get_env(@untrusted_env_var) do
+      System.put_env(@untrusted_env_var, "TRUE")
     end
 
-    {:ok, env_var}
+    :ok
   end
 end

@@ -109,7 +109,12 @@ defmodule Image.Options.Thumbnail do
     if ICCProfile.known?(profile) do
       {:cont, options}
     else
-      {:halt, {:error, "The color profile #{inspect(profile)} is not known"}}
+      {:halt,
+       {:error,
+        %Image.Error{
+          message: "The color profile #{inspect(profile)} is not known",
+          reason: "The color profile #{inspect(profile)} is not known"
+        }}}
     end
   end
 
@@ -123,7 +128,12 @@ defmodule Image.Options.Thumbnail do
     if ICCProfile.known?(profile) do
       {:cont, options}
     else
-      {:halt, {:error, "The color profile #{inspect(profile)} is not known"}}
+      {:halt,
+       {:error,
+        %Image.Error{
+          message: "The color profile #{inspect(profile)} is not known",
+          reason: "The color profile #{inspect(profile)} is not known"
+        }}}
     end
   end
 
@@ -178,7 +188,11 @@ defmodule Image.Options.Thumbnail do
         {:ok, width, Keyword.put(options, :height, height)}
 
       _other ->
-        {:error, "Invalid dimensions. Found #{inspect(dimensions)}"}
+        {:error,
+         %Image.Error{
+           message: "Invalid dimensions. Found #{inspect(dimensions)}",
+           reason: "Invalid dimensions. Found #{inspect(dimensions)}"
+         }}
     end
   end
 

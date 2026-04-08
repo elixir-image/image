@@ -58,7 +58,11 @@ defmodule Image.Complex do
 
   defp to_complex(%Vimage{} = _image, format, bands)
        when not complex(format) and not even(bands) do
-    {:error, "Not an even number of bands. Found: #{inspect(bands)}"}
+    {:error,
+     %Image.Error{
+       message: "Not an even number of bands. Found: #{inspect(bands)}",
+       reason: "Not an even number of bands. Found: #{inspect(bands)}"
+     }}
   end
 
   # If its already complex, return it

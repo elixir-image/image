@@ -57,7 +57,7 @@ defmodule Image.ExtendMode do
       {:ok, :VIPS_EXTEND_REPEAT}
 
       iex> Image.Kernel.validate_extend(:unknown)
-      {:error, "Unknown extend mode. Found :unknown"}
+      {:error, %Image.Error{message: "Unknown extend mode. Found :unknown", reason: "Unknown extend mode. Found :unknown"}}
 
   """
   def validate_extend(extend) when extend in @vips_extend do

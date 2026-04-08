@@ -208,7 +208,7 @@ defmodule Image.Exif.Decode do
   end
 
   defp component_configuration(components) do
-    "Unknown #{inspect components}"
+    "Unknown #{inspect(components)}"
   end
 
   @spec metering_mode(non_neg_integer()) :: binary()

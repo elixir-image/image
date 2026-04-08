@@ -57,7 +57,7 @@ defmodule Image.Kernel do
       {:ok, :VIPS_KERNEL_CUBIC}
 
       iex> Image.Kernel.validate_kernel(:unknown)
-      {:error, "Unknown kernel. Found :unknown"}
+      {:error, %Image.Error{message: "Unknown kernel. Found :unknown", reason: "Unknown kernel. Found :unknown"}}
 
   """
   def validate_kernel(kernel) when kernel in @vips_kernel do
