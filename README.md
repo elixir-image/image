@@ -6,7 +6,7 @@ Elixir. It is a high-level wrapper around
 [libvips](https://www.libvips.org) C library, and provides an
 idiomatic functional API for image manipulation, drawing, text
 rendering, EXIF/XMP metadata, classification (via Bumblebee),
-object detection (via eVision), QR code encoding and decoding,
+video frame extraction (via Xav/FFmpeg), QR code encoding and decoding (via eVision),
 video frame extraction, blurhash, perceptual hashing, and many
 other image-related operations.
 
@@ -66,13 +66,20 @@ Documentation can be found at <https://hexdocs.pm/image>.
   Plug `Conn`s, in-memory binaries, and S3 sources.
 
 * **Optional ML integrations** —
-  * `Image.Classification` and `Image.Generation` via
-    [Bumblebee](https://hex.pm/packages/bumblebee).
-  * `Image.QRcode` (encode + decode) and `Image.Video` (frame
-    extraction, seek, webcam) via
+  * `Image.Video` (frame extraction, seek, webcam) via
+    [Xav](https://hex.pm/packages/xav), an Elixir wrapper around
+    FFmpeg. Requires FFmpeg ≥ 6.0 on the system.
+  * `Image.QRcode` (encode + decode) via
     [eVision](https://hex.pm/packages/evision).
   * `Image.k_means` via [Scholar](https://hex.pm/packages/scholar).
   * `Image.to_nx/2` / `Image.from_nx/1` via [Nx](https://hex.pm/packages/nx).
+  * **Object detection, image classification, and image
+    generation** live in the separate
+    [`:image_detection`](https://hex.pm/packages/image_detection)
+    package. Add it alongside `:image` in your `mix.exs` to get
+    `Image.Detection`, `Image.Classification`, and
+    `Image.Generation` (which depend on `:axon_onnx` and
+    [Bumblebee](https://hex.pm/packages/bumblebee) respectively).
 
 * **Hashing** — perceptual difference hash (`Image.dhash/2`),
   blurhash encode/decode (`Image.Blurhash`), Hamming distance.
@@ -256,9 +263,10 @@ optional dependencies enable specific features:
 | Dependency | Enables |
 |---|---|
 | `:nx` | `Image.to_nx/2`, `Image.from_nx/1`, tensor interop |
-| `:bumblebee` | `Image.Classification`, `Image.Generation` |
 | `:scholar` | `Image.k_means/2` |
-| `:evision` | `Image.QRcode`, `Image.Video` |
+| `:xav` | `Image.Video` (FFmpeg-backed frame extraction) |
+| `:evision` | `Image.QRcode`, `Image.to_evision/2`, `Image.from_evision/1` |
+| `:image_detection` | `Image.Detection`, `Image.Classification`, `Image.Generation` (object detection, classification, image generation — pulls Bumblebee, Nx, Axon as transitive deps) |
 | `:plug` | streaming via `Plug.Conn` |
 | `:req` | streaming over HTTP |
 | `:kino` | `Image.Kino` (Livebook integration) |
@@ -285,6 +293,37 @@ has a sensible default; the most commonly tuned ones:
 You can also set the concurrency programmatically with
 `Image.put_concurrency/1` and read it back with
 `Image.get_concurrency/0`.
+
+## FFmpeg / Xav log noise
+
+If you use `Image.Video` (which is backed by
+[Xav](https://hex.pm/packages/xav) / FFmpeg) you may see lines like
+
+    [swscaler @ 0x1490a0000] No accelerated colorspace conversion found from yuv420p to rgb24.
+
+written to `stderr` during frame decoding. These are
+**informational notices** from FFmpeg's `libswscale`, **not
+errors**. They mean that `libswscale` does not have a
+hand-optimised SIMD path for that particular pixel-format
+conversion on your CPU, so it is using its generic C fallback.
+Decoded frames are bit-for-bit correct either way.
+
+The messages come from FFmpeg writing directly to `stderr` at its
+default log level (`AV_LOG_INFO`). Xav does not currently expose
+`av_log_set_level/1`, so the only way to silence them from
+application code is to install an FFmpeg build that has the
+SIMD path for your architecture (typically an FFmpeg compiled
+with `--enable-runtime-cpudetect` and any of `--enable-asm`,
+`--enable-x86asm`, or platform ASM flags — most distribution
+packages already do this). On Apple Silicon the arm64 optimised
+path for `yuv420p → rgb24` is not in FFmpeg's `swscale` as of
+FFmpeg 7.x, which is why macOS users on M-series machines see
+the notice most often.
+
+If the noise is disruptive during tests or automation, you can
+redirect stderr for the command in question, e.g.
+`mix test 2> /dev/null`. Do not do this for production —
+suppressing stderr will also hide real FFmpeg errors.
 
 ## Security considerations
 

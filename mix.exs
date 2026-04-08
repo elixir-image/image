@@ -1,15 +1,14 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.65.0"
-
+  @version "0.67.0"
   @app_name "image"
 
   def project do
     [
       app: String.to_atom(@app_name),
       version: @version,
-      elixir: "~> 1.16",
+      elixir: "~> 1.17",
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       source_url: "https://github.com/elixir-image/image",
@@ -23,7 +22,7 @@ defmodule Image.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
-        plt_add_apps: ~w(mix nx plug evision bumblebee ex_unit)a
+        plt_add_apps: ~w(mix nx plug evision ex_unit)a
       ],
       compilers: Mix.compilers()
     ]
@@ -57,15 +56,19 @@ defmodule Image.MixProject do
     [
       # libvips bindings
       {:vix, "~> 0.33"},
-
-      # Color science: conversions, gamut mapping, parsing.
-      # Will progressively replace Image.Color.
-      {:color, path: "../color"},
       # {:vix, github: "akash-akya/vix", branch: "dev"},
       # {:vix, github: "akash-akya/vix"},
       # {:vix, path: "../vix"},
 
-      # eVision OpenCV bindings
+      # Color science: conversions, gamut mapping, parsing.
+      {:color, github: "elixir-image/color"},
+
+      # FFmpeg bindings, used by Image.Video for video frame
+      # extraction, seeking, and streaming.
+      {:xav, "~> 0.10", optional: true},
+
+      # eVision OpenCV bindings. Used by Image.QRcode and the
+      # Image.to_evision/1 / Image.from_evision/1 interop helpers.
       {:evision, "~> 0.1.33 or ~> 0.2", optional: true},
       # {:evision, github: "cocoa-xu/evision"},
 
@@ -82,23 +85,17 @@ defmodule Image.MixProject do
       {:req, "~> 0.4", optional: true},
 
       # Kino for rendering in Livebook
-      if(Version.compare(System.version(), "1.13.0") in [:gt, :eq],
-        do: {:kino, "~> 0.13", optional: true}
-      ),
+      {:kino, "~> 0.13", optional: true},
 
-      # For NX interchange testing and
-      # Bumblebee for image classification,
-      # Scholar for k-means
-      if(otp_release() >= 24,
-        do: [
-          {:nx, "~> 0.10", optional: true},
-          {:nx_image, "~> 0.1", optional: true},
-          {:scholar, "~> 0.3", optional: true},
-          {:bumblebee, "~> 0.6", optional: true},
-          {:exla, "~> 0.9", optional: true},
-          {:rustler, "> 0.0.0", optional: true}
-        ]
-      ),
+      # For Nx interchange (Image.to_nx/2, Image.from_nx/1)
+      # and Scholar for k-means clustering. Image classification
+      # and image generation moved to the `:image_detection`
+      # package along with the `:bumblebee` dependency.
+      {:nx, "~> 0.10", optional: true},
+      {:nx_image, "~> 0.1", optional: true},
+      {:scholar, "~> 0.3", optional: true},
+      {:exla, "~> 0.9", optional: true},
+      {:rustler, "> 0.0.0", optional: true},
 
       # For testing and benchmarking
       {:temp, "~> 0.4", only: [:test, :dev], runtime: false},
@@ -112,12 +109,7 @@ defmodule Image.MixProject do
       {:ex_aws_s3, "~> 2.3", optional: true, only: [:dev, :test]},
       {:hackney, "~> 1.18", optional: true, only: [:dev, :test]},
       {:jason, "~> 1.4", optional: true}
-
-      # Only used for benchmarking
-      # {:mogrify, "~> 0.9.1", only: :dev, optional: true}
     ]
-    |> List.flatten()
-    |> Enum.reject(&is_nil/1)
   end
 
   defp package do
@@ -215,11 +207,6 @@ defmodule Image.MixProject do
       Guards: &(&1[:subject] == "Guard"),
       "libvips Configuration": &(&1[:subject] == "Configuration")
     ]
-  end
-
-  defp otp_release do
-    :erlang.system_info(:otp_release)
-    |> List.to_integer()
   end
 
   @doc false

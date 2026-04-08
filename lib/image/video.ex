@@ -1,537 +1,489 @@
-if Image.evision_configured?() do
+if Image.xav_configured?() do
   defmodule Image.Video do
     @moduledoc """
-    Implements functions to extract frames froma video file
-    as images using [eVision](https://hex.pm/packages/evision). The
-    implementation is based upon
-    [OpenCV Video Capture](https://docs.opencv.org/3.4/d0/da7/videoio_overview.html).
+    Functions to extract frames from a video file or device as
+    images using [Xav](https://hex.pm/packages/xav), an Elixir
+    wrapper around FFmpeg.
 
-    Images can be extracted by frame number of number of milliseconds with
-    `Image.Video.image_from_video/2`.
+    Frames can be extracted by frame number or by millisecond
+    offset with `Image.Video.image_from_video/2`. Streams of
+    frames can be produced with `Image.Video.stream!/2`.
 
-    In order to extract images the video file must first be
-    opened with `Image.Video.open/1`. At the end of processing the video
-    file should be closed with `Image.Video.close/1`.
+    A video must first be opened with `Image.Video.open/2`. The
+    underlying Xav reader is garbage-collected, so explicit
+    `close/1` is no longer required, but the function is provided
+    as a no-op for source compatibility.
 
-    This process can be wrapped by `Image.Video.with_video/2` which will
-    open a video file, execute a function (passing it the video reference) and
-    closing the video file at the end of the function.
+    The pattern can be wrapped by `Image.Video.with_video/2` which
+    opens a video, executes a function with the video reference,
+    and (since closing is no longer required) simply discards the
+    reference at the end.
 
-    ### Note
+    ## Note
 
     This module is only available if the optional dependency
-    [eVision](https://hex.pm/packages/evision) is configured in
-    `mix.exs`.
+    [Xav](https://hex.pm/packages/xav) is in your `mix.exs`. Xav
+    in turn requires FFmpeg ≥ 6.0 to be installed on the system.
+
+    ## Migration from the eVision-backed implementation
+
+    Earlier releases of `Image` used `:evision` (OpenCV) for
+    video frame extraction. From version 0.66.0 the implementation
+    is FFmpeg-based via `:xav`. The public function shapes are the
+    same with these intentional differences:
+
+    * The opaque video struct is `%Image.Video{}` rather than
+      `%Evision.VideoCapture{}`. Pattern-match on the new struct
+      module if your code does so.
+
+    * Backend selection (the `:backend` option to `open/2`) has
+      been removed. FFmpeg is the only backend.
+
+    * Camera input is now opened with a device path string rather
+      than an integer index. `:default_camera` still works on
+      Linux (resolves to `/dev/video0`) and on macOS (resolves to
+      AVFoundation device 0). Other camera indices need an
+      explicit device string.
+
+    * Frame-based seeking (`seek(video, frame: n)` and
+      `image_from_video(video, frame: n)`) is now implemented as
+      a time-based seek to `n / fps` followed by zero or more
+      `next_frame` calls to land on the exact frame. For
+      keyframe-only files this is exact; for inter-frame
+      compressed files (the common case) the behaviour is the
+      same since FFmpeg seeks to the nearest keyframe and decodes
+      forward.
 
     """
 
     alias Vix.Vips.Image, as: Vimage
-    alias Evision.VideoCapture
-    alias Evision.Constant
-    alias Image.Options
 
-    @typedoc "The valid options for Image.Video.seek/2, Image.Video.image_from_video/2"
+    @typedoc """
+    The valid options for `Image.Video.seek/2` and
+    `Image.Video.image_from_video/2`.
+    """
     @type seek_options :: [frame: non_neg_integer()] | [millisecond: non_neg_integer()]
 
-    @typedoc "The representation of a video stream"
-    @type stream_id :: non_neg_integer() | :default_camera
+    @typedoc """
+    A video source. Either a file path / URL accepted by FFmpeg,
+    `:default_camera` for the system's first webcam, or an
+    explicit device path / integer index.
+    """
+    @type source :: Path.t() | :default_camera | non_neg_integer() | String.t()
+
+    @typedoc """
+    Options for `Image.Video.open/2`. Currently empty — the
+    `:backend` option supported by the previous eVision-backed
+    implementation has been removed.
+    """
+    @type open_options :: []
+
+    @typedoc """
+    Options for `Image.Video.stream!/2`.
+    """
+    @type stream_options :: [
+            {:start, non_neg_integer()}
+            | {:finish, integer()}
+            | {:step, pos_integer()}
+            | {:frame, non_neg_integer() | nil}
+            | {:millisecond, non_neg_integer() | nil}
+          ]
+
+    @typedoc """
+    The representation of an open video.
+
+    `:reader` holds the underlying `Xav.Reader` struct. The
+    derived `:fps`, `:duration_seconds`, `:frame_count`, `:width`,
+    and `:height` fields are computed at open time so callers can
+    pattern-match without re-querying FFmpeg.
+    """
+    @type t :: %__MODULE__{
+            reader: Xav.Reader.t() | nil,
+            source: source(),
+            fps: float(),
+            duration_seconds: float(),
+            frame_count: non_neg_integer(),
+            width: pos_integer() | nil,
+            height: pos_integer() | nil
+          }
+
+    defstruct [:reader, :source, :fps, :duration_seconds, :frame_count, :width, :height]
 
     @doc subject: "Guard"
     @doc "Guards that a frame offset is valid for a video"
     defguard is_frame(frame, frame_count)
-             when (is_integer(frame) and frame >= 0 and frame <= trunc(frame_count) - 1) or
-                    (is_integer(frame) and frame_count == 0.0)
+             when (is_integer(frame) and frame >= 0 and frame <= frame_count - 1) or
+                    (is_integer(frame) and frame_count == 0)
 
     @doc subject: "Guard"
     @doc "Guards that a millisecond count is valid for a video"
-    defguard is_valid_millis(millis, frames, fps)
-             when is_integer(millis) and millis >= 0 and millis <= trunc(fps * frames * 1000) - 1
+    defguard is_valid_millis(millis, duration_seconds)
+             when is_integer(millis) and millis >= 0 and
+                    (millis <= trunc(duration_seconds * 1000) - 1 or duration_seconds == 0)
 
-    @doc "Guards that a stream id is valid for a video stream"
     @doc subject: "Guard"
+    @doc "Guards that a stream identifier is valid for a video device"
     defguard is_stream(stream_id)
              when (is_integer(stream_id) and stream_id >= 0) or stream_id == :default_camera
 
+    # ----- with_video --------------------------------------------------------
+
     @doc """
-    Opens a video file, calls the given function with the video
-    reference and closes the video after the function returns.
+    Opens a video, calls the given function with the video
+    reference, and discards the reference when the function
+    returns.
 
     ### Arguments
 
-    * `filename` is the filename of a video file.
+    * `source` is the filename of a video file, a URL accepted
+      by FFmpeg, or a device specifier — see `open/2`.
+
+    * `fun` is a 1-arity function called with the open
+      `%Image.Video{}` struct.
 
     ### Returns
 
-    * The result of the user function or
+    * The result of `fun.(video)` or
 
-    * `{:error, reason}` if the video file could not be opened.
-
-    ### Example
-
-        iex> Image.Video.with_video "./test/support/video/video_sample.mp4", fn video ->
-        ...>  Image.Video.image_from_video(video, 1)
-        ...> end
-
-    """
-    @spec with_video(filename :: Path.t(), (VideoCapture.t() -> any())) :: any()
-
-    def with_video(filename, fun) when is_binary(filename) and is_function(fun, 1) do
-      filename
-      |> open()
-      |> do_with_video(fun)
-    end
-
-    defp do_with_video({:ok, video}, fun) do
-      fun.(video)
-    after
-      close(video)
-    end
-
-    defp do_with_video({:error, reason}, _fun) do
-      {:error, reason}
-    end
-
-    @doc """
-    Opens a video file, camera, RTSP URL or video stream for
-    frame extraction.
-
-    ### Arguments
-
-    * `filename_or_stream` is the filename of a video file,
-      the URL of an [RTSP stream](https://en.wikipedia.org/wiki/Real-Time_Streaming_Protocol)
-      or the OpenCV representation of a video stream as
-      an integer.  It may also be `:default_camera` to open
-      the default camera if there is one.
-
-    * `options` is a keyword list of options. The default
-      is `[]`.
-
-    ### Options
-
-    * `:backend` specifies the backend video processing
-      system to be used. The default is `:any` which means
-      that the first available backend in the current OpenCV
-      configuration will be used.  The available backends
-      can be returned by `Image.Video.available_backends/0`.
-
-    ### Returns
-
-    * `{:ok, video}` or
-
-    * `{:error, reason}`.
-
-    ### Notes
-
-    * The video `t:VideoCapture.t/0` struct that is returned
-      includes metadata fields for frame rate (:fps), frame width
-      (:frame_width), frame height (:frame_height) and frame count
-      (:frame_count). *Note that frame count is an approximation due to
-      issues in the underlying OpenCV*.
-
-    * Opening an RTSP stream requires that `evision` be built with
-      `ffpmeg` support. Since the prebuilt `evision` packages are not
-      built with `ffmpeg` support, `evision` must be installed and
-      compiled with the environment variable `EVISION_PREFER_PRECOMPILED=false`
-      after ensuring that `ffmpeg` is installed. On a MacOS system,
-      `brew install ffmpeg && brew link ffpeg` or similar will perform
-      that installation. See also the [detailed evision installation instructions](https://github.com/cocoa-xu/evision/wiki/Compile-evision-from-source).
+    * `{:error, reason}` if the video could not be opened.
 
     ### Example
 
-        iex> Image.Video.open "./test/support/video/video_sample.mp4"
-        iex> {:ok, camera_video} = Image.Video.open(:default_camera)
-        iex> Image.Video.close(camera_video)
+        iex> result = Image.Video.with_video("./test/support/video/video_sample.mp4", &Image.Video.image_from_video/1)
+        iex> match?({:ok, %Vix.Vips.Image{}}, result)
+        true
 
     """
-    @spec open(filename_or_stream :: Path.t() | stream_id(), Options.Video.open_options()) ::
-            {:ok, VideoCapture.t()} | {:error, Image.error()}
+    @doc subject: "Load and save"
+    @spec with_video(source(), (t() -> any())) :: any()
+    def with_video(source, fun) when is_function(fun, 1) do
+      case open(source) do
+        {:ok, video} ->
+          try do
+            fun.(video)
+          after
+            close(video)
+          end
 
-    def open(filename, options \\ [])
-
-    def open(filename, options) when is_binary(filename) and is_list(options) do
-      with {:ok, backend} <- Options.Video.validate_open_options(options) do
-        case VideoCapture.videoCapture(filename, apiPreference: backend) do
-          %VideoCapture{isOpened: true} = video ->
-            {:ok, video}
-
-          %VideoCapture{isOpened: false} ->
-            {:error,
-             %Image.Error{
-               message: "Could not open video #{inspect(filename)}",
-               reason: "Could not open video #{inspect(filename)}"
-             }}
-
-          error ->
-            {:error,
-             %Image.Error{
-               message: "Could not open video #{inspect(filename)}. Error #{inspect(error)}",
-               reason: "Could not open video #{inspect(filename)}. Error #{inspect(error)}"
-             }}
-        end
+        {:error, _} = err ->
+          err
       end
     end
 
-    def open(camera, options) when is_integer(camera) and camera >= 0 do
-      with {:ok, backend} <- Options.Video.validate_open_options(options) do
-        case VideoCapture.videoCapture(camera, apiPreference: backend) do
-          %VideoCapture{isOpened: true} = video ->
-            {:ok, video}
-
-          %VideoCapture{isOpened: false} ->
-            {:error,
-             %Image.Error{
-               message: "Could not open camera #{inspect(camera)}",
-               reason: "Could not open camera #{inspect(camera)}"
-             }}
-
-          error ->
-            {:error,
-             %Image.Error{
-               message: "Could not open the camera. Error #{inspect(error)}",
-               reason: "Could not open the camera. Error #{inspect(error)}"
-             }}
-        end
-      end
-    end
-
-    @default_camera_id 0
-
-    def open(:default_camera, options) do
-      open(@default_camera_id, options)
-    end
+    # ----- open / open! ------------------------------------------------------
 
     @doc """
-    Opens a video file, camera, RTSP URL or video stream for
-    frame extraction or raises an exception.
+    Opens a video for frame extraction.
 
     ### Arguments
 
-    * `filename_or_stream` is the filename of a video file,
-      the URL of an [RTSP stream](https://en.wikipedia.org/wiki/Real-Time_Streaming_Protocol)
-      or the OpenCV representation of a video stream as
-      an integer.  It may also be `:default_camera` to open
-      the default camera if there is one.
+    * `source` is one of:
 
-    * `options` is a keyword list of options. The default
-      is `[]`.
+      * a file path to a video file;
+      * a URL accepted by FFmpeg (`http://`, `https://`,
+        `rtmp://`, `rtsp://`, …);
+      * the atom `:default_camera` for the system's first webcam.
+        Resolves to `/dev/video0` on Linux. On macOS this is
+        passed to FFmpeg's AVFoundation input;
+      * a non-negative integer camera index. Resolves to
+        `/dev/videoN` on Linux. Use a device path string on
+        other platforms;
+      * a device path string interpreted by FFmpeg directly.
 
-    ### Options
-
-    * `:backend` specifies the backend video processing
-      system to be used. The default is `:any` which means
-      that the first available backend in the current OpenCV
-      configuration will be used.  The available backends
-      can be returned by `Image.Video.available_backends/0`.
+    * `options` is a keyword list. Currently no options are
+      defined; the `:backend` option supported by previous
+      releases has been removed.
 
     ### Returns
 
-    * `video` or
+    * `{:ok, %Image.Video{}}` on success or
 
-    * raises an exception.
-
-    ### Notes
-
-    * The video `t:VideoCapture.t/0` struct that is returned
-      includes metadata fields for frame rate (:fps), frame width
-      (:frame_width), frame height (:frame_height) and frame count
-      (:frame_count). *Note that frame count is an approximation due to
-      issues in the underlying OpenCV*.
-
-    * Opening an RTSP stream requires that `evision` be built with
-      `ffpmeg` support. Since the prebuilt `evision` packages are not
-      built with `ffmpeg` support, `evision` must be installed and
-      compiled with the environment variable `EVISION_PREFER_PRECOMPILED=false`
-      after ensuring that `ffmpeg` is installed. On a MacOS system,
-      `brew install ffmpeg && brew link ffpeg` or similar will perform
-      that installation. See also the [detailed evision installation instructions](https://github.com/cocoa-xu/evision/wiki/Compile-evision-from-source).
+    * `{:error, %Image.Error{}}`.
 
     ### Example
 
-        iex> Image.Video.open! "./test/support/video/video_sample.mp4"
+        iex> {:ok, video} = Image.Video.open("./test/support/video/video_sample.mp4")
+        iex> video.fps
+        30.0
 
     """
-    @spec open!(filename_or_stream :: Path.t() | stream_id()) ::
-            VideoCapture.t() | no_return()
-    def open!(filename_or_stream) do
-      case open(filename_or_stream) do
+    @doc subject: "Load and save"
+    @spec open(source(), open_options()) :: {:ok, t()} | {:error, Image.error()}
+    def open(source, options \\ [])
+
+    def open(source, _options) when is_binary(source) do
+      do_open(source, source, device?: false)
+    end
+
+    def open(:default_camera, _options) do
+      device = default_camera_path()
+      do_open(device, :default_camera, device?: true)
+    end
+
+    def open(camera, _options) when is_integer(camera) and camera >= 0 do
+      device = camera_path(camera)
+      do_open(device, camera, device?: true)
+    end
+
+    @doc """
+    Opens a video for frame extraction, raising on error.
+
+    See `open/2`.
+    """
+    @doc subject: "Load and save"
+    @spec open!(source()) :: t() | no_return()
+    def open!(source) do
+      case open(source) do
         {:ok, video} -> video
-        {:error, reason} -> raise Image.Error, reason
+        {:error, error} -> raise error
       end
     end
+
+    defp do_open(path_or_device, source, xav_options) do
+      case Xav.Reader.new(path_or_device, xav_options) do
+        {:ok, reader} ->
+          {:ok, build(reader, source)}
+
+        {:error, reason} ->
+          {:error,
+           Image.Error.wrap(reason,
+             operation: :video_open,
+             path: path_or_device
+           )}
+      end
+    end
+
+    defp build(%Xav.Reader{} = reader, source) do
+      fps = framerate_to_fps(reader.framerate)
+      duration_seconds = reader.duration * 1.0
+
+      %__MODULE__{
+        reader: reader,
+        source: source,
+        fps: fps,
+        duration_seconds: duration_seconds,
+        frame_count: trunc(fps * duration_seconds),
+        width: nil,
+        height: nil
+      }
+    end
+
+    defp framerate_to_fps({num, den}) when is_integer(num) and is_integer(den) and den > 0,
+      do: num / den
+
+    defp framerate_to_fps(_), do: 0.0
+
+    # ----- close -------------------------------------------------------------
 
     @doc """
     Closes a video.
 
+    Xav's reader is garbage-collected so explicit close is not
+    required. This function is provided for source compatibility
+    with the previous implementation: it returns
+    `{:ok, %Image.Video{reader: nil}}` so subsequent operations
+    against the same struct will fail with a clear error.
+
     ### Arguments
 
-    * `video` is any `t:VideoCapture.t/0`.
+    * `video` is any `t:Image.Video.t/0` returned from `open/2`.
 
     ### Returns
 
-    * `{:ok, closed_video}` or
-
-    * `{:error, reason}`.
-
-    ### Example
-
-        iex> {:ok, video} = Image.Video.open "./test/support/video/video_sample.mp4"
-        iex> Image.Video.close(video)
+    * `{:ok, video}` where `video.reader` is now `nil`.
 
     """
-    @spec close(VideoCapture.t()) ::
-            {:ok, VideoCapture.t()} | {:error, Image.error()}
-    def close(%VideoCapture{} = video) do
-      case VideoCapture.release(video) do
-        %VideoCapture{} = video ->
-          {:ok, video}
-
-        error ->
-          {:error,
-           %Image.Error{
-             message: "Could not close video. Error #{inspect(error)}",
-             reason: "Could not close video. Error #{inspect(error)}"
-           }}
-      end
+    @doc subject: "Load and save"
+    @spec close(t()) :: {:ok, t()}
+    def close(%__MODULE__{} = video) do
+      {:ok, %{video | reader: nil}}
     end
 
     @doc """
-    Closes a video or raises an exception.
+    Closes a video, raising on error.
 
-    ### Arguments
-
-    * `video` is any `t:VideoCapture.t/0`.
-
-    ### Returns
-
-    * `closed_video` or
-
-    * raises an exception.
-
-    ### Example
-
-        iex> {:ok, video} = Image.Video.open "./test/support/video/video_sample.mp4"
-        iex> Image.Video.close!(video)
-
+    See `close/1`.
     """
-    @spec close!(VideoCapture.t()) :: VideoCapture.t() | no_return()
-    def close!(video) do
-      case close(video) do
-        {:ok, video} -> video
-        {:error, reason} -> raise Image.Error, reason
-      end
+    @doc subject: "Load and save"
+    @spec close!(t()) :: t()
+    def close!(%__MODULE__{} = video) do
+      {:ok, closed} = close(video)
+      closed
     end
 
-    @doc """
-    Returns video file or live video as a `t:Enumerable.t/0`
-    stream.
+    # ----- stream! -----------------------------------------------------------
 
-    This allows a video file or live video to be streamed
-    for processing like any other enumerable.
+    @doc """
+    Returns a `Stream` of images from a video.
 
     ### Arguments
 
-    * `filename_or_stream` is either a pathname on the
-      current system, a non-negative integer representing a
-      video stream or `:default_camera` representing the
-      stream for the default system camera. It can also
-      be a `t:VideoCapture.t/0` representing a
-      video file or stream that is already opened (this is the
-      preferred approach).
+    * `video` is any `t:Image.Video.t/0` returned from `open/2`.
 
     * `options` is a keyword list of options.
 
     ### Options
 
-    Only one of the following options can be provided. No
-    options means the entire video will be streamed frame
-    by frame.
+    * `:frame` — start frame offset (default `0`).
 
-    * `:frame` is a `t:Range.t/0` representing the range
-      of frames to be extracted. `:frames` can only be specified
-      for video files, not for video streams. For example,
-      `frames: 10..100/2` will produce a stream of images that
-      are every second image between the frame offsets `10` and `100`.
+    * `:millisecond` — start millisecond offset.
 
-    * `:millisecond` is a `t:Range.t/0` representing the range
-      of milliseconds to be extracted. `:millisecond` can only
-      be specified for video files, not for video streams. For example,
-      `millisecond: 1000..100000/2` will produce a stream of images
-      that are every second image between the millisecond offsets of `1_000`
-      and `100_000`.
+    * `:start` — same as `:frame` (kept for back-compat).
+
+    * `:finish` — last frame offset, inclusive. Default `-1`
+      (meaning to the end of the video).
+
+    * `:step` — number of frames to advance between yielded
+      frames. Default `1`.
+
+    Only one of `:frame` / `:millisecond` may be supplied.
 
     ### Returns
 
-    * A `t:Enumerable.t/0` that can be used with functions in
-      the `Stream` and `Enum` modules to lazily enumerate images
-      extracted from a video stream.
+    * A `Stream` that produces `t:Vix.Vips.Image.t/0` images
+      lazily as enumerated.
 
     ### Example
 
-        # Extract every second frame starting at the
-        # first frame and ending at the last frame.
-        iex> "./test/support/video/video_sample.mp4"
-        ...> |> Image.Video.stream!(frame: 0..-1//2)
-        ...> |> Enum.to_list()
-        ...> |> Enum.count()
-        86
+        iex> video = Image.Video.open!("./test/support/video/video_sample.mp4")
+        iex> video |> Image.Video.stream!(start: 0, finish: 2) |> Enum.count()
+        3
 
     """
-    @spec stream!(
-            filename_or_stream :: Path.t() | stream_id() | VideoCapture.t(),
-            options :: Keyword.t()
-          ) :: Enumerable.t()
+    @doc subject: "Load and save"
+    @spec stream!(t(), stream_options()) :: Enumerable.t()
     def stream!(video, options \\ [])
 
-    def stream!(filename_or_stream, options)
-        when is_binary(filename_or_stream) or is_stream(filename_or_stream) do
-      filename_or_stream
-      |> open!()
-      |> stream!(options)
+    def stream!(%__MODULE__{reader: nil}, _options) do
+      raise Image.Error,
+        reason: :video_closed,
+        message: "Video has been closed"
     end
 
-    def stream!(%VideoCapture{} = video, options) do
-      options = Options.Video.validate_stream_options!(video, options)
+    def stream!(%__MODULE__{} = video, options) do
+      start_frame = start_frame(video, options)
+      finish_frame = finish_frame(video, options)
+      step = Keyword.get(options, :step, 1)
 
       Stream.resource(
-        fn ->
-          seek_to_video_first(video, options)
-        end,
-        fn
-          {video, _unit, first, last, _step} = stream when first <= last ->
-            case Image.Video.image_from_video(video) do
-              {:ok, image} ->
-                {[image], advance_stream(stream)}
-
-              _other ->
-                {:halt, video}
-            end
-
-          {video, _unit, _first, _last, _step} ->
-            {:halt, video}
-        end,
-        fn video -> Image.Video.close(video) end
+        fn -> {video, start_frame, finish_frame, step, true} end,
+        &advance_stream/1,
+        fn _state -> :ok end
       )
     end
 
-    defp seek_to_video_first(video, {nil = unit, first, last, step}) do
-      {video, unit, first, last, step}
+    defp start_frame(video, options) do
+      cond do
+        ms = Keyword.get(options, :millisecond) -> millisecond_to_frame(video, ms)
+        frame = Keyword.get(options, :frame) -> frame
+        true -> Keyword.get(options, :start, 0)
+      end
     end
 
-    defp seek_to_video_first(video, {unit, 0 = first, last, step}) do
-      {video, unit, first, last, step}
+    defp finish_frame(video, options) do
+      case Keyword.get(options, :finish, -1) do
+        -1 -> video.frame_count - 1
+        n when is_integer(n) and n >= 0 -> n
+      end
     end
 
-    defp seek_to_video_first(video, {unit, first, last, step}) do
-      {:ok, video} = seek(video, [{unit, first}])
-      {video, unit, first, last, step}
+    defp advance_stream({video, current, finish, _step, _seek_first}) when current > finish do
+      {:halt, video}
     end
 
-    defp advance_stream({video, nil = unit, first, last, step}) do
-      {video, unit, first, last, step}
+    defp advance_stream({video, current, finish, step, true}) do
+      _ = seek_to_frame(video, current)
+      emit_current_frame(video, current, finish, step)
     end
 
-    defp advance_stream({video, unit, first, last, 1 = step}) do
-      next = first + step
-      {video, unit, next, last, step}
+    defp advance_stream({video, current, finish, step, false}) do
+      # Advance step - 1 frames (already at the previous yielded frame),
+      # then yield.
+      Enum.each(1..(step - 1)//1, fn _ -> Xav.Reader.next_frame(video.reader) end)
+      emit_current_frame(video, current, finish, step)
     end
 
-    defp advance_stream({video, unit, first, last, step}) do
-      next = first + step
-      Enum.each(1..(step - 1), fn _x -> VideoCapture.grab(video) end)
-      {video, unit, next, last, step}
+    defp emit_current_frame(video, current, finish, step) do
+      case Xav.Reader.next_frame(video.reader) do
+        {:ok, frame} ->
+          {:ok, image} = frame_to_image(frame)
+          {[image], {video, current + step, finish, step, false}}
+
+        {:error, :eof} ->
+          {:halt, video}
+      end
     end
+
+    # ----- seek --------------------------------------------------------------
 
     @doc """
-    Seeks the video head to a specified frame offset
-    or millisecond offset.
+    Seeks the video head to a frame or millisecond offset.
 
-    Note that seeking a video format is supported,
-    seeking a live video stream (such as from a
-    webcam) is not supported and will return an
-    error.
+    Note that seeking is not supported on live video streams
+    such as a webcam.
 
     ### Arguments
 
-    * `video` is any `t:VideoCapture.t/0`.
+    * `video` is any `t:Image.Video.t/0` returned from `open/2`.
 
-    * `options` is a keyword list of options.
+    * `options` is a keyword list with **exactly one** of:
 
-    ### Options
+      * `frame: non_neg_integer()` — seek to a frame offset.
 
-    * `unit` is either `:frame` or `:millisecond` with a
-      non-negative integer offset. For example `frame: 3`.
+      * `millisecond: non_neg_integer()` — seek to a millisecond
+        offset.
 
     ### Returns
 
-    * `{:ok, video}` or
+    * `{:ok, video}` on success or
 
-    * `{:error, reason}`
+    * `{:error, %Image.Error{}}`.
 
-    ### Notes
-
-    Seeking cannot be performed on image streams such as
-    webcams.  Therefore no options may be provided when
-    extracting images from an image stream.
-
-    ### Warning
-
-    Seeking is not [frame accurate](https://github.com/opencv/opencv/issues/9053)!
-
-    ### Examples
+    ### Example
 
         iex> {:ok, video} = Image.Video.open("./test/support/video/video_sample.mp4")
-        iex> {:ok, _image} = Image.Video.seek(video, frame: 0)
-        iex> {:ok, _image} = Image.Video.seek(video, millisecond: 1_000)
+        iex> {:ok, _} = Image.Video.seek(video, frame: 0)
+        iex> {:ok, _} = Image.Video.seek(video, millisecond: 1_000)
         iex> {:error, %Image.Error{reason: :negative_offset}} = Image.Video.seek(video, frame: -1)
         iex> :ok
         :ok
 
     """
-    @spec seek(VideoCapture.t(), seek_options()) ::
-            {:ok, VideoCapture.t()} | {:error, Image.error()}
+    @doc subject: "Operation"
+    @spec seek(t(), seek_options()) :: {:ok, t()} | {:error, Image.error()}
+    def seek(video, options)
 
-    def seek(%VideoCapture{isOpened: true, frame_count: frame_count} = video, [{:frame, frame}])
-        when is_frame(frame, frame_count) do
-      case VideoCapture.set(video, Constant.cv_CAP_PROP_POS_FRAMES(), frame) do
-        true ->
-          {:ok, video}
+    def seek(%__MODULE__{reader: nil}, _options) do
+      {:error, video_closed_error()}
+    end
 
-        false ->
-          {:error,
-           %Image.Error{
-             message: "Could not seek to the frame offset #{inspect(frame)}.",
-             reason: "Could not seek to the frame offset #{inspect(frame)}."
-           }}
+    def seek(%__MODULE__{} = video, [{:frame, frame}])
+        when is_frame(frame, video.frame_count) do
+      seconds = frame / max(video.fps, 1.0)
+
+      case Xav.Reader.seek(video.reader, seconds) do
+        :ok -> {:ok, video}
+        {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :video_seek)}
       end
     end
 
-    def seek(%VideoCapture{isOpened: true, fps: fps, frame_count: frame_count} = video, [
-          {:millisecond, millis}
-        ])
-        when is_valid_millis(millis, frame_count, fps) do
-      case VideoCapture.set(video, Constant.cv_CAP_PROP_POS_MSEC(), millis) do
-        true ->
-          {:ok, video}
-
-        false ->
-          {:error,
-           %Image.Error{
-             message: "Could not seek to the millisecond offset #{inspect(millis)}.",
-             reason: "Could not seek to the millisecond offset #{inspect(millis)}."
-           }}
+    def seek(%__MODULE__{} = video, [{:millisecond, millis}])
+        when is_valid_millis(millis, video.duration_seconds) do
+      case Xav.Reader.seek(video.reader, millis / 1000) do
+        :ok -> {:ok, video}
+        {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :video_seek)}
       end
     end
 
-    def seek(%VideoCapture{isOpened: true}, [{unit, offset}])
-        when unit in [:frame, :millisecond] and offset < 0 do
+    def seek(%__MODULE__{}, [{unit, offset}])
+        when unit in [:frame, :millisecond] and is_integer(offset) and offset < 0 do
       message =
         "Offset for #{inspect(unit)} must be a non-negative integer. Found #{inspect(offset)}"
 
       {:error, %Image.Error{reason: :negative_offset, value: offset, message: message}}
     end
 
-    def seek(%VideoCapture{isOpened: true}, [{unit, offset}])
-        when unit in [:frame, :millisecond] and is_integer(offset) do
+    def seek(%__MODULE__{}, [{unit, _offset}]) when unit in [:frame, :millisecond] do
       {:error,
        %Image.Error{
          reason: :frame_out_of_range,
@@ -539,153 +491,76 @@ if Image.evision_configured?() do
        }}
     end
 
-    def seek(%VideoCapture{isOpened: true}, options) do
+    def seek(%__MODULE__{}, options) do
       message =
-        "Options must be either `frame: frame_offet` or `millisecond: millisecond_offset`. Found #{inspect(options)}"
+        "Options must be either `frame: frame_offset` or " <>
+          "`millisecond: millisecond_offset`. Found #{inspect(options)}"
 
       {:error, %Image.Error{reason: :invalid_seek_options, value: options, message: message}}
     end
 
-    def seek(%VideoCapture{isOpened: false}, _options) do
-      {:error, video_closed_error()}
-    end
-
     @doc """
-    Seeks the video head to a specified frame offset
-    or millisecond offset.
-
-    Note that seeking a video format is supported,
-    seeking a live video stream (such as from a
-    webcam) is not supported and will return an
-    error.
-
-    ### Arguments
-
-    * `video` is any `t:VideoCapture.t/0`.
-
-    * `options` is a keyword list of options.
-
-    ### Options
-
-    * `unit` is either `:frame` or `:millisecond` with a
-      non-negative integer offset. For example `frame: 3`.
-
-    ### Returns
-
-    * `{:ok, video}` or
-
-    * `{:error, reason}`.
-
-    ### Notes
-
-    Seeking cannot be performed on image streams such as
-    webcams.  Therefore no options may be provided when
-    extracting images from an image stream.
-
+    Seeks the video head to a frame or millisecond offset,
+    raising on error. See `seek/2`.
     """
-    @spec seek!(VideoCapture.t(), seek_options()) ::
-            VideoCapture.t() | no_return()
-
-    def seek!(video, options \\ []) do
+    @doc subject: "Operation"
+    @spec seek!(t(), seek_options()) :: t() | no_return()
+    def seek!(video, options) do
       case seek(video, options) do
         {:ok, video} -> video
-        {:error, reason} -> raise Image.Error, reason
+        {:error, error} -> raise error
       end
     end
 
-    @doc """
-    Scrubs a video forward by a number of frames.
-
-    In OpenCV (the underlying video library used by
-    `Image.Video`), seeking to a specified frame is not
-    frame accurate.  This function moves the video
-    play head forward frame by frame and is therefore
-    a frame accurate way of moving the the video head
-    forward.
-
-    ### Arguements
-
-    * `video` is any `t:VideoCapture.t/0`.
-
-    * `frames` is a positive integer number of frames
-      to scrub forward.
-
-    ### Returns
-
-    * `{:ok, frames_scrubbed}`. `frames_scrubbed` may
-      be less than the number of requested frames. This may
-      happen of the end of the video stream is reached, or
-
-    * `{:error, reason}`.
-
-    ### Examples
-
-        iex> {:ok, video} = Image.Video.open "./test/support/video/video_sample.mp4"
-        iex> {:ok, 10} = Image.Video.scrub(video, 10)
-        iex>  Image.Video.scrub(video, 100_000_000)
-        {:ok, 161}
-
-    """
-    @spec scrub(VideoCapture.t(), frames :: pos_integer) ::
-            {:ok, pos_integer()} | {:error, Image.error()}
-
-    def scrub(%VideoCapture{isOpened: true} = video, frames)
-        when is_integer(frames) and frames > 0 do
-      Enum.reduce_while(1..frames, {:ok, 0}, fn _frame, {:ok, count} ->
-        case VideoCapture.grab(video) do
-          true -> {:cont, {:ok, count + 1}}
-          false -> {:halt, {:ok, count}}
-          {:error, reason} -> {:halt, {:error, reason}}
-        end
-      end)
-    end
-
-    def scrub(%VideoCapture{isOpened: false}, _frames) do
-      {:error, video_closed_error()}
-    end
+    # ----- scrub -------------------------------------------------------------
 
     @doc """
-    Extracts a frame from a video and returns
-    an image.
-
-    After the image is extracted the play head
-    in the video file is advanced one frame. That is,
-    successive calls to `Image.Video.image_from_video/2`
-    will return successive frames - not the same frame.
+    Advances the video head by `frames` frames without
+    decoding them as images.
 
     ### Arguments
 
-    * `video` is any `t:VideoCapture.t/0`
+    * `video` is any `t:Image.Video.t/0` returned from `open/2`.
 
-    * `options` is a keyword list of options. The defalt
+    * `frames` is the number of frames to advance.
 
-    ### Options
+    ### Returns
 
-    * `unit` is either `:frame` or `:millisecond` with a
-      non-negative integer offset. For example `frame: 3`.
-      The default is `[]` which means that no seek is performed
-      and the extracted image is taken from the current
-      position in the file or video stream. Note that seeking
-      is not guaranteed to be accurate. If frame accuracy is
-      required the recommended process is:
+    * `{:ok, video}` after advancing or
 
-      * Open the video file with `Image.Video.open/1`
-      * Scrub forward to the required freame with `Image.Video.scrub/2`
-      * Then capture the frame with `Image.Video.image_from_video/1`
+    * `{:error, %Image.Error{}}`.
+
+    """
+    @doc subject: "Operation"
+    @spec scrub(t(), pos_integer()) :: {:ok, t()} | {:error, Image.error()}
+    def scrub(%__MODULE__{reader: nil}, _frames) do
+      {:error, video_closed_error()}
+    end
+
+    def scrub(%__MODULE__{} = video, frames)
+        when is_integer(frames) and frames > 0 do
+      Enum.each(1..frames, fn _ -> Xav.Reader.next_frame(video.reader) end)
+      {:ok, video}
+    end
+
+    # ----- image_from_video --------------------------------------------------
+
+    @doc """
+    Reads a single frame from a video as an `t:Vix.Vips.Image.t/0`.
+
+    ### Arguments
+
+    * `video` is any `t:Image.Video.t/0` returned from `open/2`.
+
+    * `options` is `[]`, `[frame: n]`, or `[millisecond: n]`.
 
     ### Returns
 
     * `{:ok, image}` or
 
-    * `{:error, reason}`.
+    * `{:error, %Image.Error{}}`.
 
-    ### Notes
-
-    Seeking cannot be performed on image streams such as
-    webcams.  Therefore no options may be provided when
-    extracting images from an image stream.
-
-    ### Examples
+    ### Example
 
         iex> {:ok, video} = Image.Video.open("./test/support/video/video_sample.mp4")
         iex> {:ok, _image} = Image.Video.image_from_video(video)
@@ -697,169 +572,121 @@ if Image.evision_configured?() do
         :ok
 
     """
-    @spec image_from_video(VideoCapture.t(), seek_options()) ::
+    @doc subject: "Operation"
+    @spec image_from_video(t(), seek_options()) ::
             {:ok, Vimage.t()} | {:error, Image.error()}
-
     def image_from_video(video, options \\ [])
 
-    def image_from_video(%VideoCapture{isOpened: true} = video, []) do
-      with %Evision.Mat{} = cv_image <- VideoCapture.read(video) do
-        Image.from_evision(cv_image)
-      else
-        error ->
+    def image_from_video(%__MODULE__{reader: nil}, _options) do
+      {:error, video_closed_error()}
+    end
+
+    def image_from_video(%__MODULE__{} = video, []) do
+      case Xav.Reader.next_frame(video.reader) do
+        {:ok, frame} ->
+          frame_to_image(frame)
+
+        {:error, :eof} ->
           {:error,
            %Image.Error{
-             message: "Could not extract the frame. Error #{inspect(error)}.",
-             reason: "Could not extract the frame. Error #{inspect(error)}."
+             reason: :end_of_stream,
+             message: "Reached end of video stream"
            }}
       end
     end
 
-    def image_from_video(%VideoCapture{isOpened: true} = video, options) do
+    def image_from_video(%__MODULE__{} = video, options) do
       with {:ok, video} <- seek(video, options) do
-        image_from_video(video)
+        image_from_video(video, [])
       end
     end
 
-    def image_from_video(%VideoCapture{isOpened: false}, _options) do
-      {:error, video_closed_error()}
-    end
-
     @doc """
-    Extracts a frame from a video and returns
-    an image or raises an exception.
-
-    After the image is extracted the play head
-    in the video file is advanced one frame. That is,
-    successive calls to `Image.Video.image_from_video/2`
-    will return successive frames - not the same frame.
-
-    ### Arguments
-
-    * `video` is any `t:VideoCapture.t/0`.
-
-    * `options` is a keyword list of options.
-
-    ### Options
-
-    * `unit` is either `:frame` or `:millisecond` with a
-      non-negative integer offset. For example `frame: 3`.
-      The default is `[]` which means that no seek is performed
-      and the extracted image is taken from the current
-      position in the file or video stream. Note that seeking
-      is not guaranteed to be accurate. If frame accuracy is
-      required the recommended process is:
-
-      * Open the video file with `Image.Video.open/1`
-      * Scrub forward to the required freame with `Image.Video.scrub/2`
-      * Then capture the frame with `Image.Video.image_from_video/1`
-
-    ### Returns
-
-    * `image` or
-
-    * raises an exception.
-
-    ### Notes
-
-    Seeking cannot be performed on image streams such as
-    webcams.  Therefore no options may be provided when
-    extracting images from an image stream.
-
+    Reads a single frame from a video as an
+    `t:Vix.Vips.Image.t/0`, raising on error. See
+    `image_from_video/2`.
     """
-    @spec image_from_video!(VideoCapture.t(), seek_options()) :: Vimage.t() | no_return()
-
-    def image_from_video!(%VideoCapture{} = video, options \\ []) do
+    @doc subject: "Operation"
+    @spec image_from_video!(t(), seek_options()) :: Vimage.t() | no_return()
+    def image_from_video!(video, options \\ []) do
       case image_from_video(video, options) do
         {:ok, image} -> image
-        {:error, reason} -> raise Image.Error, reason
+        {:error, error} -> raise error
       end
     end
 
-    @doc """
-    Returns a list of known (valid but not necessarily
-    available for use in the current OpenCV configuration)
-    backend video processors.
-
-    See the [OpenCV documentation](https://docs.opencv.org/4.x/d4/d15/group__videoio__flags__base.html#ga023786be1ee68a9105bf2e48c700294d)
-    for more information on video processor backends.
-
-    ### Example
-
-        iex> Image.Video.known_backends() |> Enum.sort()
-        [:android, :any, :aravis, :avfoundation, :cmu1394, :dc1394, :dshow, :ffmpeg,
-         :fireware, :firewire, :giganetix, :gphoto2, :gstreamer, :ieee1394, :images,
-         :intel_mfx, :intelperc, :msmf, :obsensor, :opencv_mjpeg, :openni, :openni2,
-         :openni2_astra, :openni2_asus, :openni_asus, :pvapi, :qt, :realsense, :ueye,
-         :unicap, :v4l, :v4l2, :vfw, :winrt, :xiapi, :xine]
-
-    """
-    @spec known_backends :: list(Options.Video.backend())
-    def known_backends do
-      Map.keys(Options.Video.known_backends())
-    end
+    # ----- frame conversion --------------------------------------------------
 
     @doc false
-    def known_backend_values do
-      Map.keys(Options.Video.inverted_known_backends())
+    def frame_to_image(%Xav.Frame{
+          type: :video,
+          data: data,
+          width: width,
+          height: height,
+          format: format
+        })
+        when format in [:rgb24, :bgr24] do
+      bands = 3
+
+      case Vix.Vips.Image.new_from_binary(data, width, height, bands, :VIPS_FORMAT_UCHAR) do
+        {:ok, image} ->
+          if format == :bgr24 do
+            with {:ok, swapped} <- Vix.Vips.Operation.bandjoin([image[2], image[1], image[0]]) do
+              {:ok, swapped}
+            end
+          else
+            {:ok, image}
+          end
+
+        {:error, reason} ->
+          {:error, Image.Error.wrap(reason, operation: :frame_to_image)}
+      end
     end
 
-    @doc """
-    Returns a boolean indicating if the specified
-    backend is known (valid but not necessarily
-    available for use in the current OpenCV configuration).
-
-    ### Examples
-
-        iex> Image.Video.known_backend?(:avfoundation)
-        true
-        iex> Image.Video.known_backend?(:invalid)
-        false
-        iex> Image.Video.known_backend?(1200)
-        true
-        iex> Image.Video.known_backend?(-1)
-        false
-
-    """
-    @spec known_backend?(Options.Video.backend()) :: boolean()
-    def known_backend?(backend) when is_atom(backend) do
-      backend in known_backends()
+    def frame_to_image(%Xav.Frame{format: format}) do
+      {:error,
+       %Image.Error{
+         reason: :unsupported_frame_format,
+         value: format,
+         message: "Unsupported video frame format: #{inspect(format)}"
+       }}
     end
 
-    def known_backend?(backend) when is_integer(backend) do
-      backend in known_backend_values()
+    # ----- helpers -----------------------------------------------------------
+
+    defp millisecond_to_frame(%__MODULE__{fps: fps}, millis) do
+      trunc(millis / 1000 * fps)
     end
 
-    @doc """
-    Returns a list of available (configured and
-    available for use) backend video processors.
+    defp seek_to_frame(%__MODULE__{} = video, 0), do: {:ok, video}
 
-    See the [OpenCV documentation](https://docs.opencv.org/4.x/d4/d15/group__videoio__flags__base.html#ga023786be1ee68a9105bf2e48c700294d)
-    for more information on video processor backends.
-
-    """
-    @spec available_backends :: list(Options.Video.backend())
-    def available_backends do
-      Options.Video.known_backends()
-      |> Enum.filter(fn {_backend, value} -> Evision.VideoIORegistry.hasBackend(value) end)
-      |> Keyword.keys()
+    defp seek_to_frame(%__MODULE__{} = video, frame) do
+      seconds = frame / max(video.fps, 1.0)
+      _ = Xav.Reader.seek(video.reader, seconds)
+      {:ok, video}
     end
 
-    @doc """
-    Returns a boolean indicating if the specified
-    backend is available (configured and
-    available for use).
-
-    """
-    @spec available_backend?(any) :: boolean()
-    def available_backend?(backend) do
-      backend in available_backends()
+    defp default_camera_path do
+      case :os.type() do
+        {:unix, :darwin} -> "0"
+        {:unix, _} -> "/dev/video0"
+        {:win32, _} -> "video=0"
+      end
     end
 
-    ### Helpers
+    defp camera_path(index) do
+      case :os.type() do
+        {:unix, :darwin} -> Integer.to_string(index)
+        {:unix, _} -> "/dev/video#{index}"
+        {:win32, _} -> "video=#{index}"
+      end
+    end
 
     defp video_closed_error do
-      "Video is not open"
+      %Image.Error{
+        reason: :video_closed,
+        message: "Video has been closed"
+      }
     end
   end
 end

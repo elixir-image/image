@@ -5,7 +5,6 @@ defmodule Image.Test do
   alias Vix.Vips.Image, as: Vimage
 
   doctest Image
-  doctest Image.Classification
   doctest Image.BandFormat
   doctest Image.Blurhash
   doctest Image.Math

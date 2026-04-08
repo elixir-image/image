@@ -11893,17 +11893,12 @@ defmodule Image do
   end
 
   @doc false
-  def bumblebee_configured? do
-    Enum.reduce_while([Nx, EXLA, Bumblebee], true, fn mod, flag ->
-      case Code.ensure_compiled(mod) do
-        {:module, _module} -> {:cont, flag}
-        _other -> {:halt, false}
-      end
-    end)
+  def evision_configured? do
+    match?({:module, _module}, Code.ensure_compiled(Evision))
   end
 
   @doc false
-  def evision_configured? do
-    match?({:module, _module}, Code.ensure_compiled(Evision))
+  def xav_configured? do
+    match?({:module, _module}, Code.ensure_compiled(Xav.Reader))
   end
 end

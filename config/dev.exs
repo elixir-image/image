@@ -24,11 +24,12 @@ config :nx, :default_defn_options, compiler: EXLA
 config :logger,
   level: :warning
 
-config :image, :classifier,
-  model: {:hf, "Falconsai/nsfw_image_detection"},
-  featurizer: {:hf, "Falconsai/nsfw_image_detection"},
-  featurizer_options: [module: Bumblebee.Vision.VitFeaturizer],
-  name: Image.Classification.Server,
-  autostart: true
-
-config :image, :generator, autostart: false
+# Image classification and generation moved to the
+# `:image_detection` package. Configure them there:
+#
+#   config :image_detection, :classifier,
+#     model: {:hf, "Falconsai/nsfw_image_detection"},
+#     featurizer: {:hf, "Falconsai/nsfw_image_detection"},
+#     autostart: true
+#
+#   config :image_detection, :generator, autostart: false
