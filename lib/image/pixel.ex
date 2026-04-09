@@ -68,7 +68,7 @@ defmodule Image.Pixel do
     labs: {Color.Lab, :short_lab},
     lch: {Color.LCHab, :float_lch},
     cmyk: {Color.CMYK, :uchar_cmyk},
-    hsv: {Color.Hsv, :uchar_hsv},
+    hsv: {Color.HSV, :uchar_hsv},
     bw: {Color.SRGB, :uchar_grey},
     grey16: {Color.SRGB, :ushort_grey},
     multiband: {Color.SRGB, :uchar_rgb}
@@ -471,8 +471,8 @@ defmodule Image.Pixel do
     do: {:ok, [scale(c, 255), scale(m, 255), scale(y, 255), scale(k, 255)]}
 
   # libvips HSV uses uchar (0..255) for all three channels.
-  # Color.Hsv uses [0, 1] for h, s, v.
-  defp encode(:uchar_hsv, %Color.Hsv{h: h, s: s, v: v}),
+  # Color.HSV uses [0, 1] for h, s, v.
+  defp encode(:uchar_hsv, %Color.HSV{h: h, s: s, v: v}),
     do: {:ok, [scale(h, 255), scale(s, 255), scale(v, 255)]}
 
   # 1-band greyscale: use Color.Lab L* as a perceptually-correct luma.

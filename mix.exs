@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.64.0"
+  @version "0.65.0"
   @app_name "image"
 
   def project do
@@ -61,7 +61,7 @@ defmodule Image.MixProject do
       # {:vix, path: "../vix"},
 
       # Color science: conversions, gamut mapping, parsing.
-      {:color, "~> 0.3"},
+      {:color, "~> 0.4"},
 
       # FFmpeg bindings, used by Image.Video for video frame
       # extraction, seeking, and streaming.
@@ -93,7 +93,6 @@ defmodule Image.MixProject do
       # package along with the `:bumblebee` dependency.
       {:nx, "~> 0.11.0", optional: true},
       {:exla, "0.11.0", optional: true},
-      {:fine, "0.1.4", optional: true},
       {:nx_image, "~> 0.1", optional: true},
       {:scholar, "~> 0.3", optional: true},
       {:rustler, "> 0.0.0", optional: true},

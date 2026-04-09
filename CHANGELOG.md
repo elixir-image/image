@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.65.0
+
+This is the changelog for Image version 0.65.0 released on April 9th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Use the updated colorspace names in Color 0.4.0.
+
 ## Image 0.64.0
 
 This is the changelog for Image version 0.64.0 released on April 9th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
