@@ -16,27 +16,10 @@ The primary intent of this release is to stablise the code in readiness for a 1.
   * `Image.map_pages/2` — use `Image.map_join_pages/2`.
   
 * `Image.Color` has been removed. Color handling now lives in two new modules and one new dependency:
-
-  * `Image.Pixel` — `to_pixel/3` resolves any colour input (atom, hex string, named colour, numeric list, `Color.*` struct) into a pixel matching the interpretation, value range, and band layout of a target image. This fixes a long-standing bug where colour arguments were treated as raw 8-bit sRGB regardless of the image's actual colour space (so `:red` against a Lab image would yield `[255, 0, 0]` instead of Lab red `[53.24, 80.09, 67.20]`). Every option validator that accepts a colour now routes through `Image.Pixel.to_pixel/3`. `Image.Pixel` also exposes `to_srgb/1`, `transparency/1`, the `is_pixel/1` defguard, and the `t/0` type.
-
-  * `Image.ICCProfile` — the libvips ICC profile helpers (`inbuilt/0`, `known?/1`, `is_inbuilt/1`, `t/0`).
-
-  * The new `:color` dependency — a full-featured colour library (`Color.new/2`, `Color.convert/2,3`, `Color.SRGB.parse/1`, `Color.CSSNames`, all the major colour spaces, gamut mapping, ICC rendering intents). Hex parsing now supports `#RGB`, `#RGBA`, `#RRGGBB`, and `#RRGGBBAA`.
   
-* `Image.Classification` and `Image.Generation` have moved to a new sibling package, [`:image_detection`](https://hex.pm/packages/image_detection). The two modules keep their fully-qualified names (`Image.Classification` and `Image.Generation`) so that existing call sites continue to work — they just live in a different OTP application now. To restore the previous functionality, add `:image_detection` to your `mix.exs`:
-
-      def deps do
-        [
-          {:image, "~> 0.67"},
-          {:image_detection, "~> 0.1"},
-          # plus your preferred Nx backend, e.g.
-          {:exla, "~> 0.10"}
-        ]
-      end
+* `Image.Classification` and `Image.Generation` have moved to a new sibling package, [`:image_detection`](https://hex.pm/packages/image_detection). 
 
 * `:bumblebee` is no longer a dependency of `:image`. It is configured in the new library `image_detection`.
-
-* The `livebook/segment_anything.livemd` notebook has also moved to `image_detection/livebooks/segment_anything.livemd`, since the Segment Anything Model (SAM) pipeline relies on the same ONNX / Nx toolchain as the other detection modules. The `:image` HexDocs extras no longer reference it.
 
 * `Image.Video` is now backed by [Xav](https://hex.pm/packages/xav) (a thin Elixir wrapper around FFmpeg) instead of `:evision` / OpenCV. The public API surface is largely unchanged but the underlying type, options, and a few semantic details have moved:
 
