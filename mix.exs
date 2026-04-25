@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.65.0"
+  @version "0.66.0"
   @app_name "image"
 
   def project do
@@ -89,10 +89,10 @@ defmodule Image.MixProject do
 
       # For Nx interchange (Image.to_nx/2, Image.from_nx/1)
       # and Scholar for k-means clustering. Image classification
-      # and image generation moved to the `:image_detection`
+      # and image generation moved to the `:image_vision`
       # package along with the `:bumblebee` dependency.
-      {:nx, "~> 0.11.0", optional: true},
-      {:exla, "0.11.0", optional: true},
+      {:nx, "~> 0.10", optional: true},
+      {:exla, "~> 0.10", optional: true},
       {:nx_image, "~> 0.1", optional: true},
       {:scholar, "~> 0.3", optional: true},
       {:rustler, "> 0.0.0", optional: true},

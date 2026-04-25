@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.66.0
+
+This is the changelog for Image version 0.66.0 released on April 25th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Relax Nx support to allow `~> 0.10` (not ~> 0.11). This allows Bumblebee to be configured in `image_vision` since Bumblebee only supports Nx `~> 0.9.0 or ~> 0.10.0`.
+
 ## Image 0.65.0
 
 This is the changelog for Image version 0.65.0 released on April 9th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
