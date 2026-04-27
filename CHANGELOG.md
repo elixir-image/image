@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.67.0
+
+This is the changelog for Image version 0.67.0 released on ______, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Adds `Image.vignette/2`
+
 ## Image 0.66.0
 
 This is the changelog for Image version 0.66.0 released on April 25th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
@@ -30,10 +38,10 @@ The primary intent of this release is to stablise the code in readiness for a 1.
   * `Image.convert_to_mask/1` — use `Image.convert_alpha_to_mask/1`.
   * `Image.convert_to_mask!/1` — use `Image.convert_alpha_to_mask!/1`.
   * `Image.map_pages/2` — use `Image.map_join_pages/2`.
-  
+
 * `Image.Color` has been removed. Color handling now lives in two new modules and one new dependency:
-  
-* `Image.Classification` and `Image.Generation` have moved to a new sibling package, [`:image_detection`](https://hex.pm/packages/image_detection). 
+
+* `Image.Classification` and `Image.Generation` have moved to a new sibling package, [`:image_detection`](https://hex.pm/packages/image_detection).
 
 * `:bumblebee` is no longer a dependency of `:image`. It is configured in the new library `image_detection`.
 

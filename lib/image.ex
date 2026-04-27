@@ -8666,6 +8666,112 @@ defmodule Image do
   end
 
   @doc """
+  Adds a radial vignette to an image, darkening the corners
+  smoothly relative to the centre.
+
+  This is the photographic forward of the lens-vignetting
+  correction implemented by `Image.LensCorrection.vignette_correction/4`
+  in the `:image_lens_correction` package: this function multiplies
+  pixel values by the lensfun "pa" model
+
+      Cd = Cs * (1 + k1*r² + k2*r⁴ + k3*r⁶)
+
+  where `r = 0` at the image centre and `r = 1` at the corner.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:strength` is a number controlling how dark the corners become.
+    `0.0` is no vignette; `1.0` darkens the corners almost to black;
+    negative values brighten the corners (an inverse vignette).
+    The default is `#{Image.Options.Vignette.default_strength()}`.
+    Ignored if any of `:k1`, `:k2`, `:k3` is supplied.
+
+  * `:k1`, `:k2`, `:k3` are the polynomial coefficients of the
+    lensfun "pa" vignetting model. Supply these for full control —
+    typically with negative values for darkening (and positive
+    values for brightening). When any of these is supplied, the
+    `:strength` shortcut is ignored and any unsupplied coefficient
+    defaults to `0.0`.
+
+  ### Returns
+
+  * `{:ok, vignetted_image}` or
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, _} = Image.vignette(image)
+      iex> {:ok, _} = Image.vignette(image, strength: 0.8)
+      iex> {:ok, _} = Image.vignette(image, k1: -0.4, k2: 0.1, k3: -0.05)
+
+  """
+  @doc subject: "Operation", since: "0.67.0"
+
+  @spec vignette(image :: Vimage.t(), options :: Options.Vignette.vignette_options()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+
+  def vignette(%Vimage{} = image, options \\ []) do
+    use Image.Math
+
+    with {:ok, options} <- Options.Vignette.validate_options(options) do
+      format = Image.band_format(image)
+      width = Image.width(image)
+      height = Image.height(image)
+
+      centre_x = (width - 1) / 2.0
+      centre_y = (height - 1) / 2.0
+      corner_radius = :math.sqrt(centre_x * centre_x + centre_y * centre_y)
+
+      index = Operation.xyz!(width, height) - [centre_x, centre_y]
+      r = Image.Complex.polar!(index)[0] / corner_radius
+
+      r2 = r ** 2
+      r4 = r2 ** 2
+      r6 = r4 * r2
+
+      multiplier = 1.0 + options.k1 * r2 + options.k2 * r4 + options.k3 * r6
+      Image.cast(image * multiplier, format)
+    end
+  end
+
+  @doc """
+  Adds a radial vignette to an image, darkening the corners
+  smoothly relative to the centre, or raises an exception.
+
+  See `vignette/2` for the supported options.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `vignetted_image` or
+  * raises an exception.
+
+  """
+  @doc subject: "Operation", since: "0.67.0"
+
+  @spec vignette!(image :: Vimage.t(), options :: Options.Vignette.vignette_options()) ::
+          Vimage.t() | no_return()
+
+  def vignette!(%Vimage{} = image, options \\ []) do
+    case vignette(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Equalizes the histogram of an imaage.
 
   Equalization is the process of expanding the
