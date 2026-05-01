@@ -314,6 +314,79 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
+  # `:lossy` is a friendly cross-format toggle that maps to the
+  # right libvips knob per encoder:
+  #
+  #   * WebP / AVIF — `lossless: !lossy` (toggles the lossless
+  #     wire format).
+  #   * PNG         — `palette: lossy` (palette-quantised PNG is
+  #     "lossy PNG"; equivalent to libvips' lossy png mode).
+  #   * JPEG / GIF / TIFF / HEIF — not supported (JPEG is always
+  #     lossy; GIF/TIFF lossiness is structural; HEIF is
+  #     handled via `:compression`).
+  defp validate_option({:lossy, lossy?}, options, image_type)
+       when is_webp(image_type) and is_boolean(lossy?) do
+    options =
+      options
+      |> Keyword.delete(:lossy)
+      |> Keyword.put(:lossless, not lossy?)
+
+    {:cont, options}
+  end
+
+  defp validate_option({:lossy, lossy?}, options, image_type)
+       when is_avif(image_type) and is_boolean(lossy?) do
+    options =
+      options
+      |> Keyword.delete(:lossy)
+      |> Keyword.put(:lossless, not lossy?)
+
+    {:cont, options}
+  end
+
+  defp validate_option({:lossy, lossy?}, options, image_type)
+       when is_png(image_type) and is_boolean(lossy?) do
+    options =
+      options
+      |> Keyword.delete(:lossy)
+      |> Keyword.put(:palette, lossy?)
+
+    {:cont, options}
+  end
+
+  # `:chroma_subsampling` selects the chroma layout for encoders
+  # that support sub-sampling. Maps to libvips'
+  # `subsample-mode` enum:
+  #
+  #   * `:auto` (default for libvips)  — let libvips pick.
+  #   * `:on`                          — force 4:2:0 (the
+  #                                      classic JPEG chroma
+  #                                      sub-sample). Smaller
+  #                                      files; fine for
+  #                                      photographs.
+  #   * `:off`                         — force 4:4:4 (full
+  #                                      chroma resolution).
+  #                                      Larger files; needed
+  #                                      for sharp text and
+  #                                      vibrant solid colours.
+  #
+  # Supported on JPEG and AVIF. Rejected on other formats.
+  @subsample_mode_map %{
+    auto: :VIPS_FOREIGN_SUBSAMPLE_AUTO,
+    on: :VIPS_FOREIGN_SUBSAMPLE_ON,
+    off: :VIPS_FOREIGN_SUBSAMPLE_OFF
+  }
+
+  defp validate_option({:chroma_subsampling, mode}, options, image_type)
+       when (is_jpg(image_type) or is_avif(image_type)) and is_map_key(@subsample_mode_map, mode) do
+    options =
+      options
+      |> Keyword.delete(:chroma_subsampling)
+      |> Keyword.put(:"subsample-mode", Map.fetch!(@subsample_mode_map, mode))
+
+    {:cont, options}
+  end
+
   defp validate_option(option, _options, image_type) do
     {:halt, {:error, invalid_option(option, image_type)}}
   end

@@ -258,11 +258,10 @@ defmodule Image do
   @min_luminance 1.0
   @max_luminance 99.0
 
-  # Representing an opque alpha band
-  @opaque_ 0
-
-  # Representing a transparent alpha band
-  @transparent 255
+  # Standard libvips/RGBA convention: alpha 255 = fully
+  # opaque (visible), alpha 0 = fully transparent (invisible).
+  @opaque_ 255
+  @transparent 0
 
   # How many bins to use to calculate an approximate
   # dominant color. The maximum is 256. Larger numbers
@@ -1349,6 +1348,20 @@ defmodule Image do
     is a integer in the range `1..100`. The default for
     most image formats is `75`. For HEIF files the default
     is `50`.For PNG files the `:quality` option is ignored.
+
+  * `:lossy` is a boolean. On WebP and AVIF, `false`
+    forces a lossless wire format (`lossless: true`); `true`
+    keeps the default lossy encoder. On PNG, `true` enables
+    palette quantisation (lossy 8-bit PNG); `false` is the
+    default unquantised mode. JPEG, GIF, TIFF, and HEIF do
+    not accept this option.
+
+  * `:chroma_subsampling` selects the chroma layout for
+    encoders that support sub-sampling. One of `:auto`
+    (default), `:on` (4:2:0 — smaller files, fine for
+    photographs), or `:off` (4:4:4 — full chroma resolution,
+    needed for sharp text or vibrant solid colours).
+    Supported on JPEG and AVIF.
 
   ### Streaming images and :memory images
 
@@ -2824,12 +2837,11 @@ defmodule Image do
 
   OR
 
-  * an integer in the range `0..255` that represents
-    the level of transparency of the alpha band. `0`
-    represents fully opaque and `255` represents fully
-    transparent. The atoms `:opaque` and `:transparent`
-    may also be provided representing the values of
-    `0` and `255` respectively.
+  * an integer in the range `0..255` representing the
+    alpha-band fill value, using the standard libvips / RGBA
+    convention: `255` is fully opaque, `0` is fully
+    transparent. The atoms `:opaque` and `:transparent` may
+    also be provided in place of `255` and `0` respectively.
 
   ### Returns
 
@@ -6052,6 +6064,75 @@ defmodule Image do
   def autorotate!(image) do
     case autorotate(image) do
       {:ok, {image, _flags}} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Overrides an image's EXIF orientation tag without rotating
+  the underlying pixel data.
+
+  EXIF orientation is a 1–8 enum that tells viewers how to
+  display the stored pixels (1 = no transform, 3 = rotate 180°,
+  6 = rotate 90° clockwise, 8 = rotate 90° counter-clockwise,
+  even values mirror as well). `set_orientation/2` rewrites
+  this metadata field in place. Combine with `Image.open/2`'s
+  default `autorotate: false` to keep the image orientation
+  under your control across the load → process → write
+  pipeline.
+
+  Imgix's `or=<n>` and similar CDN parameters use this to let
+  callers ignore or override the orientation a camera burned
+  into a JPEG.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `orientation` is an integer in `1..8`. See the [EXIF
+    orientation reference](https://magnushoff.com/articles/jpeg-orientation/)
+    for the visual meaning of each value.
+
+  ### Returns
+
+  * `{:ok, image_with_orientation}` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+      iex> {:ok, rotated_metadata} = Image.set_orientation(image, 6)
+      iex> Vix.Vips.Image.header_value(rotated_metadata, "orientation")
+      {:ok, 6}
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Metadata"
+
+  @spec set_orientation(image :: Vimage.t(), orientation :: 1..8) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def set_orientation(%Vimage{} = image, orientation)
+      when is_integer(orientation) and orientation in 1..8 do
+    Vimage.mutate(image, fn mut_img ->
+      Vix.Vips.MutableImage.set(mut_img, "orientation", :gint, orientation)
+    end)
+  end
+
+  @doc """
+  Overrides an image's EXIF orientation tag, or raises on
+  error.
+
+  See `set_orientation/2` for argument documentation.
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Metadata"
+
+  @spec set_orientation!(image :: Vimage.t(), orientation :: 1..8) :: Vimage.t() | no_return()
+  def set_orientation!(%Vimage{} = image, orientation) do
+    case set_orientation(image, orientation) do
+      {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
   end
@@ -9286,6 +9367,305 @@ defmodule Image do
   @spec saturation!(image :: Vimage.t(), saturation :: float()) :: Vimage.t() | no_return()
   def saturation!(%Vimage{} = image, saturation) when is_multiplier(saturation) do
     case saturation(image, saturation) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Applies a gamma adjustment to an image.
+
+  Each band's value is raised to the power of `1 / exponent`.
+  The default `exponent` of `1.0` is a no-op; values greater
+  than `1.0` brighten the midtones (a "lift"); values less than
+  `1.0` darken them (a "crush").
+
+  Gamma is a simple per-band curve and does not change the
+  image's working color space. Alpha bands are preserved.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `exponent` is a positive float. The default is `1.0`.
+    Values in `(0.0, 1.0)` darken; values in `(1.0, ∞)`
+    brighten. Imgix's `gam=`, Cloudflare's `gamma=`, and
+    Cloudinary's `e_gamma:` all use this convention.
+
+  ### Returns
+
+  * `{:ok, adjusted_image}` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/cat.png")
+      iex> {:ok, _brighter} = Image.gamma(image, 1.4)
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Basic Adjustments"
+
+  @spec gamma(image :: Vimage.t(), exponent :: float()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def gamma(%Vimage{} = image, exponent \\ 1.0) when is_multiplier(exponent) and exponent > 0.0 do
+    Vix.Vips.Operation.gamma(image, exponent: exponent)
+  end
+
+  @doc """
+  Applies a gamma adjustment to an image or raises on error.
+
+  See `gamma/2` for argument and option documentation.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/cat.png")
+      iex> _brighter = Image.gamma!(image, 1.4)
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Basic Adjustments"
+
+  @spec gamma!(image :: Vimage.t(), exponent :: float()) :: Vimage.t() | no_return()
+  def gamma!(%Vimage{} = image, exponent \\ 1.0) when is_multiplier(exponent) and exponent > 0.0 do
+    case gamma(image, exponent) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  # The standard Microsoft / Adobe sepia matrix. Applied via
+  # libvips `recomb`, which multiplies each pixel by a 3x3
+  # matrix. `Image.sepia/2` blends this matrix with the
+  # identity according to the requested strength.
+  @sepia_matrix [
+    [0.393, 0.769, 0.189],
+    [0.349, 0.686, 0.168],
+    [0.272, 0.534, 0.131]
+  ]
+
+  @doc """
+  Applies a sepia tone to an image.
+
+  Sepia is a single-pass per-pixel colour-matrix transform — no
+  colour-space conversion happens. Alpha bands are preserved.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `strength` is a float in `[0.0, 1.0]`. The default is
+    `1.0` (full sepia). `0.0` is the identity (no change);
+    intermediate values blend the sepia matrix with the
+    identity, matching imgix's `sepia=N` 0–100 percentage
+    convention divided by 100.
+
+  ### Returns
+
+  * `{:ok, sepia_image}` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/cat.png")
+      iex> {:ok, _toned} = Image.sepia(image)
+      iex> {:ok, _half} = Image.sepia(image, 0.5)
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Basic Adjustments"
+
+  @spec sepia(image :: Vimage.t(), strength :: float()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def sepia(%Vimage{} = image, strength \\ 1.0)
+      when is_multiplier(strength) and strength <= 1.0 do
+    matrix = blend_with_identity(@sepia_matrix, strength)
+
+    without_alpha_band(image, fn srgb ->
+      with {:ok, m} <- Vix.Vips.Image.new_matrix_from_array(3, 3, matrix) do
+        Vix.Vips.Operation.recomb(srgb, m)
+      end
+    end)
+  end
+
+  @doc """
+  Applies a sepia tone to an image or raises on error.
+
+  See `sepia/2` for argument and option documentation.
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Basic Adjustments"
+
+  @spec sepia!(image :: Vimage.t(), strength :: float()) :: Vimage.t() | no_return()
+  def sepia!(%Vimage{} = image, strength \\ 1.0)
+      when is_multiplier(strength) and strength <= 1.0 do
+    case sepia(image, strength) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  # Blend a 3x3 colour matrix with the 3x3 identity by
+  # `strength`. Result is row-major nested lists ready for
+  # `Vix.Vips.Image.new_matrix_from_array/3`.
+  defp blend_with_identity(matrix, 1.0), do: matrix
+
+  defp blend_with_identity(matrix, strength) do
+    inv = 1.0 - strength
+
+    matrix
+    |> Enum.with_index()
+    |> Enum.map(fn {row, i} ->
+      row
+      |> Enum.with_index()
+      |> Enum.map(fn {value, j} ->
+        identity = if i == j, do: 1.0, else: 0.0
+        inv * identity + strength * value
+      end)
+    end)
+  end
+
+  @doc """
+  Reduces an image's tonal range to `levels` distinct values
+  per band ("posterize").
+
+  Each band is quantized into `levels` evenly-spaced bands; the
+  result is a flat-shaded, comic-strip rendering of the source.
+
+  Alpha bands are preserved unchanged. The image is processed
+  in its current colour space — call `to_colorspace/2` first
+  to posterize against a different working space.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `levels` is an integer in `2..256`. Lower values produce
+    flatter output; `2` is a strict two-tone per band.
+
+  ### Returns
+
+  * `{:ok, posterized_image}` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/cat.png")
+      iex> {:ok, _flat} = Image.posterize(image, 4)
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Operation"
+
+  @spec posterize(image :: Vimage.t(), levels :: pos_integer()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def posterize(%Vimage{} = image, levels)
+      when is_integer(levels) and levels >= 2 and levels <= 256 do
+    use Image.Math
+
+    band_format = Vix.Vips.Image.format(image)
+    step = 256.0 / levels
+
+    without_alpha_band(image, fn srgb ->
+      # Quantize each band: floor(value / step) * step.
+      # Cast to integer first to perform the floor — the band
+      # format is restored at the end so the output matches the
+      # input pixel type.
+      quantized =
+        srgb
+        |> Operation.linear!([1.0 / step], [0.0])
+        |> Operation.cast!(:VIPS_FORMAT_UCHAR)
+        |> Operation.linear!([step], [0.0])
+
+      Operation.cast(quantized, band_format)
+    end)
+  end
+
+  @doc """
+  Reduces an image's tonal range to `levels` distinct values
+  per band, or raises on error.
+
+  See `posterize/2` for argument documentation.
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Operation"
+
+  @spec posterize!(image :: Vimage.t(), levels :: pos_integer()) :: Vimage.t() | no_return()
+  def posterize!(%Vimage{} = image, levels) do
+    case posterize(image, levels) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Multiplies an image's alpha channel by `factor`.
+
+  If the image has no alpha band, an opaque one is added first
+  so that `factor < 1.0` produces a translucent result. The
+  colour bands are not changed; this is intentional — opacity
+  is an *alpha* operation, distinct from a brightness or
+  saturation curve.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `factor` is a float in `[0.0, 1.0]`. `1.0` is a no-op (the
+    image is returned unchanged when it already has alpha);
+    `0.0` makes the entire image fully transparent;
+    intermediate values produce proportional translucency.
+    Cloudinary's `o_<n>` and ImageKit's `e-opacity` both use
+    this `0..1` (or `0..100` percentage) convention.
+
+  ### Returns
+
+  * `{:ok, alpha_adjusted_image}` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/cat.png")
+      iex> {:ok, _half} = Image.opacity(image, 0.5)
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Operation"
+
+  @spec opacity(image :: Vimage.t(), factor :: float()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def opacity(%Vimage{} = image, factor)
+      when is_multiplier(factor) and factor <= 1.0 do
+    image =
+      if has_alpha?(image), do: image, else: add_alpha!(image, :opaque)
+
+    {colour_bands, alpha} = split_alpha(image)
+
+    with {:ok, scaled_alpha} <- Operation.linear(alpha, [factor], [0.0]),
+         {:ok, scaled_alpha} <- Operation.cast(scaled_alpha, :VIPS_FORMAT_UCHAR) do
+      add_alpha(colour_bands, scaled_alpha)
+    end
+  end
+
+  @doc """
+  Multiplies an image's alpha channel by `factor`, or raises on
+  error.
+
+  See `opacity/2` for argument documentation.
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Operation"
+
+  @spec opacity!(image :: Vimage.t(), factor :: float()) :: Vimage.t() | no_return()
+  def opacity!(%Vimage{} = image, factor) do
+    case opacity(image, factor) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end

@@ -6,9 +6,25 @@ This is the changelog for Image version 0.67.0 released on ______, 2026.  For ol
 
 ### Enhancements
 
-* Adds `Image.vignette/2`
+* Adds `Image.vignette/2`.
 
 * Adds `Image.Palette.extract/2` — perceptual palette extraction from an image via K-means in Oklab plus the `Color.Palette.Cluster` merge / phantom-guard / centroid-aware-rep pipeline (requires `:scholar` and `:nx`).
+
+* Adds `Image.gamma/2` — per-band gamma curve adjustment (wraps `Vix.Vips.Operation.gamma/2`).
+
+* Adds `Image.sepia/2` — single-pass sepia tone via a 3×3 colour-recombination matrix; accepts a `0.0..1.0` strength that blends the matrix with the identity (matching imgix's `sepia=N` percentage).
+
+* Adds `Image.posterize/2` — quantises each band to `2..256` evenly-spaced levels for a flat-shaded, comic-strip rendering.
+
+* Adds `Image.opacity/2` — multiplies the alpha band by a `0.0..1.0` factor; adds an opaque alpha band first when the input has none.
+
+* Adds `Image.set_orientation/2` — overrides the EXIF orientation tag without rotating the underlying pixels (paired with `Image.open/2`'s default `autorotate: false` for full caller control over orientation; matches imgix's `or=N`).
+
+* Adds `:lossy` and `:chroma_subsampling` options to `Image.write/3`. `:lossy` (boolean) toggles the lossless wire format on WebP / AVIF and palette-quantisation on PNG. `:chroma_subsampling` selects `:auto` / `:on` (4:2:0) / `:off` (4:4:4) on JPEG and AVIF.
+
+### Bug Fixes
+
+* `Image.add_alpha/2`'s `:opaque` and `:transparent` atoms now produce alpha = 255 and alpha = 0 respectively, matching the standard libvips / RGBA convention. The previous values were inverted relative to their names; integer values pass through unchanged.
 
 ## Image 0.66.0
 

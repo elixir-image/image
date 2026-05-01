@@ -704,7 +704,7 @@ defmodule Image.Text do
       |> Enum.map(&(&1 * 1.0))
 
     image =
-      if Image.has_alpha?(image), do: image, else: Image.add_alpha!(image, :transparent)
+      if Image.has_alpha?(image), do: image, else: Image.add_alpha!(image, :opaque)
 
     Operation.embed(image, padding_left, padding_top, width, height,
       background: background_fill_color
