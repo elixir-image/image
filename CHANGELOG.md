@@ -8,6 +8,8 @@ This is the changelog for Image version 0.67.0 released on ______, 2026.  For ol
 
 * Adds `Image.vignette/2`
 
+* Adds `Image.Palette.extract/2` — perceptual palette extraction from an image via K-means in Oklab plus the `Color.Palette.Cluster` merge / phantom-guard / centroid-aware-rep pipeline (requires `:scholar` and `:nx`).
+
 ## Image 0.66.0
 
 This is the changelog for Image version 0.66.0 released on April 25th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

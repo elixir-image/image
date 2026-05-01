@@ -60,8 +60,10 @@ defmodule Image.MixProject do
       # {:vix, github: "akash-akya/vix"},
       # {:vix, path: "../vix"},
 
-      # Color science: conversions, gamut mapping, parsing.
-      {:color, "~> 0.4"},
+      # Color science: conversions, gamut mapping, parsing,
+      # palette generation, and the Cluster primitives used by
+      # Image.Palette for image-pixel palette extraction.
+      {:color, "~> 0.13"},
 
       # FFmpeg bindings, used by Image.Video for video frame
       # extraction, seeking, and streaming.
