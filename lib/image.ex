@@ -6549,6 +6549,62 @@ defmodule Image do
   end
 
   @doc """
+  Minimize metadata while keeping a caller-selected subset of
+  EXIF fields. Same as `minimize_metadata/1` but lets the
+  caller control exactly which fields survive — useful when a
+  CDN-style `metadata=copyright` flag should preserve only the
+  copyright tag, for example.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:keep` is a list of EXIF field atoms to preserve. Any
+    field present on the source image *and* listed in `:keep`
+    is rewritten onto the minimised image; everything else is
+    stripped. Default `[:copyright, :artist]` (matches
+    `minimize_metadata/1`). Pass `[]` to strip every EXIF
+    field.
+
+  ### Returns
+
+  * `{:ok, image_with_minimal_metadata}` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+      iex> {:ok, _stripped} = Image.minimize_metadata(image, keep: [:copyright])
+
+  """
+  @doc subject: "Metadata"
+  @doc since: "0.67.0"
+
+  @spec minimize_metadata(image :: Vimage.t(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def minimize_metadata(%Vimage{} = image, options) when is_list(options) do
+    keep = Keyword.get(options, :keep, [:copyright, :artist])
+
+    case exif(image) do
+      {:ok, exif} ->
+        image
+        |> remove_metadata!()
+        |> put_kept_metadata(exif, keep)
+
+      {:error, %Image.Error{reason: "No such field"}} ->
+        remove_metadata(image)
+
+      other ->
+        other
+    end
+  end
+
+  @doc """
   Minimize metadata by keeping only the artist
   and copyright (if available).
 
@@ -6573,6 +6629,38 @@ defmodule Image do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
+  end
+
+  @doc """
+  Minimize metadata while keeping a caller-selected subset of
+  EXIF fields. Raises on error. See `minimize_metadata/2` for
+  argument and option documentation.
+
+  """
+  @doc subject: "Metadata"
+  @doc since: "0.67.0"
+
+  @spec minimize_metadata!(image :: Vimage.t(), options :: Keyword.t()) ::
+          Vimage.t() | no_return()
+  def minimize_metadata!(%Vimage{} = image, options) when is_list(options) do
+    case minimize_metadata(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  defp put_kept_metadata(image, _exif, []), do: {:ok, image}
+
+  defp put_kept_metadata(image, exif, keep) when is_list(keep) do
+    Vimage.mutate(image, fn mut_img ->
+      Enum.each(keep, fn field ->
+        if value = Map.get(exif, field) do
+          Exif.put_metadata(mut_img, field, value)
+        end
+      end)
+
+      :ok
+    end)
   end
 
   @metadata_fields %{
@@ -9505,6 +9593,420 @@ defmodule Image do
     case sepia(image, strength) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Applies a single-colour tint to an image.
+
+  The image is converted to greyscale and the resulting
+  luminance is multiplied by the supplied tint colour. White
+  source pixels become the tint colour, black source pixels
+  remain black, and intermediate luminances scale linearly.
+  Alpha bands are preserved unchanged.
+
+  Useful for the imgix `monochrome=#hex` /
+  ImageKit `e-monochrome` family of CDN options, where a
+  photograph is rendered as a coloured monochrome.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `color` is any value `Image.Pixel.to_pixel/3` accepts —
+    a hex string, a CSS named colour atom, an `[r, g, b]`
+    list (0–255), or any `Color.*` struct.
+
+  ### Returns
+
+  * `{:ok, tinted_image}` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/cat.png")
+      iex> {:ok, _gold} = Image.tint(image, "#a08020")
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Basic Adjustments"
+
+  @spec tint(image :: Vimage.t(), color :: Image.Pixel.t() | binary() | atom()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  # ITU-R BT.601 luma weights — the standard "perceived
+  # lightness" projection from sRGB to greyscale.
+  @luma_r 0.299
+  @luma_g 0.587
+  @luma_b 0.114
+
+  def tint(%Vimage{} = image, color) do
+    with {:ok, [r, g, b | _]} <- Image.Pixel.to_pixel(image, color) do
+      # Build a 3x3 matrix where each output channel is the
+      # source luminance scaled by the corresponding tint
+      # channel: out_r = luma * r/255, etc. One libvips
+      # `recomb` pass replaces a `to_colorspace(:bw) →
+      # bandjoin → linear` chain that would produce a
+      # 3-band image with a stale B&W interpretation flag.
+      matrix = [
+        [@luma_r * r / 255, @luma_g * r / 255, @luma_b * r / 255],
+        [@luma_r * g / 255, @luma_g * g / 255, @luma_b * g / 255],
+        [@luma_r * b / 255, @luma_g * b / 255, @luma_b * b / 255]
+      ]
+
+      without_alpha_band(image, fn srgb ->
+        with {:ok, m} <- Vix.Vips.Image.new_matrix_from_array(3, 3, matrix) do
+          Vix.Vips.Operation.recomb(srgb, m)
+        end
+      end)
+    end
+  end
+
+  @doc """
+  Applies a single-colour tint to an image or raises on error.
+
+  See `tint/2` for argument documentation.
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Basic Adjustments"
+
+  @spec tint!(image :: Vimage.t(), color :: Image.Pixel.t() | binary() | atom()) ::
+          Vimage.t() | no_return()
+  def tint!(%Vimage{} = image, color) do
+    case tint(image, color) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @valid_fade_edges [:top, :bottom, :left, :right]
+
+  @doc """
+  Applies an alpha-gradient fade-out to one or more edges of
+  an image.
+
+  Each requested edge gets a linear alpha ramp from `0` at the
+  outer pixel to `255` at `:length` pixels in. The resulting
+  per-edge masks are combined with a per-pixel minimum (the
+  most-faded value wins at corners), and the combined mask is
+  multiplied into the image's alpha band. If the image has no
+  alpha band, an opaque one is added first.
+
+  Useful for the Cloudinary `e_fade:N` family of CDN options.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:edges` is an atom or a list of atoms drawn from
+    `:top`, `:bottom`, `:left`, `:right`. The atom `:all`
+    is shorthand for all four edges. The default is
+    `:bottom`.
+
+  * `:length` is the fade distance. Either an integer number
+    of pixels, or a float in `(0.0, 1.0]` interpreted as a
+    fraction of the relevant dimension (image height for
+    `:top` / `:bottom`, width for `:left` / `:right`). The
+    default is `0.2` (20% of the dimension).
+
+  ### Returns
+
+  * `{:ok, faded_image}` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+      iex> {:ok, _faded} = Image.fade(image, edges: [:bottom, :right], length: 0.15)
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Operation"
+
+  @spec fade(image :: Vimage.t(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def fade(%Vimage{} = image, options \\ []) do
+    edges = options |> Keyword.get(:edges, :bottom) |> normalise_fade_edges()
+    length_opt = Keyword.get(options, :length, 0.2)
+
+    with :ok <- validate_fade_edges(edges),
+         {:ok, masks} <- build_fade_masks(image, edges, length_opt) do
+      combined = combine_masks_min(masks)
+      apply_fade_mask(image, combined)
+    end
+  end
+
+  @doc """
+  Applies an alpha-gradient fade-out to an image, or raises on
+  error. See `fade/2` for argument and option documentation.
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Operation"
+
+  @spec fade!(image :: Vimage.t(), options :: Keyword.t()) :: Vimage.t() | no_return()
+  def fade!(%Vimage{} = image, options \\ []) do
+    case fade(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  defp normalise_fade_edges(:all), do: @valid_fade_edges
+  defp normalise_fade_edges(edge) when is_atom(edge), do: [edge]
+  defp normalise_fade_edges(edges) when is_list(edges), do: edges
+
+  defp validate_fade_edges(edges) do
+    invalid = Enum.reject(edges, &(&1 in @valid_fade_edges))
+
+    if invalid == [] do
+      :ok
+    else
+      {:error,
+       %Image.Error{
+         message: "Invalid fade edge(s): #{inspect(invalid)}. " <>
+                    "Allowed: #{inspect(@valid_fade_edges)} or :all",
+         reason: "Invalid fade edges"
+       }}
+    end
+  end
+
+  # Build one full-image-sized greyscale mask per edge. Each
+  # mask is white (255) where the image is fully visible and
+  # ramps to black (0) at the edge over the configured length.
+  defp build_fade_masks(image, edges, length_opt) do
+    width = width(image)
+    height = height(image)
+
+    Enum.reduce_while(edges, {:ok, []}, fn edge, {:ok, acc} ->
+      length_px = fade_length(edge, length_opt, width, height)
+
+      case build_fade_edge_mask(width, height, edge, length_px) do
+        {:ok, mask} -> {:cont, {:ok, [mask | acc]}}
+        other -> {:halt, other}
+      end
+    end)
+  end
+
+  defp fade_length(edge, length, _width, height) when edge in [:top, :bottom] and is_float(length),
+    do: round(length * height)
+
+  defp fade_length(edge, length, width, _height) when edge in [:left, :right] and is_float(length),
+    do: round(length * width)
+
+  defp fade_length(_edge, length, _width, _height) when is_integer(length) and length > 0,
+    do: length
+
+  # Render a single SVG gradient that's white in the body and
+  # ramps to black on the requested edge. Returns a 1-band
+  # u8 image the same size as the source.
+  defp build_fade_edge_mask(width, height, edge, length_px) do
+    {x1, y1, x2, y2, stop} = fade_gradient_geometry(edge, width, height, length_px)
+
+    svg = """
+    <svg xmlns="http://www.w3.org/2000/svg" width="#{width}" height="#{height}" viewBox="0 0 #{width} #{height}">
+      <defs>
+        <linearGradient id="g" gradientUnits="userSpaceOnUse"
+          x1="#{x1}" y1="#{y1}" x2="#{x2}" y2="#{y2}">
+          <stop offset="0" stop-color="black"/>
+          <stop offset="#{stop}" stop-color="white"/>
+          <stop offset="1" stop-color="white"/>
+        </linearGradient>
+      </defs>
+      <rect width="#{width}" height="#{height}" fill="url(#g)"/>
+    </svg>
+    """
+
+    with {:ok, {svg_image, _flags}} <- Operation.svgload_buffer(svg) do
+      # SVG render emits an RGBA image; collapse to a 1-band
+      # luminance mask so the per-pixel `min` combine across
+      # edges is straightforward.
+      to_colorspace(Operation.extract_band!(svg_image, 0, n: 3), :bw)
+    end
+  end
+
+  # Geometry of the gradient axis. The gradient runs *into* the
+  # image perpendicular to the edge, length `length_px`, and
+  # the inner stop is `length_px / dim` of the way along the
+  # full SVG axis (which spans the whole image).
+  defp fade_gradient_geometry(:top, width, height, length_px) do
+    {div(width, 2), 0, div(width, 2), height, safe_stop(length_px, height)}
+  end
+
+  defp fade_gradient_geometry(:bottom, width, height, length_px) do
+    {div(width, 2), height, div(width, 2), 0, safe_stop(length_px, height)}
+  end
+
+  defp fade_gradient_geometry(:left, width, height, length_px) do
+    {0, div(height, 2), width, div(height, 2), safe_stop(length_px, width)}
+  end
+
+  defp fade_gradient_geometry(:right, width, height, length_px) do
+    {width, div(height, 2), 0, div(height, 2), safe_stop(length_px, width)}
+  end
+
+  defp safe_stop(length_px, dim) do
+    fraction = length_px / max(dim, 1)
+    fraction |> max(0.0) |> min(1.0) |> Float.round(6)
+  end
+
+  @doc """
+  Composites a soft drop shadow underneath the image's
+  alpha-shaped silhouette.
+
+  Useful for the ImageKit `e-shadow` and Cloudinary
+  `e_shadow` CDN options, and for general UI use.
+
+  The output is the same size as the input. Shadow content
+  that would fall outside the input bounds is clipped — pad
+  the input with `Image.embed/3` first if you need shadow
+  spill-out.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`. If the image has
+    no alpha band, an opaque one is added first so the
+    shadow takes the rectangular shape of the image.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:color` is the shadow colour. Any value
+    `Image.Pixel.to_pixel/3` accepts. Default `:black`.
+
+  * `:opacity` is a float in `[0.0, 1.0]` controlling the
+    shadow's overall intensity. Default `0.5`.
+
+  * `:sigma` is the Gaussian blur sigma applied to the
+    shadow's alpha to soften its edges. A larger value
+    produces a softer, more diffuse shadow. Default `5.0`.
+
+  * `:dx` is the horizontal shadow offset in pixels.
+    Positive values shift the shadow to the right. Default
+    `0`.
+
+  * `:dy` is the vertical shadow offset in pixels. Positive
+    values shift the shadow down. Default
+    `round(sigma * 2)`.
+
+  ### Returns
+
+  * `{:ok, image_with_shadow}` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/cat.png")
+      iex> {:ok, _shadowed} = Image.drop_shadow(image, sigma: 8.0, dy: 12)
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Operation"
+
+  @spec drop_shadow(image :: Vimage.t(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def drop_shadow(%Vimage{} = image, options \\ []) do
+    color = Keyword.get(options, :color, :black)
+    opacity = Keyword.get(options, :opacity, 0.5)
+    sigma = Keyword.get(options, :sigma, 5.0)
+    dx = Keyword.get(options, :dx, 0)
+    dy = Keyword.get(options, :dy, round(sigma * 2))
+
+    with :ok <- validate_drop_shadow_args(opacity, sigma) do
+      image = if has_alpha?(image), do: image, else: add_alpha!(image, :opaque)
+      width = width(image)
+      height = height(image)
+      {_colour_bands, alpha} = split_alpha(image)
+
+      # Shadow alpha = source alpha × opacity, blurred to
+      # soften the silhouette's edges.
+      use Image.Math
+      shadow_alpha_f = alpha * opacity
+
+      with {:ok, shadow_alpha} <- Operation.cast(shadow_alpha_f, :VIPS_FORMAT_UCHAR),
+           {:ok, blurred} <- Operation.gaussblur(shadow_alpha, sigma),
+           {:ok, [r, g, b | _]} <- Image.Pixel.to_pixel(image, color),
+           {:ok, shadow_rgb} <- Image.new(width, height, color: [r, g, b]),
+           {:ok, shadow} <- add_alpha(shadow_rgb, blurred),
+           {:ok, base} <- Image.new(width, height, color: [0, 0, 0, 0]),
+           {:ok, base_with_shadow} <- Operation.composite2(base, shadow, :VIPS_BLEND_MODE_OVER, x: dx, y: dy) do
+        Operation.composite2(base_with_shadow, image, :VIPS_BLEND_MODE_OVER, x: 0, y: 0)
+      end
+    end
+  end
+
+  @doc """
+  Composites a soft drop shadow under an image, or raises on
+  error. See `drop_shadow/2` for argument and option
+  documentation.
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Operation"
+
+  @spec drop_shadow!(image :: Vimage.t(), options :: Keyword.t()) :: Vimage.t() | no_return()
+  def drop_shadow!(%Vimage{} = image, options \\ []) do
+    case drop_shadow(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  defp validate_drop_shadow_args(opacity, sigma) do
+    cond do
+      not (is_number(opacity) and opacity >= 0.0 and opacity <= 1.0) ->
+        {:error,
+         %Image.Error{
+           message: ":opacity must be a number in [0.0, 1.0]",
+           reason: ":opacity must be a number in [0.0, 1.0]"
+         }}
+
+      not (is_number(sigma) and sigma > 0.0) ->
+        {:error,
+         %Image.Error{
+           message: ":sigma must be a positive number",
+           reason: ":sigma must be a positive number"
+         }}
+
+      true ->
+        :ok
+    end
+  end
+
+  defp combine_masks_min([single]), do: single
+
+  defp combine_masks_min([first | rest]) do
+    use Image.Math
+
+    Enum.reduce(rest, first, fn mask, acc ->
+      # Per-pixel min via the standard libvips idiom: a where
+      # a < b, otherwise b.
+      if_then_else!(acc < mask, acc, mask)
+    end)
+  end
+
+  # Multiply the combined fade mask into the image's alpha
+  # band. Adds an opaque alpha band first if the image has
+  # none.
+  defp apply_fade_mask(image, mask_u8) do
+    image =
+      if has_alpha?(image), do: image, else: add_alpha!(image, :opaque)
+
+    {colour_bands, alpha} = split_alpha(image)
+
+    use Image.Math
+    scaled_alpha = alpha * mask_u8 / 255.0
+
+    with {:ok, scaled_alpha} <- Operation.cast(scaled_alpha, :VIPS_FORMAT_UCHAR) do
+      add_alpha(colour_bands, scaled_alpha)
     end
   end
 

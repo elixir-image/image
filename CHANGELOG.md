@@ -22,6 +22,14 @@ This is the changelog for Image version 0.67.0 released on ______, 2026.  For ol
 
 * Adds `:lossy` and `:chroma_subsampling` options to `Image.write/3`. `:lossy` (boolean) toggles the lossless wire format on WebP / AVIF and palette-quantisation on PNG. `:chroma_subsampling` selects `:auto` / `:on` (4:2:0) / `:off` (4:4:4) on JPEG and AVIF.
 
+* Adds `Image.tint/2` — colour-tinted monochrome via a single 3×3 luminance + tint colour-recombination matrix. Used for the imgix `monochrome=#hex` / ImageKit `e-monochrome` family of CDN options.
+
+* Adds `Image.fade/2` — alpha-gradient fade-out on one or more edges via SVG `<linearGradient>` masks combined with a per-pixel min. Supports `:top`, `:bottom`, `:left`, `:right`, or `:all`, with `:length` as either pixels or a fraction of the relevant dimension. Used for Cloudinary `e_fade`.
+
+* Adds `Image.drop_shadow/2` — soft drop shadow under the image's alpha-shaped silhouette. Composites a Gaussian-blurred, opacity-scaled, tinted copy of the alpha band beneath the original. Used for ImageKit `e-shadow` and Cloudinary `e_shadow`.
+
+* Adds `Image.minimize_metadata/2` with a `:keep` option — caller-controlled list of EXIF fields to preserve when minimising metadata. The 1-arity variant continues to default to `[:copyright, :artist]`; the 2-arity variant lets callers pass `keep: [:copyright]` (preserve only copyright), `keep: []` (strip everything), or any other subset.
+
 ### Bug Fixes
 
 * `Image.add_alpha/2`'s `:opaque` and `:transparent` atoms now produce alpha = 255 and alpha = 0 respectively, matching the standard libvips / RGBA convention. The previous values were inverted relative to their names; integer values pass through unchanged.
