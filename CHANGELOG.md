@@ -34,6 +34,10 @@ This is the changelog for Image version 0.67.0 released on ______, 2026.  For ol
 
 * Adds `Image.to_colorspace/3` — ICC-profile-driven colourspace conversion. Accepts the libvips built-in profile atoms (`:srgb`, `:cmyk`, `:p3`) or a path to an `.icc` file via `Image.ICCProfile.known?/1` validation. Options: `:input_profile`, `:intent` (`:relative` / `:perceptual` / `:saturation` / `:absolute`), and `:depth` (`8` / `16`). Wraps `Vix.Vips.Operation.icc_transform/3`.
 
+### Removed
+
+* `Image.QRcode` is removed. QR encoding and decoding move to the sibling [`image_qrcode`](https://hex.pm/packages/image_qrcode) package, which is built on Nayuki's QR-Code-generator + `quirc` and does not depend on `:evision`. Migration: replace `Image.QRcode.encode/2` / `Image.QRcode.decode/1` with `Image.QRCode.encode/2` / `Image.QRCode.decode/1` (note the capital "C") and add `{:image_qrcode, "~> 0.1"}` to your deps. The `Image.to_evision/2` and `Image.from_evision/1` interop helpers are unchanged.
+
 ### Bug Fixes
 
 * `Image.add_alpha/2`'s `:opaque` and `:transparent` atoms now produce alpha = 255 and alpha = 0 respectively, matching the standard libvips / RGBA convention. The previous values were inverted relative to their names; integer values pass through unchanged.

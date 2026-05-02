@@ -3793,11 +3793,17 @@ defmodule Image do
       |> Exif.extract_exif()
       |> wrap(:ok)
     else
-      false ->
-        {:error, %Image.Error{reason: :invalid_exif, message: "Invalid Exif data"}}
-
       {:error, raw} ->
         {:error, Image.Error.wrap(raw, operation: :exif)}
+
+      # The binary pattern above failed — the blob is present
+      # but doesn't start with the "Exif\\0\\0" prefix. This
+      # happens for some libvips-readable formats whose EXIF
+      # field carries a bare TIFF header. Surface it as an
+      # `:invalid_exif` error rather than letting the `with`
+      # raise `WithClauseError`.
+      bad_blob when is_binary(bad_blob) ->
+        {:error, %Image.Error{reason: :invalid_exif, message: "Invalid Exif data"}}
     end
   end
 
@@ -4171,24 +4177,21 @@ defmodule Image do
 
   def resize(%Vimage{} = image, scale, options \\ []) when scale >= 0 do
     with {:ok, options} <- Resize.validate_options(options) do
-      do_resize(image, scale, options, has_alpha?(image))
-    end
-  end
+      if has_alpha?(image) do
+        # Pre-multiply the alpha so the resize doesn't bleed
+        # transparent edges into the colour bands; un-premultiply
+        # and recast back to the source's band format afterwards.
+        band_format = Vix.Vips.Image.format(image)
+        premultiplied = Operation.premultiply!(image)
 
-  @dialyzer {:nowarn_function, {:do_resize, 4}}
-
-  defp do_resize(image, scale, options, false = _has_alpha?) do
-    Operation.resize(image, scale, options)
-  end
-
-  defp do_resize(image, scale, options, true = _has_alpha?) do
-    band_format = Vix.Vips.Image.format(image)
-    premultiplied = Operation.premultiply!(image)
-
-    with {:ok, resized} <- Operation.resize(premultiplied, scale, options) do
-      resized
-      |> Operation.unpremultiply!()
-      |> Operation.cast(band_format)
+        with {:ok, resized} <- Operation.resize(premultiplied, scale, options) do
+          resized
+          |> Operation.unpremultiply!()
+          |> Operation.cast(band_format)
+        end
+      else
+        Operation.resize(image, scale, options)
+      end
     end
   end
 

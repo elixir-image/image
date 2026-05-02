@@ -1,6 +1,6 @@
 # Image
 
-`Image` is a fast, memory-efficient image processing library for Elixir. It is a high-level wrapper around [Vix](https://hex.pm/packages/vix), the Elixir bindings for the [libvips](https://www.libvips.org) C library, and provides an idiomatic functional API for image manipulation, drawing, text rendering, EXIF/XMP metadata, video frame extraction (via Xav/FFmpeg), QR code encoding and decoding (via eVision), blurhash, perceptual hashing, and many other image-related operations.
+`Image` is a fast, memory-efficient image processing library for Elixir. It is a high-level wrapper around [Vix](https://hex.pm/packages/vix), the Elixir bindings for the [libvips](https://www.libvips.org) C library, and provides an idiomatic functional API for image manipulation, drawing, text rendering, EXIF/XMP metadata, video frame extraction (via Xav/FFmpeg), blurhash, perceptual hashing, and many other image-related operations.
 
 Machine-learning features (object detection, image classification, image generation) live in the companion [`image_detection`](https://hex.pm/packages/image_detection) library, which depends on `:image` and pulls in [Bumblebee](https://hex.pm/packages/bumblebee) and [Nx](https://hex.pm/packages/nx) as its own optional dependencies.
 
@@ -36,7 +36,7 @@ Documentation can be found at <https://hexdocs.pm/image>.
 
   * `Image.Video` (frame extraction, seek, webcam) via [Xav](https://hex.pm/packages/xav), an Elixir wrapper around FFmpeg. Requires FFmpeg ≥ 6.0 on the system.
 
-  * `Image.QRcode` (encode + decode) via [eVision](https://hex.pm/packages/evision).
+  * QR code encoding and decoding via the sibling [`image_qrcode`](https://hex.pm/packages/image_qrcode) package (Nayuki QR-Code-generator + quirc; no `:evision` dependency).
 
   * `Image.k_means` via [Scholar](https://hex.pm/packages/scholar).
 
@@ -159,12 +159,7 @@ exif[:make]
 
 ### QR codes
 
-```elixir
-{:ok, qrcode} = Image.QRcode.encode("Hello world", size: 256)
-{:ok, "Hello world"} = Image.QRcode.decode(qrcode)
-```
-
-(Requires the optional `:evision` dependency.)
+QR encoding and decoding live in the sibling [`image_qrcode`](https://hex.pm/packages/image_qrcode) package — add it to your deps and call `Image.QRCode.encode/2` / `Image.QRCode.decode/1`. The earlier in-tree `Image.QRcode` module (which depended on `:evision`) was removed in 0.67.0; `image_qrcode` is a drop-in replacement built on Nayuki's QR-Code-generator and `quirc`, with no `:evision` requirement.
 
 ### Pattern-matching errors
 
@@ -243,7 +238,8 @@ optional dependencies enable specific features:
 | `:nx` | `Image.to_nx/2`, `Image.from_nx/1`, tensor interop |
 | `:scholar` | `Image.k_means/2` |
 | `:xav` | `Image.Video` (FFmpeg-backed frame extraction) |
-| `:evision` | `Image.QRcode`, `Image.to_evision/2`, `Image.from_evision/1` |
+| `:evision` | `Image.to_evision/2`, `Image.from_evision/1` (Mat ↔ Vimage interop) |
+| `:image_qrcode` | QR code encoding and decoding (sibling package — drop-in for the removed `Image.QRcode`) |
 | `:image_detection` | `Image.Detection`, `Image.Classification`, `Image.Generation` (object detection, classification, image generation — pulls Bumblebee, Nx, Axon as its own transitive deps) |
 | `:plug` | streaming via `Plug.Conn` |
 | `:req` | streaming over HTTP |

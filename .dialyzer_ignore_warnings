@@ -1,0 +1,12 @@
+# Dialyzer reports a `pattern_match` warning at lib/image.ex:1
+# ("the pattern 'false' can never match the type 'true'") that
+# is not locatable to a specific function — dialyxir collapses
+# it to line 1 because the source mapping is unavailable. The
+# warning originates from a `cond` / `if-else` arm whose
+# predicate dialyzer infers to be always-true based on Vix's
+# NIF return types (e.g. `Vix.Vips.Image.has_alpha?/1` is
+# typed `boolean | no_return()` but the NIF-only inference
+# narrows it to `true`). The behaviour is correct at runtime
+# — we keep the falsy arms because `has_alpha?/1` does
+# return `false` for alpha-less images.
+lib/image.ex:1: The pattern 'false' can never match the type 'true'
