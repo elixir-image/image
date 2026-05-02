@@ -32,6 +32,8 @@ This is the changelog for Image version 0.67.0 released on ______, 2026.  For ol
 
 * Adds `Image.enhance/2` — content-aware automatic enhancement composed of luminance equalisation + mild saturation boost + mild sharpen. Approximates the CDN-style "improve" / "auto-enhance" calls used by Cloudinary, imgix, and ImageKit. Tunable via `:saturation` and `:sharpen_sigma` options.
 
+* Adds `Image.to_colorspace/3` — ICC-profile-driven colourspace conversion. Accepts the libvips built-in profile atoms (`:srgb`, `:cmyk`, `:p3`) or a path to an `.icc` file via `Image.ICCProfile.known?/1` validation. Options: `:input_profile`, `:intent` (`:relative` / `:perceptual` / `:saturation` / `:absolute`), and `:depth` (`8` / `16`). Wraps `Vix.Vips.Operation.icc_transform/3`.
+
 ### Bug Fixes
 
 * `Image.add_alpha/2`'s `:opaque` and `:transparent` atoms now produce alpha = 255 and alpha = 0 respectively, matching the standard libvips / RGBA convention. The previous values were inverted relative to their names; integer values pass through unchanged.

@@ -8293,6 +8293,116 @@ defmodule Image do
   end
 
   @doc """
+  Converts an image to the colourspace defined by an ICC
+  profile.
+
+  Use this when you need a colour conversion driven by a
+  specific ICC profile (Adobe RGB, ProPhoto, a custom monitor
+  profile, …) rather than the named libvips interpretations
+  exposed by `to_colorspace/2`.
+
+  Internally this delegates to `Vix.Vips.Operation.icc_transform/3`,
+  which performs a profile-aware conversion. When the source
+  image carries an embedded ICC profile, libvips uses it as
+  the input; otherwise pass `:input_profile` explicitly.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `output_profile` is one of the libvips built-in atoms
+    (`:srgb`, `:cmyk`, `:p3`) **or** a path to an `.icc` file.
+    Validated by `Image.ICCProfile.known?/1`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:input_profile` overrides the source profile. Same shape
+    as `output_profile`. Default: use the embedded profile, or
+    sRGB if there isn't one.
+
+  * `:intent` is the rendering intent. One of
+    `:relative` (default), `:perceptual`, `:saturation`,
+    `:absolute`.
+
+  * `:depth` is the output bit depth. `8` (default) or `16`.
+
+  ### Returns
+
+  * `{:ok, image_in_target_profile}` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+      iex> {:ok, _adobe} = Image.to_colorspace(image, :srgb, intent: :perceptual)
+
+  """
+  @doc subject: "Color"
+  @doc since: "0.67.0"
+
+  @spec to_colorspace(Vimage.t(), Image.ICCProfile.t(), keyword()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def to_colorspace(%Vimage{} = image, output_profile, options) when is_list(options) do
+    intent_map = %{
+      relative: :VIPS_INTENT_RELATIVE,
+      perceptual: :VIPS_INTENT_PERCEPTUAL,
+      saturation: :VIPS_INTENT_SATURATION,
+      absolute: :VIPS_INTENT_ABSOLUTE
+    }
+
+    intent_atom = Keyword.get(options, :intent, :relative)
+    depth = Keyword.get(options, :depth, 8)
+    input_profile = Keyword.get(options, :input_profile)
+
+    cond do
+      not Image.ICCProfile.known?(output_profile) ->
+        {:error,
+         %Image.Error{
+           message: "Unknown ICC output profile: #{inspect(output_profile)}",
+           reason: :unknown_icc_profile
+         }}
+
+      not is_map_key(intent_map, intent_atom) ->
+        {:error,
+         %Image.Error{
+           message: "Unknown intent #{inspect(intent_atom)}; valid: #{inspect(Map.keys(intent_map))}",
+           reason: :invalid_intent
+         }}
+
+      not (depth in [8, 16]) ->
+        {:error,
+         %Image.Error{
+           message: ":depth must be 8 or 16",
+           reason: :invalid_depth
+         }}
+
+      true ->
+        opts =
+          [
+            intent: Map.fetch!(intent_map, intent_atom),
+            depth: depth,
+            "output-profile": to_string(output_profile)
+          ]
+          |> maybe_put_input_profile(input_profile)
+
+        Vix.Vips.Operation.icc_transform(image, to_string(output_profile), opts)
+    end
+  end
+
+  defp maybe_put_input_profile(opts, nil), do: opts
+
+  defp maybe_put_input_profile(opts, profile) do
+    if Image.ICCProfile.known?(profile) do
+      Keyword.put(opts, :"input-profile", to_string(profile))
+    else
+      opts
+    end
+  end
+
+  @doc """
   Converts an image to the given colorspace returning
   an image or raising an exception.
 
