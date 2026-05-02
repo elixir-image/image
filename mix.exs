@@ -110,7 +110,6 @@ defmodule Image.MixProject do
       # For testing HTTP streaming
       {:ex_aws_s3, "~> 2.3", optional: true, only: [:dev, :test]},
       {:hackney, "~> 1.18", optional: true, only: [:dev, :test]},
-      # {:jason, "~> 1.4", optional: true}
     ] ++ maybe_json_polyfill()
   end
 
