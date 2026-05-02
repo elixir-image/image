@@ -30,6 +30,8 @@ This is the changelog for Image version 0.67.0 released on ______, 2026.  For ol
 
 * Adds `Image.minimize_metadata/2` with a `:keep` option — caller-controlled list of EXIF fields to preserve when minimising metadata. The 1-arity variant continues to default to `[:copyright, :artist]`; the 2-arity variant lets callers pass `keep: [:copyright]` (preserve only copyright), `keep: []` (strip everything), or any other subset.
 
+* Adds `Image.enhance/2` — content-aware automatic enhancement composed of luminance equalisation + mild saturation boost + mild sharpen. Approximates the CDN-style "improve" / "auto-enhance" calls used by Cloudinary, imgix, and ImageKit. Tunable via `:saturation` and `:sharpen_sigma` options.
+
 ### Bug Fixes
 
 * `Image.add_alpha/2`'s `:opaque` and `:transparent` atoms now produce alpha = 255 and alpha = 0 respectively, matching the standard libvips / RGBA convention. The previous values were inverted relative to their names; integer values pass through unchanged.

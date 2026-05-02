@@ -9112,6 +9112,97 @@ defmodule Image do
   end
 
   @doc """
+  Applies a content-aware automatic enhancement to an image.
+
+  This is a sensible-defaults stack of three operations
+  intended to mimic the behaviour of CDN-style "improve" /
+  "auto-enhance" calls (Cloudinary `e_improve`, imgix
+  `auto=enhance`, ImageKit `e-retouch`):
+
+  1. **Luminance equalisation** via `equalize/2` with `:luminance`
+     mode — stretches the tone range so the darkest pixel
+     becomes black and the brightest becomes white.
+
+  2. **Mild saturation boost** via `saturation/2 * 1.1` — adds
+     a small amount of vibrance to compensate for the
+     desaturating effect of luminance equalisation on
+     low-contrast inputs.
+
+  3. **Mild sharpening** via `sharpen/2` with a small sigma —
+     adds perceived clarity without ringing.
+
+  The hosted CDN equivalents are content-aware ML models that
+  this function does not attempt to replicate byte-for-byte;
+  results are visually similar but not identical.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:saturation` is the saturation multiplier applied after
+    luminance equalisation. Default `1.1`. Pass `1.0` to skip
+    the saturation step.
+
+  * `:sharpen_sigma` is the libvips Gaussian sigma used for
+    the final sharpen. Default `0.5`. Pass `0.0` to skip the
+    sharpen step.
+
+  ### Returns
+
+  * `{:ok, enhanced_image}` or
+
+  * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+      iex> {:ok, _enhanced} = Image.enhance(image)
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Operation"
+
+  @spec enhance(image :: Vimage.t(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def enhance(%Vimage{} = image, options \\ []) do
+    saturation_mult = Keyword.get(options, :saturation, 1.1)
+    sharpen_sigma = Keyword.get(options, :sharpen_sigma, 0.5)
+
+    with {:ok, equalised} <- equalize(image, :luminance),
+         {:ok, saturated} <- maybe_saturation(equalised, saturation_mult),
+         {:ok, _final} = success <- maybe_sharpen(saturated, sharpen_sigma) do
+      success
+    end
+  end
+
+  @doc """
+  Applies a content-aware automatic enhancement to an image,
+  or raises on error. See `enhance/2` for argument and option
+  documentation.
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Operation"
+
+  @spec enhance!(image :: Vimage.t(), options :: Keyword.t()) :: Vimage.t() | no_return()
+  def enhance!(%Vimage{} = image, options \\ []) do
+    case enhance(image, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  defp maybe_saturation(image, mult) when mult == 1.0, do: {:ok, image}
+  defp maybe_saturation(image, mult), do: saturation(image, mult)
+
+  defp maybe_sharpen(image, sigma) when sigma in [0, +0.0], do: {:ok, image}
+  defp maybe_sharpen(image, sigma), do: sharpen(image, sigma: sigma)
+
+  @doc """
   Applies a tone curve to an image.
 
   A [tone curve](https://en.wikipedia.org/wiki/Curve_(tonality))
