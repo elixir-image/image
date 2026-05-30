@@ -35,6 +35,23 @@ defmodule Image.Test do
     assert input_info.size > output_info.size * 2
   end
 
+  test "Remove metadata", %{dir: _dir} do
+    image = image_path("Kip_small.jpg")
+    {:ok, kip} = Vimage.new_from_file(image)
+
+    for {atom_key, raw_header_key} <- [
+          {:exif, "exif-data"},
+          {:xmp, "xmp-data"},
+          {:iptc, "iptc-data"}
+        ] do
+      {:ok, header_fields} = Vix.Vips.Image.header_field_names(kip)
+      assert Enum.member?(header_fields, raw_header_key)
+      {:ok, kip} = Image.remove_metadata(kip, [atom_key])
+      {:ok, header_fields} = Vix.Vips.Image.header_field_names(kip)
+      refute Enum.member?(header_fields, raw_header_key)
+    end
+  end
+
   test "Circular Image", %{dir: dir} do
     image = image_path("Kip_small.jpg")
     {:ok, kip} = Vimage.new_from_file(image)
