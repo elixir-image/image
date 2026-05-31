@@ -69,7 +69,7 @@ defmodule Image.MixProject do
       # extraction, seeking, and streaming.
       {:xav, "~> 0.10", optional: true},
 
-      # eVision OpenCV bindings. Used by Image.QRcode and the
+      # eVision OpenCV bindings. Use for
       # Image.to_evision/1 / Image.from_evision/1 interop helpers.
       {:evision, "~> 0.1.33 or ~> 0.2", optional: true},
       # {:evision, github: "cocoa-xu/evision"},
@@ -93,8 +93,8 @@ defmodule Image.MixProject do
       # and Scholar for k-means clustering. Image classification
       # and image generation moved to the `:image_vision`
       # package along with the `:bumblebee` dependency.
-      {:nx, "~> 0.10", optional: true},
-      {:exla, "~> 0.10", optional: true},
+      {:nx, "~> 0.12", optional: true},
+      {:exla, "~> 0.12", optional: true},
       {:nx_image, "~> 0.1", optional: true},
       {:scholar, "~> 0.3", optional: true},
       {:rustler, "> 0.0.0", optional: true},
