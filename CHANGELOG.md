@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.68.0
+
+This is the changelog for Image version 0.68.0 released on May 31st, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Bug Fixes
+
+* Fix `remove_metadata/2` with `:xmp` selector. It was a silent no-op due to a typo in the header map. Thanks to @hlindset for the PR. Closes #198.
+
 ## Image 0.67.0
 
 This is the changelog for Image version 0.67.0 released on May 3rd, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
