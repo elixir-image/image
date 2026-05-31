@@ -158,7 +158,6 @@ defmodule Image.MixProject do
         "README.md",
         "guides/thumbnailing.md",
         "guides/performance.md",
-        "guides/color_migration.md",
         "livebook/image_edge_masking.livemd",
         "livebook/color_clustering.livemd",
         "LICENSE.md",
