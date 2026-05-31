@@ -6668,7 +6668,7 @@ defmodule Image do
 
   @metadata_fields %{
     exif: "exif-data",
-    xmp: "xmp-dataa",
+    xmp: "xmp-data",
     iptc: "iptc-data"
   }
 
