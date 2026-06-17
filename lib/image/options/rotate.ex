@@ -64,4 +64,16 @@ defmodule Image.Options.Rotate do
   defp invalid_option(option) do
     "Invalid option or option value: #{inspect(option)}"
   end
+
+  @doc false
+  def no_displacement?(options) do
+    empty_displacement?(options, :idx) and
+      empty_displacement?(options, :idy) and
+      empty_displacement?(options, :odx) and
+      empty_displacement?(options, :ody)
+  end
+
+  defp empty_displacement?(options, key) do
+    Keyword.get(options, key, 0) in [nil, 0, 0.0]
+  end
 end
