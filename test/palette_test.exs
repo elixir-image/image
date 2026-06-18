@@ -79,6 +79,7 @@ defmodule Image.Palette.Test do
   describe "Image.Color.srgb_tensor_to_oklab/1" do
     test "matches Color.convert per-row for sRGB primaries" do
       hexes = ["#ff0000", "#00ff00", "#0000ff", "#ffffff", "#000000", "#808080"]
+
       rows =
         Enum.map(hexes, fn hex ->
           {:ok, srgb} = Color.new(hex)

@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.69.0
+
+This is the changelog for Image version 0.69.0 released on June 18th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Enhancements
+
+* Updat `Image.rotate/3` to use `Vix.Vips.Operation.rot/2` as a fast path for rotations that are multiples of 90 when no displacement options are set. Falls back to `Vix.Vips.Operation.rotate/3` otherwise. Thanks to @hlindset for the PR. Closes #199.
+
 ## Image 0.68.0
 
 This is the changelog for Image version 0.68.0 released on May 31st, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

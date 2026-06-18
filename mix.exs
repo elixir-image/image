@@ -1,7 +1,7 @@
 defmodule Image.MixProject do
   use Mix.Project
 
-  @version "0.68.0"
+  @version "0.69.0"
   @app_name "image"
 
   def project do
@@ -109,7 +109,7 @@ defmodule Image.MixProject do
 
       # For testing HTTP streaming
       {:ex_aws_s3, "~> 2.3", optional: true, only: [:dev, :test]},
-      {:hackney, "~> 1.18", optional: true, only: [:dev, :test]},
+      {:hackney, "~> 1.18", optional: true, only: [:dev, :test]}
     ] ++ maybe_json_polyfill()
   end
 

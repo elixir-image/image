@@ -8408,11 +8408,12 @@ defmodule Image do
       not is_map_key(intent_map, intent_atom) ->
         {:error,
          %Image.Error{
-           message: "Unknown intent #{inspect(intent_atom)}; valid: #{inspect(Map.keys(intent_map))}",
+           message:
+             "Unknown intent #{inspect(intent_atom)}; valid: #{inspect(Map.keys(intent_map))}",
            reason: :invalid_intent
          }}
 
-      not (depth in [8, 16]) ->
+      depth not in [8, 16] ->
         {:error,
          %Image.Error{
            message: ":depth must be 8 or 16",
@@ -10011,8 +10012,9 @@ defmodule Image do
     else
       {:error,
        %Image.Error{
-         message: "Invalid fade edge(s): #{inspect(invalid)}. " <>
-                    "Allowed: #{inspect(@valid_fade_edges)} or :all",
+         message:
+           "Invalid fade edge(s): #{inspect(invalid)}. " <>
+             "Allowed: #{inspect(@valid_fade_edges)} or :all",
          reason: "Invalid fade edges"
        }}
     end
@@ -10178,7 +10180,8 @@ defmodule Image do
            {:ok, shadow_rgb} <- Image.new(width, height, color: [r, g, b]),
            {:ok, shadow} <- add_alpha(shadow_rgb, blurred),
            {:ok, base} <- Image.new(width, height, color: [0, 0, 0, 0]),
-           {:ok, base_with_shadow} <- Operation.composite2(base, shadow, :VIPS_BLEND_MODE_OVER, x: dx, y: dy) do
+           {:ok, base_with_shadow} <-
+             Operation.composite2(base, shadow, :VIPS_BLEND_MODE_OVER, x: dx, y: dy) do
         Operation.composite2(base_with_shadow, image, :VIPS_BLEND_MODE_OVER, x: 0, y: 0)
       end
     end

@@ -181,7 +181,8 @@ defmodule Image.GroupA.Test do
 
   describe "Image.write/3 :lossy and :chroma_subsampling options" do
     test ":chroma_subsampling on JPEG controls chroma layout", %{hk: image} do
-      {:ok, off} = Image.write(image, :memory, suffix: ".jpg", quality: 75, chroma_subsampling: :off)
+      {:ok, off} =
+        Image.write(image, :memory, suffix: ".jpg", quality: 75, chroma_subsampling: :off)
 
       {:ok, default} = Image.write(image, :memory, suffix: ".jpg", quality: 75)
 
