@@ -45,8 +45,13 @@ jobs:
             elixir: "1.18.1-otp-27"
           - otp: "28.3.1"
             elixir: "1.19.4-otp-28"
+          # Elixir 1.20.1 is tested on both OTP 28 and OTP 29.
           - otp: "28.3.1"
-            elixir: "1.20.0-rc.4-otp-28"
+            elixir: "1.20.1-otp-28"
+          # Canonical / standard toolchain: Elixir 1.20.1 on Erlang/OTP 29.
+          # This is the lint entry (warnings-as-errors + dialyzer).
+          - otp: "29.0.1"
+            elixir: "1.20.1-otp-29"
             lint: true
     steps:
     # Step: Setup Elixir + Erlang image as the base.
