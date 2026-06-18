@@ -5907,6 +5907,12 @@ defmodule Image do
     a list of 3 or 4 float values depending on the image
     color space.
 
+  ## Discrete rotation
+
+  When `angle` is a multiple of 90, and all displacement options
+  are unset, `nil`, `0` or `0.0`, the rotation will be done as a
+  discrete operation in order to preserve source pixel values.
+
   ## Notes
 
   The displacement parameters cause the image canvas to be
@@ -5935,9 +5941,40 @@ defmodule Image do
 
   def rotate(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
     with {:ok, options} <- Options.Rotate.validate_options(options) do
-      Operation.rotate(image, angle, options)
+      rot_angle = rot_angle(angle, options)
+
+      if rot_angle do
+        Operation.rot(image, rot_angle)
+      else
+        Operation.rotate(image, angle, options)
+      end
     end
   end
+
+  defp rot_angle(angle, options) do
+    if Options.Rotate.no_displacement?(options) do
+      to_rot_angle(angle)
+    end
+  end
+
+  defp to_rot_angle(angle) when is_integer(angle) and rem(angle, 90) == 0 do
+    angle
+    |> Integer.mod(360)
+    |> rot_angle_from_degrees()
+  end
+
+  defp to_rot_angle(angle) when is_float(angle) and angle == trunc(angle) do
+    angle
+    |> trunc()
+    |> to_rot_angle()
+  end
+
+  defp to_rot_angle(_angle), do: nil
+
+  defp rot_angle_from_degrees(0), do: :VIPS_ANGLE_D0
+  defp rot_angle_from_degrees(90), do: :VIPS_ANGLE_D90
+  defp rot_angle_from_degrees(180), do: :VIPS_ANGLE_D180
+  defp rot_angle_from_degrees(270), do: :VIPS_ANGLE_D270
 
   @doc """
   Rotate an image clockwise (to the
