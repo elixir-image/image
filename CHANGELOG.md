@@ -6,7 +6,7 @@ This is the changelog for Image version 0.69.0 released on June 18th, 2026.  For
 
 ### Enhancements
 
-* Updat `Image.rotate/3` to use `Vix.Vips.Operation.rot/2` as a fast path for rotations that are multiples of 90 when no displacement options are set. Falls back to `Vix.Vips.Operation.rotate/3` otherwise. Thanks to @hlindset for the PR. Closes #199.
+* Update `Image.rotate/3` to use `Vix.Vips.Operation.rot/2` as a fast path for rotations that are multiples of 90 when no displacement options are set. Falls back to `Vix.Vips.Operation.rotate/3` otherwise. Thanks to @hlindset for the PR. Closes #199.
 
 ## Image 0.68.0
 
