@@ -176,7 +176,7 @@ defmodule Image.Options.Write do
     options =
       options
       |> Keyword.delete(:strip_metadata)
-      |> Keyword.put(:strip, strip?)
+      |> put_strip_metadata(strip?)
 
     {:cont, options}
   end
@@ -220,7 +220,7 @@ defmodule Image.Options.Write do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
-      |> Keyword.put(:strip, true)
+      |> put_strip_metadata(true)
       |> Keyword.put(:"optimize-coding", true)
       |> Keyword.put(:interlace, true)
       |> Keyword.put(:"optimize-scans", true)
@@ -235,7 +235,7 @@ defmodule Image.Options.Write do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
-      |> Keyword.put(:strip, true)
+      |> put_strip_metadata(true)
       |> Keyword.put(:palette, true)
 
     {:cont, options}
@@ -247,7 +247,7 @@ defmodule Image.Options.Write do
       options
       |> Keyword.delete(:minimize_file_size)
       |> Keyword.put(:"min-size", true)
-      |> Keyword.put(:strip, true)
+      |> put_strip_metadata(true)
       |> Keyword.put(:mixed, true)
 
     {:cont, options}
@@ -259,7 +259,7 @@ defmodule Image.Options.Write do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
-      |> Keyword.put(:strip, true)
+      |> put_strip_metadata(true)
 
     {:cont, options}
   end
@@ -424,6 +424,33 @@ defmodule Image.Options.Write do
 
   # Range 0..6
   defp conform_effort(effort, ".webp"), do: round(effort / 10 * 6)
+
+  # libvips 8.15 deprecated the boolean `strip` save option in favour of the
+  # `keep` flag. Vix removes deprecated properties from the operation it builds,
+  # so passing `strip: true` to `Vix.Vips.Image.write_to_file/3` is silently
+  # ignored on libvips >= 8.15 and no metadata is stripped. The `:memory`, stream
+  # and `Plug.Conn` targets escaped the bug because they serialise the options
+  # into a libvips filename suffix string (e.g. `".jpg[strip=true]"`) which is
+  # parsed by libvips' own option parser, and that parser still honours the
+  # deprecated `strip` alias.
+  #
+  # Emit the modern `keep` flag where it exists, so `strip: true` is converted to
+  # `keep: [:VIPS_FOREIGN_KEEP_NONE]`, and fall back to `strip` on libvips < 8.15
+  # where `keep` does not exist.
+  defp put_strip_metadata(options, false), do: options
+
+  defp put_strip_metadata(options, true) do
+    if keep_option_supported?() do
+      Keyword.put(options, :keep, [:VIPS_FOREIGN_KEEP_NONE])
+    else
+      Keyword.put(options, :strip, true)
+    end
+  end
+
+  defp keep_option_supported? do
+    {:ok, version} = Image.vips_version()
+    Version.compare(version, "8.15.0") != :lt
+  end
 
   defp image_type_from("", "") do
     {:error,
