@@ -886,8 +886,17 @@ defmodule Image do
   end
 
   defp loader_options(options) do
-    "[" <> Enum.map_join(options, ",", fn {k, v} -> "#{k}=#{v}" end) <> "]"
+    "[" <> Enum.map_join(options, ",", &loader_option/1) <> "]"
   end
+
+  # Flag-valued options are passed to libvips as a list of flag atoms.
+  # In a filename suffix string flags are written by name joined with `:`,
+  # e.g. `keep=VIPS_FOREIGN_KEEP_EXIF:VIPS_FOREIGN_KEEP_XMP`.
+  defp loader_option({key, value}) when is_list(value) do
+    "#{key}=" <> Enum.map_join(value, ":", &to_string/1)
+  end
+
+  defp loader_option({key, value}), do: "#{key}=#{value}"
 
   @doc """
   Opens an image file for image processing
