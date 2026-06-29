@@ -10756,10 +10756,16 @@ defmodule Image do
     `t:Image.Options.Affine.interpolate/0` for more information
     about the available options.
 
-  * `:background` is the background color to be sued for filling
-    the blank areas of the image. The background is specified as
-    a single number or a list of 3 or 4 float values depending on
-    the image color space.
+  * `:background` defines the color of any generated background
+    pixels. This can be specified as a single integer which will
+    be applied to all bands, or a list of integers representing
+    the color for each band. The color can also be supplied as a
+    CSS color name as a string or atom. For example: `:misty_rose`.
+    It can also be supplied as a hex string of the form `#rrggbb`.
+    Can also be set to `:average` in which case the background will
+    be the average color of the base image.
+
+    See also `Image.Pixel.to_pixel/2`.
 
   * `:extend_mode` controls how the interpolator synthesises the
     thin band of pixels just beyond the source edge when resampling
@@ -10834,9 +10840,8 @@ defmodule Image do
 
   def affine(%Vimage{} = image, [a, b, c, d], options)
       when is_number(a) and is_number(b) and is_number(c) and is_number(d) do
-    with {:ok, options} <- Options.Affine.validate_options(options) do
-      matrix = Enum.map([a, b, c, d], &(&1 * 1.0))
-      Operation.affine(image, matrix, options)
+    with {:ok, options} <- Options.Affine.validate_options(image, options) do
+      Operation.affine(image, [a, b, c, d], options)
     end
   end
 

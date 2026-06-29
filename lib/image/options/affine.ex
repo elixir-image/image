@@ -8,7 +8,9 @@ defmodule Image.Options.Affine do
 
   """
 
+  alias Vix.Vips.Image, as: Vimage
   alias Vix.Vips.Interpolate
+  alias Image.Pixel
 
   @typedoc """
   The interpolators that may be selected with the `:interpolate`
@@ -39,8 +41,8 @@ defmodule Image.Options.Affine do
           | {:idy, number()}
           | {:odx, number()}
           | {:ody, number()}
-          | {:interpolate, interpolate() | Interpolate.t()}
-          | {:background, Image.pixel()}
+          | {:interpolate, interpolate()}
+          | {:background, Pixel.t() | :average}
           | {:output_area, [integer()]}
           | {:extend_mode, Image.ExtendMode.t()}
         ]
@@ -51,18 +53,19 @@ defmodule Image.Options.Affine do
 
   @displacement_options [:idx, :idy, :odx, :ody]
 
-  @doc false
-  defguard is_color(color) when is_number(color) and color >= 0
-
   @doc """
   Validate the options for `Image.affine/3`.
+
+  The `image` is required to resolve the `:background` option
+  into a pixel matching the image's bands and color space.
 
   See `t:Image.Options.Affine.affine_options/0`.
 
   """
-  @spec validate_options(Keyword.t()) :: {:ok, Keyword.t()} | {:error, Image.error()}
-  def validate_options(options) do
-    case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
+  @spec validate_options(Vimage.t(), Keyword.t()) ::
+          {:ok, Keyword.t()} | {:error, Image.error()}
+  def validate_options(image, options) do
+    case Enum.reduce_while(options, options, &validate_option(&1, image, &2)) do
       {:error, value} ->
         {:error, value}
 
@@ -71,11 +74,7 @@ defmodule Image.Options.Affine do
     end
   end
 
-  defp validate_option({:interpolate, %Interpolate{}}, options) do
-    {:cont, options}
-  end
-
-  defp validate_option({:interpolate, interpolate}, options)
+  defp validate_option({:interpolate, interpolate}, _image, options)
        when interpolate in @valid_interpolators do
     case Interpolate.new(Atom.to_string(interpolate)) do
       {:ok, interpolator} ->
@@ -86,9 +85,9 @@ defmodule Image.Options.Affine do
     end
   end
 
-  # The public option is `:extend_mode` (matching `Image.warp_perspective/4`),
-  # libvips names the affine parameter `extend`.
-  defp validate_option({:extend_mode, extend}, options) do
+  # The public option is `:extend_mode`, renamed internally to `:extend` for `libvips`
+  defp validate_option({:extend_mode, extend}, _image, options)
+       when is_atom(extend) or is_binary(extend) do
     case Image.ExtendMode.validate_extend(extend) do
       {:ok, extend} ->
         options =
@@ -104,27 +103,33 @@ defmodule Image.Options.Affine do
     end
   end
 
-  defp validate_option({:background, background}, options) when is_color(background) do
-    options = Keyword.put(options, :background, List.wrap(background))
-    {:cont, options}
+  # Background handling mirrors `Image.warp_perspective/4`: `:average`
+  # uses the image's average color and any other value is resolved by
+  # `Image.Pixel.to_pixel/2` (numbers, lists, CSS names, hex strings).
+  defp validate_option({:background, :average}, image, options) do
+    case Image.average(image) do
+      color when is_list(color) ->
+        {:cont, Keyword.put(options, :background, color)}
+
+      {:error, reason} ->
+        {:halt,
+         {:error,
+          %Image.Error{
+            message: "Could not get the image average: #{inspect(reason)}",
+            reason: "Could not get the image average: #{inspect(reason)}"
+          }}}
+    end
   end
 
-  defp validate_option({:background, [r, g, b]}, options)
-       when is_color(r) and is_color(g) and is_color(b) do
-    {:cont, options}
-  end
-
-  defp validate_option({:background, [r, g, b, a]}, options)
-       when is_color(r) and is_color(g) and is_color(b) and is_color(a) do
-    {:cont, options}
-  end
-
-  defp validate_option({:background, [c]}, options) when is_color(c) do
-    {:cont, options}
+  defp validate_option({:background, color} = option, image, options) do
+    case Pixel.to_pixel(image, color) do
+      {:ok, pixel} -> {:cont, Keyword.put(options, :background, pixel)}
+      _other -> {:halt, {:error, invalid_option(option)}}
+    end
   end
 
   # The public option is `:output_area`, libvips names it `oarea`.
-  defp validate_option({:output_area, [left, top, width, height] = area}, options)
+  defp validate_option({:output_area, [left, top, width, height] = area}, _image, options)
        when is_integer(left) and is_integer(top) and is_integer(width) and is_integer(height) do
     options =
       options
@@ -134,12 +139,12 @@ defmodule Image.Options.Affine do
     {:cont, options}
   end
 
-  defp validate_option({option, value}, options)
+  defp validate_option({option, value}, _image, options)
        when option in @displacement_options and is_number(value) do
     {:cont, Keyword.put(options, option, value * 1.0)}
   end
 
-  defp validate_option(option, _options) do
+  defp validate_option(option, _image, _options) do
     {:halt, {:error, invalid_option(option)}}
   end
 

@@ -135,6 +135,25 @@ defmodule Image.Affine.Test do
       assert Image.get_pixel!(result, 0, 0) == [100, 100, 100]
     end
 
+    test "accepts a CSS colour name as the :background fill" do
+      image = white_dot(20, 20, 10, 10)
+      {:ok, result} = Image.translate(image, 5, 0, background: :red)
+
+      assert Image.get_pixel!(result, 0, 0) == [255, 0, 0]
+    end
+
+    test "accepts :average as the :background fill" do
+      image = Image.new!(20, 20, color: [10, 20, 30])
+      {:ok, result} = Image.translate(image, 5, 0, background: :average)
+
+      assert Image.get_pixel!(result, 0, 0) == [10, 20, 30]
+    end
+
+    test "rejects an invalid :background" do
+      image = white_dot(20, 20, 10, 10)
+      assert {:error, _reason} = Image.translate(image, 5, 0, background: :not_a_colour)
+    end
+
     test "translate!/4 returns an image on success" do
       image = white_dot(20, 20, 2, 3)
       assert %Vimage{} = Image.translate!(image, 5, 4)
