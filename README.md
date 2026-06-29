@@ -239,8 +239,10 @@ optional dependencies enable specific features:
 | `:scholar` | `Image.k_means/2` |
 | `:xav` | `Image.Video` (FFmpeg-backed frame extraction) |
 | `:evision` | `Image.to_evision/2`, `Image.from_evision/1` (Mat ↔ Vimage interop) |
+| `:image_vision` | `Image.Detection`, `Image.Classification`, `Image.Segmentation`, `Image.FaceDetection`, `Image.Captioning`, `Image.Background`, and `Image.ZeroShot` (has dependencies to Nx, EXLA, and optionally Bumblebee and Ortex) |
 | `:image_qrcode` | QR code encoding and decoding (sibling package — drop-in for the removed `Image.QRcode`) |
-| `:image_vision` | `Image.Detection`, `Image.Classification`, `Image.Segmentation`, `Image.FaceDetection`, `Image.Captioning`, `Image.Background`, and `Image.ZeroShot` (has dependencies to Nx, EXLA, and optionally Bumblebee and Ortex)
+| `:image_lens_correction` | Correct camera-lens distortion, vignetting, or chromatic aberration |
+| `:image_ocr` | Run OCR over image content |
 | `:plug` | streaming via `Plug.Conn` |
 | `:req` | streaming over HTTP |
 | `:kino` | `Image.Kino` (Livebook integration) |
