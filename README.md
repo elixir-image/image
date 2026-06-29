@@ -2,7 +2,7 @@
 
 `Image` is a fast, memory-efficient image processing library for Elixir. It is a high-level wrapper around [Vix](https://hex.pm/packages/vix), the Elixir bindings for the [libvips](https://www.libvips.org) C library, and provides an idiomatic functional API for image manipulation, drawing, text rendering, EXIF/XMP metadata, video frame extraction (via Xav/FFmpeg), blurhash, perceptual hashing, and many other image-related operations.
 
-Machine-learning features (object detection, image classification, image generation) live in the companion [`image_detection`](https://hex.pm/packages/image_detection) library, which depends on `:image` and pulls in [Bumblebee](https://hex.pm/packages/bumblebee) and [Nx](https://hex.pm/packages/nx) as its own optional dependencies.
+Machine-learning features (object detection, image classification, image segmentation, face detection, image captioning, background removal, and zero-shot classification) live in the companion [`image_vision`](https://hex.pm/packages/image_vision) library, which depends on `:image` and pulls in [Nx](https://hex.pm/packages/nx), [EXLA](https://hex.pm/packages/exla), and optionally [Ortex](https://hex.pm/packages/ortex) and [Bumblebee](https://hex.pm/packages/bumblebee).
 
 In a simple resize benchmark, `Image` is approximately 2 to 3 times faster than [Mogrify](https://hex.pm/packages/mogrify) and uses about 5 times less memory.
 
@@ -42,7 +42,7 @@ Documentation can be found at <https://hexdocs.pm/image>.
 
   * `Image.to_nx/2` / `Image.from_nx/1` via [Nx](https://hex.pm/packages/nx).
 
-  * **Object detection, image classification, and image generation** live in the separate [`:image_detection`](https://hex.pm/packages/image_detection) package. Add it alongside `:image` in your `mix.exs` to get `Image.Detection`, `Image.Classification`, and `Image.Generation` (which depend on `:axon_onnx` and [Bumblebee](https://hex.pm/packages/bumblebee) respectively).
+  * **Object detection, image classification, image segmentation, face detection, image captioning, background removal, and zero-shot classification** live in the separate [`:image_vision`](https://hex.pm/packages/image_vision) package. Add it alongside `:image` in your `mix.exs` to get `Image.Detection`, `Image.Classification`, `Image.Segmentation`, `Image.FaceDetection`, `Image.Captioning`, `Image.Background`, and `Image.ZeroShot`.
 
 * **Hashing** — perceptual difference hash (`Image.dhash/2`), blurhash encode/decode (`Image.Blurhash`), Hamming distance.
 
@@ -240,7 +240,7 @@ optional dependencies enable specific features:
 | `:xav` | `Image.Video` (FFmpeg-backed frame extraction) |
 | `:evision` | `Image.to_evision/2`, `Image.from_evision/1` (Mat ↔ Vimage interop) |
 | `:image_qrcode` | QR code encoding and decoding (sibling package — drop-in for the removed `Image.QRcode`) |
-| `:image_detection` | `Image.Detection`, `Image.Classification`, `Image.Generation` (object detection, classification, image generation — pulls Bumblebee, Nx, Axon as its own transitive deps) |
+| `:image_vision` | `Image.Detection`, `Image.Classification`, `Image.Segmentation`, `Image.FaceDetection`, `Image.Captioning`, `Image.Background`, and `Image.ZeroShot` (has dependencies to Nx, EXLA, and optionally Bumblebee and Ortex)
 | `:plug` | streaming via `Plug.Conn` |
 | `:req` | streaming over HTTP |
 | `:kino` | `Image.Kino` (Livebook integration) |
