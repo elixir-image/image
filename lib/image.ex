@@ -10813,19 +10813,27 @@ defmodule Image do
   40]`: the alpha is preserved, but each color band is multiplied by
   `255 / 40`.
 
-  To fill the exposed canvas with an exact partially-transparent
-  color, transform over a transparent background and then composite the
-  result over a canvas of the desired color:
+  If you need an exact partially-transparent fill, don't pass it as
+  `:background`. Instead transform over a transparent background and
+  composite the result onto a canvas of the desired color. Here
+  `jose.png` is opaque (an alpha band is added so the exposed canvas
+  can be transparent), so the only transparency is the canvas the
+  transform exposes:
 
-      iex> image = Image.open!("./test/support/images/dice_transparent.png")
+      iex> image = Image.add_alpha!(Image.open!("./test/support/images/jose.png"), 255)
       iex> angle = :math.pi() / 4
       iex> matrix = [:math.cos(angle), -:math.sin(angle), :math.sin(angle), :math.cos(angle)]
       iex> {:ok, rotated} = Image.affine(image, matrix, background: [0, 0, 0, 0])
       iex> canvas = Image.new!(rotated, color: [10, 20, 30, 40])
       iex> {:ok, _filled} = Image.compose(canvas, rotated)
 
-  Because the color is applied by the composite rather than passed
-  through the transform, it is reproduced exactly.
+  The color is applied by the composite rather than passed through the
+  transform, so it is reproduced exactly. Note that the composite backs
+  the *entire* image: it fills every transparent pixel, not just the
+  canvas exposed by the transform. Because the content here is opaque
+  the two coincide; for a source that carries its own transparency the
+  composite also fills those areas, which `:background` would leave
+  untouched.
 
   ### Notes
 
