@@ -4,32 +4,64 @@ defmodule Image.Options.Rotate do
 
   """
 
+  alias Vix.Vips.Interpolate
+  alias Image.Pixel
+
+  @typedoc """
+  The interpolators that may be selected with the `:interpolate`
+  option (descriptions from `vips -l interpolate`):
+
+  * `:nearest` - nearest-neighbour interpolation
+  * `:bilinear` (default) - bilinear interpolation
+  * `:bicubic` - bicubic interpolation (Catmull-Rom)
+  * `:lbb` - reduced halo bicubic
+  * `:nohalo` - edge sharpening resampler with halo reduction
+  * `:vsqbs` - B-Splines with antialiasing smoothing
+
+  """
+  @type interpolate ::
+          :nearest
+          | :bilinear
+          | :bicubic
+          | :lbb
+          | :nohalo
+          | :vsqbs
+
   @typedoc """
   The options applicable to rotating an
   image.
 
   """
   @type rotation_options :: [
-          {:idy, float()}
-          | {:idx, float()}
-          | {:ody, float()}
-          | {:odx, float()}
-          | {:background, Image.pixel()}
+          {:idy, number()}
+          | {:idx, number()}
+          | {:ody, number()}
+          | {:odx, number()}
+          | {:interpolate, interpolate()}
+          | {:background, Pixel.t() | :average}
         ]
 
-  @valid_options [:idy, :idx, :ody, :odx]
+  # The libvips nickname for each interpolator is identical to the
+  # public atom, so resolution is a simple `Atom.to_string/1`.
+  @valid_interpolators ~w(nearest bilinear bicubic lbb nohalo vsqbs)a
 
-  @doc false
-  defguard is_color(color) when is_number(color) and color >= 0
+  @displacement_options [:idy, :idx, :ody, :odx]
 
   @doc """
   Validate the options for `Image.rotate/3`.
 
+  The `image` is required to resolve the `:background` option
+  into a pixel matching the image's bands and color space.
+
   See `t:Image.Options.Rotate.rotation_options/0`.
 
   """
-  def validate_options(options) do
-    case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
+  @spec validate_options(Vix.Vips.Image.t(), Keyword.t()) ::
+          {:ok, Keyword.t()} | {:error, Image.error()}
+  def validate_options(image, options) do
+    options = Keyword.merge(default_options(), options)
+
+    case Enum.reduce_while(options, options, &validate_option(&1, image, &2)) do
       {:error, value} ->
         {:error, value}
 
@@ -38,31 +70,64 @@ defmodule Image.Options.Rotate do
     end
   end
 
-  defp validate_option({:background, background}, options) when is_color(background) do
-    options = Keyword.put(options, :background, List.wrap(background))
-    {:cont, options}
+  defp validate_option({:interpolate, interpolate}, _image, options)
+       when interpolate in @valid_interpolators do
+    case Interpolate.new(Atom.to_string(interpolate)) do
+      {:ok, interpolator} ->
+        {:cont, Keyword.put(options, :interpolate, interpolator)}
+
+      {:error, reason} ->
+        {:halt, {:error, reason}}
+    end
   end
 
-  defp validate_option({:background, [r, g, b]}, options)
-       when is_color(r) and is_color(g) and is_color(b) do
-    {:cont, options}
+  # `:average` uses the image's average color and any other value is resolved
+  # by `Image.Pixel.to_pixel/2` (numbers, lists, CSS names, hex strings).
+  defp validate_option({:background, :average}, image, options) do
+    case Image.average(image) do
+      color when is_list(color) ->
+        {:cont, Keyword.put(options, :background, color)}
+
+      {:error, reason} ->
+        {:halt,
+         {:error,
+          %Image.Error{
+            message: "Could not get the image average: #{inspect(reason)}",
+            reason: "Could not get the image average: #{inspect(reason)}"
+          }}}
+    end
   end
 
-  defp validate_option({:background, [c]}, options) when is_color(c) do
-    {:cont, options}
+  defp validate_option({:background, color} = option, image, options) do
+    case Pixel.to_pixel(image, color) do
+      {:ok, pixel} -> {:cont, Keyword.put(options, :background, pixel)}
+      _other -> {:halt, {:error, invalid_option(option)}}
+    end
   end
 
-  defp validate_option({option, value}, options)
-       when option in @valid_options and is_number(value) do
-    {:cont, options}
+  defp validate_option({option, value}, _image, options)
+       when option in @displacement_options and is_number(value) do
+    {:cont, Keyword.put(options, option, value)}
   end
 
-  defp validate_option(option, _options) do
+  defp validate_option(option, _image, _options) do
     {:halt, {:error, invalid_option(option)}}
   end
 
   defp invalid_option(option) do
-    "Invalid option or option value: #{inspect(option)}"
+    %Image.Error{
+      reason: :invalid_option,
+      value: option,
+      message: "Invalid option or option value: #{inspect(option)}"
+    }
+  end
+
+  # No default `:background` is injected: when the caller omits it,
+  # `libvips` keeps its own native fill (transparent for images with
+  # an alpha band, black otherwise). `:interpolate` defaults to
+  # `:bilinear`, which is also `libvips`' own default.
+  defp default_options do
+    [interpolate: :bilinear]
   end
 
   @doc false
