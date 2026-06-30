@@ -65,6 +65,8 @@ defmodule Image.Options.Affine do
   @spec validate_options(Vimage.t(), Keyword.t()) ::
           {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(image, options) do
+    options = Keyword.merge(default_options(), options)
+
     case Enum.reduce_while(options, options, &validate_option(&1, image, &2)) do
       {:error, value} ->
         {:error, value}
@@ -154,5 +156,13 @@ defmodule Image.Options.Affine do
       value: option,
       message: "Invalid option or option value: #{inspect(option)}"
     }
+  end
+
+  # `:extend_mode` defaults to `:background` rather than `:black`: since
+  # extend only governs the antialiased edge fringe (not the canvas fill),
+  # `:background` blends the fringe toward the fill color, whereas `:black`
+  # would leave a dark fringe on a non-black background.
+  defp default_options do
+    [extend_mode: :background, background: :black, interpolate: :bilinear]
   end
 end

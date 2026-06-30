@@ -10763,7 +10763,7 @@ defmodule Image do
     CSS color name as a string or atom. For example: `:misty_rose`.
     It can also be supplied as a hex string of the form `#rrggbb`.
     Can also be set to `:average` in which case the background will
-    be the average color of the base image.
+    be the average color of the base image. The default is `:black`.
 
     See also `Image.Pixel.to_pixel/2`.
 

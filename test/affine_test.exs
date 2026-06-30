@@ -103,6 +103,15 @@ defmodule Image.Affine.Test do
         Image.affine!(image, [1, 0, 0, 1], interpolate: :unknown)
       end
     end
+
+    test "applies the documented default :extend_mode, :background and :interpolate" do
+      image = white_dot(20, 20, 2, 3)
+      {:ok, options} = Image.Options.Affine.validate_options(image, [])
+
+      assert Keyword.get(options, :extend) == :VIPS_EXTEND_BACKGROUND
+      assert Keyword.get(options, :background) == [0, 0, 0]
+      assert %Vix.Vips.Interpolate{} = Keyword.get(options, :interpolate)
+    end
   end
 
   describe "Image.translate/4" do
