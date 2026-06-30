@@ -5899,17 +5899,8 @@ defmodule Image do
 
   ### Options
 
-  * `:idy` is the vertical input displacement which
-    defaults to `0.0`
-
-  * `:idx` is the horizontal input displacement which
-    defaults to `0.0`
-
-  * `:ody` is the vertical output displacement
-    which defaults to `0.0`
-
-  * `:odx` is the horizontal output displacement
-    which defaults to `0.0`
+  * `:idx`, `:idy`, `:odx` and `:ody` displace the image relative to
+    the rotation. See the *Displacements* section below.
 
   * `:interpolate` selects the interpolator used to resample
     pixels: `:nearest`, `:bilinear` (the default), `:bicubic`,
@@ -5966,15 +5957,14 @@ defmodule Image do
   are unset, `nil`, `0` or `0.0`, the rotation will be done as a
   discrete operation in order to preserve source pixel values.
 
-  ## Notes
+  ## Displacements
 
-  The displacement parameters cause the image canvas to be
-  expanded and the image displaced, relative to the top left
-  corner of the image, by the amount specified.
+  * `:idx` and `:idy` are the horizontal and vertical *input*-space
+    displacements (default `0.0`). Applied before the rotation, so the
+    shift is itself rotated.
 
-  The rules defining how the image canvas is expanded
-  is not known to the author of `Image`. Experimentation will
-  be required if you explore these options.
+  * `:odx` and `:ody` are the horizontal and vertical *output*-space
+    displacements (default `0.0`). Applied after the rotation.
 
   ### Returns
 
@@ -6043,15 +6033,10 @@ defmodule Image do
   * `options` is a keyword list of options.
     See `Image.rotate/3`.
 
-  ## Notes
+  ## Displacements
 
-  The displacement parameters cause the image canvas to be
-  expanded and the image displaced, relative to the top left
-  corner of the image, by the amount specified.
-
-  The rules defining how the image canvas is expanded
-  is not known to the author of `Image`. Experimentation will
-  be required if you explore these options.
+  The `:idx`, `:idy`, `:odx` and `:ody` displacement options behave
+  as documented for `Image.rotate/3`.
 
   ### Returns
 
