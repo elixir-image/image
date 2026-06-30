@@ -163,6 +163,6 @@ defmodule Image.Options.Affine do
   # `:background` blends the fringe toward the fill color, whereas `:black`
   # would leave a dark fringe on a non-black background.
   defp default_options do
-    [extend_mode: :background, background: :black, interpolate: :bilinear]
+    [extend_mode: :background, interpolate: :bilinear]
   end
 end

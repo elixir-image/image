@@ -104,13 +104,25 @@ defmodule Image.Affine.Test do
       end
     end
 
-    test "applies the documented default :extend_mode, :background and :interpolate" do
+    test "applies the documented default :extend_mode and :interpolate and leaves :background to libvips" do
       image = white_dot(20, 20, 2, 3)
       {:ok, options} = Image.Options.Affine.validate_options(image, [])
 
       assert Keyword.get(options, :extend) == :VIPS_EXTEND_BACKGROUND
-      assert Keyword.get(options, :background) == [0, 0, 0]
       assert %Vix.Vips.Interpolate{} = Keyword.get(options, :interpolate)
+      # No default :background is injected so libvips keeps its native
+      # fill (transparent for alpha images, black otherwise).
+      refute Keyword.has_key?(options, :background)
+    end
+
+    test "preserves libvips' transparent fill for alpha images when :background is unset" do
+      # A translation vacates a strip of canvas. With no :background the
+      # exposed pixels must keep libvips' native transparent fill rather
+      # than being forced to opaque black.
+      image = Image.new!(20, 20, color: [0, 0, 0, 255])
+
+      {:ok, translated} = Image.translate(image, 10, 0)
+      assert Image.get_pixel!(translated, 2, 10) == [0, 0, 0, 0]
     end
   end
 

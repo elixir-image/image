@@ -10759,11 +10759,15 @@ defmodule Image do
   * `:background` defines the color of any generated background
     pixels. This can be specified as a single integer which will
     be applied to all bands, or a list of integers representing
-    the color for each band. The color can also be supplied as a
-    CSS color name as a string or atom. For example: `:misty_rose`.
-    It can also be supplied as a hex string of the form `#rrggbb`.
-    Can also be set to `:average` in which case the background will
-    be the average color of the base image. The default is `:black`.
+    the color for each band (including an optional alpha band). The
+    color can also be supplied as a CSS color name as a string or
+    atom. For example: `:misty_rose`. It can also be supplied as a
+    hex string of the form `#rrggbb`. Can also be set to `:average`
+    in which case the background will be the average color of the
+    base image.
+
+    When omitted, `libvips` uses its native fill: transparent for
+    images with an alpha band, black otherwise.
 
     See also `Image.Pixel.to_pixel/2`.
 
@@ -10794,6 +10798,42 @@ defmodule Image do
     For example, `output_area: [0, 0, Image.width(image),
     Image.height(image)]` keeps the output the same size as the
     input, anchored at the origin.
+
+  ## Partially-transparent backgrounds
+
+  A fully opaque or fully transparent `:background` is reproduced
+  exactly. A *partially* transparent `:background` (an alpha band
+  value somehwere between fully opaque and fully transparent) is
+  not. To interpolate correctly `libvips` works in premultiplied-alpha
+  space, and it injects the fill color directly into that space and
+  then unpremultiplies the whole result on output. The fill therefore
+  sees only that one unpremultiply step, which scales its color bands
+  by `max / alpha`. For example, on an 8-bit image (where `max` is
+  `255`) a declared `[10, 20, 30, 40]` is filled as `[63, 127, 191,
+  40]`: the alpha is preserved, but each color band is multiplied by
+  `255 / 40`.
+
+  If you need an exact partially-transparent fill, don't pass it as
+  `:background`. Instead transform over a transparent background and
+  composite the result onto a canvas of the desired color. Here
+  `jose.png` is opaque (an alpha band is added so the exposed canvas
+  can be transparent), so the only transparency is the canvas the
+  transform exposes:
+
+      iex> image = Image.add_alpha!(Image.open!("./test/support/images/jose.png"), 255)
+      iex> angle = :math.pi() / 4
+      iex> matrix = [:math.cos(angle), -:math.sin(angle), :math.sin(angle), :math.cos(angle)]
+      iex> {:ok, rotated} = Image.affine(image, matrix, background: [0, 0, 0, 0])
+      iex> canvas = Image.new!(rotated, color: [10, 20, 30, 40])
+      iex> {:ok, _filled} = Image.compose(canvas, rotated)
+
+  The color is applied by the composite rather than passed through the
+  transform, so it is reproduced exactly. Note that the composite backs
+  the *entire* image: it fills every transparent pixel, not just the
+  canvas exposed by the transform. Because the content here is opaque
+  the two coincide; for a source that carries its own transparency the
+  composite also fills those areas, which `:background` would leave
+  untouched.
 
   ### Notes
 
