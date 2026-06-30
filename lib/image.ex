@@ -10708,6 +10708,366 @@ defmodule Image do
     end
   end
 
+  @doc """
+  Applies an affine transformation to an image.
+
+  This is the shared primitive of the affine family: `Image.translate/4`
+  and `Image.shear/4` are thin wrappers that call it with a fixed matrix.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `matrix` is a four-element list of numbers `[a, b, c, d]`
+    describing the linear part of the transformation: scale,
+    rotation, shear (and reflection via negative scale). An
+    input pixel at `(x, y)` is mapped to `(a*x + b*y, c*x + d*y)`.
+
+    Translation is not part of the matrix - use the
+    `:idx`/`:idy`/`:odx`/`:ody` displacement options.
+
+    Examples:
+
+    * Identity: `[1, 0, 0, 1]` (the identity matrix with `:idx`
+      and `:idy` is `Image.translate/4`)
+    * Scale:
+      `(sx, sy)`: `[sx, 0, 0, sy]`
+    * Rotate by theta:
+      `[:math.cos(t), -:math.sin(t), :math.sin(t), :math.cos(t)]`
+    * Shear:
+      `[1, sx, sy, 1]` (this is exactly what `Image.shear/3` builds)
+    * Horizontal flip:
+      `[-1, 0, 0, 1]`
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:idx` and `:idy` are the horizontal and vertical *input*-space
+    displacements (default `0.0`). Applied before the matrix, so the
+    shift is itself transformed by it.
+
+  * `:odx` and `:ody` are the horizontal and vertical *output*-space
+    displacements (default `0.0`). Applied after the matrix.
+
+  * `:interpolate` selects the interpolator used to resample
+    pixels: `:nearest`, `:bilinear` (the default), `:bicubic`,
+    `:lbb`, `:nohalo` or `:vsqbs`. See
+    `t:Image.Options.Affine.interpolate/0` for more information
+    about the available options.
+
+  * `:background` defines the color of any generated background
+    pixels. This can be specified as a single integer which will
+    be applied to all bands, or a list of integers representing
+    the color for each band. The color can also be supplied as a
+    CSS color name as a string or atom. For example: `:misty_rose`.
+    It can also be supplied as a hex string of the form `#rrggbb`.
+    Can also be set to `:average` in which case the background will
+    be the average color of the base image. The default is `:black`.
+
+    See also `Image.Pixel.to_pixel/2`.
+
+  * `:extend_mode` controls how the interpolator synthesises the
+    thin band of pixels just beyond the source edge when resampling
+    boundary pixels. It is visible only for transforms that sample
+    between pixels (rotation, scaling, sub-pixel translation), as a
+    one-pixel fringe along the content edge. It does *not* fill the
+    blank canvas left uncovered by the transformation - that area is
+    always filled with `:background`. The values are:
+
+      * `:background` (the default) means the synthesised pixels use
+        the `:background` color.
+      * `:black` means the synthesised pixels are black.
+      * `:white` means the synthesised pixels are white.
+      * `:copy` means the synthesised pixels copy the nearest edge
+        pixel of the base image.
+      * `:repeat` means the base image is tiled.
+      * `:mirror` means the base image is reflected.
+
+  * `:output_area` is a four-element list of integers `[left, top,
+    width, height]` selecting the rectangle of output space to
+    render, overriding the default bounding-box sizing. The result
+    is `width` * `height` pixels where local pixel `(x, y)` maps to
+    output coordinate `(left + x, top + y)`. Any part of the window
+    not covered by the transformed image is filled with `:background`.
+
+    For example, `output_area: [0, 0, Image.width(image),
+    Image.height(image)]` keeps the output the same size as the
+    input, anchored at the origin.
+
+  ### Notes
+
+  The output canvas is sized to the bounding box of the
+  transformed image and is *not* affected by the displacement
+  options. Content displaced beyond the canvas is clipped.
+
+  ### Returns
+
+  * `{:ok, transformed_image}` or
+
+  * `{:error, reason}`
+
+  ### Examples
+
+  Rotate 30 degrees and scale 1.5x in a single resample:
+
+      iex> image = Image.open!("./test/support/images/jose.png")
+      iex> angle = :math.pi() / 6
+      iex> matrix = [1.5 * :math.cos(angle), -1.5 * :math.sin(angle), 1.5 * :math.sin(angle), 1.5 * :math.cos(angle)]
+      iex> {:ok, _rotated_and_scaled} = Image.affine(image, matrix)
+
+  Flip horizontally with a negative `x` scale:
+
+      iex> image = Image.open!("./test/support/images/jose.png")
+      iex> {:ok, _flipped} = Image.affine(image, [-1, 0, 0, 1])
+
+  Stretch horizontally only (anisotropic scale):
+
+      iex> image = Image.open!("./test/support/images/jose.png")
+      iex> {:ok, _stretched} = Image.affine(image, [2, 0, 0, 1])
+
+  """
+  @doc subject: "Distortion"
+
+  @spec affine(
+          image :: Vimage.t(),
+          matrix :: [number()],
+          options :: Options.Affine.affine_options()
+        ) ::
+          {:ok, Vimage.t()} | {:error, error()}
+
+  def affine(image, matrix, options \\ [])
+
+  def affine(%Vimage{} = image, [a, b, c, d], options)
+      when is_number(a) and is_number(b) and is_number(c) and is_number(d) do
+    with {:ok, options} <- Options.Affine.validate_options(image, options) do
+      Operation.affine(image, [a, b, c, d], options)
+    end
+  end
+
+  def affine(%Vimage{}, matrix, _options) do
+    {:error,
+     %Image.Error{
+       reason: :invalid_affine_matrix,
+       operation: :affine,
+       value: matrix,
+       message: "Invalid affine matrix. Expected a four-element list of numbers [a, b, c, d]."
+     }}
+  end
+
+  @doc """
+  Applies an affine transformation to an image or raises
+  an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `matrix` is a four-element list of numbers `[a, b, c, d]`.
+    See `Image.affine/3`.
+
+  * `options` is a keyword list of options. See `Image.affine/3`.
+
+  ### Returns
+
+  * `transformed_image` or
+
+  * raises an exception
+
+  """
+  @doc subject: "Distortion"
+
+  @spec affine!(
+          image :: Vimage.t(),
+          matrix :: [number()],
+          options :: Options.Affine.affine_options()
+        ) ::
+          Vimage.t() | no_return()
+
+  def affine!(%Vimage{} = image, matrix, options \\ []) do
+    case affine(image, matrix, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Translates (shifts) an image within a same-size canvas.
+
+  Translation is an affine transformation with an identity
+  matrix and an input displacement of `(dx, dy)`. The canvas
+  is not resized, so content shifted beyond an edge is clipped.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `dx` is the number of pixels to shift the image content to
+    the right. Negative values shift to the left.
+
+  * `dy` is the number of pixels to shift the image content
+    down. Negative values shift up.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * Any option accepted by `Image.affine/3` (such as `:interpolate`,
+    `:background` or `:extend_mode`) is supported.
+
+  Because the canvas is not resized, `:background` fills the area
+  vacated by the shift; `:extend_mode` only affects the antialiased
+  edge fringe on fractional (sub-pixel) shifts.
+
+  ### Returns
+
+  * `{:ok, translated_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc subject: "Distortion"
+
+  @spec translate(
+          image :: Vimage.t(),
+          dx :: number(),
+          dy :: number(),
+          options :: Options.Affine.affine_options()
+        ) ::
+          {:ok, Vimage.t()} | {:error, error()}
+
+  def translate(%Vimage{} = image, dx, dy, options \\ [])
+      when is_number(dx) and is_number(dy) do
+    affine(image, [1, 0, 0, 1], Keyword.merge(options, idx: dx, idy: dy))
+  end
+
+  @doc """
+  Translates (shifts) an image within a same-size canvas or
+  raises an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `dx` is the number of pixels to shift the image content to
+    the right. Negative values shift to the left.
+
+  * `dy` is the number of pixels to shift the image content
+    down. Negative values shift up.
+
+  * `options` is a keyword list of options. See
+    `Image.translate/4`.
+
+  ### Returns
+
+  * `translated_image` or
+
+  * raises an exception
+
+  """
+  @doc subject: "Distortion"
+
+  @spec translate!(
+          image :: Vimage.t(),
+          dx :: number(),
+          dy :: number(),
+          options :: Options.Affine.affine_options()
+        ) ::
+          Vimage.t() | no_return()
+
+  def translate!(%Vimage{} = image, dx, dy, options \\ []) do
+    case translate(image, dx, dy, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Shears an image.
+
+  Shearing is an affine transformation with the matrix
+  `[1, sx, sy, 1]`. `sx` is the horizontal shear proportional
+  to `y` and `sy` is the vertical shear proportional to `x`.
+  The canvas is sized to the bounding box of the sheared image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `sx` is the horizontal shear factor applied in proportion
+    to the `y` coordinate.
+
+  * `sy` is the vertical shear factor applied in proportion to
+    the `x` coordinate.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * Any option accepted by `Image.affine/3` (such as
+    `:interpolate`, `:background` or `:extend_mode`) is supported.
+
+  ### Returns
+
+  * `{:ok, sheared_image}` or
+
+  * `{:error, reason}`
+
+  """
+  @doc subject: "Distortion"
+
+  @spec shear(
+          image :: Vimage.t(),
+          sx :: number(),
+          sy :: number(),
+          options :: Options.Affine.affine_options()
+        ) ::
+          {:ok, Vimage.t()} | {:error, error()}
+
+  def shear(%Vimage{} = image, sx, sy, options \\ [])
+      when is_number(sx) and is_number(sy) do
+    affine(image, [1, sx, sy, 1], options)
+  end
+
+  @doc """
+  Shears an image or raises an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `sx` is the horizontal shear factor applied in proportion
+    to the `y` coordinate.
+
+  * `sy` is the vertical shear factor applied in proportion to
+    the `x` coordinate.
+
+  * `options` is a keyword list of options. See `Image.shear/4`.
+
+  ### Returns
+
+  * `sheared_image` or
+
+  * raises an exception
+
+  """
+  @doc subject: "Distortion"
+
+  @spec shear!(
+          image :: Vimage.t(),
+          sx :: number(),
+          sy :: number(),
+          options :: Options.Affine.affine_options()
+        ) ::
+          Vimage.t() | no_return()
+
+  def shear!(%Vimage{} = image, sx, sy, options \\ []) do
+    case shear(image, sx, sy, options) do
+      {:ok, image} -> image
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
   if match?({:module, _module}, Code.ensure_compiled(Nx)) do
     @doc """
     Converts an image into an [Nx](https://hex.pm/packages/nx)
