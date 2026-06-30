@@ -5899,22 +5899,62 @@ defmodule Image do
 
   ### Options
 
-  * `:idy` is the vertical input displacement which
-    defaults to `0.0`
+  * `:idx`, `:idy`, `:odx` and `:ody` displace the image relative to
+    the rotation. See the *Displacements* section below.
 
-  * `:idx` is the horizontal input displacement which
-    defaults to `0.0`
+  * `:interpolate` selects the interpolator used to resample
+    pixels: `:nearest`, `:bilinear` (the default), `:bicubic`,
+    `:lbb`, `:nohalo` or `:vsqbs`. See
+    `t:Image.Options.Rotate.interpolate/0` for more information
+    about the available options. This option has no effect for
+    discrete rotations (see below) which copy source pixels
+    directly.
 
-  * `:ody` is the vertical output displacement
-    which defaults to `0.0`
+  * `:background` defines the color used to fill the blank areas
+    of the canvas exposed by the rotation. This can be specified as
+    a single integer which will be applied to all bands, or a list
+    of integers representing the color for each band (including an
+    optional alpha band). The color can also be supplied as a CSS
+    color name as a string or atom. For example: `:misty_rose`.
+    It can also be supplied as a hex string of the form `#rrggbb`.
+    Can also be set to `:average` in which case the background will
+    be the average color of the base image.
 
-  * `:odx` is the horizontal output displacement
-    which defaults to `0.0`
+    When omitted, `libvips` uses its native fill: transparent for
+    images with an alpha band, black otherwise.
 
-  * `:background` is the background color to be used for filling
-    the blank areas of the image. The background is specified as
-    a list of 3 or 4 float values depending on the image
-    color space.
+    See also `Image.Pixel.to_pixel/2`.
+
+  ## Partially-transparent backgrounds
+
+  A fully opaque or fully transparent `:background` is reproduced
+  exactly. A *partially* transparent `:background` (an alpha band
+  value somewhere between fully opaque and fully transparent) is
+  not. To interpolate correctly `libvips` works in premultiplied-alpha
+  space, and it injects the fill color directly into that space and
+  then unpremultiplies the whole result on output. The fill therefore
+  sees only that one unpremultiply step, which scales its color bands
+  by `max / alpha`. For example, on an 8-bit image (where `max` is
+  `255`) a declared `[10, 20, 30, 40]` is filled as `[63, 127, 191,
+  40]`: the alpha is preserved, but each color band is multiplied by
+  `255 / 40`.
+
+  If you need an exact partially-transparent fill, don't pass it as
+  `:background`. Instead rotate over a transparent background and
+  composite the result onto a canvas of the desired color:
+
+      iex> image = Image.open!("./test/support/images/dice_transparent.png")
+      iex> {:ok, rotated} = Image.rotate(image, 45, background: [0, 0, 0, 0])
+      iex> canvas = Image.new!(rotated, color: [10, 20, 30, 40])
+      iex> {:ok, _filled} = Image.compose(canvas, rotated)
+
+  The color is applied by the composite rather than passed through the
+  rotate, so it is reproduced exactly. Note that this backs the
+  *entire* image: it fills every transparent pixel, not just the canvas
+  exposed by the rotate. When the source content is fully opaque the
+  two are the same region; for a source that carries its own
+  transparency (such as the dice image above) the composite also fills
+  those areas, which `:background` would leave untouched.
 
   ## Discrete rotation
 
@@ -5922,15 +5962,14 @@ defmodule Image do
   are unset, `nil`, `0` or `0.0`, the rotation will be done as a
   discrete operation in order to preserve source pixel values.
 
-  ## Notes
+  ## Displacements
 
-  The displacement parameters cause the image canvas to be
-  expanded and the image displaced, relative to the top left
-  corner of the image, by the amount specified.
+  * `:idx` and `:idy` are the horizontal and vertical *input*-space
+    displacements (default `0.0`). Applied before the rotation, so the
+    shift is itself rotated.
 
-  The rules defining how the image canvas is expanded
-  is not known to the author of `Image`. Experimentation will
-  be required if you explore these options.
+  * `:odx` and `:ody` are the horizontal and vertical *output*-space
+    displacements (default `0.0`). Applied after the rotation.
 
   ### Returns
 
@@ -5949,7 +5988,7 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error()}
 
   def rotate(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
-    with {:ok, options} <- Options.Rotate.validate_options(options) do
+    with {:ok, options} <- Options.Rotate.validate_options(image, options) do
       rot_angle = rot_angle(angle, options)
 
       if rot_angle do
@@ -5999,15 +6038,10 @@ defmodule Image do
   * `options` is a keyword list of options.
     See `Image.rotate/3`.
 
-  ## Notes
+  ## Displacements
 
-  The displacement parameters cause the image canvas to be
-  expanded and the image displaced, relative to the top left
-  corner of the image, by the amount specified.
-
-  The rules defining how the image canvas is expanded
-  is not known to the author of `Image`. Experimentation will
-  be required if you explore these options.
+  The `:idx`, `:idy`, `:odx` and `:ody` displacement options behave
+  as documented for `Image.rotate/3`.
 
   ### Returns
 
