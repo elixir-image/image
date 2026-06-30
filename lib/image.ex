@@ -5929,7 +5929,7 @@ defmodule Image do
 
   A fully opaque or fully transparent `:background` is reproduced
   exactly. A *partially* transparent `:background` (an alpha band
-  value somehwere between fully opaque and fully transparent) is
+  value somewhere between fully opaque and fully transparent) is
   not. To interpolate correctly `libvips` works in premultiplied-alpha
   space, and it injects the fill color directly into that space and
   then unpremultiplies the whole result on output. The fill therefore
@@ -5939,17 +5939,22 @@ defmodule Image do
   40]`: the alpha is preserved, but each color band is multiplied by
   `255 / 40`.
 
-  To fill the exposed canvas with an exact partially-transparent
-  color, rotate over a transparent background and then composite the
-  result over a canvas of the desired color:
+  If you need an exact partially-transparent fill, don't pass it as
+  `:background`. Instead rotate over a transparent background and
+  composite the result onto a canvas of the desired color:
 
       iex> image = Image.open!("./test/support/images/dice_transparent.png")
       iex> {:ok, rotated} = Image.rotate(image, 45, background: [0, 0, 0, 0])
       iex> canvas = Image.new!(rotated, color: [10, 20, 30, 40])
       iex> {:ok, _filled} = Image.compose(canvas, rotated)
 
-  Because the color is applied by the composite rather than passed
-  through the rotation, it is reproduced exactly.
+  The color is applied by the composite rather than passed through the
+  rotate, so it is reproduced exactly. Note that this backs the
+  *entire* image: it fills every transparent pixel, not just the canvas
+  exposed by the rotate. When the source content is fully opaque the
+  two are the same region; for a source that carries its own
+  transparency (such as the dice image above) the composite also fills
+  those areas, which `:background` would leave untouched.
 
   ## Discrete rotation
 
