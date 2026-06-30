@@ -76,10 +76,15 @@ defmodule Image.Options.WarpPerspective do
     end
   end
 
+  # The public option is `:extend_mode`, renamed internally to `:extend` for `libvips`
   defp validate_option({:extend_mode, extend}, _image, options) do
     case Image.ExtendMode.validate_extend(extend) do
       {:ok, extend_mode} ->
-        options = Keyword.put(options, :extend_mode, extend_mode)
+        options =
+          options
+          |> Keyword.delete(:extend_mode)
+          |> Keyword.put(:extend, extend_mode)
+
         {:cont, options}
 
       {:error, reason} ->
@@ -97,7 +102,7 @@ defmodule Image.Options.WarpPerspective do
 
   defp default_options do
     [
-      extend_mode: :black,
+      extend_mode: :background,
       background: :black
     ]
   end

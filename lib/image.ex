@@ -11015,20 +11015,21 @@ defmodule Image do
       in which case the background will be the average color of the base
       image. See also `Color.new/2` from the Color library.
 
-    * `:extend_mode` determines how any additional pixels
-      are generated. The values are:
+    * `:extend_mode` controls how the interpolator synthesises the
+      thin band of pixels just beyond the source edge when resampling
+      the warped content boundary. It is visible only as a one-pixel
+      fringe along the content edge. It does *not* fill the blank
+      canvas left uncovered by the transformation — that area is
+      always filled with `:background`. The values are:
 
-      * `:black` (the default) meaning the generated pixels are
-        black.
-      * `:white` meaning the generated pixels are white.
-      * `:copy` means the generated pixels take the value of the
-        nearest edge pixel of the base image.
-      * `:repeat` means the generated pixels are tiles from the
-        base image.
-      * `:mirror` means the generated pixels are a reflected tiles of
-        the base image.
-      * `:background` means the generated pixels are the background
-        color setin `options`.
+      * `:background` (the default) means the synthesised pixels use
+        the `:background` color.
+      * `:black` means the synthesised pixels are black.
+      * `:white` means the synthesised pixels are white.
+      * `:copy` means the synthesised pixels copy the nearest edge
+        pixel of the base image.
+      * `:repeat` means the base image is tiled.
+      * `:mirror` means the base image is reflected.
 
     ### Notes
 
@@ -11093,20 +11094,11 @@ defmodule Image do
       also be set to `:average` in which case the background will be
       the average color of the base image. See also `Color.new/2` from the Color library.
 
-    * `:extend_mode` determines how any additional pixels
-      are generated. The values are:
-
-      * `:black` (the default) meaning the generated pixels are
-        black.
-      * `:white` meaning the generated pixels are white.
-      * `:copy` means the generated pixels take the value of the
-        nearest edge pixel of the base image.
-      * `:repeat` means the generated pixels are tiles from the
-        base image.
-      * `:mirror` means the generated pixels are a reflected tiles of
-        the base image.
-      * `:background` means the generated pixels are the background
-        color setin `options`.
+    * `:extend_mode` controls how pixels just beyond the source edge
+      are synthesised during interpolation. It is visible only as a
+      one-pixel fringe along the content edge; it does not fill the
+      blank canvas left uncovered by the transformation, which is
+      always filled by `:background`. See `Image.warp_perspective/4`.
 
     ### Returns
 
@@ -11166,20 +11158,11 @@ defmodule Image do
       also be set to `:average` in which case the background will be
       the average color of the base image. See also `Color.new/2` from the Color library.
 
-    * `:extend_mode` determines how any additional pixels
-      are generated. The values are:
-
-      * `:black` (the default) meaning the generated pixels are
-        black.
-      * `:white` meaning the generated pixels are white.
-      * `:copy` means the generated pixels take the value of the
-        nearest edge pixel of the base image.
-      * `:repeat` means the generated pixels are tiles from the
-        base image.
-      * `:mirror` means the generated pixels are a reflected tiles of
-        the base image.
-      * `:background` means the generated pixels are the background
-        color setin `options`.
+    * `:extend_mode` controls how pixels just beyond the source edge
+      are synthesised during interpolation. It is visible only as a
+      one-pixel fringe along the content edge; it does not fill the
+      blank canvas left uncovered by the transformation, which is
+      always filled by `:background`. See `Image.warp_perspective/4`.
 
     ### Returns
 
@@ -11249,20 +11232,11 @@ defmodule Image do
       also be set to `:average` in which case the background will be
       the average color of the base image. See also `Color.new/2` from the Color library.
 
-    * `:extend_mode` determines how any additional pixels
-      are generated. The values are:
-
-      * `:black` (the default) meaning the generated pixels are
-        black.
-      * `:white` meaning the generated pixels are white.
-      * `:copy` means the generated pixels take the value of the
-        nearest edge pixel of the base image.
-      * `:repeat` means the generated pixels are tiles from the
-        base image.
-      * `:mirror` means the generated pixels are a reflected tiles of
-        the base image.
-      * `:background` means the generated pixels are the background
-        color setin `options`.
+    * `:extend_mode` controls how pixels just beyond the source edge
+      are synthesised during interpolation. It is visible only as a
+      one-pixel fringe along the content edge; it does not fill the
+      blank canvas left uncovered by the transformation, which is
+      always filled by `:background`. See `Image.warp_perspective/4`.
 
     ### Returns
 
