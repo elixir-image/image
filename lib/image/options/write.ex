@@ -8,13 +8,13 @@ defmodule Image.Options.Write do
   # Vix option.
 
   alias Image.{ICCProfile, Pixel}
+  alias Vix.Vips.Image, as: Vimage
   import ICCProfile, only: [is_inbuilt: 1]
-  import Pixel, only: [is_pixel: 1]
 
   @typedoc "Options for writing an image to a file with `Image.write/2`."
   @type image_write_options :: [
           {:quality, 1..100}
-          | {:background, Image.pixel()}
+          | {:background, Pixel.t() | :average}
           | stream_write_option()
           | jpeg_write_option()
           | png_write_option()
@@ -117,10 +117,10 @@ defmodule Image.Options.Write do
   @suffix_keys Map.keys(@suffix_map)
   @suffix_values Map.values(@suffix_map) |> Enum.uniq()
 
-  def validate_options(options, :require_suffix) when is_list(options) do
+  def validate_options(%Vimage{} = image, options, :require_suffix) when is_list(options) do
     case Keyword.fetch(options, :suffix) do
       {:ok, _options} ->
-        validate_options("", options)
+        validate_options(image, "", options)
 
       _other ->
         {:error,
@@ -131,10 +131,11 @@ defmodule Image.Options.Write do
     end
   end
 
-  def validate_options(path, options) when is_binary(path) and is_list(options) do
+  def validate_options(%Vimage{} = image, path, options)
+      when is_binary(path) and is_list(options) do
     with {:ok, image_type} <- path |> Path.extname() |> image_type_from(options[:suffix]),
          {:ok, options} <- merge_image_type_options(options, image_type) do
-      case Enum.reduce_while(options, options, &validate_option(&1, &2, image_type)) do
+      case Enum.reduce_while(options, options, &validate_option(&1, &2, image, image_type)) do
         {:error, value} ->
           {:error, value}
 
@@ -144,20 +145,20 @@ defmodule Image.Options.Write do
     end
   end
 
-  defp validate_option({:suffix, "." <> _suffix}, options, _image_type) do
+  defp validate_option({:suffix, "." <> _suffix}, options, _image, _image_type) do
     {:cont, options}
   end
 
   # :quality for png files is ignored, there's no practical setting
   # that adjust quality in the same way as other formats.
-  defp validate_option({:quality, quality}, options, image_type)
+  defp validate_option({:quality, quality}, options, _image, image_type)
        when is_png(image_type) and is_integer(quality) and quality in 1..100 do
     options = Keyword.delete(options, :quality)
 
     {:cont, options}
   end
 
-  defp validate_option({:quality, quality}, options, _image_type)
+  defp validate_option({:quality, quality}, options, _image, _image_type)
        when is_integer(quality) and quality in 1..100 do
     options =
       options
@@ -167,12 +168,13 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
-  defp validate_option({:buffer_size, buffer_size}, options, _image_type)
+  defp validate_option({:buffer_size, buffer_size}, options, _image, _image_type)
        when (is_integer(buffer_size) and buffer_size >= 0) or buffer_size == :unbuffered do
     {:cont, options}
   end
 
-  defp validate_option({:strip_metadata, strip?}, options, _image_type) when is_boolean(strip?) do
+  defp validate_option({:strip_metadata, strip?}, options, _image, _image_type)
+       when is_boolean(strip?) do
     options =
       options
       |> Keyword.delete(:strip_metadata)
@@ -181,7 +183,7 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
-  defp validate_option({:progressive, progressive?}, options, _image_type)
+  defp validate_option({:progressive, progressive?}, options, _image, _image_type)
        when is_boolean(progressive?) do
     options =
       options
@@ -191,12 +193,12 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
-  defp validate_option({:compression, compression}, options, image_type)
+  defp validate_option({:compression, compression}, options, _image, image_type)
        when is_png(image_type) and compression in 1..9 do
     {:cont, options}
   end
 
-  defp validate_option({:compression, compression}, options, image_type)
+  defp validate_option({:compression, compression}, options, _image, image_type)
        when is_heif(image_type) and is_map_key(@heif_compression_map, compression) do
     vips_compression = Map.fetch!(@heif_compression_map, compression)
     options = Keyword.put(options, :compression, vips_compression)
@@ -204,7 +206,7 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
-  defp validate_option({:compression, compression}, options, image_type)
+  defp validate_option({:compression, compression}, options, _image, image_type)
        when is_avif(image_type) and is_map_key(@avif_compression_map, compression) do
     vips_compression = Map.fetch!(@avif_compression_map, compression)
     options = Keyword.put(options, :compression, vips_compression)
@@ -216,7 +218,8 @@ defmodule Image.Options.Write do
   # Applies only to jpeg save
   # For maximum compression with mozjpeg, a useful set of options is
   # strip, optimize-coding, interlace, optimize-scans, trellis-quant, quant_table=3.
-  defp validate_option({:minimize_file_size, true}, options, image_type) when is_jpg(image_type) do
+  defp validate_option({:minimize_file_size, true}, options, _image, image_type)
+       when is_jpg(image_type) do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
@@ -231,7 +234,8 @@ defmodule Image.Options.Write do
   end
 
   # Quantize a png image
-  defp validate_option({:minimize_file_size, true}, options, image_type) when is_png(image_type) do
+  defp validate_option({:minimize_file_size, true}, options, _image, image_type)
+       when is_png(image_type) do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
@@ -242,7 +246,8 @@ defmodule Image.Options.Write do
   end
 
   # For webp, apply min-size, strip, and mixed (allow mixed encoding which might reduce file size)
-  defp validate_option({:minimize_file_size, true}, options, image_type) when is_webp(image_type) do
+  defp validate_option({:minimize_file_size, true}, options, _image, image_type)
+       when is_webp(image_type) do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
@@ -254,7 +259,7 @@ defmodule Image.Options.Write do
   end
 
   # For webp, apply min-size, strip, and mixed (allow mixed encoding which might reduce file size)
-  defp validate_option({:minimize_file_size, true}, options, image_type)
+  defp validate_option({:minimize_file_size, true}, options, _image, image_type)
        when is_heif(image_type) or is_avif(image_type) do
     options =
       options
@@ -265,12 +270,12 @@ defmodule Image.Options.Write do
   end
 
   # For tiff files, allow the :pyramid option
-  defp validate_option({:pyramid, pyramid?}, options, image_type)
+  defp validate_option({:pyramid, pyramid?}, options, _image, image_type)
        when is_tiff(image_type) and is_boolean(pyramid?) do
     {:cont, options}
   end
 
-  defp validate_option({:minimize_file_size, false}, options, image_type)
+  defp validate_option({:minimize_file_size, false}, options, _image, image_type)
        when is_png(image_type) or is_jpg(image_type) or is_webp(image_type) do
     options =
       options
@@ -279,7 +284,7 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
-  defp validate_option({:icc_profile, profile}, options, _image_type)
+  defp validate_option({:icc_profile, profile}, options, _image, _image_type)
        when is_inbuilt(profile) or is_binary(profile) do
     options =
       options
@@ -298,18 +303,41 @@ defmodule Image.Options.Write do
     end
   end
 
-  defp validate_option({:background, background}, options, _image_type) when is_pixel(background) do
-    {:cont, options}
+  # `:average` uses the image's average color and any other value is resolved
+  # by `Image.Pixel.to_pixel/2` (numbers, lists, CSS names, hex strings).
+  defp validate_option({:background, :average}, options, image, _image_type) do
+    case Image.average(image) do
+      color when is_list(color) ->
+        {:cont, Keyword.put(options, :background, color)}
+
+      {:error, reason} ->
+        {:halt,
+         {:error,
+          %Image.Error{
+            message: "Could not get the image average: #{inspect(reason)}",
+            reason: "Could not get the image average: #{inspect(reason)}"
+          }}}
+    end
   end
 
-  defp validate_option({:effort, effort}, options, image_type)
+  defp validate_option({:background, background} = option, options, image, _image_type) do
+    case Pixel.to_pixel(image, background) do
+      {:ok, pixel} ->
+        {:cont, Keyword.put(options, :background, strip_alpha(pixel, image))}
+
+      {:error, _reason} ->
+        {:halt, {:error, invalid_option(option)}}
+    end
+  end
+
+  defp validate_option({:effort, effort}, options, _image, image_type)
        when is_integer(effort) and effort in 1..10 and not is_jpg(image_type) and
               not is_tiff(image_type) do
     options = Keyword.put(options, :effort, conform_effort(effort, image_type))
     {:cont, options}
   end
 
-  defp validate_option({:interframe_maxerror, int_max_error}, options, image_type)
+  defp validate_option({:interframe_maxerror, int_max_error}, options, _image, image_type)
        when is_gif(image_type) and int_max_error in 0..32 do
     {:cont, options}
   end
@@ -324,7 +352,7 @@ defmodule Image.Options.Write do
   #   * JPEG / GIF / TIFF / HEIF — not supported (JPEG is always
   #     lossy; GIF/TIFF lossiness is structural; HEIF is
   #     handled via `:compression`).
-  defp validate_option({:lossy, lossy?}, options, image_type)
+  defp validate_option({:lossy, lossy?}, options, _image, image_type)
        when is_webp(image_type) and is_boolean(lossy?) do
     options =
       options
@@ -334,7 +362,7 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
-  defp validate_option({:lossy, lossy?}, options, image_type)
+  defp validate_option({:lossy, lossy?}, options, _image, image_type)
        when is_avif(image_type) and is_boolean(lossy?) do
     options =
       options
@@ -344,7 +372,7 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
-  defp validate_option({:lossy, lossy?}, options, image_type)
+  defp validate_option({:lossy, lossy?}, options, _image, image_type)
        when is_png(image_type) and is_boolean(lossy?) do
     options =
       options
@@ -377,7 +405,7 @@ defmodule Image.Options.Write do
     off: :VIPS_FOREIGN_SUBSAMPLE_OFF
   }
 
-  defp validate_option({:chroma_subsampling, mode}, options, image_type)
+  defp validate_option({:chroma_subsampling, mode}, options, _image, image_type)
        when (is_jpg(image_type) or is_avif(image_type)) and is_map_key(@subsample_mode_map, mode) do
     options =
       options
@@ -387,8 +415,16 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
-  defp validate_option(option, _options, image_type) do
+  defp validate_option(option, _options, _image, image_type) do
     {:halt, {:error, invalid_option(option, image_type)}}
+  end
+
+  defp invalid_option(option) do
+    %Image.Error{
+      reason: :invalid_option,
+      value: option,
+      message: "Invalid option or option value: #{inspect(option)}"
+    }
   end
 
   defp invalid_option(option, image_type) do
@@ -413,6 +449,14 @@ defmodule Image.Options.Write do
 
   defp delete_all_type_options(options) do
     Enum.reduce(@suffix_values, options, &Keyword.delete(&2, &1))
+  end
+
+  defp strip_alpha(pixel, image) do
+    if Image.has_alpha?(image) do
+      Enum.take(pixel, length(pixel) - 1)
+    else
+      pixel
+    end
   end
 
   # Range 1..10
