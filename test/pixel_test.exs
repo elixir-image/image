@@ -120,6 +120,39 @@ defmodule Image.PixelTest do
     end
   end
 
+  describe "to_pixel/3 alpha scale matches the interpretation's max alpha" do
+    defp with_alpha(colorspace) do
+      {:ok, srgba} = Image.new(2, 2, color: [10, 20, 30, 255])
+      {:ok, image} = Image.to_colorspace(srgba, colorspace)
+      image
+    end
+
+    test "opaque alpha resolves to 255 for every 0..255-scale interpretation" do
+      for colorspace <- [:srgb, :cmyk, :hsv, :bw, :lab, :lch, :labs] do
+        image = with_alpha(colorspace)
+        {:ok, pixel} = Pixel.to_pixel(image, :red, alpha: :opaque)
+        assert List.last(pixel) == 255, "#{colorspace} opaque alpha was #{List.last(pixel)}"
+      end
+    end
+
+    test "scRGB opaque alpha stays 1.0" do
+      image = with_alpha(:scrgb)
+      assert {:ok, [_r, _g, _b, alpha]} = Pixel.to_pixel(image, :red, alpha: :opaque)
+      assert alpha == 1.0
+    end
+
+    test "a plain color (no explicit :alpha) also synthesizes opaque 255 on Lab" do
+      image = with_alpha(:lab)
+      assert {:ok, [_l, _a, _b, 255]} = Pixel.to_pixel(image, :red)
+    end
+
+    test "alpha 0.5 resolves to 128 on Lab" do
+      image = with_alpha(:lab)
+      assert {:ok, [_l, _a, _b, alpha]} = Pixel.to_pixel(image, :red, alpha: 0.5)
+      assert alpha == 128
+    end
+  end
+
   describe "to_pixel/3 against a CMYK image" do
     setup do
       {:ok, image} = Image.new(2, 2, color: :black)

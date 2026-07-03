@@ -525,26 +525,20 @@ defmodule Image.Pixel do
     end
   end
 
+  # Encoders grouped by their alpha band's max value
+  @alpha_max_255 [:uchar_rgb, :uchar_cmyk, :uchar_hsv, :uchar_grey, :float_lab, :float_lch, :short_lab]
+  @alpha_max_65535 [:ushort_rgb, :ushort_grey]
+
   # The alpha band uses the same numeric type as the rest of the
   # interpretation: 0..255 for uchar, 0..65535 for ushort, 0.0..1.0
-  # for float-typed bands. LABS / Lab / LCH happen to be float-typed
-  # interpretations whose alpha band is also a float in [0, 1].
+  # for float-typed bands. scRGB is the only float interpretation whose
+  # alpha is in [0, 1]. LABS / Lab / LCH carry a 0..255 alpha band
+  # despite their float/short color bands.
   defp scale_alpha_to_encoder(alpha, encoder) do
     case encoder do
-      e when e in [:uchar_rgb, :uchar_cmyk, :uchar_hsv, :uchar_grey] ->
-        scale(alpha, 255)
-
-      e when e in [:ushort_rgb, :ushort_grey] ->
-        scale(alpha, 65_535)
-
-      :float_rgb ->
-        alpha * 1.0
-
-      e when e in [:float_lab, :float_lch] ->
-        alpha * 1.0
-
-      :short_lab ->
-        round(alpha * 65_535)
+      e when e in @alpha_max_255 -> scale(alpha, 255)
+      e when e in @alpha_max_65535 -> scale(alpha, 65_535)
+      :float_rgb -> alpha * 1.0
     end
   end
 
