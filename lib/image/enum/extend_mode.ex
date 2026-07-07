@@ -44,19 +44,19 @@ defmodule Image.ExtendMode do
 
   ### Returns
 
-  * `{:error, normalized_extend_mode}` or
+  * `{:ok, normalized_extend_mode}` or
 
   * `{:error, reason}`.
 
   ### Examples
 
-      iex> Image.Kernel.validate_extend(:black)
+      iex> Image.ExtendMode.validate_extend(:black)
       {:ok, :VIPS_EXTEND_BLACK}
 
-      iex> Image.Kernel.validate_extend(:VIPS_EXTEND_REPEAT)
+      iex> Image.ExtendMode.validate_extend(:VIPS_EXTEND_REPEAT)
       {:ok, :VIPS_EXTEND_REPEAT}
 
-      iex> Image.Kernel.validate_extend(:unknown)
+      iex> Image.ExtendMode.validate_extend(:unknown)
       {:error, %Image.Error{message: "Unknown extend mode. Found :unknown", reason: "Unknown extend mode. Found :unknown"}}
 
   """
@@ -107,6 +107,7 @@ defmodule Image.ExtendMode do
   end
 
   defp unknown_extend_error(extend) do
-    "Unknown extend mode. Found #{inspect(extend)}"
+    message = "Unknown extend mode. Found #{inspect(extend)}"
+    %Image.Error{message: message, reason: message}
   end
 end

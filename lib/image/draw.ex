@@ -1084,8 +1084,8 @@ defmodule Image.Draw do
   def smudge(image, left, top, width, height, options \\ [])
 
   def smudge(%Vimage{} = image, left, top, width, height, options)
-      when is_integer(left) and is_integer(top) and left >= 0 and top >= 0
-      when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
+      when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 and
+             is_integer(width) and is_integer(height) and width > 0 and height > 0 do
     with {:ok, _options} <- Options.Draw.validate_options(image, :smudge, options) do
       Image.mutate(image, fn mut_img ->
         MutableOperation.draw_smudge(mut_img, left, top, width, height)
@@ -1095,8 +1095,8 @@ defmodule Image.Draw do
   end
 
   def smudge(%MutableImage{} = image, left, top, width, height, options)
-      when is_integer(left) and is_integer(top) and left >= 0 and top >= 0
-      when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
+      when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 and
+             is_integer(width) and is_integer(height) and width > 0 and height > 0 do
     with {:ok, _options} <- Options.Draw.validate_options(image, :smudge, options) do
       :ok = MutableOperation.draw_smudge(image, left, top, width, height)
       {:ok, image}

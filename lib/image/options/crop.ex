@@ -109,16 +109,20 @@ defmodule Image.Options.Crop do
 
   def normalize_box({w, h}, _left, _top, width, height) when w < width or h < height do
     {:error,
-     "Cannot define a crop region that is larger than the image. " <>
-       "Image size is {#{inspect(w)}, #{inspect(h)}} but requested " <>
-       "crop is {#{inspect(width)}, #{inspect(height)}}"}
+     crop_error(
+       "Cannot define a crop region that is larger than the image. " <>
+         "Image size is {#{inspect(w)}, #{inspect(h)}} but requested " <>
+         "crop is {#{inspect(width)}, #{inspect(height)}}"
+     )}
   end
 
   def normalize_box(_dims, _left, _top, width, height)
       when is_integer(width) and is_integer(height) and (width < 1 or height < 1) do
     {:error,
-     "Cannot define a crop region with negative sizes. " <>
-       "Found width #{inspect(width)} and height #{inspect(height)}"}
+     crop_error(
+       "Cannot define a crop region with negative sizes. " <>
+         "Found width #{inspect(width)} and height #{inspect(height)}"
+     )}
   end
 
   def normalize_box({w, _h} = dims, left, top, width, height) when is_percent(left) do
@@ -208,8 +212,10 @@ defmodule Image.Options.Crop do
 
   def normalize_box(_dims, left, top, width, height) do
     {:error,
-     "Cannot not define a crop region at postion {#{inspect(left)}, #{inspect(top)}} " <>
-       "with width #{inspect(width)} and height #{inspect(height)}"}
+     crop_error(
+       "Cannot define a crop region at position {#{inspect(left)}, #{inspect(top)}} " <>
+         "with width #{inspect(width)} and height #{inspect(height)}"
+     )}
   end
 
   @doc false
@@ -237,21 +243,31 @@ defmodule Image.Options.Crop do
 
   def normalize_dims(_dims, width, height) do
     {:error,
-     "Could not define a crop region with dimensions " <>
-       "width #{inspect(width)} and height #{inspect(height)}"}
+     crop_error(
+       "Could not define a crop region with dimensions " <>
+         "width #{inspect(width)} and height #{inspect(height)}"
+     )}
   end
 
   defp size_error(dim, size) when is_number(size) do
-    "#{dim} must be a percentage expressed as a float greater than 0.0 and " <>
-      "less than or equal to 1.0. Found #{inspect(size)}"
+    crop_error(
+      "#{dim} must be a percentage expressed as a float greater than 0.0 and " <>
+        "less than or equal to 1.0. Found #{inspect(size)}"
+    )
   end
 
   defp location_error(dim, size) when is_number(size) do
-    "#{dim} must be a percentage expressed as a float beteen -1.0 and 1.0. " <>
-      "Found #{inspect(size)}"
+    crop_error(
+      "#{dim} must be a percentage expressed as a float between -1.0 and 1.0. " <>
+        "Found #{inspect(size)}"
+    )
   end
 
   defp invalid_crop(crop) do
-    "Invalid crop option #{inspect(crop)}. Valid values are #{inspect(@crop)}"
+    crop_error("Invalid crop option #{inspect(crop)}. Valid values are #{inspect(@crop)}")
+  end
+
+  defp crop_error(message) do
+    %Image.Error{message: message, reason: message}
   end
 end

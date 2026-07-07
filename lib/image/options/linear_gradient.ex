@@ -77,7 +77,11 @@ defmodule Image.Options.LinearGradient do
   end
 
   defp invalid_option(option) do
-    "Invalid option or option value: #{inspect(option)}"
+    %Image.Error{
+      reason: :invalid_option,
+      value: option,
+      message: "Invalid option or option value: #{inspect(option)}"
+    }
   end
 
   # Gradient math operates on RGBA, so opaque sRGB inputs need an

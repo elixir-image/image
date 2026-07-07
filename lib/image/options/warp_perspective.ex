@@ -81,7 +81,11 @@ defmodule Image.Options.WarpPerspective do
   end
 
   defp invalid_option(option) do
-    "Invalid option or option value: #{inspect(option)}"
+    %Image.Error{
+      reason: :invalid_option,
+      value: option,
+      message: "Invalid option or option value: #{inspect(option)}"
+    }
   end
 
   defp default_options do

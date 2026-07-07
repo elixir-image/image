@@ -428,7 +428,13 @@ defmodule Image.Options.Write do
   end
 
   defp invalid_option(option, image_type) do
-    "Invalid option or option value: #{inspect(option)} for image type #{inspect(image_type)}"
+    %Image.Error{
+      reason: :invalid_option,
+      value: option,
+      message:
+        "Invalid option or option value: #{inspect(option)} " <>
+          "for image type #{inspect(image_type)}"
+    }
   end
 
   defp merge_image_type_options(options, suffix) when suffix in @suffix_keys do

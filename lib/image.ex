@@ -367,18 +367,22 @@ defmodule Image do
   defguard is_percent(value) when is_float(value) and value >= -1.0 and value <= 1.0
 
   @doc """
-  Guards whether a value is a positive percentage as representeed
+  Guards whether a value is a positive percentage as represented
   by a float greater than `0.0` and less than or equal to `1.0`.
+
+  The float requirement is significant: floats are interpreted
+  as percentages and integers as pixel dimensions wherever both
+  are accepted.
   """
   @doc subject: "Guard"
   defguard is_positive_percent(value) when is_float(value) and value >= 0.0 and value <= 1.0
 
   @doc """
-  Guards whether a value is a multiplier as representeed
-  by a float greater than `0.0`.
+  Guards whether a value is a multiplier as represented
+  by a number greater than or equal to `0`.
   """
   @doc subject: "Guard"
-  defguard is_multiplier(value) when is_float(value) and value >= 0.0
+  defguard is_multiplier(value) when is_number(value) and value >= 0
 
   @doc """
   Create a new image of the given dimensions.
@@ -848,10 +852,12 @@ defmodule Image do
   end
 
   def open(%File.Stream{}, _options) do
-    {:error,
-     "File stream must be specify the number of bytes to read. " <>
-       "It should be opened as File.stream!(path, options, bytes) where bytes " <>
-       "is the number of bytes to read on each iteration."}
+    message =
+      "File stream must specify the number of bytes to read. " <>
+        "It should be opened as File.stream!(path, options, bytes) where bytes " <>
+        "is the number of bytes to read on each iteration."
+
+    {:error, %Image.Error{message: message, reason: message}}
   end
 
   # Any other stream
@@ -2024,12 +2030,13 @@ defmodule Image do
   @spec if_then_else!(
           condition_image :: Vimage.t(),
           if_image :: image_or_color(),
-          else_image :: image_or_color()
+          else_image :: image_or_color(),
+          options :: Keyword.t()
         ) ::
           Vimage.t() | no_return()
 
-  def if_then_else!(%Vimage{} = condition_image, if_color, else_image_or_color) do
-    case if_then_else(condition_image, if_color, else_image_or_color) do
+  def if_then_else!(%Vimage{} = condition_image, if_color, else_image_or_color, options \\ []) do
+    case if_then_else(condition_image, if_color, else_image_or_color, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
@@ -3081,6 +3088,9 @@ defmodule Image do
   the list is either a `t:Vix.Vips.Image.t/0` or a
   `t:Image.composition_list/0`. A composition supports the specification
   of how a particular image is composed onto the base image.
+  The `options` argument is used as the default options for
+  each entry in the list; options set on an individual
+  composition take precedence.
 
   * `:x` describes the absolute `x` offset on the
     base image where this image will be placed. If
@@ -3188,17 +3198,28 @@ defmodule Image do
         ) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def compose(%Vimage{} = base_image, image_list, _options) when is_list(image_list) do
+  def compose(%Vimage{} = base_image, image_list, options) when is_list(image_list) do
     width = Image.width(base_image)
     height = Image.height(base_image)
+    default_options = Map.new(options)
 
     zipped =
       Enum.reduce_while(image_list, {0, 0, width, height, []}, fn
         %Vimage{} = image, {prev_x, prev_y, prev_width, prev_height, acc} ->
-          build_composition(image, prev_x, prev_y, prev_width, prev_height, acc, Map.new())
+          build_composition(image, prev_x, prev_y, prev_width, prev_height, acc, default_options)
 
         {%Vimage{} = image, options}, {prev_x, prev_y, prev_width, prev_height, acc} ->
-          build_composition(image, prev_x, prev_y, prev_width, prev_height, acc, Map.new(options))
+          composition_options = Map.merge(default_options, Map.new(options))
+
+          build_composition(
+            image,
+            prev_x,
+            prev_y,
+            prev_width,
+            prev_height,
+            acc,
+            composition_options
+          )
       end)
 
     case zipped do
@@ -3282,6 +3303,9 @@ defmodule Image do
   the list is either a `t:Vix.Vips.Image.t/0` or a
   `t:Image.composition_list/0`. A composition supports the specification
   of how a particular image is composed onto the base image.
+  The `options` argument is used as the default options for
+  each entry in the list; options set on an individual
+  composition take precedence.
 
   * `:x` describes the absolute `x` offset on the
     base image where this image will be placed. If
@@ -4167,8 +4191,10 @@ defmodule Image do
   end
 
   def flip(%Vimage{} = _image, direction) do
-    {:error,
-     "Invalid flip direction. Must be :vertical or :horizontal.  Found #{inspect(direction)}"}
+    message =
+      "Invalid flip direction. Must be :vertical or :horizontal. Found #{inspect(direction)}"
+
+    {:error, %Image.Error{message: message, reason: message}}
   end
 
   @doc """
@@ -5423,9 +5449,9 @@ defmodule Image do
     cropped to the bounding box of the non-background
     area.
 
-  * `{:error, reason}`.  Reason may be
-    `:uncropped` which means the image was
-    considered to be only the background color.
+  * `{:error, reason}`. When the image is considered
+    to be only the background color the error message
+    is "Could not find anything to trim".
 
   """
   @doc subject: "Resize", since: "0.23.0"
@@ -5603,11 +5629,13 @@ defmodule Image do
   end
 
   defp find_trim_to_alpha({_other_bands, nil}, _image, _options) do
-    {:error, {Image.Error, "Image has no alpha band"}}
+    message = "Image has no alpha band"
+    {:error, %Image.Error{message: message, reason: message}}
   end
 
   defp nothing_to_trim_error do
-    {Image.Error, "Could not find anything to trim"}
+    message = "Could not find anything to trim"
+    %Image.Error{message: message, reason: message}
   end
 
   @doc """
@@ -7798,7 +7826,7 @@ defmodule Image do
   @spec delta_e(
           color_1 :: Vimage.t() | Pixel.t(),
           color_2 :: Vimage.t() | Pixel.t(),
-          version :: :de76 | :de00 | :cmc
+          version :: :de76 | :de00 | :decmc
         ) :: {:ok, float()} | {:error, error()}
   def delta_e(color_1, color_2, version \\ @default_delta_e_version)
 
@@ -7898,9 +7926,11 @@ defmodule Image do
     do: {:ok, version}
 
   defp validate_delta_e_version(version) do
-    {:error,
-     "Invalid delta_e version #{inspect(version)}. " <>
-       "Version must be one of #{inspect(@delta_e_versions)}"}
+    message =
+      "Invalid delta_e version #{inspect(version)}. " <>
+        "Version must be one of #{inspect(@delta_e_versions)}"
+
+    {:error, %Image.Error{message: message, reason: message}}
   end
 
   # The Scholar-backed k-means and reduce-colors functions also
@@ -8166,7 +8196,7 @@ defmodule Image do
           |> Keyword.put(:num_clusters, kmeans_num_clusters)
           |> Keyword.delete(:colors)
 
-        {height, width, bands} =
+        {width, height, bands} =
           Image.shape(image)
 
         nx_reshaped =
@@ -10543,7 +10573,7 @@ defmodule Image do
 
   * `:threshold` is the saturation level above which no
     adjustment is made. The range is `1..100` with a default
-    of `70`.
+    of `60`.
 
   ### Returns
 
@@ -11222,8 +11252,9 @@ defmodule Image do
         the underlying data in `{height, width, bands}` shape.
         This is the default action.
 
-      * `:whc` or `:whb` which reshapes the tensor to
-        `width, height, bands`.
+      * `:whc` or `:whb` which transposes the tensor to
+        `width, height, bands` order. This materialises a
+        copy of the data.
 
     ### Returns
 
@@ -11264,40 +11295,33 @@ defmodule Image do
     def to_nx(%Vimage{} = image, options \\ []) do
       {to_shape, options} = Keyword.pop(options, :shape, @default_shape)
 
-      with {:ok, tensor} <- Vix.Vips.Image.write_to_tensor(image),
-           {:ok, shape, names} <- maybe_reshape_tensor(tensor, to_shape) do
-        %Vix.Tensor{data: binary, type: type} = tensor
+      with {:ok, tensor} <- Vix.Vips.Image.write_to_tensor(image) do
+        %Vix.Tensor{data: binary, type: type, shape: shape} = tensor
 
-        binary
-        |> Nx.from_binary(type, options)
-        |> Nx.reshape(shape, names: names)
-        |> wrap(:ok)
+        # write_to_tensor writes in height, width, bands format.
+        hwc_tensor =
+          binary
+          |> Nx.from_binary(type, options)
+          |> Nx.reshape(shape, names: [:height, :width, :bands])
+
+        case to_shape do
+          hwc when hwc in [:hwc, :hwb] ->
+            {:ok, hwc_tensor}
+
+          whc when whc in [:whc, :whb] ->
+            {:ok, Nx.transpose(hwc_tensor, axes: [1, 0, 2])}
+
+          other ->
+            invalid_nx_shape_error(other)
+        end
       end
     end
 
-    # Because of the dialyzer issue for to_nx/2, dialyzer then
-    # thinks this function won't be called.
-    @dialyzer {:nowarn_function, {:maybe_reshape_tensor, 2}}
+    defp invalid_nx_shape_error(shape) do
+      message =
+        "Invalid shape. Allowable shapes are :whb, :whc, :hwc and :hwb. Found #{inspect(shape)}"
 
-    # write_to_tensor writes in height, widght, bands format. No reshape
-    # is required.
-    defp maybe_reshape_tensor(%Vix.Tensor{shape: shape}, :hwc),
-      do: {:ok, shape, [:height, :width, :bands]}
-
-    defp maybe_reshape_tensor(%Vix.Tensor{shape: shape}, :hwb),
-      do: {:ok, shape, [:height, :width, :bands]}
-
-    defp maybe_reshape_tensor(%Vix.Tensor{} = tensor, :whb),
-      do: maybe_reshape_tensor(tensor, :whc)
-
-    # We need to reshape the tensor since the default is
-    # :hwc
-    defp maybe_reshape_tensor(%Vix.Tensor{shape: {x, y, bands}}, :whc),
-      do: {:ok, {y, x, bands}, [:width, :height, :bands]}
-
-    defp maybe_reshape_tensor(_tensor, shape) do
-      {:error,
-       "Invalid shape. Allowable shapes are :whb, :whc, :hwc and :hwb. Found #{inspect(shape)}"}
+      {:error, %Image.Error{message: message, reason: message}}
     end
 
     @doc """
@@ -11319,8 +11343,9 @@ defmodule Image do
         the underlying data in `{height, width, bands}` shape.
         This is the default action.
 
-      * `:whc` or `:whb` which reshapes the tensor to
-        `width, height, bands`.
+      * `:whc` or `:whb` which transposes the tensor to
+        `width, height, bands` order. This materialises a
+        copy of the data.
 
     ### Returns
 
@@ -11389,8 +11414,11 @@ defmodule Image do
       with `libvips` (most tensors will satisfy this
       requirement other than tensors whose type is complex).
 
-    * The names of the axes must be `[:width, :height, any_other]`
-      or `[:height, :width, any_other]`.
+    * The data is interpreted in `{height, width, bands}` order
+      unless the first axis is named `:width`, in which case the
+      tensor is transposed from its `{width, height, bands}` order
+      before conversion. Unnamed tensors are assumed to be in
+      `{height, width, bands}` order.
 
     ### Example
 
@@ -11405,14 +11433,27 @@ defmodule Image do
     def from_nx(tensor) when is_struct(tensor, Nx.Tensor) do
       with {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
         case Nx.shape(tensor) do
-          {x, y, bands} when bands in 1..5 ->
-            {width, height} = dimensions_from_tensor(tensor, x, y)
-            binary = Nx.to_binary(tensor)
+          {_, _, bands} when bands in 1..5 ->
+            hwc_tensor = transpose_to_hwc(tensor)
+            {height, width, bands} = Nx.shape(hwc_tensor)
+            binary = Nx.to_binary(hwc_tensor)
             Vix.Vips.Image.new_from_binary(binary, width, height, bands, tensor_format)
 
           shape ->
             shape_error(shape)
         end
+      end
+    end
+
+    # A tensor whose first axis is named :width is in
+    # {width, height, bands} order and is transposed to the
+    # {height, width, bands} order that libvips requires. Unnamed
+    # tensors are assumed to already be in {height, width, bands}
+    # order, which is the common convention for image tensors.
+    defp transpose_to_hwc(tensor) do
+      case Nx.names(tensor) do
+        [:width, _, _] -> Nx.transpose(tensor, axes: [1, 0, 2])
+        _other -> tensor
       end
     end
 
@@ -11444,8 +11485,11 @@ defmodule Image do
       with `libvips` (most tensors will satisfy this
       requirement other than tensors whose type is complex).
 
-    * The names of the axes must be `[:width, :height, any_other]`
-      or `[:height, :width, any_other]`.
+    * The data is interpreted in `{height, width, bands}` order
+      unless the first axis is named `:width`, in which case the
+      tensor is transposed from its `{width, height, bands}` order
+      before conversion. Unnamed tensors are assumed to be in
+      `{height, width, bands}` order.
 
     ### Example
 
@@ -11464,17 +11508,12 @@ defmodule Image do
       end
     end
 
-    defp dimensions_from_tensor(tensor, x, y) do
-      case Nx.names(tensor) do
-        [:height, _, _] -> {y, x}
-        _other -> {x, y}
-      end
-    end
-
     defp shape_error(shape) do
-      {:error,
-       "The tensor must have the shape {height, width, bands} with bands between " <>
-         "1 and 5. Found shape #{inspect(shape)}."}
+      message =
+        "The tensor must have the shape {height, width, bands} with bands between " <>
+          "1 and 5. Found shape #{inspect(shape)}."
+
+      {:error, %Image.Error{message: message, reason: message}}
     end
 
     @doc """
@@ -11961,7 +12000,7 @@ defmodule Image do
 
       * `Image` images have the shape `{width, height, bands}`
         whereas `Evision` images have the shape `{height, width, bands}`
-        so this function transposes the dimensions to match.
+        so this function relabels the axes to match.
 
       * `Image` data is arranged as `rgb` data elements whereas
         `Evision` requires the data to be in `bgr` order. This function
@@ -12001,7 +12040,7 @@ defmodule Image do
 
       * `Image` images have the shape `{width, height, bands}`
         whereas `Evision` images have the shape `{height, width, bands}`
-        so this function transposes the dimensions to match.
+        so this function relabels the axes to match.
 
       * `Image` data is arranged as `rgb` data elements whereas
         `Evision` requires the data to be in `bgr` order. This function
@@ -12018,11 +12057,9 @@ defmodule Image do
           tensor = Evision.Mat.to_nx(mat)
 
           case Nx.shape(tensor) do
-            {x, y, bands} when bands in 1..5 ->
-              {width, height} = dimensions_from_tensor(tensor, x, y)
-
+            {height, width, bands} when bands in 1..5 ->
               tensor
-              |> Nx.reshape({width, height, bands}, names: [:height, :width, :bands])
+              |> Nx.reshape({height, width, bands}, names: [:height, :width, :bands])
               |> from_nx()
 
             shape ->
@@ -12772,7 +12809,7 @@ defmodule Image do
   """
   @doc subject: "Split and join", since: "0.60.0"
 
-  @spec band_and!(image :: Vimage.t()) ::
+  @spec band_or!(image :: Vimage.t()) ::
           Vimage.t() | no_return()
 
   def band_or!(image) do
@@ -13385,8 +13422,10 @@ defmodule Image do
   end
 
   defp supported_terminal(terminal) do
-    {:error,
-     "Unsupported terminal #{inspect(terminal)}. iTerm2 is required for inline image display."}
+    message =
+      "Unsupported terminal #{inspect(terminal)}. iTerm2 is required for inline image display."
+
+    {:error, %Image.Error{message: message, reason: message}}
   end
 
   defp get_prelude_epilog_for_term("screen" <> _rest) do

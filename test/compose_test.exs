@@ -30,5 +30,20 @@ defmodule Image.ComposeTest do
 
       assert message =~ "Unknown blend mode"
     end
+
+    test "applies top-level options as defaults for each composition", %{
+      base: base,
+      overlay: overlay
+    } do
+      # Regression: options were silently ignored for composition lists.
+      # An invalid top-level option must now surface as an error because
+      # it applies to each composition.
+      assert {:error, %Image.Error{}} =
+               Image.compose(base, [overlay], blend_mode: :bogus)
+
+      # And a valid top-level option is inherited by list entries.
+      assert {:ok, %Vix.Vips.Image{}} =
+               Image.compose(base, [overlay, overlay], blend_mode: :multiply, x: 1, y: 1)
+    end
   end
 end

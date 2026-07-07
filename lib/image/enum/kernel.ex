@@ -44,7 +44,7 @@ defmodule Image.Kernel do
 
   ### Returns
 
-  * `{:error, normalized_kernel}` or
+  * `{:ok, normalized_kernel}` or
 
   * `{:error, reason}`
 
@@ -107,6 +107,7 @@ defmodule Image.Kernel do
   end
 
   defp unknown_kernel_error(kernel) do
-    "Unknown kernel. Found #{inspect(kernel)}"
+    message = "Unknown kernel. Found #{inspect(kernel)}"
+    %Image.Error{message: message, reason: message}
   end
 end

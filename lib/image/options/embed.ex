@@ -151,7 +151,11 @@ defmodule Image.Options.Embed do
   end
 
   defp invalid_option(option) do
-    "Invalid option or option value: #{inspect(option)}"
+    %Image.Error{
+      reason: :invalid_option,
+      value: option,
+      message: "Invalid option or option value: #{inspect(option)}"
+    }
   end
 
   defp adjust_transparency(%{extend_mode: :VIPS_EXTEND_BLACK} = options, _bands, true = _has_alpha?) do

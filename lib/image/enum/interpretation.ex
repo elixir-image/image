@@ -60,7 +60,7 @@ defmodule Image.Interpretation do
 
   ### Returns
 
-  * `{:error, normalized_interpretation}` or
+  * `{:ok, normalized_interpretation}` or
 
   * `{:error, reason}`
 
@@ -103,6 +103,7 @@ defmodule Image.Interpretation do
   end
 
   defp unknown_interpretation_error(interpretation) do
-    "Unknown interpretation. Found #{inspect(interpretation)}"
+    message = "Unknown interpretation. Found #{inspect(interpretation)}"
+    %Image.Error{message: message, reason: message}
   end
 end

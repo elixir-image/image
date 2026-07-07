@@ -184,8 +184,7 @@ defmodule Image.Options.Draw do
   end
 
   defp validate_option(_image, type, {:stroke_width, stroke_width}, options)
-       when type in [:rect, :circle]
-       when is_integer(stroke_width) and stroke_width > 0 do
+       when type in [:rect, :circle] and is_integer(stroke_width) and stroke_width > 0 do
     {:cont, options}
   end
 

@@ -175,7 +175,11 @@ defmodule Image.Options.Thumbnail do
   end
 
   defp invalid_option(option) do
-    "Invalid Image.thumbnail option or option value: #{inspect(option)}"
+    %Image.Error{
+      reason: :invalid_option,
+      value: option,
+      message: "Invalid Image.thumbnail option or option value: #{inspect(option)}"
+    }
   end
 
   @doc false

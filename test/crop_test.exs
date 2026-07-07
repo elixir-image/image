@@ -58,13 +58,11 @@ defmodule Image.Crop.Test do
     assert {:error, "operation build:" <> _other} =
              Image.crop(image, 0.5, 0.5, 0.5, 0.6)
 
-    assert Image.crop(image, 0.5, 0.5, -0.5, 0.6) ==
-             {:error,
-              "width must be a percentage expressed as a float greater than 0.0 and less than or equal to 1.0. Found -0.5"}
+    assert {:error, %Image.Error{message: "width must be a percentage" <> _}} =
+             Image.crop(image, 0.5, 0.5, -0.5, 0.6)
 
-    assert Image.crop(image, 0.5, 0.5, 0.5, -0.6) ==
-             {:error,
-              "height must be a percentage expressed as a float greater than 0.0 and less than or equal to 1.0. Found -0.6"}
+    assert {:error, %Image.Error{message: "height must be a percentage" <> _}} =
+             Image.crop(image, 0.5, 0.5, 0.5, -0.6)
   end
 
   test "Cropping a multipage webp image" do

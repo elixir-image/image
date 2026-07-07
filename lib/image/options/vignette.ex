@@ -58,7 +58,11 @@ defmodule Image.Options.Vignette do
   end
 
   defp invalid_option(option) do
-    "Invalid option or option value: #{inspect(option)}"
+    %Image.Error{
+      reason: :invalid_option,
+      value: option,
+      message: "Invalid option or option value: #{inspect(option)}"
+    }
   end
 
   # If the caller supplies any explicit polynomial coefficient we use
