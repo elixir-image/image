@@ -15,7 +15,11 @@ defmodule Image.Shape do
   """
 
   alias Vix.Vips.Image, as: Vimage
-  alias Vix.Vips.Operation
+  alias Image.Vips.Operation
+
+  defguardp is_line(x1, y1, x2, y2)
+            when is_integer(x1) and x1 >= 0 and is_integer(y1) and y1 >= 0 and
+                   is_integer(x2) and x2 >= 0 and is_integer(y2) and y2 >= 0
 
   @typedoc """
   A point is a list of two integers
@@ -234,9 +238,9 @@ defmodule Image.Shape do
   def polygon(points, options \\ [])
 
   def polygon(points, options) when is_binary(points) do
-    points
-    |> points_to_path()
-    |> polygon(options)
+    with {:ok, points} <- points_to_path(points) do
+      polygon(points, options)
+    end
   end
 
   def polygon(points, options) when is_list(points) and is_list(options) do
@@ -246,6 +250,31 @@ defmodule Image.Shape do
   end
 
   def polygon(points, %{} = options) when is_list(points) do
+    with :ok <- validate_polygon_points(points) do
+      do_polygon(points, options)
+    end
+  end
+
+  @spec polygon(sides :: pos_integer(), options :: Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, Image.error()}
+
+  def polygon(sides, options) when is_integer(sides) and sides > 2 do
+    {radius, options} = Keyword.pop(options, :radius, @default_radius)
+    {rotation, options} = Keyword.pop(options, :rotation, @default_rotation)
+
+    segment = :math.pi() * 2 / sides
+    rotation = rotation * :math.pi() / 180
+
+    for side <- 1..sides do
+      [
+        :math.sin(segment * side + rotation) * radius,
+        :math.cos(segment * side + rotation) * radius
+      ]
+    end
+    |> polygon(options)
+  end
+
+  defp do_polygon(points, options) do
     {width, height} = dimensions_from(points, options[:width], options[:height])
 
     points =
@@ -271,25 +300,6 @@ defmodule Image.Shape do
       {:ok, {polygon, _flags}} -> {:ok, polygon}
       {:error, reason} -> {:error, reason}
     end
-  end
-
-  @spec polygon(sides :: pos_integer(), options :: Keyword.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error()}
-
-  def polygon(sides, options) when is_integer(sides) and sides > 2 do
-    {radius, options} = Keyword.pop(options, :radius, @default_radius)
-    {rotation, options} = Keyword.pop(options, :rotation, @default_rotation)
-
-    segment = :math.pi() * 2 / sides
-    rotation = rotation * :math.pi() / 180
-
-    for side <- 1..sides do
-      [
-        :math.sin(segment * side + rotation) * radius,
-        :math.cos(segment * side + rotation) * radius
-      ]
-    end
-    |> polygon(options)
   end
 
   defp dimensions_from(points, nil, nil) do
@@ -422,7 +432,7 @@ defmodule Image.Shape do
   @spec star(points :: pos_integer(), options :: Keyword.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
-  def star(points \\ @default_star_points, options \\ []) when points > 3 do
+  def star(points \\ @default_star_points, options \\ []) when points >= 3 do
     {inner_radius, options} = Keyword.pop(options, :inner_radius, @default_star_inner_radius)
     {outer_radius, options} = Keyword.pop(options, :outer_radius, @default_star_outer_radius)
     {rotation, options} = Keyword.pop(options, :rotation, @default_star_rotation)
@@ -778,8 +788,7 @@ defmodule Image.Shape do
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def line(x1, y1, x2, y2, options \\ [])
-      when is_integer(x1) and x1 >= 0 and is_integer(y1) and y1 >= 0 and is_integer(x2) and x2 >= 0 and
-             is_integer(y2) and y2 >= 0 do
+      when is_line(x1, y1, x2, y2) do
     with {:ok, options} <- Image.Options.Shape.validate_polygon_options(options) do
       width = max(x1, x2) + div(options.stroke_width, 2)
       height = max(y1, y2) + div(options.stroke_width, 2)
@@ -794,7 +803,7 @@ defmodule Image.Shape do
             opacity: #{options.opacity};
           }
         </style>
-        <line x1="#{x1}" y1="#{y1}" x2="#{y2}" y2="#{y2}" />
+        <line x1="#{x1}" y1="#{y1}" x2="#{x2}" y2="#{y2}" />
       </svg>
       """
 
@@ -857,8 +866,7 @@ defmodule Image.Shape do
           Vimage.t() | no_return()
 
   def line!(x1, y1, x2, y2, options \\ [])
-      when is_integer(x1) and x1 >= 0 and is_integer(y1) and y1 >= 0 and is_integer(x2) and x2 >= 0 and
-             is_integer(y2) and y2 >= 0 do
+      when is_line(x1, y1, x2, y2) do
     case line(x1, y1, x2, y2, options) do
       {:ok, line} -> line
       {:error, reason} -> raise Image.Error, reason
@@ -926,7 +934,64 @@ defmodule Image.Shape do
   defp points_to_path(points) when is_binary(points) do
     points
     |> String.split([",", " ", "\n"], trim: true)
-    |> Enum.map(&String.to_integer/1)
-    |> Enum.chunk_every(2)
+    |> Enum.reduce_while({:ok, []}, fn token, {:ok, acc} ->
+      case parse_number(token) do
+        {:ok, number} ->
+          {:cont, {:ok, [number | acc]}}
+
+        :error ->
+          {:halt, {:error, shape_error("Invalid value #{inspect(token)} in polygon points string")}}
+      end
+    end)
+    |> case do
+      {:ok, numbers} -> {:ok, numbers |> Enum.reverse() |> Enum.chunk_every(2)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp parse_number(token) do
+    case Integer.parse(token) do
+      {integer, ""} ->
+        {:ok, integer}
+
+      _other ->
+        case Float.parse(token) do
+          {float, ""} -> {:ok, float}
+          _other -> :error
+        end
+    end
+  end
+
+  defp validate_polygon_points(points) do
+    pairs? =
+      Enum.all?(points, &match?([x, y] when is_number(x) and is_number(y), &1))
+
+    cond do
+      length(points) < 3 ->
+        {:error, shape_error("A polygon requires at least 3 points. Found #{inspect(points)}")}
+
+      not pairs? ->
+        {:error,
+         shape_error("Polygon points must be [x, y] pairs of numbers. Found #{inspect(points)}")}
+
+      degenerate_extent?(points) ->
+        {:error,
+         shape_error(
+           "Polygon points must not all lie on a single horizontal or vertical line. " <>
+             "Found #{inspect(points)}"
+         )}
+
+      true ->
+        :ok
+    end
+  end
+
+  defp degenerate_extent?(points) do
+    {x_min, x_max, y_min, y_max} = polygon_scale(points)
+    x_min == x_max or y_min == y_max
+  end
+
+  defp shape_error(message) do
+    %Image.Error{message: message, reason: message}
   end
 end

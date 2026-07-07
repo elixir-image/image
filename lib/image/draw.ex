@@ -11,7 +11,8 @@ defmodule Image.Draw do
   """
 
   alias Vix.Vips.Image, as: Vimage
-  alias Vix.Vips.{MutableImage, MutableOperation}
+  alias Vix.Vips.MutableImage
+  alias Image.Vips.MutableOperation
   alias Image.Pixel
   alias Image.Options
 
@@ -781,9 +782,14 @@ defmodule Image.Draw do
 
   def image(%Vimage{} = image, %Vimage{} = sub_image, top, left, options)
       when is_integer(top) and is_integer(left) and left >= 0 and top >= 0 do
-    Image.mutate(image, fn mut_img ->
-      image(mut_img, sub_image, top, left, options)
-    end)
+    # Options are validated before entering the mutate callback so that
+    # a validation error returns {:error, _} rather than escaping from
+    # Image.mutate/2.
+    with {:ok, options} <- Options.Draw.validate_options(image, :image, options) do
+      Image.mutate(image, fn mut_img ->
+        image(mut_img, sub_image, top, left, options)
+      end)
+    end
     |> maybe_wrap()
   end
 

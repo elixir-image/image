@@ -2,12 +2,12 @@
 
 ```elixir
 Mix.install([
-  {:nx, "~> 0.7"},
+  {:nx, "~> 0.12"},
   {:nx_image, "~> 0.1"},
   {:scholar, "~> 0.3"},
   {:exla, "~> 0.7"},
   {:kino, "~> 0.13"},
-  {:image, "~> 0.51"}
+  {:image, "~> 0.69"}
 ],
  config: [
     nx: [

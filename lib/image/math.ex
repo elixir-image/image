@@ -32,11 +32,11 @@ defmodule Image.Math do
 
   """
 
-  alias Vix.Vips.Operation
+  alias Image.Vips.Operation
   alias Vix.Vips.Image, as: Vimage
 
   import Kernel,
-    except: [+: 2, -: 1, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2, abs: 1]
+    except: [+: 2, -: 1, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, !=: 2, >=: 2, <=: 2, abs: 1]
 
   @doc """
   Guards if a given value might be reasonably interpreted
@@ -49,7 +49,21 @@ defmodule Image.Math do
   defmacro __using__(_opts) do
     quote do
       import Kernel,
-        except: [+: 2, -: 1, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, >=: 2, <=: 2, abs: 2]
+        except: [
+          +: 2,
+          -: 1,
+          -: 2,
+          *: 2,
+          /: 2,
+          **: 2,
+          <: 2,
+          >: 2,
+          ==: 2,
+          !=: 2,
+          >=: 2,
+          <=: 2,
+          abs: 1
+        ]
 
       import Image.Math
     end
@@ -424,84 +438,84 @@ defmodule Image.Math do
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def less_than(%Vimage{} = image, %Vimage{} = other) do
-    Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_LESS)
+    Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_LESS)
   end
 
   @spec less_than(Vimage.t(), Image.pixel()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def less_than(%Vimage{} = image, other) when is_pixel(other) do
-    Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_LESS, List.wrap(other))
+    Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_LESS, List.wrap(other))
   end
 
   @spec less_than_or_equal(Vimage.t(), Vimage.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def less_than_or_equal(%Vimage{} = image, %Vimage{} = other) do
-    Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_LESSEQ)
+    Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_LESSEQ)
   end
 
   @spec less_than_or_equal(Vimage.t(), Image.pixel()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def less_than_or_equal(%Vimage{} = image, other) when is_pixel(other) do
-    Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_LESSEQ, List.wrap(other))
+    Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_LESSEQ, List.wrap(other))
   end
 
   @spec greater_than(Vimage.t(), Vimage.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def greater_than(%Vimage{} = image, %Vimage{} = other) do
-    Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_MORE)
+    Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_MORE)
   end
 
   @spec greater_than(Vimage.t(), Image.pixel()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def greater_than(%Vimage{} = image, other) when is_pixel(other) do
-    Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_MORE, List.wrap(other))
+    Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_MORE, List.wrap(other))
   end
 
   @spec greater_than_or_equal(Vimage.t(), Vimage.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def greater_than_or_equal(%Vimage{} = image, %Vimage{} = other) do
-    Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_MOREEQ)
+    Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_MOREEQ)
   end
 
   @spec greater_than_or_equal(Vimage.t(), Image.pixel()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def greater_than_or_equal(%Vimage{} = image, other) when is_pixel(other) do
-    Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_MOREEQ, List.wrap(other))
+    Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_MOREEQ, List.wrap(other))
   end
 
   @spec equal(Vimage.t(), Vimage.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def equal(%Vimage{} = image, %Vimage{} = other) do
-    Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_EQUAL)
+    Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_EQUAL)
   end
 
   @spec equal(Vimage.t(), Image.pixel()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def equal(%Vimage{} = image, other) when is_pixel(other) do
-    Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_EQUAL, List.wrap(other))
+    Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_EQUAL, List.wrap(other))
   end
 
   @spec not_equal(Vimage.t(), Vimage.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def not_equal(%Vimage{} = image, %Vimage{} = other) do
-    Vix.Vips.Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_NOTEQ)
+    Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_NOTEQ)
   end
 
   @spec not_equal(Vimage.t(), Image.pixel()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def not_equal(%Vimage{} = image, other) when is_pixel(other) do
-    Vix.Vips.Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_NOTEQ, List.wrap(other))
+    Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_NOTEQ, List.wrap(other))
   end
 
   @spec less_than!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()

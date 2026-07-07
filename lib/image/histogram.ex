@@ -36,7 +36,7 @@ defmodule Image.Histogram do
   """
 
   alias Vix.Vips.Image, as: Vimage
-  alias Vix.Vips.Operation
+  alias Image.Vips.Operation
   alias Image.Options
 
   # Both the number of histogram buckets

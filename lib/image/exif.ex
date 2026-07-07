@@ -170,7 +170,7 @@ defmodule Image.Exif do
 
   def read_exif(_exif_offset, _context), do: %{}
 
-  @spec read_gps(non_neg_integer(), context()) :: %Gps{}
+  @spec read_gps(non_neg_integer(), context()) :: struct()
   defp read_gps(gps_offset, {gps, _offset, ru} = context)
        when is_integer(gps_offset) and gps_offset >= 0 do
     case gps do

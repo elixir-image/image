@@ -4,7 +4,7 @@
 
 ```elixir
 Mix.install([
-  {:image, "~> 0.42"},
+  {:image, "~> 0.69"},
   {:req, "> 0.0.0"},
   {:kino, "> 0.0.0"}
 ])

@@ -88,7 +88,7 @@ defmodule Image.Pixel do
   """
   defguard is_pixel(value)
            when is_struct(value) or
-                  (is_list(value) and length(value) >= 1 and length(value) <= 5) or
+                  (is_list(value) and value != [] and length(value) <= 5) or
                   is_binary(value) or
                   (is_atom(value) and value not in [nil, true, false]) or
                   is_number(value)
@@ -180,7 +180,7 @@ defmodule Image.Pixel do
   # natively (Image.if_then_else, k-means clusters, gradient defaults,
   # etc).
   def to_pixel(%Vimage{} = image, color, _options)
-      when is_list(color) and length(color) > 0 do
+      when is_list(color) and color != [] do
     bands = Vimage.bands(image)
     interpretation = Image.colorspace(image)
 
@@ -196,7 +196,7 @@ defmodule Image.Pixel do
   end
 
   def to_pixel(%MutableImage{} = image, color, _options)
-      when is_list(color) and length(color) > 0 do
+      when is_list(color) and color != [] do
     {:ok, {_w, _h, bands}} = MutableImage.shape(image)
 
     if length(color) == bands and pre_encoded?(color, :srgb) do

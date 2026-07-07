@@ -61,7 +61,7 @@ defmodule Image.Palette.Test do
       {:ok, tiny} = Image.thumbnail(image, 64)
 
       {:ok, palette} = Image.Palette.extract(tiny, key: Nx.Random.key(42))
-      assert length(palette) >= 1
+      refute Enum.empty?(palette)
     end
 
     test "extract!/2 raises on a programmer error" do

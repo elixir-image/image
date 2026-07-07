@@ -73,16 +73,14 @@ defmodule Image.Options.Vignette do
     has_explicit? =
       Map.has_key?(options, :k1) or Map.has_key?(options, :k2) or Map.has_key?(options, :k3)
 
-    cond do
-      has_explicit? ->
-        %{
-          k1: Map.get(options, :k1, 0.0) * 1.0,
-          k2: Map.get(options, :k2, 0.0) * 1.0,
-          k3: Map.get(options, :k3, 0.0) * 1.0
-        }
-
-      true ->
-        %{k1: -options.strength * 1.0, k2: 0.0, k3: 0.0}
+    if has_explicit? do
+      %{
+        k1: Map.get(options, :k1, 0.0) * 1.0,
+        k2: Map.get(options, :k2, 0.0) * 1.0,
+        k3: Map.get(options, :k3, 0.0) * 1.0
+      }
+    else
+      %{k1: -options.strength * 1.0, k2: 0.0, k3: 0.0}
     end
   end
 

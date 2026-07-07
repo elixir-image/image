@@ -15,7 +15,7 @@ defmodule Image do
 
   """
 
-  alias Vix.Vips.Operation
+  alias Image.Vips.Operation
   alias Vix.Vips.MutableImage
   alias Vix.Vips.Image, as: Vimage
 
@@ -352,7 +352,7 @@ defmodule Image do
   @doc subject: "Guard"
   defguard is_pixel(value)
            when is_number(value) or
-                  (is_list(value) and length(value) >= 1 and length(value) <= 5) or
+                  (is_list(value) and value != [] and length(value) <= 5) or
                   is_binary(value) or
                   (is_atom(value) and value not in [nil, true, false]) or
                   (is_struct(value) and
@@ -453,7 +453,7 @@ defmodule Image do
     new(width, height, [])
   end
 
-  @spec new(image :: %Vimage{}, options :: Options.New.t()) ::
+  @spec new(image :: Vimage.t(), options :: Options.New.t()) ::
           {:ok, Vimage.t()} | {:error, error()}
 
   def new(%Vimage{} = image, options) do
@@ -472,7 +472,7 @@ defmodule Image do
       when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
     with {:ok, options} <- Options.New.validate_options(options) do
       {:ok, pixel} =
-        Vix.Vips.Operation.black!(1, 1, bands: options.bands)
+        Operation.black!(1, 1, bands: options.bands)
         |> Image.Math.add!(options.color)
         |> Operation.cast(options.format)
 
@@ -558,7 +558,7 @@ defmodule Image do
     end
   end
 
-  @spec new!(image :: %Vimage{}, options :: Options.New.t()) ::
+  @spec new!(image :: Vimage.t(), options :: Options.New.t()) ::
           Vimage.t() | no_return()
 
   def new!(%Vimage{} = image, options) do
@@ -604,7 +604,7 @@ defmodule Image do
   """
   @doc subject: "Load and save", since: "0.1.13"
 
-  @spec new(image :: %Vimage{}) ::
+  @spec new(image :: Vimage.t()) ::
           {:ok, Vimage.t()} | {:error, error()}
 
   def new(%Vimage{} = image) do
@@ -1670,7 +1670,7 @@ defmodule Image do
     @doc since: "0.61.0"
 
     @spec from_req_stream(url_or_request :: binary() | Req.Request.t()) ::
-            {:ok, image :: %Vimage{}} | {:error, error()}
+            {:ok, image :: Vimage.t()} | {:error, error()}
 
     def from_req_stream(url_or_request, options \\ []) do
       timeout = Keyword.get(options, :timeout, @default_req_timeout)
@@ -1685,17 +1685,26 @@ defmodule Image do
           end,
           fn
             %Req.Response{status: 200} = resp ->
-              case Req.parse_message(resp, get_req_message(timeout)) do
-                {:ok, chunks} ->
-                  data_chunks =
-                    chunks
-                    |> Enum.filter(&match?({:data, _}, &1))
-                    |> Enum.map(fn {:data, binary} -> binary end)
+              case get_req_message(timeout) do
+                {:error, :timed_out} ->
+                  throw({:image_req_timeout, timeout})
 
-                  if Enum.any?(chunks, &(&1 == :done)) do
-                    {data_chunks, {:done, resp}}
-                  else
-                    {data_chunks, resp}
+                message ->
+                  case Req.parse_message(resp, message) do
+                    {:ok, chunks} ->
+                      data_chunks =
+                        chunks
+                        |> Enum.filter(&match?({:data, _}, &1))
+                        |> Enum.map(fn {:data, binary} -> binary end)
+
+                      if Enum.any?(chunks, &(&1 == :done)) do
+                        {data_chunks, {:done, resp}}
+                      else
+                        {data_chunks, resp}
+                      end
+
+                    {:error, reason} ->
+                      throw({:image_req_error, reason})
                   end
               end
 
@@ -1715,6 +1724,13 @@ defmodule Image do
         )
 
       Vix.Vips.Image.new_from_enum(body_stream)
+    catch
+      {:image_req_timeout, timeout} ->
+        message = "Timed out after #{timeout}ms waiting for the image stream"
+        {:error, %Image.Error{message: message, reason: :timed_out}}
+
+      {:image_req_error, reason} ->
+        {:error, Image.Error.wrap(reason, operation: :from_req_stream)}
     end
 
     defp get_req_message(timeout) do
@@ -1828,20 +1844,22 @@ defmodule Image do
 
   @spec stream!(Vimage.t(), options :: Options.Write.image_write_options()) :: Enumerable.t()
   def stream!(%Vimage{} = image, options \\ []) do
-    with {:ok, options} <- Options.Write.validate_options(image, options, :require_suffix) do
-      {suffix, options} = Keyword.pop(options, :suffix)
-      {buffer_size, options} = Keyword.pop(options, :buffer_size, :unbuffered)
-      options = suffix <> loader_options(options)
+    case Options.Write.validate_options(image, options, :require_suffix) do
+      {:ok, options} ->
+        {suffix, options} = Keyword.pop(options, :suffix)
+        {buffer_size, options} = Keyword.pop(options, :buffer_size, :unbuffered)
+        options = suffix <> loader_options(options)
 
-      stream = Vimage.write_to_stream(image, options)
+        stream = Vimage.write_to_stream(image, options)
 
-      if buffer_size == :unbuffered || buffer_size == 0 do
-        stream
-      else
-        buffer!(stream, buffer_size)
-      end
-    else
-      {:error, reason} -> raise Image.Error, reason
+        if buffer_size == :unbuffered || buffer_size == 0 do
+          stream
+        else
+          buffer!(stream, buffer_size)
+        end
+
+      {:error, reason} ->
+        raise Image.Error, reason
     end
   end
 
@@ -1850,24 +1868,31 @@ defmodule Image do
   # a minimum 5 MiB chunk size for multi-part uploads.
 
   defp buffer!(stream, buffer_size) do
-    chunker = fn bin, acc ->
-      acc_size = IO.iodata_length(acc)
+    Stream.transform(
+      stream,
+      fn -> <<>> end,
+      fn bin, acc ->
+        rebuffer(acc <> bin, buffer_size, [])
+      end,
+      fn
+        <<>> -> {[], <<>>}
+        rest -> {[rest], <<>>}
+      end,
+      fn _acc -> :ok end
+    )
+  end
 
-      if IO.iodata_length(bin) + acc_size >= buffer_size do
-        size = buffer_size - acc_size
-        <<chunk::binary-size(^size), rest::binary>> = bin
-        {:cont, IO.iodata_to_binary([acc, chunk]), [rest]}
-      else
-        {:cont, [acc, bin]}
-      end
-    end
+  # Splits the accumulated binary into as many buffer_size chunks as
+  # are available, carrying the remainder. A single incoming chunk
+  # from libvips can be much larger than buffer_size so more than one
+  # chunk may be emitted per element.
+  defp rebuffer(data, buffer_size, chunks) when byte_size(data) >= buffer_size do
+    <<chunk::binary-size(^buffer_size), rest::binary>> = data
+    rebuffer(rest, buffer_size, [chunk | chunks])
+  end
 
-    final = fn
-      [] -> {:cont, []}
-      acc -> {:cont, IO.iodata_to_binary(acc), []}
-    end
-
-    Stream.chunk_while(stream, [], chunker, final)
+  defp rebuffer(rest, _buffer_size, chunks) do
+    {Enum.reverse(chunks), rest}
   end
 
   @doc """
@@ -2157,9 +2182,13 @@ defmodule Image do
   def chroma_mask(%Vimage{} = image, %{color: color, threshold: threshold}) do
     alias Image.Math
 
+    # The mask is computed from the color bands only so any alpha
+    # band is split off and the color is truncated to match.
+    {color_image, _alpha} = split_alpha(image)
     color = maybe_calculate_color(image, color)
+    color = color |> List.wrap() |> Enum.take(bands(color_image))
 
-    image
+    color_image
     |> Math.subtract!(color)
     |> Math.pow!(2)
     |> Operation.bandmean!()
@@ -2171,10 +2200,10 @@ defmodule Image do
     alias Image.Math
 
     with {:ok, greater} <- Math.greater_than(image, greater_than),
-         {:ok, less} = Math.less_than(image, less_than),
-         {:ok, color_mask} = Math.boolean_and(greater, less),
-         {:ok, mask} = Vix.Vips.Operation.bandbool(color_mask, :VIPS_OPERATION_BOOLEAN_AND) do
-      Vix.Vips.Operation.invert(mask)
+         {:ok, less} <- Math.less_than(image, less_than),
+         {:ok, color_mask} <- Math.boolean_and(greater, less),
+         {:ok, mask} <- Operation.bandbool(color_mask, :VIPS_OPERATION_BOOLEAN_AND) do
+      Operation.invert(mask)
     end
   end
 
@@ -2708,15 +2737,25 @@ defmodule Image do
 
   def feather(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Blur.validate_options(options) do
+      margin = round(options.sigma * 2)
+
       cond do
         has_alpha?(image) ->
           {image, alpha} = split_alpha(image)
-          {:ok, feathered} = feather(alpha, options)
-          Operation.bandjoin([image, feathered])
+
+          with {:ok, feathered} <- feather(alpha, options) do
+            Operation.bandjoin([image, feathered])
+          end
+
+        bands(image) == 1 and (width(image) <= 2 * margin or height(image) <= 2 * margin) ->
+          message =
+            "Image of size {#{width(image)}, #{height(image)}} is too small to feather " <>
+              "with sigma #{inspect(options.sigma)}. The image must be larger than " <>
+              "{#{2 * margin}, #{2 * margin}}"
+
+          {:error, %Image.Error{message: message, reason: message}}
 
         bands(image) == 1 ->
-          margin = options.sigma * 2
-
           crop!(image, margin, margin, width(image) - 2 * margin, height(image) - 2 * margin)
           |> Operation.embed!(margin, margin, width(image), height(image))
           |> blur!(options)
@@ -3488,10 +3527,17 @@ defmodule Image do
   @spec join(image_list :: list(Vimage.t()), options :: Options.Join.join_options()) ::
           {:ok, joined_image :: Vimage.t()} | {:error, error()}
 
-  def join(image_list, options \\ []) when is_list(image_list) do
-    with {:ok, options} <- Options.Join.validate_options(hd(image_list), options) do
+  def join(image_list, options \\ [])
+
+  def join([%Vimage{} = first | _rest] = image_list, options) do
+    with {:ok, options} <- Options.Join.validate_options(first, options) do
       Operation.arrayjoin(image_list, options)
     end
+  end
+
+  def join([], _options) do
+    message = "Cannot join an empty list of images"
+    {:error, %Image.Error{message: message, reason: message}}
   end
 
   @doc """
@@ -3648,10 +3694,9 @@ defmodule Image do
     with {:ok, options} <- Options.Meme.validate_options(image, options),
          {:ok, width} <- text_box_width(image, options),
          {:ok, headline} <- text_overlay(headline, options.headline_size, width, options),
-         {:ok, text} <- text_overlay(options.text, options.text_size, width, options) do
-      image
-      |> compose!(headline, headline_location(image, headline))
-      |> compose(text, text_location(image, text))
+         {:ok, text} <- text_overlay(options.text, options.text_size, width, options),
+         {:ok, with_headline} <- compose(image, headline, headline_location(image, headline)) do
+      compose(with_headline, text, text_location(image, text))
     end
   end
 
@@ -3837,10 +3882,11 @@ defmodule Image do
 
   ### Returns
 
-  * The pathname from which the image was opened or
-    `nil` if there is no associated path. This can
-    happen in the case of a streamed image or an image
-    created from a memory buffer.
+  * The pathname from which the image was opened,
+    a synthetic name (such as `"temp-1"`) for images
+    created with `Image.new/2`, or `nil` if there is
+    no associated path. `nil` is returned for streamed
+    images and images created from a memory buffer.
 
   """
   @doc subject: "Image info"
@@ -4012,7 +4058,8 @@ defmodule Image do
 
   * `{min_value, max_value}` where `min_value` and
     `max_value` are integers for unsigned images and
-    floats for signed images.
+    floats for signed images. Float-format images have
+    a nominal range of `{0.0, 1.0}`.
 
   ### Examples
 
@@ -4029,6 +4076,7 @@ defmodule Image do
     case band_format(image) do
       {:u, bits} -> {0, 2 ** bits - 1}
       {:s, bits} -> {-1.0 * 2 ** (bits - 1), 2 ** (bits - 1) - 1.0}
+      {:f, _bits} -> {0.0, 1.0}
     end
   end
 
@@ -5328,7 +5376,7 @@ defmodule Image do
     with {:ok, to_color} <- Pixel.to_pixel(image, to_color),
          {:ok, chroma_mask} <- chroma_mask(image, options),
          {:ok, inverted} <- Operation.invert(chroma_mask),
-         {:ok, blend} = if_then_else(inverted, to_color, image, blend: blend) do
+         {:ok, blend} <- if_then_else(inverted, to_color, image, blend: blend) do
       Operation.copy(blend, xres: xres, yres: yres)
     end
   end
@@ -5728,7 +5776,7 @@ defmodule Image do
         # Flatten strips alpha and replaces it with the background; the
         # background must therefore be the opaque colour part only.
         bands = Vix.Vips.Image.bands(image) - 1
-        Vix.Vips.Operation.flatten(image, background: Enum.take(background_color, bands))
+        Operation.flatten(image, background: Enum.take(background_color, bands))
       else
         {:ok, image}
       end
@@ -5829,7 +5877,7 @@ defmodule Image do
   def dilate(image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
     radius = radius + radius * 2
     index = radius * radius - 1
-    Vix.Vips.Operation.rank(image, radius, radius, index)
+    Operation.rank(image, radius, radius, index)
   end
 
   @doc """
@@ -5923,7 +5971,7 @@ defmodule Image do
 
   def erode(image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
     radius = radius + radius * 2
-    Vix.Vips.Operation.rank(image, radius, radius, 0)
+    Operation.rank(image, radius, radius, 0)
   end
 
   @doc """
@@ -6411,12 +6459,25 @@ defmodule Image do
 
   @spec circle(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def circle(%Vimage{} = image, _options \\ []) do
+    use Image.Math
+
     width = width(image)
     height = height(image)
     size = min(width, height)
 
-    {:ok, mask} = mask(:circle, size, size)
-    Operation.bandjoin([image, mask])
+    # A non-square image is center-cropped to a square so that the
+    # mask and the image have the same dimensions.
+    with {:ok, image} <- crop(image, :center, :middle, size, size),
+         {:ok, mask} <- mask(:circle, size, size) do
+      case split_alpha(image) do
+        {base_image, nil} ->
+          Operation.bandjoin([base_image, mask])
+
+        {base_image, alpha} ->
+          alpha = if_then_else!(mask == 0, mask, alpha)
+          Operation.bandjoin([base_image, alpha])
+      end
+    end
   end
 
   @doc """
@@ -6699,15 +6760,14 @@ defmodule Image do
   def minimize_metadata(%Vimage{} = image) do
     case exif(image) do
       {:ok, exif} ->
-        image
-        |> remove_metadata!()
-        |> put_copyright_and_artist(exif)
+        with {:ok, cleaned} <- remove_metadata(image) do
+          put_copyright_and_artist(cleaned, exif)
+        end
 
-      {:error, %Image.Error{reason: "No such field"}} ->
+      # No exif data (or unreadable exif data) means there is nothing
+      # to preserve, so all metadata is removed.
+      {:error, _no_exif} ->
         remove_metadata(image)
-
-      other ->
-        other
     end
   end
 
@@ -6763,15 +6823,14 @@ defmodule Image do
 
     case exif(image) do
       {:ok, exif} ->
-        image
-        |> remove_metadata!()
-        |> put_kept_metadata(exif, keep)
+        with {:ok, cleaned} <- remove_metadata(image) do
+          put_kept_metadata(cleaned, exif, keep)
+        end
 
-      {:error, %Image.Error{reason: "No such field"}} ->
+      # No exif data (or unreadable exif data) means there is nothing
+      # to preserve, so all metadata is removed.
+      {:error, _no_exif} ->
         remove_metadata(image)
-
-      other ->
-        other
     end
   end
 
@@ -7134,7 +7193,7 @@ defmodule Image do
 
     with {:ok, gradient} <-
            linear_gradient(gradient_width, gradient_height, start, finish, base_rotation),
-         {:ok, rotated} = rotate(gradient, angle) do
+         {:ok, rotated} <- rotate(gradient, angle) do
       crop(rotated, :center, :middle, width, height)
     end
   end
@@ -7290,7 +7349,7 @@ defmodule Image do
           height :: pos_integer(),
           options :: Options.RadialGradient.radial_gradient_options()
         ) ::
-          {:ok, %Vimage{}} | {:error, error()}
+          {:ok, Vimage.t()} | {:error, error()}
 
   def radial_gradient(width, height, options \\ []) do
     use Image.Math
@@ -7366,7 +7425,7 @@ defmodule Image do
           height :: pos_integer(),
           options :: Options.RadialGradient.radial_gradient_options()
         ) ::
-          %Vimage{} | no_return()
+          Vimage.t() | no_return()
 
   def radial_gradient!(width, height, options \\ []) do
     case radial_gradient(width, height, options) do
@@ -7569,7 +7628,8 @@ defmodule Image do
   # Suggestion by @jcupitt from https://github.com/libvips/libvips/discussions/3692
   # Take just the alpha and count the number of 0 pixels.
   # Flatten the RGBA image with 0 as the background colour and count significant colours as before
-  # Subtract the number of alpha zeros from the bin at (0, 0, 0), since all the alpha 0 pixels will have gone into that bin
+  # Subtract the number of alpha zeros from the bin at (0, 0, 0), since
+  # all the alpha 0 pixels will have gone into that bin
   # Find the max position.  Thanks to @akash-akya for the assist.
 
   defp dominant_color_alpha(image, bins, count) do
@@ -7585,7 +7645,7 @@ defmodule Image do
     {:ok, histogram} =
       Image.mutate(histogram, fn img ->
         pixel = [max(black - alpha_black_pixel_count, 0) | remaining_pixels]
-        Vix.Vips.MutableOperation.draw_rect!(img, pixel, 0, 0, 1, 1)
+        Image.Vips.MutableOperation.draw_rect!(img, pixel, 0, 0, 1, 1)
       end)
 
     {:ok, unfolded} =
@@ -8461,7 +8521,7 @@ defmodule Image do
 
   def to_colorspace(%Vimage{} = image, colorspace) do
     with {:ok, colorspace} <- Interpretation.validate_interpretation(colorspace) do
-      Vix.Vips.Operation.colourspace(image, colorspace)
+      Operation.colourspace(image, colorspace)
     end
   end
 
@@ -8562,7 +8622,7 @@ defmodule Image do
           ]
           |> maybe_put_input_profile(input_profile)
 
-        Vix.Vips.Operation.icc_transform(image, to_string(output_profile), opts)
+        Operation.icc_transform(image, to_string(output_profile), opts)
     end
   end
 
@@ -8885,8 +8945,11 @@ defmodule Image do
   end
 
   def contrast(%Vimage{} = _image, contrast) do
-    {:error,
-     "Invalid contrast value. Contrast must be a float greater that 0.0. Found #{inspect(contrast)}"}
+    message =
+      "Invalid contrast value. Contrast must be a number greater than or equal to 0. " <>
+        "Found #{inspect(contrast)}"
+
+    {:error, %Image.Error{message: message, reason: message}}
   end
 
   @doc """
@@ -8924,8 +8987,8 @@ defmodule Image do
   @doc since: "0.35.0"
   @doc subject: "Basic Adjustments"
 
-  @spec contrast!(image :: Vimage.t(), contrast :: float()) :: Vimage.t() | no_return()
-  def contrast!(%Vimage{} = image, contrast) when is_multiplier(contrast) do
+  @spec contrast!(image :: Vimage.t(), contrast :: number()) :: Vimage.t() | no_return()
+  def contrast!(%Vimage{} = image, contrast) do
     case contrast(image, contrast) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -8962,7 +9025,7 @@ defmodule Image do
 
   @spec invert(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def invert(%Vimage{} = image) do
-    Vix.Vips.Operation.invert(image)
+    Operation.invert(image)
   end
 
   @doc """
@@ -9246,7 +9309,8 @@ defmodule Image do
 
     * `:each` means that each band is equalized individually
       such that each band is expanded to fill the range
-      between 5% and 95% of the available tone range. Since
+      between the #{@level_trim_percent}% and #{100 - @level_trim_percent}%
+      percentiles of the available tone range. Since
       each band is equalized separately there may be some
       color shifts detected.
 
@@ -9291,7 +9355,11 @@ defmodule Image do
 
         low = Enum.map(bands, &level_percent(&1, @level_trim_percent))
         high = Enum.map(bands, &level_percent(&1, 100 - @level_trim_percent))
-        scale = for {h, l} <- Enum.zip(high, low), do: 255.0 / (h - l)
+
+        # A constant-color band has coincident percentiles. There is
+        # nothing to expand so the band is scaled by 1.0 rather than
+        # dividing by zero.
+        scale = for {h, l} <- Enum.zip(high, low), do: if(h == l, do: 1.0, else: 255.0 / (h - l))
         scaled = (image - low) * scale
 
         Operation.cast(scaled, band_format)
@@ -9312,8 +9380,11 @@ defmodule Image do
   end
 
   def equalize(%Vimage{} = _image, bands) do
-    {:error,
-     "Invalid bands parameter. Valid parameters are :all, :each and :luminance. Found #{inspect(bands)}."}
+    message =
+      "Invalid bands parameter. Valid parameters are :all, :each and :luminance. " <>
+        "Found #{inspect(bands)}."
+
+    {:error, %Image.Error{message: message, reason: message}}
   end
 
   defp level_percent(hist, percentage) do
@@ -9365,7 +9436,8 @@ defmodule Image do
 
     * `:each` means that each band is equalized individually
       such that each band is expanded to fill the range
-      between 5% and 95% of the available tone range. Since
+      between the #{@level_trim_percent}% and #{100 - @level_trim_percent}%
+      percentiles of the available tone range. Since
       each band is equalized separately there may be some
       color shifts detected.
 
@@ -9635,10 +9707,9 @@ defmodule Image do
   end
 
   defp tone_curve(%Vimage{} = image, options) do
-    {_min, _max} = range(image)
+    {_min, max} = range(image)
 
     with {:ok, options} <- Options.ToneCurve.validate_options(options),
-         {_min, max} <- range(image),
          {:ok, lut} <-
            Operation.tonelut(
              Lb: options.black_point,
@@ -9873,7 +9944,7 @@ defmodule Image do
   @spec gamma(image :: Vimage.t(), exponent :: float()) ::
           {:ok, Vimage.t()} | {:error, error()}
   def gamma(%Vimage{} = image, exponent \\ 1.0) when is_multiplier(exponent) and exponent > 0.0 do
-    Vix.Vips.Operation.gamma(image, exponent: exponent)
+    Operation.gamma(image, exponent: exponent)
   end
 
   @doc """
@@ -9948,7 +10019,7 @@ defmodule Image do
 
     without_alpha_band(image, fn srgb ->
       with {:ok, m} <- Vix.Vips.Image.new_matrix_from_array(3, 3, matrix) do
-        Vix.Vips.Operation.recomb(srgb, m)
+        Operation.recomb(srgb, m)
       end
     end)
   end
@@ -10031,7 +10102,7 @@ defmodule Image do
 
       without_alpha_band(image, fn srgb ->
         with {:ok, m} <- Vix.Vips.Image.new_matrix_from_array(3, 3, matrix) do
-          Vix.Vips.Operation.recomb(srgb, m)
+          Operation.recomb(srgb, m)
         end
       end)
     end
@@ -10111,6 +10182,7 @@ defmodule Image do
     length_opt = Keyword.get(options, :length, 0.2)
 
     with :ok <- validate_fade_edges(edges),
+         :ok <- validate_fade_length(length_opt),
          {:ok, masks} <- build_fade_masks(image, edges, length_opt) do
       combined = combine_masks_min(masks)
       apply_fade_mask(image, combined)
@@ -10168,6 +10240,21 @@ defmodule Image do
         other -> {:halt, other}
       end
     end)
+  end
+
+  defp validate_fade_length(length) when is_float(length) and length > 0.0 and length <= 1.0,
+    do: :ok
+
+  defp validate_fade_length(length) when is_integer(length) and length > 0,
+    do: :ok
+
+  defp validate_fade_length(length) do
+    message =
+      "Invalid :length option. Must be a positive integer number of pixels or " <>
+        "a float fraction greater than 0.0 and less than or equal to 1.0. " <>
+        "Found #{inspect(length)}"
+
+    {:error, %Image.Error{message: message, reason: message}}
   end
 
   defp fade_length(edge, length, _width, height) when edge in [:top, :bottom] and is_float(length),
@@ -11431,6 +11518,8 @@ defmodule Image do
 
     @spec from_nx(tensor :: Nx.Tensor.t()) :: {:ok, Vimage.t()} | {:error, error()}
     def from_nx(tensor) when is_struct(tensor, Nx.Tensor) do
+      tensor = narrow_64bit_integers(tensor)
+
       with {:ok, tensor_format} <- Image.BandFormat.image_format_from_nx(tensor) do
         case Nx.shape(tensor) do
           {_, _, bands} when bands in 1..5 ->
@@ -11442,6 +11531,17 @@ defmodule Image do
           shape ->
             shape_error(shape)
         end
+      end
+    end
+
+    # libvips has no 64-bit integer band format. 64-bit integer tensors
+    # (Nx's default integer type) are narrowed to 32 bits so that the
+    # tensor binary matches the byte width libvips will read.
+    defp narrow_64bit_integers(tensor) do
+      case Nx.type(tensor) do
+        {:s, 64} -> Nx.as_type(tensor, {:s, 32})
+        {:u, 64} -> Nx.as_type(tensor, {:u, 32})
+        _other -> tensor
       end
     end
 
@@ -11853,7 +11953,7 @@ defmodule Image do
         when length(source) == length(destination) do
       use Image.Math
 
-      index = Vix.Vips.Operation.xyz!(Image.width(image), Image.height(image))
+      index = Operation.xyz!(Image.width(image), Image.height(image))
       couples = Enum.zip(source, destination)
 
       {deltas, weights} =
@@ -11870,9 +11970,9 @@ defmodule Image do
           {[delta | deltas], [weight | weights]}
         end)
 
-      index = index + Vix.Vips.Operation.sum!(deltas) / Vix.Vips.Operation.sum!(weights)
+      index = index + Operation.sum!(deltas) / Operation.sum!(weights)
       bicubic_interpolator = Vix.Vips.Interpolate.new!("bicubic")
-      Vix.Vips.Operation.mapim(image, index, interpolate: bicubic_interpolator)
+      Operation.mapim(image, index, interpolate: bicubic_interpolator)
     end
 
     @doc """
@@ -11970,9 +12070,10 @@ defmodule Image do
       Operation.bandjoin!([x, y])
     end
 
-    # TODO Needs to respect the image type when doing the
-    # color channel order conversion (ie when its an RGB-A etc etc)
-    # Same for interpretation (not every image is srgb!)
+    # Known limitation: the eVision interop assumes a 3-band sRGB
+    # image (enforced by validate_transferable_image/1). Supporting
+    # alpha bands and non-sRGB interpretations in the channel-order
+    # conversion is future work.
 
     if Code.ensure_loaded?(Evision) do
       @doc """
@@ -12737,7 +12838,7 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error()}
 
   def band_and(image) do
-    Vix.Vips.Operation.bandbool(image, :VIPS_OPERATION_BOOLEAN_AND)
+    Operation.bandbool(image, :VIPS_OPERATION_BOOLEAN_AND)
   end
 
   @doc """
@@ -12788,7 +12889,7 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error()}
 
   def band_or(image) do
-    Vix.Vips.Operation.bandbool(image, :VIPS_OPERATION_BOOLEAN_OR)
+    Operation.bandbool(image, :VIPS_OPERATION_BOOLEAN_OR)
   end
 
   @doc """
@@ -12839,7 +12940,7 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error()}
 
   def band_xor(image) do
-    Vix.Vips.Operation.bandbool(image, :VIPS_OPERATION_BOOLEAN_EOR)
+    Operation.bandbool(image, :VIPS_OPERATION_BOOLEAN_EOR)
   end
 
   @doc """

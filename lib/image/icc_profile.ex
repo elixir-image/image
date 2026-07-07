@@ -86,7 +86,7 @@ defmodule Image.ICCProfile do
   def known?(profile) when is_inbuilt(profile), do: true
 
   def known?(path) when is_binary(path) do
-    case Vix.Vips.Operation.profile_load(path) do
+    case Image.Vips.Operation.profile_load(path) do
       {:ok, _} -> true
       _other -> false
     end

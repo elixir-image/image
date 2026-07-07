@@ -4,61 +4,99 @@ defmodule Image.Matrix do
   # Adapted from [Nx.tensor/2](https://hexdocs.pm/nx/Nx.html#tensor/2)
 
   def image_from_matrix(list) when is_list(list) do
-    type = infer_type(list)
-    [width, height] = dimensions(list)
-
-    with {:ok, format} <- Image.BandFormat.image_format_from_nx(type),
-         {:ok, image} = Vix.Vips.Image.new_matrix_from_array(width, height, list) do
-      Vix.Vips.Operation.cast(image, format)
+    with {:ok, type} <- infer_type(list),
+         {:ok, [width, height]} <- dimensions(list),
+         {:ok, format} <- Image.BandFormat.image_format_from_nx(type),
+         {:ok, image} <- Vix.Vips.Image.new_matrix_from_array(width, height, list) do
+      Image.Vips.Operation.cast(image, format)
     end
   end
 
   ### Helpers
 
   defp dimensions(list) do
-    dimensions(list, [])
+    case do_dimensions(list, []) do
+      {:ok, [_width, _height] = dimensions} ->
+        {:ok, dimensions}
+
+      {:ok, other} ->
+        {:error,
+         matrix_error(
+           "A matrix must be a two-dimensional list of lists of numbers. " <>
+             "Found dimensions #{inspect(other)}"
+         )}
+
+      {:error, _reason} = error ->
+        error
+    end
   end
 
-  defp dimensions([], dimensions) do
-    [0 | dimensions]
+  defp do_dimensions([], dimensions) do
+    {:ok, [0 | dimensions]}
   end
 
-  defp dimensions([head | rest], parent_dimensions) when is_list(head) do
-    child_dimensions = dimensions(head, [])
+  defp do_dimensions([head | rest], parent_dimensions) when is_list(head) do
+    with {:ok, child_dimensions} <- do_dimensions(head, []) do
+      rest
+      |> Enum.reduce_while({:ok, 1}, fn list, {:ok, count} ->
+        case do_dimensions(list, []) do
+          {:ok, ^child_dimensions} ->
+            {:cont, {:ok, count + 1}}
 
-    n =
-      Enum.reduce(rest, 1, fn list, count ->
-        case dimensions(list, []) do
-          ^child_dimensions ->
-            count + 1
+          {:ok, other_dimensions} ->
+            {:halt,
+             {:error,
+              matrix_error(
+                "Cannot build image because lists have different shapes: " <>
+                  inspect(List.to_tuple(child_dimensions)) <>
+                  " at position 0 and " <>
+                  inspect(List.to_tuple(other_dimensions)) <> " at position #{count}"
+              )}}
 
-          other_dimensions ->
-            raise ArgumentError,
-                  "cannot build image because lists have different shapes, got " <>
-                    inspect(List.to_tuple(child_dimensions)) <>
-                    " at position 0 and " <>
-                    inspect(List.to_tuple(other_dimensions)) <> " at position #{count + 1}"
+          {:error, _reason} = error ->
+            {:halt, error}
         end
       end)
-
-    child_dimensions ++ [n | parent_dimensions]
+      |> case do
+        {:ok, count} -> {:ok, child_dimensions ++ [count | parent_dimensions]}
+        {:error, _reason} = error -> error
+      end
+    end
   end
 
-  defp dimensions(list, dimensions) do
-    [length(list) | dimensions]
+  defp do_dimensions(list, dimensions) when is_list(list) do
+    {:ok, [length(list) | dimensions]}
   end
 
-  defp infer_type([head | tail]) when is_list(tail) do
-    Enum.reduce(tail, infer_type(head), &merge(infer_type(&1), &2))
+  defp do_dimensions(_scalar, dimensions) do
+    {:ok, dimensions}
+  end
+
+  defp infer_type(list) when is_list(list) do
+    list
+    |> Enum.reduce_while({:ok, nil}, fn element, {:ok, acc} ->
+      case infer_type(element) do
+        {:ok, type} when is_nil(acc) -> {:cont, {:ok, type}}
+        {:ok, type} -> {:cont, {:ok, merge(type, acc)}}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, nil} -> {:error, matrix_error("Cannot infer the type of an empty matrix")}
+      other -> other
+    end
   end
 
   defp infer_type(number) when is_number(number) do
-    infer(number)
+    {:ok, infer(number)}
   end
 
   defp infer_type(value) do
-    raise ArgumentError,
-          "invalid value given to Image.Matrix.binary_from_list/1, got: #{inspect(value)}"
+    {:error, matrix_error("Invalid matrix value: #{inspect(value)}")}
+  end
+
+  defp matrix_error(message) do
+    %Image.Error{message: message, reason: message}
   end
 
   defp infer(value) when is_integer(value), do: {:s, 64}

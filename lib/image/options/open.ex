@@ -135,7 +135,8 @@ defmodule Image.Options.Open do
     {:cont, options}
   end
 
-  def validate_option({:pages, n}, options) when is_number(n) and n >= -1 and n <= 100_000 do
+  def validate_option({:pages, n}, options)
+      when is_integer(n) and (n == -1 or n in 1..100_000) do
     options =
       options
       |> Keyword.delete(:pages)
@@ -181,6 +182,10 @@ defmodule Image.Options.Open do
   end
 
   defp invalid_autorotate_option(_option) do
-    "Autorotate is no longer a supported option. Call `Image.autorotate/1` after opening the image instead."
+    message =
+      "Autorotate is no longer a supported option. " <>
+        "Call `Image.autorotate/1` after opening the image instead."
+
+    %Image.Error{message: message, reason: message}
   end
 end

@@ -27,7 +27,7 @@ defmodule Image.BandFormat do
     {:u, 32} => :VIPS_FORMAT_UINT,
     {:s, 32} => :VIPS_FORMAT_INT,
     {:u, 64} => :VIPS_FORMAT_UINT,
-    {:s, 64} => :VIPS_FORMAT_UINT,
+    {:s, 64} => :VIPS_FORMAT_INT,
     {:f, 32} => :VIPS_FORMAT_FLOAT,
     {:f, 64} => :VIPS_FORMAT_DOUBLE
   }
@@ -40,7 +40,11 @@ defmodule Image.BandFormat do
 
   @band_format_map Map.merge(@long_format_map, @short_format_map)
 
+  # The 64-bit integer entries are aliases for the 32-bit libvips
+  # formats, so they are excluded when inverting: the inverse of a
+  # libvips format is its true width.
   @inverse_band_format_map @long_format_map
+                           |> Enum.reject(fn {code, _enum} -> code in [{:u, 64}, {:s, 64}] end)
                            |> Enum.map(fn {code, enum} -> {enum, code} end)
                            |> Map.new()
 

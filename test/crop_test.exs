@@ -52,10 +52,12 @@ defmodule Image.Crop.Test do
   end
 
   test "Crop using invalid percentages", %{image: image} do
-    assert {:error, "operation build:" <> _other} =
+    # libvips errors are wrapped in Image.Error with the raw libvips
+    # message preserved as the reason.
+    assert {:error, %Image.Error{reason: "operation build:" <> _, operation: :extract_area}} =
              Image.crop(image, 0.5, 0.5, 0.6, 0.5)
 
-    assert {:error, "operation build:" <> _other} =
+    assert {:error, %Image.Error{reason: "operation build:" <> _, operation: :extract_area}} =
              Image.crop(image, 0.5, 0.5, 0.5, 0.6)
 
     assert {:error, %Image.Error{message: "width must be a percentage" <> _}} =

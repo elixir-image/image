@@ -5,7 +5,7 @@ defmodule Image.Text do
   """
 
   alias Vix.Vips.Image, as: Vimage
-  alias Vix.Vips.Operation
+  alias Image.Vips.Operation
   alias Image.Options
 
   @doc """

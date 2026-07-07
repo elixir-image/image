@@ -10,7 +10,7 @@ defmodule Image.Exif.Tag do
   # unsigned byte, size = 1
   @spec value(non_neg_integer(), non_neg_integer(), value(), context()) :: any()
   def value(1, count, value, context),
-    do: decode_numeric(value, count, 2, context)
+    do: decode_numeric(value, count, 1, context)
 
   # ascii string, size = 1
   def value(2, count, value, {exif, _offset, ru}) do
@@ -19,10 +19,12 @@ defmodule Image.Exif.Tag do
 
     cond do
       count > 4 ->
-        # + offset
         offset = ru.(value)
-        <<_::binary-size(^offset), string::binary-size(^length), _::binary>> = exif
-        string
+
+        case exif do
+          <<_::binary-size(^offset), string::binary-size(^length), _::binary>> -> string
+          _malformed -> nil
+        end
 
       count == 0 ->
         ""
@@ -67,8 +69,10 @@ defmodule Image.Exif.Tag do
 
     values =
       if length > 4 do
+        offset = ru.(value)
+
         case exif do
-          <<_::binary-size(^value), data::binary-size(^length), _::binary>> -> data
+          <<_::binary-size(^offset), data::binary-size(^length), _::binary>> -> data
           # probably a maker_note or user_comment
           _ -> nil
         end

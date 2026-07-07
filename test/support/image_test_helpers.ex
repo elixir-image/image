@@ -1,4 +1,6 @@
 defmodule Image.TestSupport do
+  @moduledoc false
+
   import ExUnit.Assertions
   alias Vix.Vips.Image, as: Vimage
 

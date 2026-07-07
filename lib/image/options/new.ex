@@ -103,7 +103,7 @@ defmodule Image.Options.New do
   # already produced a pixel for a particular interpretation
   # (Image.if_then_else, Image.replace_color, k-means, etc).
   defp validate_option({:color, color}, options)
-       when is_list(color) and length(color) >= 1 and length(color) <= 5 do
+       when is_list(color) and color != [] and length(color) <= 5 do
     if Enum.all?(color, &is_number/1) do
       {:cont, Keyword.put(options, :color, color)}
     else

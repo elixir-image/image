@@ -141,9 +141,9 @@ if Code.ensure_loaded?(Scholar.Cluster.KMeans) and Code.ensure_loaded?(Nx) do
     @spec extract(image :: Vimage.t(), options :: Keyword.t()) ::
             {:ok, [Color.SRGB.t()]} | {:error, term()}
     def extract(%Vimage{} = image, options \\ []) do
-      options = put_defaults(options)
-
-      with {:ok, sampled} <- prepare_pixels(image, options),
+      with {:ok, options} <- validate_options(options),
+           {:ok, sampled} <- prepare_pixels(image, options),
+           {:ok, options} <- clamp_k_to_pixel_count(options, sampled.total_mass),
            clusters <- cluster(sampled, options),
            survivors <- post_process(clusters, sampled.total_mass, options) do
         swatches =
@@ -188,6 +188,57 @@ if Code.ensure_loaded?(Scholar.Cluster.KMeans) and Code.ensure_loaded?(Nx) do
       |> Keyword.put_new(:phantom_max_chroma, @default_phantom_max_chroma)
       |> Keyword.put_new(:rep_chroma_threshold, @default_rep_chroma_threshold)
       |> Keyword.put_new(:sort, @default_sort)
+    end
+
+    @positive_integer_options [:k, :final, :longest_dim, :max_pixels]
+
+    defp validate_options(options) do
+      options = put_defaults(options)
+
+      invalid =
+        Enum.find(@positive_integer_options, fn key ->
+          value = options[key]
+          not (is_integer(value) and value >= 1)
+        end)
+
+      sort = options[:sort]
+
+      cond do
+        invalid ->
+          {:error,
+           palette_error(
+             "#{inspect(invalid)} must be a positive integer. Found #{inspect(options[invalid])}"
+           )}
+
+        not (sort in [false, nil] or is_atom(sort)) ->
+          {:error,
+           palette_error(":sort must be an atom sort strategy or false. Found #{inspect(sort)}")}
+
+        true ->
+          {:ok, options}
+      end
+    end
+
+    # K-means requires at least as many samples as clusters. An image
+    # with fewer opaque pixels than :k has its cluster count clamped;
+    # an image with no opaque pixels at all cannot produce a palette.
+    defp clamp_k_to_pixel_count(_options, 0) do
+      {:error, palette_error("Image has no opaque pixels from which to extract a palette")}
+    end
+
+    defp clamp_k_to_pixel_count(options, total_mass) do
+      k = min(options[:k], total_mass)
+
+      options =
+        options
+        |> Keyword.put(:k, k)
+        |> Keyword.put(:final, min(options[:final], k))
+
+      {:ok, options}
+    end
+
+    defp palette_error(message) do
+      %Image.Error{message: message, reason: message}
     end
 
     defp rep_options(options) do
@@ -244,25 +295,24 @@ if Code.ensure_loaded?(Scholar.Cluster.KMeans) and Code.ensure_loaded?(Nx) do
 
         flat = Nx.reshape(tensor, {:auto, bands})
 
-        rgb =
-          case bands do
-            3 ->
-              flat
+        case bands do
+          4 ->
+            alpha = Nx.slice_along_axis(flat, 3, 1, axis: 1)
+            colour = Nx.slice_along_axis(flat, 0, 3, axis: 1)
+            keep = Nx.greater_equal(alpha, 128) |> Nx.reshape({:auto})
+            n_keep = Nx.sum(keep) |> Nx.to_number()
 
-            4 ->
-              alpha = Nx.slice_along_axis(flat, 3, 1, axis: 1)
-              colour = Nx.slice_along_axis(flat, 0, 3, axis: 1)
-              keep = Nx.greater_equal(alpha, 128) |> Nx.reshape({:auto})
+            if n_keep == 0 do
+              {:error, palette_error("Image has no opaque pixels from which to extract a palette")}
+            else
               indices = Nx.argsort(keep, direction: :desc)
-              n_keep = Nx.sum(keep) |> Nx.to_number()
               kept_rows = Nx.take(colour, Nx.slice_along_axis(indices, 0, n_keep, axis: 0))
-              kept_rows
+              {:ok, ensure_u8(kept_rows)}
+            end
 
-            _ ->
-              flat
-          end
-
-        {:ok, ensure_u8(rgb)}
+          _other ->
+            {:ok, ensure_u8(flat)}
+        end
       end
     end
 
@@ -344,8 +394,16 @@ if Code.ensure_loaded?(Scholar.Cluster.KMeans) and Code.ensure_loaded?(Nx) do
       counts =
         Enum.reduce(assignments, %{}, fn idx, acc -> Map.update(acc, idx, 1, &(&1 + 1)) end)
 
+      # Empty clusters (which K-means can produce when the cluster count
+      # approaches the number of distinct samples) have zero mass and
+      # NaN centroids, so they are rejected before their representations
+      # are computed.
       centroids
       |> Enum.with_index()
+      |> Enum.reject(fn {{l, a, b}, idx} ->
+        Map.get(counts, idx, 0) == 0 or
+          not (is_number(l) and is_number(a) and is_number(b))
+      end)
       |> Enum.map(fn {{l, a, b}, idx} ->
         mass = Map.get(counts, idx, 0) * 1.0
         oklab = %Color.Oklab{l: l, a: a, b: b}
@@ -356,7 +414,6 @@ if Code.ensure_loaded?(Scholar.Cluster.KMeans) and Code.ensure_loaded?(Nx) do
 
         %{centroid: {l, a, b}, mass: mass, members: [member]}
       end)
-      |> Enum.reject(fn cluster -> cluster.mass == 0.0 end)
     end
 
     # Convert centroid → SRGB via existing :color paths. Falls

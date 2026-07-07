@@ -34,9 +34,9 @@ defmodule Image.Blurhash.Encoder do
 
     # DC
     normalization_factor =
-      unless component_x == 0 and component_y == 0,
-        do: 2,
-        else: 1
+      if component_x == 0 and component_y == 0,
+        do: 1,
+        else: 2
 
     basis =
       normalization_factor * :math.cos(:math.pi() * pixel_x * component_x / width) *

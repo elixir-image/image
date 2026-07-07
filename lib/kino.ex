@@ -11,7 +11,7 @@ if match?({:module, _module}, Code.ensure_compiled(Kino)) do
 
     """
 
-    alias Vix.Vips.Operation
+    alias Image.Vips.Operation
     alias Vix.Vips.Image, as: Vimage
 
     @default_max_height 200

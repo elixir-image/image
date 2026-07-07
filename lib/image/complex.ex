@@ -3,7 +3,7 @@ defmodule Image.Complex do
   # See http://libvips.blogspot.com/2015/11/fancy-transforms.html
 
   alias Vix.Vips.Image, as: Vimage
-  alias Vix.Vips.Operation
+  alias Image.Vips.Operation
 
   defguard complex(format) when format in [:VIPS_FORMAT_COMPLEX, :VIPS_FORMAT_DPCOMPLEX]
   defguard float_format(format) when format in [:VIPS_FORMAT_FLOAT, :VIPS_FORMAT_DOUBLE]

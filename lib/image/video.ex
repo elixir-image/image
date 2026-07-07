@@ -363,7 +363,7 @@ if Image.xav_configured?() do
     def stream!(%__MODULE__{} = video, options) do
       start_frame = start_frame(video, options)
       finish_frame = finish_frame(video, options)
-      step = Keyword.get(options, :step, 1)
+      step = step(options)
 
       Stream.resource(
         fn -> {video, start_frame, finish_frame, step, true} end,
@@ -373,17 +373,49 @@ if Image.xav_configured?() do
     end
 
     defp start_frame(video, options) do
+      millisecond = Keyword.get(options, :millisecond)
+      frame = Keyword.get(options, :frame)
+
       cond do
-        ms = Keyword.get(options, :millisecond) -> millisecond_to_frame(video, ms)
-        frame = Keyword.get(options, :frame) -> frame
-        true -> Keyword.get(options, :start, 0)
+        millisecond && frame ->
+          raise Image.Error,
+                "Only one of :frame and :millisecond may be supplied. " <>
+                  "Found frame: #{inspect(frame)} and millisecond: #{inspect(millisecond)}"
+
+        millisecond ->
+          millisecond_to_frame(video, millisecond)
+
+        frame ->
+          frame
+
+        true ->
+          Keyword.get(options, :start, 0)
       end
     end
 
     defp finish_frame(video, options) do
       case Keyword.get(options, :finish, -1) do
-        -1 -> video.frame_count - 1
-        n when is_integer(n) and n >= 0 -> n
+        -1 ->
+          video.frame_count - 1
+
+        n when is_integer(n) and n >= 0 ->
+          n
+
+        other ->
+          raise Image.Error,
+                "Invalid :finish option. Must be -1 or a non-negative integer. " <>
+                  "Found #{inspect(other)}"
+      end
+    end
+
+    defp step(options) do
+      case Keyword.get(options, :step, 1) do
+        n when is_integer(n) and n >= 1 ->
+          n
+
+        other ->
+          raise Image.Error,
+                "Invalid :step option. Must be a positive integer. Found #{inspect(other)}"
       end
     end
 
@@ -406,8 +438,10 @@ if Image.xav_configured?() do
     defp emit_current_frame(video, current, finish, step) do
       case Xav.Reader.next_frame(video.reader) do
         {:ok, frame} ->
-          {:ok, image} = frame_to_image(frame)
-          {[image], {video, current + step, finish, step, false}}
+          case frame_to_image(frame) do
+            {:ok, image} -> {[image], {video, current + step, finish, step, false}}
+            {:error, reason} -> raise Image.Error, reason
+          end
 
         {:error, :eof} ->
           {:halt, video}
@@ -631,9 +665,7 @@ if Image.xav_configured?() do
       case Vix.Vips.Image.new_from_binary(data, width, height, bands, :VIPS_FORMAT_UCHAR) do
         {:ok, image} ->
           if format == :bgr24 do
-            with {:ok, swapped} <- Vix.Vips.Operation.bandjoin([image[2], image[1], image[0]]) do
-              {:ok, swapped}
-            end
+            Image.Vips.Operation.bandjoin([image[2], image[1], image[0]])
           else
             {:ok, image}
           end

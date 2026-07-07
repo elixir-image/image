@@ -505,16 +505,19 @@ defmodule Image.Options.Write do
     Version.compare(version, "8.15.0") != :lt
   end
 
-  defp image_type_from("", "") do
-    {:error,
-     %Image.Error{message: "Cannot determine image type", reason: "Cannot determine image type"}}
-  end
-
-  defp image_type_from("", suffix) do
+  defp image_type_from("", suffix) when is_binary(suffix) and suffix != "" do
     {:ok, String.downcase(suffix)}
   end
 
-  defp image_type_from(extname, _suffix) do
+  defp image_type_from(extname, _suffix) when is_binary(extname) and extname != "" do
     {:ok, String.downcase(extname)}
+  end
+
+  defp image_type_from(_extname, _suffix) do
+    message =
+      "Cannot determine the image type. The path has no file extension " <>
+        "and no :suffix option was provided"
+
+    {:error, %Image.Error{message: message, reason: message}}
   end
 end

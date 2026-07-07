@@ -1,6 +1,6 @@
 defmodule Image.BackgroundColor do
   @moduledoc """
-  Resolves a `Image.Pixel.t()` / `:average` value into a concrete pixel in the
+  Resolves an `Image.Pixel.t()` / `:average` value into a concrete pixel in the
   image's colorspace.
 
   A background color specification is either the atom `:average` (the average

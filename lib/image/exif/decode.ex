@@ -125,7 +125,13 @@ defmodule Image.Exif.Decode do
 
   # Value decodes
 
-  @spec date_time(binary()) :: NaiveDateTime.t()
+  # A nil value arrives when the tag's value offset was malformed
+  # (Image.Exif.Tag decodes such tags to nil).
+  @spec date_time(binary() | nil) :: NaiveDateTime.t() | binary() | nil
+  defp date_time(nil) do
+    nil
+  end
+
   defp date_time(date_time) do
     # Some devices produce datetimes with appended null bytes.
     # We trim those before decoding.
@@ -143,13 +149,16 @@ defmodule Image.Exif.Decode do
     end
   end
 
-  def trim(value) do
-    cond do
-      <<0::size(byte_size(value) * 8)>> == value ->
-        nil
+  # A nil value arrives when the tag's value offset was malformed.
+  def trim(nil) do
+    nil
+  end
 
-      true ->
-        String.trim(value)
+  def trim(value) do
+    if <<0::size(byte_size(value) * 8)>> == value do
+      nil
+    else
+      String.trim(value)
     end
   end
 
@@ -202,9 +211,11 @@ defmodule Image.Exif.Decode do
 
   @spec component_configuration([non_neg_integer()]) :: binary()
   defp component_configuration(components) when is_list(components) do
-    components
-    |> Enum.map(&elem(@comp_conf, &1))
-    |> Enum.join(",")
+    if Enum.all?(components, &(is_integer(&1) and &1 >= 0 and &1 < tuple_size(@comp_conf))) do
+      Enum.map_join(components, ",", &elem(@comp_conf, &1))
+    else
+      "Unknown #{inspect(components)}"
+    end
   end
 
   defp component_configuration(components) do
@@ -362,5 +373,10 @@ defmodule Image.Exif.Decode do
 
   defp version(<<major1, major2, minor1, minor2>>) do
     <<major1, major2, ?., minor1, minor2>>
+  end
+
+  # Malformed or missing version values from a corrupt EXIF payload.
+  defp version(other) do
+    "Unknown #{inspect(other)}"
   end
 end

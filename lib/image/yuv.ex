@@ -36,7 +36,7 @@ defmodule Image.YUV do
   #  https://wiki.multimedia.cx/index.php/YUV4MPEG2#Frame_data
 
   alias Vix.Vips.Image, as: Vimage
-  alias Vix.Vips.Operation
+  alias Image.Vips.Operation
 
   @bt601_to_rgb [
     [1.0, 0.0, 1.402],
@@ -206,7 +206,7 @@ defmodule Image.YUV do
 
   def new_from_binary(binary, width, height, encoding, colorspace \\ :bt601)
       when encoding in @valid_encodings and colorspace in @valid_colorspace do
-    with {:ok, decoded} = decode(binary, width, height, encoding) do
+    with {:ok, decoded} <- decode(binary, width, height, encoding) do
       to_rgb(decoded, width, height, encoding, colorspace)
     end
   end
@@ -452,30 +452,30 @@ defmodule Image.YUV do
   @doc since: "0.41.0"
 
   @spec encode(image :: Vimage.t(), encoding :: yuv_encoding()) ::
-          {:ok, yuv_list()} | {:errpr, Image.error()}
+          {:ok, yuv_list()} | {:error, Image.error()}
 
   def encode(%Vimage{} = image, :C444) do
-    with {:ok, y} = Vimage.write_to_binary(image[0]),
-         {:ok, u} = Vimage.write_to_binary(image[1]),
-         {:ok, v} = Vimage.write_to_binary(image[2]) do
+    with {:ok, y} <- Vimage.write_to_binary(image[0]),
+         {:ok, u} <- Vimage.write_to_binary(image[1]),
+         {:ok, v} <- Vimage.write_to_binary(image[2]) do
       {:ok, [y, u, v]}
     end
   end
 
   def encode(%Vimage{} = image, :C422) do
-    with {:ok, subsampled} <- Operation.subsample(image, 2, 1) do
-      {:ok, y} = Vimage.write_to_binary(image[0])
-      {:ok, u} = Vimage.write_to_binary(subsampled[1])
-      {:ok, v} = Vimage.write_to_binary(subsampled[2])
+    with {:ok, subsampled} <- Operation.subsample(image, 2, 1),
+         {:ok, y} <- Vimage.write_to_binary(image[0]),
+         {:ok, u} <- Vimage.write_to_binary(subsampled[1]),
+         {:ok, v} <- Vimage.write_to_binary(subsampled[2]) do
       {:ok, [y, u, v]}
     end
   end
 
   def encode(%Vimage{} = image, :C420) do
-    with {:ok, subsampled} <- Operation.subsample(image, 2, 2) do
-      {:ok, y} = Vimage.write_to_binary(image[0])
-      {:ok, u} = Vimage.write_to_binary(subsampled[1])
-      {:ok, v} = Vimage.write_to_binary(subsampled[2])
+    with {:ok, subsampled} <- Operation.subsample(image, 2, 2),
+         {:ok, y} <- Vimage.write_to_binary(image[0]),
+         {:ok, u} <- Vimage.write_to_binary(subsampled[1]),
+         {:ok, v} <- Vimage.write_to_binary(subsampled[2]) do
       {:ok, [y, u, v]}
     end
   end
@@ -522,7 +522,7 @@ defmodule Image.YUV do
 
   def decode(binary, width, height, :C422) do
     y_bytes = width * height
-    uv_bytes = div(y_bytes, 2)
+    uv_bytes = div(width, 2) * height
 
     case binary do
       <<y::bytes-size(^y_bytes), u::bytes-size(^uv_bytes), v::bytes-size(^uv_bytes)>> ->
@@ -539,7 +539,7 @@ defmodule Image.YUV do
 
   def decode(binary, width, height, :C420) do
     y_bytes = width * height
-    uv_bytes = div(y_bytes, 4)
+    uv_bytes = div(width, 2) * div(height, 2)
 
     case binary do
       <<y::bytes-size(^y_bytes), u::bytes-size(^uv_bytes), v::bytes-size(^uv_bytes)>> ->
@@ -563,11 +563,18 @@ defmodule Image.YUV do
   end
 
   defp new_scaled_image(data, width, height, x_scale, y_scale) do
-    width = round(width / x_scale)
-    height = round(height / y_scale)
+    # Subsampled planes have floor-divided dimensions (matching
+    # Vix.Vips.Operation.subsample/3), so for odd dimensions the scale
+    # back to the full size is not exactly x_scale/y_scale.
+    plane_width = max(div(width, round(x_scale)), 1)
+    plane_height = max(div(height, round(y_scale)), 1)
 
-    with {:ok, image} <- Vimage.new_from_binary(data, width, height, 1, :VIPS_FORMAT_UCHAR) do
-      Operation.resize(image, x_scale, vscale: y_scale, kernel: :VIPS_KERNEL_LINEAR)
+    with {:ok, image} <-
+           Vimage.new_from_binary(data, plane_width, plane_height, 1, :VIPS_FORMAT_UCHAR) do
+      Operation.resize(image, width / plane_width,
+        vscale: height / plane_height,
+        kernel: :VIPS_KERNEL_LINEAR
+      )
     end
   end
 end

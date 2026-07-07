@@ -15,11 +15,30 @@ defmodule Image.MixProject do
       docs: docs(),
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
-      deps: deps(),
       description: description(),
       package: package(),
       aliases: aliases(),
-      elixirc_paths: elixirc_paths(Mix.env()),
+      test_coverage: [
+        summary: [threshold: 90],
+        # Generated one-line passthroughs over Vix, Livebook rendering
+        # glue, protocol implementations and test support are excluded
+        # from coverage measurement: they contain no library logic.
+        ignore_modules: [
+          Image.Vips.Operation,
+          Image.Vips.MutableOperation,
+          Image.Kino,
+          Image.TestSupport,
+          String.Chars.Image.Exif.Gps,
+          String.Chars.Image.Exif.Thumbnail,
+          # Dialyzer-only support module under mix/.
+          ForDialyzer,
+          # Apparently-unused internal modules, pending a removal
+          # decision before 1.0.
+          Image.Nx,
+          Image.Exif.ReadError,
+          Image.Exif.FieldNames
+        ]
+      ],
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
         plt_add_apps: ~w(mix nx plug evision ex_unit)a

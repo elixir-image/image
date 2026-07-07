@@ -51,7 +51,7 @@ defmodule Image.Blurhash.Decoder do
     try do
       # We start with 1 because {0, 0} is the DC
       {ac_values, rest} =
-        Enum.map_reduce(1..size, encoded_ac, fn index, rest ->
+        Enum.map_reduce(1..size//1, encoded_ac, fn index, rest ->
           case Base83.decode_number(rest, 2) do
             {:ok, value, rest} ->
               # add matrix position with the color since we will need it for

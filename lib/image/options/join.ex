@@ -12,7 +12,7 @@ defmodule Image.Options.Join do
   @type join_option ::
           {:vertical_spacing, non_neg_integer()}
           | {:horizontal_spacing, non_neg_integer()}
-          | {:vertical_align, :top | :center | :bottom}
+          | {:vertical_align, :top | :middle | :bottom}
           | {:horizontal_align, :left | :center | :right}
           | {:background_color, Pixel.t() | nil}
           | {:shim, non_neg_integer()}
@@ -51,6 +51,7 @@ defmodule Image.Options.Join do
   @alignment_map %{
     bottom: :VIPS_ALIGN_LOW,
     middle: :VIPS_ALIGN_CENTRE,
+    center: :VIPS_ALIGN_CENTRE,
     top: :VIPS_ALIGN_HIGH,
     left: :VIPS_ALIGN_LOW,
     centre: :VIPS_ALIGN_CENTRE,
@@ -96,13 +97,13 @@ defmodule Image.Options.Join do
   end
 
   defp validate_option({:vertical_align, vertical_align}, _image, options)
-       when vertical_align in [:bottom, :middle, :high] do
+       when vertical_align in [:bottom, :middle, :center, :top] do
     {:cont,
      replace_option(options, :vertical_align, :valign, Map.get(@alignment_map, vertical_align))}
   end
 
   defp validate_option({:horizontal_align, horizontal_align}, _image, options)
-       when horizontal_align in [:left, :centre, :right] do
+       when horizontal_align in [:left, :centre, :center, :right] do
     {:cont,
      replace_option(options, :horizontal_align, :halign, Map.get(@alignment_map, horizontal_align))}
   end

@@ -12,9 +12,9 @@ defmodule Image.CombineMode do
     {:ok, mode}
   end
 
-  def validate(:set), do: {:ok, VIPS_COMBINE_MODE_SET}
-  def validate(:add), do: {:ok, VIPS_COMBINE_MODE_ADD}
-  def validate(:last), do: {:ok, VIPS_COMBINE_MODE_LAST}
+  def validate(:set), do: {:ok, :VIPS_COMBINE_MODE_SET}
+  def validate(:add), do: {:ok, :VIPS_COMBINE_MODE_ADD}
+  def validate(:last), do: {:ok, :VIPS_COMBINE_MODE_LAST}
 
   def validate(other) do
     {:error,

@@ -87,7 +87,7 @@ defmodule Image.Error do
   def exception(opts) when is_list(opts) do
     fields = Keyword.take(opts, [:message, :reason, :operation, :path, :value])
     struct = struct!(__MODULE__, fields)
-    %{struct | message: struct.message || format_message(struct)}
+    %{struct | message: Keyword.get(opts, :message) || format_message(struct)}
   end
 
   # ---- raise Image.Error, {:enoent, path} ---------------------------------
@@ -185,7 +185,7 @@ defmodule Image.Error do
   def wrap(%__MODULE__{} = error, context) do
     Enum.reduce(context, error, fn
       {_key, nil}, acc -> acc
-      {key, value}, acc when key in [:operation, :path, :value] -> Map.put(acc, key, value)
+      {key, value}, acc when key in [:reason, :operation, :path, :value] -> Map.put(acc, key, value)
       _, acc -> acc
     end)
   end
@@ -208,7 +208,7 @@ defmodule Image.Error do
     value = Keyword.get(context, :value)
 
     %__MODULE__{
-      reason: raw,
+      reason: Keyword.get(context, :reason, raw),
       operation: operation,
       path: path,
       value: value,
@@ -222,7 +222,7 @@ defmodule Image.Error do
     value = Keyword.get(context, :value)
 
     %__MODULE__{
-      reason: raw,
+      reason: Keyword.get(context, :reason, raw),
       operation: operation,
       path: path,
       value: value,
@@ -232,7 +232,7 @@ defmodule Image.Error do
 
   def wrap({reason_atom, _} = raw, context) when is_atom(reason_atom) do
     %__MODULE__{
-      reason: raw,
+      reason: Keyword.get(context, :reason, raw),
       operation: Keyword.get(context, :operation),
       path: Keyword.get(context, :path),
       value: Keyword.get(context, :value),
@@ -242,7 +242,7 @@ defmodule Image.Error do
 
   def wrap(other, context) do
     %__MODULE__{
-      reason: other,
+      reason: Keyword.get(context, :reason, other),
       operation: Keyword.get(context, :operation),
       path: Keyword.get(context, :path),
       value: Keyword.get(context, :value),

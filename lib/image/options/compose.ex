@@ -81,7 +81,7 @@ defmodule Image.Options.Compose do
 
   def get_x(image, prev_x, prev_width, x, dx, baseline) when is_function(dx, 6) do
     dx = dx.(image, prev_x, prev_width, x, dx, baseline)
-    get_y(image, prev_x, prev_width, x, dx, baseline)
+    get_x(image, prev_x, prev_width, x, dx, baseline)
   end
 
   def get_x(_image, _prev_x, _prev_width, x, dx, _) when is_integer(x) and is_integer(dx) do

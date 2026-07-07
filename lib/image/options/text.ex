@@ -245,7 +245,7 @@ defmodule Image.Options.Text do
   end
 
   defp validate_option({:align, align}, options)
-       when align in [:VIPS_ALIGN_LOW, :VIPS_ALIGN_LOW, :VIPS_ALIGN_CENTRE] do
+       when align in [:VIPS_ALIGN_LOW, :VIPS_ALIGN_CENTRE, :VIPS_ALIGN_HIGH] do
     {:cont, options}
   end
 
@@ -261,25 +261,13 @@ defmodule Image.Options.Text do
   @doc false
   def validate_color(option, color, options) do
     cond do
-      (is_binary(color) or is_atom(color)) && match?({:ok, _}, Color.CSS.Names.lookup(color)) ->
-        {:cont, options}
-
-      match?(<<"#", _rest::bytes-6>>, color) ->
+      named_or_hex_color?(color) ->
         {:cont, options}
 
       match?([_r, _g, _b], color) ->
-        [r, g, b] = color
+        {:cont, Keyword.put(options, option, hex_from_rgb(color))}
 
-        hex_color =
-          ["#", convert_color(r), convert_color(g), convert_color(b)]
-          |> :erlang.iolist_to_binary()
-
-        {:cont, Keyword.put(options, option, hex_color)}
-
-      color in [:none, "none"] ->
-        {:cont, Keyword.put(options, option, :transparent)}
-
-      color in [:transparent, "transparent"] ->
+      color in [:none, "none", :transparent, "transparent"] ->
         {:cont, Keyword.put(options, option, :transparent)}
 
       (is_binary(color) or is_atom(color)) && String.downcase(to_string(color)) in ["none", ""] ->
@@ -288,6 +276,15 @@ defmodule Image.Options.Text do
       true ->
         {:halt, {:error, invalid_option(option, color)}}
     end
+  end
+
+  defp named_or_hex_color?(color) do
+    ((is_binary(color) or is_atom(color)) && match?({:ok, _}, Color.CSS.Names.lookup(color))) ||
+      match?(<<"#", _rest::bytes-6>>, color)
+  end
+
+  defp hex_from_rgb([r, g, b]) do
+    :erlang.iolist_to_binary(["#", convert_color(r), convert_color(g), convert_color(b)])
   end
 
   @doc false
@@ -311,18 +308,20 @@ defmodule Image.Options.Text do
 
   @doc false
   def invalid_option(option) do
-    "Invalid option or option value: #{inspect(option)}"
+    message = "Invalid option or option value: #{inspect(option)}"
+    %Image.Error{reason: :invalid_option, value: option, message: message}
   end
 
   @doc false
   def invalid_option(option, value) do
-    "Invalid option or option value: #{option}: #{inspect(value)}"
+    message = "Invalid option or option value: #{option}: #{inspect(value)}"
+    %Image.Error{reason: :invalid_option, value: value, message: message}
   end
 
   defp ensure_background_color_if_transparent_text(options) do
     case options do
-      %{text_fill_color: :transparent, background_color: :none} ->
-        Map.put(options, :background_color, "black")
+      %{text_fill_color: :transparent, background_fill_color: :none} ->
+        Map.put(options, :background_fill_color, "black")
 
       _other ->
         options

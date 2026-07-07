@@ -22,7 +22,6 @@ defmodule Image.Options.Meme do
             | {:outline_color, Pixel.t()}
             | {:justify, boolean()}
             | {:transform, text_transform()}
-            | {:width, pos_integer()}
           ]
           | map()
 
@@ -135,7 +134,8 @@ defmodule Image.Options.Meme do
   end
 
   def no_such_font_file(file) do
-    "Font file #{inspect(file)} could not be found"
+    message = "Font file #{inspect(file)} could not be found"
+    %Image.Error{message: message, reason: message, path: file}
   end
 
   defp default_options(image) do

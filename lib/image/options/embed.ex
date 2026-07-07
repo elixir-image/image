@@ -40,6 +40,7 @@ defmodule Image.Options.Embed do
 
   """
   def validate_options(image, width, height, options) when is_list(options) do
+    user_supplied_keys = Keyword.keys(options)
     options = Keyword.merge(default_options(), options)
 
     case Enum.reduce_while(options, options, &validate_option(&1, image, width, height, &2)) do
@@ -47,13 +48,9 @@ defmodule Image.Options.Embed do
         {:error, value}
 
       options ->
-        options =
-          options
-          |> Map.new()
-          |> adjust_transparency(Image.bands(image), Image.has_alpha?(image))
-          |> adjust_extend_mode()
-
-        {:ok, options}
+        options
+        |> Map.new()
+        |> adjust_background(image, user_supplied_keys)
     end
   end
 
@@ -158,59 +155,89 @@ defmodule Image.Options.Embed do
     }
   end
 
-  defp adjust_transparency(%{extend_mode: :VIPS_EXTEND_BLACK} = options, _bands, true = _has_alpha?) do
-    options
-    |> Map.put(:extend_mode, :VIPS_EXTEND_BACKGROUND)
-    |> Map.put(:background_color, [0, 0, 0, options.background_transparency])
-    |> Map.delete(:background_transparency)
-  end
+  @geometric_extend_modes [:VIPS_EXTEND_COPY, :VIPS_EXTEND_REPEAT, :VIPS_EXTEND_MIRROR]
 
-  defp adjust_transparency(%{extend_mode: :VIPS_EXTEND_WHITE} = options, _bands, true = _has_alpha?) do
-    options
-    |> Map.put(:extend_mode, :VIPS_EXTEND_BACKGROUND)
-    |> Map.put(:background_color, [255, 255, 255, options.background_transparency])
-    |> Map.delete(:background_transparency)
-  end
+  # Resolves the interaction between :extend_mode, :background_color and
+  # :background_transparency.
+  #
+  # * A geometric extend mode (:copy, :repeat, :mirror) is always honored
+  #   as given.
+  #
+  # * An explicit :background_color (or extend_mode: :background) extends
+  #   with that color, with the alpha band (when present) set from
+  #   :background_transparency.
+  #
+  # * The :black and :white extend modes on an image with an alpha band
+  #   are converted to a background extension so that the generated
+  #   pixels carry the requested :background_transparency. The color and
+  #   alpha are scaled to the image interpretation by Pixel.to_pixel/3.
+  defp adjust_background(options, image, user_supplied_keys) do
+    explicit_background? = :background_color in user_supplied_keys
 
-  defp adjust_transparency(
-         %{extend_mode: :VIPS_EXTEND_BACKGROUND} = options,
-         bands,
-         true = _has_alpha?
-       ) do
-    if length(options.background_color) == bands do
-      options
-    else
-      options
-      |> Map.put(
-        :background_color,
-        List.insert_at(options.background_color, -1, options.background_transparency)
-      )
-    end
-    |> Map.delete(:background_transparency)
-  end
+    cond do
+      options.extend_mode in @geometric_extend_modes ->
+        {:ok, Map.delete(options, :background_transparency)}
 
-  defp adjust_transparency(%{extend_mode: :VIPS_EXTEND_BACKGROUND} = options, 1, _has_alpha?) do
-    background_color =
-      options.background_color
-      |> hd()
-      |> List.wrap()
+      explicit_background? or options.extend_mode == :VIPS_EXTEND_BACKGROUND ->
+        with {:ok, background} <- background_with_alpha(options, image) do
+          {:ok,
+           options
+           |> Map.put(:extend_mode, :VIPS_EXTEND_BACKGROUND)
+           |> Map.put(:background_color, background)
+           |> Map.delete(:background_transparency)}
+        end
 
-    options
-    |> Map.put(:background_color, background_color)
-    |> Map.delete(:background_transparency)
-  end
+      Image.has_alpha?(image) ->
+        base_color = if options.extend_mode == :VIPS_EXTEND_WHITE, do: :white, else: :black
 
-  defp adjust_transparency(options, _bands, _has_alpha?) do
-    options
-  end
+        with {:ok, pixel} <-
+               Pixel.to_pixel(image, base_color, alpha: options.background_transparency) do
+          {:ok,
+           options
+           |> Map.put(:extend_mode, :VIPS_EXTEND_BACKGROUND)
+           |> Map.put(:background_color, pixel)
+           |> Map.delete(:background_transparency)}
+        end
 
-  defp adjust_extend_mode(options) do
-    if options.background_color != [0, 0, 0] do
-      Map.put(options, :extend_mode, :VIPS_EXTEND_BACKGROUND)
-    else
-      options
+      true ->
+        {:ok, Map.delete(options, :background_transparency)}
     end
   end
+
+  defp background_with_alpha(options, image) do
+    color = options.background_color
+    bands = Image.bands(image)
+
+    cond do
+      not Image.has_alpha?(image) ->
+        {:ok, conform_single_band(color, bands)}
+
+      length(color) == bands ->
+        with {:ok, alpha} <- background_alpha(options, image) do
+          {:ok, List.replace_at(color, -1, alpha)}
+        end
+
+      length(color) == bands - 1 ->
+        with {:ok, alpha} <- background_alpha(options, image) do
+          {:ok, color ++ [alpha]}
+        end
+
+      true ->
+        {:ok, color}
+    end
+  end
+
+  # The opaque alpha value in the scale of the image interpretation,
+  # adjusted by the requested :background_transparency.
+  defp background_alpha(options, image) do
+    with {:ok, pixel} <-
+           Pixel.to_pixel(image, :black, alpha: options.background_transparency) do
+      {:ok, List.last(pixel)}
+    end
+  end
+
+  defp conform_single_band(color, 1) when length(color) > 1, do: [hd(color)]
+  defp conform_single_band(color, _bands), do: color
 
   @doc false
   def normalize_dim(a, _max) when a >= 0, do: a

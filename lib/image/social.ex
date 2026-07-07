@@ -180,9 +180,9 @@ defmodule Image.Social do
   end
 
   @doc """
-  Returns the default image type that an
+  Returns the default image usage that an
   image is resized to for a given platform
-  is no `:type` parameter is provided.
+  if no `:usage` option is provided.
 
   ### Arguments
 
@@ -225,9 +225,9 @@ defmodule Image.Social do
 
   ### Options
 
-  * `:type` is the image type within the social
+  * `:usage` is the image usage within the social
     platform for which the image should be resized. See
-    `Image.Social.image_usages/1`
+    `Image.Social.image_usages/1`.
 
   * All other options are passed to `Image.thumbnail!/3`.
 
@@ -283,9 +283,9 @@ defmodule Image.Social do
 
   ### Options
 
-  * `:type` is the image type within the social
+  * `:usage` is the image usage within the social
     platform for which the image should be resized. See
-    `Image.Social.image_usages/1`
+    `Image.Social.image_usages/1`.
 
   * All other options are passed to `Image.thumbnail!/3`.
 
@@ -340,18 +340,22 @@ defmodule Image.Social do
   end
 
   defp unknown_platform_error(platform) do
-    "Unknown social platform #{inspect(platform)}"
+    message = "Unknown social platform #{inspect(platform)}"
+    %Image.Error{message: message, reason: message}
   end
 
   defp unknown_usage_error(:default) do
-    "No :default usage is configured"
+    message = "No :default usage is configured"
+    %Image.Error{message: message, reason: message}
   end
 
   defp unknown_usage_error(usage) do
-    "Unknown image usage #{inspect(usage)}"
+    message = "Unknown image usage #{inspect(usage)}"
+    %Image.Error{message: message, reason: message}
   end
 
   defp unknown_orientation_error(orientation) do
-    "Unknown orientation #{inspect(orientation)}"
+    message = "Unknown orientation #{inspect(orientation)}"
+    %Image.Error{message: message, reason: message}
   end
 end

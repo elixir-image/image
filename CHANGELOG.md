@@ -1,5 +1,32 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+* Adds `Image.BackgroundColor` to resolve background color specifications (including `:average`) into concrete pixels; used by `Image.rotate/3`, affine and warp operations. Thanks to @hlindset for the PRs.
+* Adds `:background` color resolution to `Image.write/3` so alpha images flatten onto a resolved background when writing to formats without alpha. Thanks to @hlindset for the PR.
+* Adds `Image.YUV.valid_encodings/0` and `Image.YUV.valid_colorspaces/0`.
+
+### Changed
+
+* `Image.average/1` now weights the average by the alpha band so transparent pixels do not contribute; fully transparent images fall back to the unweighted color-band average, and float-format images return unrounded averages.
+* All validation and libvips errors are now returned as `{:error, %Image.Error{}}` as `t:Image.error/0` documents; previously many paths returned bare strings.
+* `Image.to_nx/2` with `shape: :whc` now performs a true transpose; `Image.from_nx/1` interprets unnamed tensors as `{height, width, bands}` and narrows 64-bit integer tensors to 32 bits.
+* `Image.circle/2` center-crops non-square images and merges an existing alpha band instead of adding a second one.
+* `Image.embed/4` honors `:mirror`/`:repeat`/`:copy` extend modes and explicit background colors on images with an alpha band.
+* `Image.compose/3` with a composition list applies top-level options as per-entry defaults instead of ignoring them.
+* `Image.join/2` accepts the documented `:top` and `:center` alignment values.
+
+### Fixed
+
+* Fix the alpha scale for `:lab`, `:lch` and `:labs` interpretations in `Image.Pixel.to_pixel/3` — opaque alpha is `255`, matching libvips. Thanks to @hlindset for the PR.
+* Fix `Image.Math.divide/2` for two numbers (it previously subtracted) and `Image.dominant_color/2` black-bin correction for alpha images.
+* Fix `Image.Draw` functions on greyscale and CMYK images, `Image.Shape.line/5` end coordinate, and `Image.Shape.star/2` accepting 3 points as documented.
+* Fix crashes on malformed EXIF payloads, non-base83 blurhash input, GIF writes with `:effort`, extensionless write paths, and `Image.stream!/2` with small `:buffer_size` values.
+* Fix `Image.YUV` round trips for odd image dimensions and `Image.trim/2` with an explicit `:background` on alpha images.
+* Fix `Image.thumbnail!/3` and `Image.straighten_perspective/3` error contracts, `Image.from_req_stream/2` timeout handling, and `Image.equalize/2` on constant-color bands.
+
 ## Image 0.69.0
 
 This is the changelog for Image version 0.69.0 released on June 18th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

@@ -20,7 +20,7 @@ Documentation can be found at <https://hexdocs.pm/image>.
 
 * **Colour spaces** — `Image.colorspace/1`, `Image.to_colorspace/2`, and full conversion between sRGB / scRGB / Lab / LCh / CMYK / HSV / XYZ / B&W / 16-bit RGB.
 
-* **Dominant colour and palette extraction** — `Image.dominant_color/2` with two methods: a fast 3D-histogram (default) and an imagequant-backed perceptual quantiser. See [`guides/performance.md`](guides/performance.md) for benchmarks.
+* **Dominant colour and palette extraction** — `Image.dominant_color/2` with two methods: a fast 3D-histogram (default) and an imagequant-backed perceptual quantiser. See [the performance guide](https://hexdocs.pm/image/performance.html) for benchmarks.
 
 * **K-means clustering** — `Image.k_means/2` (when `:scholar` is available) returns the dominant colour palette extracted by unsupervised clustering.
 
@@ -32,9 +32,9 @@ Documentation can be found at <https://hexdocs.pm/image>.
 
 * **Image streaming** — open and write directly from `File.Stream`s, Plug `Conn`s, in-memory binaries, and S3 sources.
 
-* **Optional ML integrations** — each is compiled only when its optional dependency is present:
+* **Optional integrations** — each is compiled only when its optional dependency is present:
 
-  * `Image.Video` (frame extraction, seek, webcam) via [Xav](https://hex.pm/packages/xav), an Elixir wrapper around FFmpeg. Requires FFmpeg ≥ 6.0 on the system.
+  * `Image.Video` (frame extraction, seek, webcam) via [Xav](https://hex.pm/packages/xav), an Elixir wrapper around FFmpeg. Requires FFmpeg 6.x or 7.x on the system.
 
   * QR code encoding and decoding via the sibling [`image_qrcode`](https://hex.pm/packages/image_qrcode) package (Nayuki QR-Code-generator + quirc; no `:evision` dependency).
 
@@ -65,7 +65,7 @@ Documentation can be found at <https://hexdocs.pm/image>.
 | 1.17 | 26, 27 |
 | 1.18 | 26, 27 |
 | 1.19 | 26, 27, 28 |
-| 1.20-rc | 27, 28 |
+| 1.20 | 27, 28, 29 |
 
 ## Quick start
 
@@ -74,15 +74,12 @@ Add `:image` to your dependencies:
 ```elixir
 def deps do
   [
-    {:image, "~> 0.64"}
+    {:image, "~> 0.69"}
   ]
 end
 ```
 
-`libvips` is bundled by default via `:vix`, so you don't need to
-install it system-wide. See the "Installing Libvips" section below
-if you want to bring your own libvips for additional format
-support.
+`libvips` is bundled by default via `:vix`, so you don't need to install it system-wide. See the "Installing Libvips" section below if you want to bring your own libvips for additional format support.
 
 ### Open, transform, write
 
@@ -174,14 +171,9 @@ end
 
 ## Installing Libvips
 
-Starting from `Vix` v0.16.0, `libvips` can be either bundled
-(default) or platform-provided. The default uses precompiled NIF
-binaries built from the [sharp-libvips](https://github.com/lovell/sharp-libvips/)
-project — no system dependencies required, ideal for Livebook and
-Heroku-style deploys.
+Starting from `Vix` v0.16.0, `libvips` can be either bundled (default) or platform-provided. The default uses precompiled NIF binaries built from the [sharp-libvips](https://github.com/lovell/sharp-libvips/) project — no system dependencies required, ideal for Livebook and Heroku-style deploys.
 
-For additional format support (HEIF compression options, JPEG XL,
-specialised codecs) you can use the platform's libvips:
+For additional format support (HEIF compression options, JPEG XL, specialised codecs) you can use the platform's libvips:
 
 ```bash
 # macOS
@@ -194,13 +186,11 @@ apt install libvips-dev
 dnf install vips-devel
 ```
 
-Then set `VIX_COMPILATION_MODE=PLATFORM_PROVIDED_LIBVIPS` at compile
-time and at runtime. See the [Vix documentation](https://hexdocs.pm/vix)
-for the full list.
+Then set `VIX_COMPILATION_MODE=PLATFORM_PROVIDED_LIBVIPS` at compile time and at runtime. See the [Vix documentation](https://hexdocs.pm/vix) for the full list.
 
 ## Installing FFmpeg (for `Image.Video`)
 
-`Image.Video` is powered by [Xav](https://hex.pm/packages/xav), which wraps the FFmpeg C libraries as a NIF. FFmpeg itself is not bundled — you need to install the FFmpeg development packages (version 4.x – 7.x) on the system where `:image` is compiled *and* where it runs.
+`Image.Video` is powered by [Xav](https://hex.pm/packages/xav), which wraps the FFmpeg C libraries as a NIF. FFmpeg itself is not bundled — you need to install the FFmpeg development packages (version 6.x or 7.x; FFmpeg 8 is not yet supported by Xav) on the system where `:image` is compiled *and* where it runs.
 
 `Image.Video` and the `:xav` optional dependency only compile when these libraries are present. Projects that don't use video don't need to install anything here.
 
@@ -219,19 +209,13 @@ apt install libavcodec-dev libavformat-dev libavutil-dev \
 dnf install pkg-config ffmpeg-devel ffmpeg-libs
 ```
 
-Note: Fedora's default repositories don't ship FFmpeg. Enable
-[RPM Fusion](https://rpmfusion.org/) first with
-`dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm`
-before installing `ffmpeg-devel`.
+Note: Fedora's default repositories don't ship FFmpeg. Enable [RPM Fusion](https://rpmfusion.org/) first with `dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm` before installing `ffmpeg-devel`.
 
-Windows is not currently supported by Xav. See the
-[Xav installation guide](https://github.com/elixir-webrtc/xav/blob/main/INSTALL.md)
-for the upstream source of these commands and any updates.
+Windows is not currently supported by Xav. See the [Xav installation guide](https://github.com/elixir-webrtc/xav/blob/main/INSTALL.md) for the upstream source of these commands and any updates.
 
 ## Optional dependencies
 
-`Image` is small and self-contained at its core. The following
-optional dependencies enable specific features:
+`Image` is small and self-contained at its core. The following optional dependencies enable specific features:
 
 | Dependency | Enables |
 |---|---|
@@ -247,14 +231,11 @@ optional dependencies enable specific features:
 | `:req` | streaming over HTTP |
 | `:kino` | `Image.Kino` (Livebook integration) |
 
-Each is detected at compile time; the corresponding `Image` module
-is conditionally compiled. Add only the deps you actually use.
+Each is detected at compile time; the corresponding `Image` module is conditionally compiled. Add only the deps you actually use.
 
 ## Configuring libvips
 
-`libvips` exposes several environment variables that control
-debugging, concurrency, memory leak detection, and security. Each
-has a sensible default; the most commonly tuned ones:
+`libvips` exposes several environment variables that control debugging, concurrency, memory leak detection, and security. Each has a sensible default; the most commonly tuned ones:
 
 * `VIPS_BLOCK_UNTRUSTED=TRUE` (set automatically when the `:image` application starts) prevents libvips from loading untrusted format loaders.
 
@@ -264,40 +245,19 @@ has a sensible default; the most commonly tuned ones:
 
 * `G_DEBUG=fatal-criticals` aborts on the first GLib critical.
 
-You can also set the concurrency programmatically with
-`Image.put_concurrency/1` and read it back with
-`Image.get_concurrency/0`.
+You can also set the concurrency programmatically with `Image.put_concurrency/1` and read it back with `Image.get_concurrency/0`.
 
 ## FFmpeg / Xav log noise
 
-If you use `Image.Video` (which is backed by
-[Xav](https://hex.pm/packages/xav) / FFmpeg) you may see lines like
+If you use `Image.Video` (which is backed by [Xav](https://hex.pm/packages/xav) / FFmpeg) you may see lines like
 
     [swscaler @ 0x1490a0000] No accelerated colorspace conversion found from yuv420p to rgb24.
 
-written to `stderr` during frame decoding. These are
-**informational notices** from FFmpeg's `libswscale`, **not
-errors**. They mean that `libswscale` does not have a
-hand-optimised SIMD path for that particular pixel-format
-conversion on your CPU, so it is using its generic C fallback.
-Decoded frames are bit-for-bit correct either way.
+written to `stderr` during frame decoding. These are **informational notices** from FFmpeg's `libswscale`, **not errors**. They mean that `libswscale` does not have a hand-optimised SIMD path for that particular pixel-format conversion on your CPU, so it is using its generic C fallback. Decoded frames are bit-for-bit correct either way.
 
-The messages come from FFmpeg writing directly to `stderr` at its
-default log level (`AV_LOG_INFO`). Xav does not currently expose
-`av_log_set_level/1`, so the only way to silence them from
-application code is to install an FFmpeg build that has the
-SIMD path for your architecture (typically an FFmpeg compiled
-with `--enable-runtime-cpudetect` and any of `--enable-asm`,
-`--enable-x86asm`, or platform ASM flags — most distribution
-packages already do this). On Apple Silicon the arm64 optimised
-path for `yuv420p → rgb24` is not in FFmpeg's `swscale` as of
-FFmpeg 7.x, which is why macOS users on M-series machines see
-the notice most often.
+The messages come from FFmpeg writing directly to `stderr` at its default log level (`AV_LOG_INFO`). Xav does not currently expose `av_log_set_level/1`, so the only way to silence them from application code is to install an FFmpeg build that has the SIMD path for your architecture (typically an FFmpeg compiled with `--enable-runtime-cpudetect` and any of `--enable-asm`, `--enable-x86asm`, or platform ASM flags — most distribution packages already do this). On Apple Silicon the arm64 optimised path for `yuv420p → rgb24` is not in FFmpeg's `swscale` as of FFmpeg 7.x, which is why macOS users on M-series machines see the notice most often.
 
-If the noise is disruptive during tests or automation, you can
-redirect stderr for the command in question, e.g.
-`mix test 2> /dev/null`. Do not do this for production —
-suppressing stderr will also hide real FFmpeg errors.
+If the noise is disruptive during tests or automation, you can redirect stderr for the command in question, e.g. `mix test 2> /dev/null`. Do not do this for production — suppressing stderr will also hide real FFmpeg errors.
 
 ## Security considerations
 
@@ -311,4 +271,4 @@ suppressing stderr will also hide real FFmpeg errors.
 
 ## License
 
-Apache 2.0. See [LICENSE.md](LICENSE.md) for the full text.
+Apache 2.0. See [LICENSE.md](https://github.com/elixir-image/image/blob/main/LICENSE.md) for the full text.

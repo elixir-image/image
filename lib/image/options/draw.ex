@@ -194,12 +194,14 @@ defmodule Image.Options.Draw do
 
   @doc false
   def invalid_option(type, option) do
-    "Invalid option or option value for draw_#{type}: #{inspect(option)}"
+    message = "Invalid option or option value for draw_#{type}: #{inspect(option)}"
+    %Image.Error{reason: :invalid_option, value: option, message: message}
   end
 
   @doc false
   def invalid_option(type, option, value) do
-    "Invalid option or option value for draw_#{type}: #{option}: #{inspect(value)}"
+    message = "Invalid option or option value for draw_#{type}: #{option}: #{inspect(value)}"
+    %Image.Error{reason: :invalid_option, value: value, message: message}
   end
 
   defp wrap(term, atom) do
