@@ -267,8 +267,18 @@ defmodule Image.IoCoverageTest do
       assert {:ok, %Vimage{}} = Image.open(path)
     end
 
-    test "writing to a stream requires a suffix", %{image: image, dir: dir} do
+    test "writing to a stream with a path extension infers the suffix", %{
+      image: image,
+      dir: dir
+    } do
       path = Temp.path!(suffix: ".png", basedir: dir)
+      stream = File.stream!(path, 2048)
+
+      assert {:ok, %Vimage{}} = Image.write(image, stream, [])
+    end
+
+    test "writing to an extensionless stream requires a suffix", %{image: image, dir: dir} do
+      path = Temp.path!(basedir: dir)
       stream = File.stream!(path, 2048)
 
       assert {:error, %Image.Error{}} = Image.write(image, stream, [])

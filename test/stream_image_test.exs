@@ -54,8 +54,20 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
                |> Image.write(stream, suffix: ".invalid")
     end
 
-    test "Stream an image for writing with no suffix provided", %{dir: dir} do
+    test "Stream an image for writing infers the suffix from the path", %{dir: dir} do
       out_path = Temp.path!(suffix: ".jpg", basedir: dir)
+      stream = File.stream!(out_path, 2048, [])
+
+      assert {:ok, _image} =
+               image_path("Singapore-2016-09-5887.jpg")
+               |> File.stream!(2048, [])
+               |> Image.open!()
+               |> Image.thumbnail!(200)
+               |> Image.write(stream)
+    end
+
+    test "Stream an image for writing with no suffix and no path extension", %{dir: dir} do
+      out_path = Temp.path!(basedir: dir)
       stream = File.stream!(out_path, 2048, [])
 
       assert {:error, _reason} =

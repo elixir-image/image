@@ -42,6 +42,8 @@ This is the changelog for Image version 0.70.0 released on July 7th, 2026.  For 
 
 * Fix `Image.thumbnail!/3` and `Image.straighten_perspective/3` error contracts, `Image.from_req_stream/2` timeout handling, and `Image.equalize/2` on constant-color bands.
 
+* Fix `Image.write/3` to a `t:File.Stream.t/0` to infer the image type from the stream path's file extension when no `:suffix` option is given.
+
 ## Image 0.69.0
 
 This is the changelog for Image version 0.69.0 released on June 18th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

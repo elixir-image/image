@@ -74,7 +74,7 @@ Add `:image` to your dependencies:
 ```elixir
 def deps do
   [
-    {:image, "~> 0.69"}
+    {:image, "~> 0.70"}
   ]
 end
 ```
@@ -93,7 +93,7 @@ end
 
 ```elixir
 image
-|> Image.resize!(scale: 0.5)
+|> Image.resize!(0.5)
 |> Image.crop!(0, 0, 400, 400)
 |> Image.rotate!(15)
 |> Image.write!("derived.png")
@@ -148,7 +148,7 @@ exif[:make]
 
 ```elixir
 "photo.jpg"
-|> File.stream!([], 64_000)
+|> File.stream!(64_000)
 |> Image.open!()
 |> Image.thumbnail!(256)
 |> Image.write!(File.stream!("thumb.jpg"))

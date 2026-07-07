@@ -377,8 +377,8 @@ defmodule Image.Options.Geometry.Test do
     end
 
     test "with a negative :bands" do
-      assert {:error, reason} = Image.new(20, 20, bands: -1)
-      assert reason =~ "Invalid option"
+      assert {:error, %Image.Error{message: message}} = Image.new(20, 20, bands: -1)
+      assert message =~ "Invalid option"
     end
 
     test "with an invalid tuple :format" do
@@ -394,8 +394,8 @@ defmodule Image.Options.Geometry.Test do
     end
 
     test "with a negative :x_res" do
-      assert {:error, reason} = Image.new(20, 20, x_res: -1)
-      assert reason =~ "Invalid option"
+      assert {:error, %Image.Error{message: message}} = Image.new(20, 20, x_res: -1)
+      assert message =~ "Invalid option"
     end
   end
 

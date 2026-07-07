@@ -1392,7 +1392,10 @@ defmodule Image do
   ### Streaming images and :memory images
 
   * `:suffix` must be specified so that the image is written
-    in the correct format. For example: `suffix: ".jpg"`.
+    in the correct format. For example: `suffix: ".jpg"`. For a
+    `t:File.Stream.t/0` whose path has a file extension the
+    suffix is inferred from the extension when the option is
+    not given.
 
   #### JPEG images
 
@@ -1582,6 +1585,8 @@ defmodule Image do
 
   def write(%Vimage{} = image, %module{} = stream, options)
       when module in [File.Stream, Stream] do
+    options = maybe_infer_suffix(stream, options)
+
     with {:ok, options} <- Options.Write.validate_options(image, options, :require_suffix) do
       case write_stream(image, stream, options) do
         :ok -> {:ok, image}
@@ -1596,6 +1601,19 @@ defmodule Image do
       options = suffix <> loader_options(options)
       Vimage.write_to_buffer(image, options)
     end
+  end
+
+  # A File.Stream carries its path, so the image type can be inferred
+  # from the path extension when no :suffix option is given.
+  defp maybe_infer_suffix(%File.Stream{path: path}, options) when is_binary(path) do
+    case Path.extname(path) do
+      "" -> options
+      extname -> Keyword.put_new(options, :suffix, extname)
+    end
+  end
+
+  defp maybe_infer_suffix(_stream, options) do
+    options
   end
 
   defp write_stream(image, stream, options) do
