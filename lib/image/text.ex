@@ -427,9 +427,8 @@ defmodule Image.Text do
   end
 
   def simple_text(string, %{} = options) do
-    with {:ok, string} <- escape_html_text(string) do
-      {:ok, text_layer} = render_text(string, options)
-
+    with {:ok, string} <- escape_html_text(string),
+         {:ok, text_layer} <- render_text(string, options) do
       if transparent_text?(options) do
         Image.convert_alpha_to_mask(text_layer)
       else
@@ -1039,9 +1038,11 @@ defmodule Image.Text do
     if Image.width(image) + x <= width do
       {:ok, {x, y}}
     else
-      {:error,
-       "Location [#{inspect(x)}, _] would place the text " <>
-         "outside the image bounds specified"}
+      message =
+        "Location [#{inspect(x)}, _] would place the text " <>
+          "outside the image bounds specified"
+
+      {:error, %Image.Error{message: message, reason: message}}
     end
   end
 
@@ -1049,9 +1050,11 @@ defmodule Image.Text do
     if Image.height(image) + y <= height do
       {:ok, {x, y}}
     else
-      {:error,
-       "Location [_, #{inspect(y)}] would place the text " <>
-         "outside the image bounds specified"}
+      message =
+        "Location [_, #{inspect(y)}] would place the text " <>
+          "outside the image bounds specified"
+
+      {:error, %Image.Error{message: message, reason: message}}
     end
   end
 
@@ -1060,9 +1063,11 @@ defmodule Image.Text do
     if Image.width(image) + x <= width && Image.height(image) + y <= height do
       {:ok, {x, y}}
     else
-      {:error,
-       "Location [#{inspect(x)}, #{inspect(y)}] would place the text " <>
-         "outside the image bounds specified"}
+      message =
+        "Location [#{inspect(x)}, #{inspect(y)}] would place the text " <>
+          "outside the image bounds specified"
+
+      {:error, %Image.Error{message: message, reason: message}}
     end
   end
 

@@ -142,12 +142,14 @@ defmodule Image.Options.New do
 
   @doc false
   def invalid_option(option) do
-    "Invalid option or option value: #{inspect(option)}"
+    message = "Invalid option or option value: #{inspect(option)}"
+    %Image.Error{reason: :invalid_option, value: option, message: message}
   end
 
   @doc false
   def invalid_option(option, value) do
-    "Invalid option or option value: #{option}: #{inspect(value)}"
+    message = "Invalid option or option value: #{option}: #{inspect(value)}"
+    %Image.Error{reason: :invalid_option, value: value, message: message}
   end
 
   defp wrap(term, atom) do

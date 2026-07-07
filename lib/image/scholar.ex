@@ -149,15 +149,18 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
       end
     end
 
+    # The multipliers are 64-bit so that 4-band encoding
+    # (255 * 256 ** 3) does not overflow the default 32-bit
+    # integer tensor type.
     defp encode_colors(colors, 3) do
       colors
-      |> Nx.multiply(Nx.tensor([[1, 256, @square_256]]))
+      |> Nx.multiply(Nx.tensor([[1, 256, @square_256]], type: :s64))
       |> Nx.sum(axes: [2])
     end
 
     defp encode_colors(colors, 4) do
       colors
-      |> Nx.multiply(Nx.tensor([[1, 256, @square_256, 256 * @square_256]]))
+      |> Nx.multiply(Nx.tensor([[1, 256, @square_256, 256 * @square_256]], type: :s64))
       |> Nx.sum(axes: [2])
     end
 

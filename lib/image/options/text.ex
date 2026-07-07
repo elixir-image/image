@@ -57,7 +57,10 @@ defmodule Image.Options.Text do
 
   """
   def validate_options(options) do
-    options = merge(default_options(), options)
+    options =
+      default_options()
+      |> merge(options)
+      |> ensure_background_color_if_transparent_text()
 
     options =
       case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
@@ -72,7 +75,6 @@ defmodule Image.Options.Text do
       {:ok, options} ->
         options
         |> Map.new()
-        |> ensure_background_color_if_transparent_text()
         |> ensure_width_if_height_specified()
         |> wrap(:ok)
 
@@ -318,13 +320,15 @@ defmodule Image.Options.Text do
     %Image.Error{reason: :invalid_option, value: value, message: message}
   end
 
+  # Applied to the merged keyword options before validation (validation
+  # rewrites :none to :transparent, which would make this check
+  # indistinguishable from an explicitly transparent background).
   defp ensure_background_color_if_transparent_text(options) do
-    case options do
-      %{text_fill_color: :transparent, background_fill_color: :none} ->
-        Map.put(options, :background_fill_color, "black")
-
-      _other ->
-        options
+    if options[:text_fill_color] in [:transparent, "transparent"] and
+         options[:background_fill_color] in [:none, "none", nil] do
+      Keyword.put(options, :background_fill_color, "black")
+    else
+      options
     end
   end
 

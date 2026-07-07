@@ -249,14 +249,14 @@ defmodule Image.Options.Crop do
      )}
   end
 
-  defp size_error(dim, size) when is_number(size) do
+  defp size_error(dim, size) do
     crop_error(
       "#{dim} must be a percentage expressed as a float greater than 0.0 and " <>
         "less than or equal to 1.0. Found #{inspect(size)}"
     )
   end
 
-  defp location_error(dim, size) when is_number(size) do
+  defp location_error(dim, size) do
     crop_error(
       "#{dim} must be a percentage expressed as a float between -1.0 and 1.0. " <>
         "Found #{inspect(size)}"
