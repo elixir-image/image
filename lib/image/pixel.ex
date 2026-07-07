@@ -526,7 +526,15 @@ defmodule Image.Pixel do
   end
 
   # Encoders grouped by their alpha band's max value
-  @alpha_max_255 [:uchar_rgb, :uchar_cmyk, :uchar_hsv, :uchar_grey, :float_lab, :float_lch, :short_lab]
+  @alpha_max_255 [
+    :uchar_rgb,
+    :uchar_cmyk,
+    :uchar_hsv,
+    :uchar_grey,
+    :float_lab,
+    :float_lch,
+    :short_lab
+  ]
   @alpha_max_65535 [:ushort_rgb, :ushort_grey]
 
   # The alpha band uses the same numeric type as the rest of the

@@ -74,10 +74,10 @@ end)
 
 ## Color Sorting
 
-Well now we can see the dominant colors, in descending frequency order. Can we see the colors in sorted order? Yes, thats possible. But what does sorting colors even mean? In `Image.Color.sort/2` we use the approach documented [here](https://www.alanzucconi.com/2015/09/30/colour-sorting/). Colors are converted to a weighted [[hue](https://en.wikipedia.org/wiki/Hue), [luminance](https://en.wikipedia.org/wiki/Luminance), value] color space which is one way to perceptually sort colors.
+Well now we can see the dominant colors, in descending frequency order. Can we see the colors in sorted order? Yes, thats possible. But what does sorting colors even mean? In `Color.Palette.sort/2` we use the approach documented [here](https://www.alanzucconi.com/2015/09/30/colour-sorting/). Colors are converted to a weighted [[hue](https://en.wikipedia.org/wiki/Hue), [luminance](https://en.wikipedia.org/wiki/Luminance), value] color space which is one way to perceptually sort colors.
 
 ```elixir
-sorted_dominant_colors = Image.Color.sort(dominant_colors)
+sorted_dominant_colors = Color.Palette.sort(dominant_colors)
 
 sorted_dominant_colors  
 |> Enum.map(fn color -> 
@@ -132,7 +132,7 @@ As with our dominant colors example, lets take a look at the centroids as color 
 
 ```elixir
 k_means
-|> Image.Color.sort()
+|> Color.Palette.sort()
 |> Enum.map(fn color -> 
   Image.new!(50, 50, color: color) 
   |> Image.to_kino()
@@ -144,7 +144,7 @@ We can see that this set of colors covers the full range of colors in the image,
 
 ```elixir
 k_means
-|> Image.Color.sort()
+|> Color.Palette.sort()
 |> ColorDiff.difference()
 ```
 

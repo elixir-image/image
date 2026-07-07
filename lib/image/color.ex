@@ -65,13 +65,13 @@ if Code.ensure_loaded?(Nx) do
 
     ### Arguments
 
-    * `tensor` is an `Nx.Tensor.t/0` of shape `{n, 3}` (alpha
+    * `tensor` is a `t:Nx.Tensor.t/0` of shape `{n, 3}` (alpha
       bands must be stripped before calling — alpha is a property
       of the *source* image, not of the colour conversion).
 
     ### Returns
 
-    * An `Nx.Tensor.t/0` of shape `{n, 3}`, type `f32`, where
+    * A `t:Nx.Tensor.t/0` of shape `{n, 3}`, type `f32`, where
       column `0` is `L`, column `1` is `a`, and column `2` is
       `b`.
 

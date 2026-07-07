@@ -106,6 +106,7 @@ defmodule Image.MixProject do
       # For release management
       {:ex_doc, "~> 0.18", only: [:release, :dev, :docs]},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false, optional: true},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false, optional: true},
 
       # For testing HTTP streaming
       {:ex_aws_s3, "~> 2.3", optional: true, only: [:dev, :test]},

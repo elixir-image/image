@@ -40,12 +40,15 @@ defmodule Image.BackgroundColorTest do
       assert BackgroundColor.resolve(image, :average) == {:ok, raw}
     end
 
-    test "LAB with alpha keeps the raw average and appends a float opaque alpha" do
+    test "LAB with alpha keeps the raw average and appends a 0..255 opaque alpha" do
+      # Float LAB color bands do not imply a float alpha: libvips stores the
+      # alpha band of a LAB image in the 0..255 range (see
+      # `vips_interpretation_max_alpha/1`), so opaque is 255, not 1.0.
       image = solid_in([120, 80, 40, 255], :lab)
       raw = Image.average!(image)
 
       assert {:ok, pixel} = BackgroundColor.resolve(image, :average)
-      assert pixel == raw ++ [1.0]
+      assert pixel == raw ++ [255]
       assert length(pixel) == Image.bands(image)
     end
 
@@ -67,16 +70,16 @@ defmodule Image.BackgroundColorTest do
       assert length(pixel) == Image.bands(image)
     end
 
-    test "signed-short LAB (labs) with alpha uses libvips' 65_535 opaque alpha" do
-      # `:labs` bands are signed shorts ({:s, 16}), but libvips stores the
-      # alpha band in the unsigned 0..65_535 range. The opaque alpha must
-      # therefore follow the interpretation (65_535), not the band format's
-      # signed maximum (32_767), matching what `Image.Pixel.to_pixel/3` does.
+    test "signed-short LAB (labs) with alpha uses libvips' 0..255 opaque alpha" do
+      # `:labs` bands are signed shorts ({:s, 16}), but libvips'
+      # `vips_interpretation_max_alpha/1` returns 255 for LABS (65_535 is
+      # reserved for RGB16/GREY16). The opaque alpha therefore follows the
+      # interpretation (255), matching what `Image.Pixel.to_pixel/3` does.
       image = solid_in([120, 80, 40, 255], :labs)
       raw = Image.average!(image)
 
       assert {:ok, pixel} = BackgroundColor.resolve(image, :average)
-      assert pixel == raw ++ [65_535]
+      assert pixel == raw ++ [255]
       assert length(pixel) == Image.bands(image)
     end
   end
