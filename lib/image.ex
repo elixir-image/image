@@ -1348,10 +1348,21 @@ defmodule Image do
   * `:strip_metadata` is a boolean indicating if all metadata
     is to be stripped from the image. The default is `false`.
 
-  * `:background` is the background value to be used
-    for any transparent areas of the image. Jpeg does
-    not support alpha bands so a color value must be
-    assigned.
+  * `:background` is the background color used to fill
+    any transparent areas of the image when saving to a
+    format that does not support an alpha band (such as
+    JPEG). If not specified, transparent areas are
+    flattened onto black. The value may be any color
+    accepted by `Image.Pixel.to_pixel/2`: a `Color` struct,
+    a hex string (`"#ff0000"`), a CSS named color
+    (`:misty_rose`, `"rebeccapurple"`) or a list of
+    numbers (`[255, 0, 0]`). It may also be `:average`,
+    in which case the average color of the image is used.
+
+    The alpha band is stripped from the color.
+
+    Note that it has no effect on alpha-preserving formats
+    such as PNG or WebP, where transparency is written as-is.
 
   * `:quality` which influences image compression and
     is a integer in the range `1..100`. The default for
@@ -1530,7 +1541,7 @@ defmodule Image do
   def write(image, image_path, options \\ [])
 
   def write(%Vimage{} = image, image_path, options) when is_binary(image_path) do
-    with {:ok, options} <- Options.Write.validate_options(image_path, options) do
+    with {:ok, options} <- Options.Write.validate_options(image, image_path, options) do
       image_path
       |> String.split("[", parts: 2)
       |> write_path(image, options)
@@ -1539,7 +1550,7 @@ defmodule Image do
 
   if match?({:module, _module}, Code.ensure_compiled(Plug)) do
     def write(%Vimage{} = image, %Plug.Conn{} = conn, options) do
-      with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
+      with {:ok, options} <- Options.Write.validate_options(image, options, :require_suffix) do
         {suffix, options} = Keyword.pop(options, :suffix)
         options = suffix <> loader_options(options)
 
@@ -1565,7 +1576,7 @@ defmodule Image do
 
   def write(%Vimage{} = image, %module{} = stream, options)
       when module in [File.Stream, Stream] do
-    with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
+    with {:ok, options} <- Options.Write.validate_options(image, options, :require_suffix) do
       case write_stream(image, stream, options) do
         :ok -> {:ok, image}
         other -> other
@@ -1574,7 +1585,7 @@ defmodule Image do
   end
 
   def write(%Vimage{} = image, :memory, options) do
-    with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
+    with {:ok, options} <- Options.Write.validate_options(image, options, :require_suffix) do
       {suffix, options} = Keyword.pop(options, :suffix)
       options = suffix <> loader_options(options)
       Vimage.write_to_buffer(image, options)
@@ -1811,7 +1822,7 @@ defmodule Image do
 
   @spec stream!(Vimage.t(), options :: Options.Write.image_write_options()) :: Enumerable.t()
   def stream!(%Vimage{} = image, options \\ []) do
-    with {:ok, options} <- Options.Write.validate_options(options, :require_suffix) do
+    with {:ok, options} <- Options.Write.validate_options(image, options, :require_suffix) do
       {suffix, options} = Keyword.pop(options, :suffix)
       {buffer_size, options} = Keyword.pop(options, :buffer_size, :unbuffered)
       options = suffix <> loader_options(options)
