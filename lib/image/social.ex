@@ -237,6 +237,16 @@ defmodule Image.Social do
 
   * `{:error, reason}`
 
+  ### Examples
+
+      iex> image = Image.new!(1500, 1500, color: :blue)
+      iex> {:ok, resized} = Image.Social.resize(image, :youtube, usage: :thumbnail)
+      iex> Image.shape(resized)
+      {1280, 720, 3}
+
+      iex> image = Image.new!(1500, 1500, color: :blue)
+      iex> {:error, %Image.Error{}} = Image.Social.resize(image, :not_a_platform)
+
   """
   @spec resize(Vimage.t(), platform(), Keyword.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
@@ -294,6 +304,13 @@ defmodule Image.Social do
   * `resized_image` or
 
   * Raises an exception.
+
+  ### Examples
+
+      iex> image = Image.new!(1500, 1500, color: :blue)
+      iex> resized = Image.Social.resize!(image, :twitter, usage: :profile)
+      iex> Image.shape(resized)
+      {400, 400, 3}
 
   """
   @spec resize!(Vimage.t(), platform(), Keyword.t()) ::

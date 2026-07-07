@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+* Adds `### Examples` doctest sections to more than 220 public functions across `Image` and its submodules. All examples run as doctests.
+
+### Fixed
+
+* Fix `Image.YUV` to use studio-swing (limited range) coefficients in both directions. Previously the encoder was studio-swing but the decoder was full-range, so YUV round trips compressed colors toward grey.
+
+### Removed
+
+* Removes the unused internal modules `Image.Nx`, `Image.Exif.ReadError` and `Image.Exif.FieldNames`. These were private implementation modules with no callers.
+
 ## Image 0.70.0
 
 This is the changelog for Image version 0.70.0 released on July 8th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

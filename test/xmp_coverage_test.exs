@@ -5,6 +5,8 @@ defmodule Image.XmpCoverageTest do
 
   alias Image.Xmp
 
+  doctest Image.Xmp
+
   @full_xmp """
   <?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
   <x:xmpmeta xmlns:x="adobe:ns:meta/">

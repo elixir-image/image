@@ -94,6 +94,13 @@ defmodule Image.Histogram do
   Thanks to [Alex Plescan](https://alexplescan.com/posts/2023/07/08/easy-svg-sparklines/)
   for the inspiration for the SVG design.
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :green)
+      iex> {:ok, svg} = Image.Histogram.as_svg(image, width: 100, height: 100)
+      iex> String.starts_with?(svg, "<svg height=\\"100px\\" width=\\"100px\\"")
+      true
+
   """
   @doc since: "0.36.0"
   @doc subject: "Histogram"
@@ -167,6 +174,13 @@ defmodule Image.Histogram do
   Thanks to [Alex Plescan](https://alexplescan.com/posts/2023/07/08/easy-svg-sparklines/)
   for the inspiration for the SVG design.
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :green)
+      iex> svg = Image.Histogram.as_svg!(image)
+      iex> String.starts_with?(svg, "<svg height=\\"auto\\" width=\\"auto\\"")
+      true
+
   """
   @doc since: "0.36.0"
   @doc subject: "Histogram"
@@ -217,6 +231,13 @@ defmodule Image.Histogram do
   of the underlying SVG viewbox which is `#{@max_value}` pixels
   wide and `#{@max_value}` pixels high.
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :green)
+      iex> {:ok, histogram} = Image.Histogram.as_image(image, width: 100, height: 100)
+      iex> Image.shape(histogram)
+      {100, 100, 4}
+
   """
   @doc since: "0.36.0"
   @doc subject: "Histogram"
@@ -266,6 +287,13 @@ defmodule Image.Histogram do
   The default of `:auto` will generate an image the size
   of the underlying SVG viewbox which is `#{@max_value}` pixels
   wide and `#{@max_value}` pixels high.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :green)
+      iex> histogram = Image.Histogram.as_image!(image, width: 64, height: 32)
+      iex> Image.shape(histogram)
+      {64, 32, 4}
 
   """
   @doc since: "0.36.0"

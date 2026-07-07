@@ -92,6 +92,17 @@ defmodule Image.Exif do
   @doc """
   Extract EXIF data from a binary blob.
 
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, <<"Exif", 0::16, blob::binary>>} = Vix.Vips.Image.header_value(image, "exif-data")
+      iex> exif = Image.Exif.extract_exif(blob)
+      iex> is_map(exif) and is_map_key(exif, :artist) and is_map_key(exif, :make)
+      true
+
+      iex> Image.Exif.extract_exif(<<1, 2, 3>>)
+      {:error, :invalid_exif}
+
   """
   def extract_exif(exif) do
     # EXIF payloads come from untrusted image files so a truncated or

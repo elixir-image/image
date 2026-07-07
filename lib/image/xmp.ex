@@ -21,6 +21,16 @@ defmodule Image.Xmp do
   * A map keyed by atom field names (`:artist`, `:keywords`,
     `:created_at`, `:rating`, …) with the parsed values.
 
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, xmp} = Vix.Vips.Image.header_value(image, "xmp-data")
+      iex> xmp_map = Image.Xmp.extract_xmp(xmp)
+      iex> xmp_map.artist
+      "Kip Cole"
+      iex> xmp_map.created_at
+      ~N[2004-09-11 16:06:57]
+
   """
   @spec extract_xmp(binary() | tuple()) :: map()
   def extract_xmp(xmp) do

@@ -334,6 +334,12 @@ defmodule Image.Text do
     options are ignored since this implies the user is taking full control
     of the markup.
 
+  ### Examples
+
+      iex> text_image = Image.Text.text!("hello", font_size: 24)
+      iex> Image.bands(text_image)
+      4
+
   """
   @spec text!(String.t(), Keyword.t()) :: Vimage.t() | no_return()
   def text!(string, options \\ []) do
@@ -510,6 +516,12 @@ defmodule Image.Text do
     a six hexadecimal digit string prefixed with `#`. For example
     `#FF00FF` for the color "Fuchsia".
 
+  ### Examples
+
+      iex> image = Image.Text.simple_text!("hi", font_size: 24)
+      iex> Image.bands(image)
+      4
+
   """
   @spec simple_text!(String.t(), Keyword.t()) :: Vimage.t() | no_return()
   def simple_text!(string, options \\ []) do
@@ -552,6 +564,13 @@ defmodule Image.Text do
     [CSS color name](https://www.w3.org/wiki/CSS/Properties/color/keywords) or
     a six hexadecimal digit string prefixed with `#`. For example
     `#FF00FF` for the color "Fuchsia".
+
+  ### Examples
+
+      iex> image = Image.new!(20, 10, color: [255, 255, 255, 255], bands: 4)
+      iex> {:ok, with_background} = Image.Text.add_background(image, background_fill_color: :blue)
+      iex> Image.shape(with_background)
+      {20, 10, 4}
 
   """
   @spec add_background(Vimage.t(), Keyword.t()) ::
@@ -617,6 +636,13 @@ defmodule Image.Text do
     a six hexadecimal digit string prefixed with `#`. For example
     `#FF00FF` for the color "Fuchsia".
 
+  ### Examples
+
+      iex> image = Image.new!(20, 10, color: [255, 255, 255, 255], bands: 4)
+      iex> with_background = Image.Text.add_background!(image, background_fill_color: :blue)
+      iex> Image.shape(with_background)
+      {20, 10, 4}
+
   """
   @spec add_background!(Vimage.t(), Keyword.t()) :: Vimage.t() | no_return()
   def add_background!(image, options \\ []) do
@@ -671,6 +697,13 @@ defmodule Image.Text do
     [CSS color name](https://www.w3.org/wiki/CSS/Properties/color/keywords) or
     a six hexadecimal digit string prefixed with `#`. For example
     `#FF00FF` for the color "Fuchsia".
+
+  ### Examples
+
+      iex> image = Image.new!(20, 10, color: [255, 255, 255, 255], bands: 4)
+      iex> {:ok, padded} = Image.Text.add_background_padding(image, background_fill_color: :blue, padding: 5)
+      iex> Image.shape(padded)
+      {30, 20, 4}
 
   """
   @spec add_background_padding(Vimage.t(), Keyword.t()) ::
@@ -770,6 +803,13 @@ defmodule Image.Text do
     a six hexadecimal digit string prefixed with `#`. For example
     `#FF00FF` for the color "Fuchsia".
 
+  ### Examples
+
+      iex> image = Image.new!(20, 10, color: [255, 255, 255, 255], bands: 4)
+      iex> padded = Image.Text.add_background_padding!(image, background_fill_color: :blue, padding: 5)
+      iex> Image.shape(padded)
+      {30, 20, 4}
+
   """
   @spec add_background_padding!(Vimage.t(), Keyword.t()) :: Vimage.t() | no_return()
   def add_background_padding!(image, options \\ []) do
@@ -823,6 +863,13 @@ defmodule Image.Text do
     [CSS color name](https://www.w3.org/wiki/CSS/Properties/color/keywords) or
     a six hexadecimal digit string prefixed with `#`. For example
     `#FF00FF` for the color "Fuchsia".
+
+  ### Examples
+
+      iex> image = Image.new!(30, 20, color: [0, 0, 255, 255], bands: 4)
+      iex> {:ok, bordered} = Image.Text.add_background_border(image, background_stroke_color: :red, padding: 5)
+      iex> Image.shape(bordered)
+      {30, 20, 4}
 
   """
   @spec add_background_border(Vimage.t(), Keyword.t()) ::
@@ -884,6 +931,13 @@ defmodule Image.Text do
     [CSS color name](https://www.w3.org/wiki/CSS/Properties/color/keywords) or
     a six hexadecimal digit string prefixed with `#`. For example
     `#FF00FF` for the color "Fuchsia".
+
+  ### Examples
+
+      iex> image = Image.new!(30, 20, color: [0, 0, 255, 255], bands: 4)
+      iex> bordered = Image.Text.add_background_border!(image, background_stroke_color: :red, padding: 5)
+      iex> Image.shape(bordered)
+      {30, 20, 4}
 
   """
   @spec add_background_border!(Vimage.t(), Keyword.t()) :: Vimage.t() | no_return()

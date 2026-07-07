@@ -601,6 +601,15 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> base = Image.new!(5, 10, color: :red)
+      iex> {:ok, image} = Image.new(base)
+      iex> Image.shape(image)
+      {5, 10, 3}
+      iex> Image.get_pixel(image, 0, 0)
+      {:ok, [0, 0, 0]}
+
   """
   @doc subject: "Load and save", since: "0.1.13"
 
@@ -652,6 +661,13 @@ defmodule Image do
   * `{:ok, image}` or
 
   * `{:error, reason}`
+
+  ### Example
+
+      iex> base = Image.new!(5, 10, color: :red)
+      iex> image = Image.new!(base)
+      iex> Image.shape(image)
+      {5, 10, 3}
 
   """
   @doc subject: "Load and save", since: "0.1.13"
@@ -761,6 +777,12 @@ defmodule Image do
   * `{:ok, image}` or
 
   * `{:error, message}`
+
+  ### Example
+
+      iex> {:ok, image} = Image.open("./test/support/images/Kip_small.jpg")
+      iex> Image.shape(image)
+      {300, 328, 3}
 
   """
   @doc subject: "Load and save"
@@ -1014,6 +1036,12 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> Image.shape(image)
+      {300, 328, 3}
+
   """
   @doc subject: "Load and save"
 
@@ -1063,6 +1091,13 @@ defmodule Image do
   * `{:ok, image}` or
 
   * `{:error, reason}`
+
+  ### Example
+
+      iex> svg = "<svg width='30' height='20' xmlns='http://www.w3.org/2000/svg'><rect width='30' height='20' fill='blue'/></svg>"
+      iex> {:ok, image} = Image.from_svg(svg)
+      iex> Image.shape(image)
+      {30, 20, 4}
 
   """
   @doc subject: "Load and save", since: "0.32.0"
@@ -1116,6 +1151,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> svg = "<svg width='30' height='20' xmlns='http://www.w3.org/2000/svg'><rect width='30' height='20' fill='blue'/></svg>"
+      iex> image = Image.from_svg!(svg)
+      iex> Image.shape(image)
+      {30, 20, 4}
+
   """
   @doc subject: "Load and save", since: "0.32.0"
 
@@ -1163,6 +1205,13 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> binary = File.read!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, image} = Image.from_binary(binary)
+      iex> Image.shape(image)
+      {300, 328, 3}
+
   """
   @doc subject: "Load and save", since: "0.7.0"
 
@@ -1195,6 +1244,13 @@ defmodule Image do
   * `image` or
 
   * raises an exception.
+
+  ### Example
+
+      iex> binary = File.read!("./test/support/images/Kip_small.jpg")
+      iex> image = Image.from_binary!(binary)
+      iex> Image.shape(image)
+      {300, 328, 3}
 
   """
   @doc subject: "Load and save", since: "0.25.0"
@@ -1245,6 +1301,16 @@ defmodule Image do
     * `{:ok, image}` or
 
     * `{:error, reason}`
+
+    ### Example
+
+    In a Livebook, with an image input field defined:
+
+        image_input = Kino.Input.image("Upload an image")
+
+        # After the user uploads an image
+        kino_image = Kino.Input.read(image_input)
+        {:ok, image} = Image.from_kino(kino_image)
 
     """
     @doc since: "0.27.0"
@@ -1309,6 +1375,16 @@ defmodule Image do
     * `image` or
 
     * raises an exception.
+
+    ### Example
+
+    In a Livebook, with an image input field defined:
+
+        image_input = Kino.Input.image("Upload an image")
+
+        # After the user uploads an image
+        kino_image = Kino.Input.read(image_input)
+        image = Image.from_kino!(kino_image)
 
     """
     @doc since: "0.27.0"
@@ -1528,6 +1604,13 @@ defmodule Image do
     `:memory`) or `{:ok, conn}` if the destination is a `t:Plug.Connt.t/0` or
 
   * `{:error, reason}`
+
+  ### Examples
+
+      iex> image = Image.new!(5, 5, color: :red)
+      iex> {:ok, binary} = Image.write(image, :memory, suffix: ".png")
+      iex> is_binary(binary)
+      true
 
   """
   if match?({:module, _module}, Code.ensure_compiled(Plug)) do
@@ -1784,6 +1867,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Examples
+
+      iex> image = Image.new!(5, 5, color: :red)
+      iex> binary = Image.write!(image, :memory, suffix: ".png")
+      iex> is_binary(binary)
+      true
+
   """
   @doc subject: "Load and save"
 
@@ -1966,6 +2056,15 @@ defmodule Image do
 
       (condition_image / 255) * if_image + (1 - condition_image / 255) * else_image
 
+  ### Example
+
+      iex> red = Image.new!(2, 2, color: [255, 0, 0])
+      iex> blue = Image.new!(2, 2, color: [0, 0, 255])
+      iex> condition = Image.new!(2, 2, color: 255, bands: 1)
+      iex> {:ok, image} = Image.if_then_else(condition, red, blue)
+      iex> Image.get_pixel(image, 0, 0)
+      {:ok, [255, 0, 0]}
+
   """
   @doc subject: "Operation", since: "0.13.0"
 
@@ -2067,6 +2166,15 @@ defmodule Image do
 
       (condition_image / 255) * if_image + (1 - condition_image / 255) *`else_image`
 
+  ### Example
+
+      iex> red = Image.new!(2, 2, color: [255, 0, 0])
+      iex> blue = Image.new!(2, 2, color: [0, 0, 255])
+      iex> condition = Image.new!(2, 2, color: 0, bands: 1)
+      iex> image = Image.if_then_else!(condition, red, blue)
+      iex> Image.get_pixel!(image, 0, 0)
+      [0, 0, 255]
+
   """
   @doc subject: "Operation", since: "0.30.0"
 
@@ -2102,6 +2210,12 @@ defmodule Image do
 
   * An RGB color as a three-element list of
     integers.
+
+  ### Example
+
+      iex> image = Image.new!(50, 50, color: [0, 255, 0])
+      iex> Image.chroma_color(image)
+      [0, 255, 0]
 
   """
 
@@ -2177,6 +2291,13 @@ defmodule Image do
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
      representing a CSS color name.
+
+  ### Example
+
+      iex> image = Image.new!(20, 20, color: [0, 255, 0])
+      iex> {:ok, mask} = Image.chroma_mask(image, color: [0, 255, 0])
+      iex> Image.shape(mask)
+      {20, 20, 1}
 
   """
 
@@ -2276,6 +2397,13 @@ defmodule Image do
      integers representing an RGB color or an atom
      representing a CSS color name.
 
+  ### Example
+
+      iex> image = Image.new!(20, 20, color: [0, 255, 0])
+      iex> mask = Image.chroma_mask!(image, color: [0, 255, 0])
+      iex> Image.shape(mask)
+      {20, 20, 1}
+
   """
   @doc subject: "Mask", since: "0.13.0"
 
@@ -2339,6 +2467,15 @@ defmodule Image do
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
      representing a CSS color name.
+
+  ### Example
+
+      iex> image = Image.new!(20, 20, color: [0, 255, 0])
+      iex> {:ok, keyed} = Image.chroma_key(image, color: [0, 255, 0])
+      iex> Image.shape(keyed)
+      {20, 20, 4}
+      iex> Image.get_pixel(keyed, 10, 10)
+      {:ok, [0, 255, 0, 0]}
 
   """
   @doc subject: "Operation", since: "0.13.0"
@@ -2406,6 +2543,13 @@ defmodule Image do
      integers representing an RGB color or an atom
      representing a CSS color name.
 
+  ### Example
+
+      iex> image = Image.new!(20, 20, color: [0, 255, 0])
+      iex> keyed = Image.chroma_key!(image, color: [0, 255, 0])
+      iex> Image.has_alpha?(keyed)
+      true
+
   """
   @doc subject: "Operation", since: "0.13.0"
 
@@ -2447,6 +2591,13 @@ defmodule Image do
 
   * `{:error reason}`
 
+  ### Example
+
+      iex> image = Image.new!(20, 20, color: :cyan)
+      iex> {:ok, blurred} = Image.blur(image, sigma: 2.0)
+      iex> Image.shape(blurred)
+      {20, 20, 3}
+
   """
   @doc subject: "Operation", since: "0.13.0"
 
@@ -2486,6 +2637,13 @@ defmodule Image do
   * `blurred_image` or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.new!(20, 20, color: :cyan)
+      iex> blurred = Image.blur!(image, sigma: 2.0)
+      iex> Image.shape(blurred)
+      {20, 20, 3}
 
   """
   @doc subject: "Operation", since: "0.13.0"
@@ -2588,6 +2746,13 @@ defmodule Image do
 
   For screen output sharpening the default options are recommended.
   Adjust `:sigma` for other output devices as required.
+
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, sharpened} = Image.sharpen(image)
+      iex> Image.shape(sharpened) == Image.shape(image)
+      true
 
   """
   @doc subject: "Operation"
@@ -2698,6 +2863,13 @@ defmodule Image do
   For screen output sharpening the default options are recommended.
   Adjust `:sigma` for other output devices as required.
 
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> sharpened = Image.sharpen!(image, sigma: 1.0)
+      iex> Image.shape(sharpened) == Image.shape(image)
+      true
+
   """
   @doc subject: "Operation"
   @doc since: "0.35.0"
@@ -2746,6 +2918,13 @@ defmodule Image do
   * `{:ok, blurred_mask_image}` or
 
   * `{:error, reason}`
+
+  ### Example
+
+      iex> image = Image.new!(50, 50, color: [0, 0, 255, 255])
+      iex> {:ok, feathered} = Image.feather(image)
+      iex> Image.shape(feathered)
+      {50, 50, 4}
 
   """
   @doc subject: "Operation", since: "0.13.0"
@@ -2824,6 +3003,13 @@ defmodule Image do
   * `blurred_mask_image` or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.new!(50, 50, color: [0, 0, 255, 255])
+      iex> feathered = Image.feather!(image)
+      iex> Image.shape(feathered)
+      {50, 50, 4}
 
   """
   @doc subject: "Operation", since: "0.13.0"
@@ -2982,6 +3168,13 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> image = Image.new!(3, 3, color: [10, 20, 30])
+      iex> {:ok, with_alpha} = Image.add_alpha(image, 128)
+      iex> Image.get_pixel(with_alpha, 0, 0)
+      {:ok, [10, 20, 30, 128]}
+
   """
   @doc subject: "Operation", since: "0.13.0"
 
@@ -3061,6 +3254,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.new!(3, 3, color: [10, 20, 30])
+      iex> with_alpha = Image.add_alpha!(image, :opaque)
+      iex> Image.get_pixel(with_alpha, 0, 0)
+      {:ok, [10, 20, 30, 255]}
+
   """
   @doc subject: "Operation", since: "0.13.0"
 
@@ -3088,6 +3288,18 @@ defmodule Image do
 
   * `{image, nil}` if there is no
     alpha band detected.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: [10, 20, 30, 255], bands: 4)
+      iex> {without_alpha, alpha} = Image.split_alpha(image)
+      iex> {Image.bands(without_alpha), Image.bands(alpha)}
+      {3, 1}
+
+      iex> image = Image.new!(10, 10, color: :blue)
+      iex> {_image, alpha} = Image.split_alpha(image)
+      iex> alpha
+      nil
 
   """
   @doc subject: "Operation", since: "0.13.0"
@@ -3541,6 +3753,18 @@ defmodule Image do
   `:middle` or `:top` and by `:horizontal_align` of `:left`,
   `:center` or `:right`. The defaults are `:bottom`, `:left`.
 
+  ### Example
+
+      iex> red = Image.new!(2, 2, color: [255, 0, 0])
+      iex> blue = Image.new!(2, 2, color: [0, 0, 255])
+      iex> {:ok, joined} = Image.join([red, blue], across: 2)
+      iex> Image.shape(joined)
+      {4, 2, 3}
+      iex> Image.get_pixel(joined, 0, 0)
+      {:ok, [255, 0, 0]}
+      iex> Image.get_pixel(joined, 2, 0)
+      {:ok, [0, 0, 255]}
+
   """
   @spec join(image_list :: list(Vimage.t()), options :: Options.Join.join_options()) ::
           {:ok, joined_image :: Vimage.t()} | {:error, error()}
@@ -3627,6 +3851,14 @@ defmodule Image do
   `:middle` or `:top``and by `:horizontal_align` of `:left`,
   `:center` or `:righ`. The defaults are `:bottom`, `:left.
 
+  ### Example
+
+      iex> red = Image.new!(2, 2, color: [255, 0, 0])
+      iex> blue = Image.new!(2, 2, color: [0, 0, 255])
+      iex> joined = Image.join!([red, blue, red, blue], across: 2)
+      iex> Image.shape(joined)
+      {4, 4, 3}
+
   """
   @spec join!(image_list :: list(Vimage.t()), options :: Options.Join.join_options()) ::
           joined_image :: Vimage.t() | no_return()
@@ -3701,6 +3933,13 @@ defmodule Image do
     applied to both the left and right sides of the image. The
     default is calculated proportional to the size of the
     image.
+
+  ### Example
+
+      iex> image = Image.new!(200, 100, color: :blue)
+      iex> {:ok, meme} = Image.meme(image, "One Does Not Simply")
+      iex> {Image.width(meme), Image.height(meme)} == {Image.width(image), Image.height(image)}
+      true
 
   """
   @doc subject: "Generator", since: "0.13.0"
@@ -3789,6 +4028,13 @@ defmodule Image do
     applied to both the left and right sides of the image. The
     default is calculated proportional to the size of the
     image.
+
+  ### Example
+
+      iex> image = Image.new!(200, 100, color: :blue)
+      iex> meme = Image.meme!(image, "One Does Not Simply")
+      iex> {Image.width(meme), Image.height(meme)} == {Image.width(image), Image.height(image)}
+      true
 
   """
   @doc subject: "Generator", since: "0.13.0"
@@ -3906,6 +4152,12 @@ defmodule Image do
     no associated path. `nil` is returned for streamed
     images and images created from a memory buffer.
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> image |> Image.filename() |> Path.basename()
+      "Kip_small.jpg"
+
   """
   @doc subject: "Image info"
 
@@ -3938,6 +4190,15 @@ defmodule Image do
     of selected EXIF data.
 
   * `{:error, reason}`
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, exif} = Image.exif(image)
+      iex> is_map(exif)
+      true
+      iex> exif.make
+      "Canon"
 
   """
   @doc subject: "Metadata"
@@ -3978,6 +4239,13 @@ defmodule Image do
   * `{:ok, xmp_map}` where `xmp_map` is a map
     of selected XMP data.
 
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, xmp} = Image.xmp(image)
+      iex> xmp.artist
+      "Kip Cole"
+
   """
   @doc subject: "Metadata"
 
@@ -4009,6 +4277,12 @@ defmodule Image do
 
   * The image width as an integer.
 
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> Image.width(image)
+      300
+
   """
   @doc subject: "Image info"
 
@@ -4027,6 +4301,12 @@ defmodule Image do
   ### Returns
 
   * The image height as an integer.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> Image.height(image)
+      328
 
   """
   @doc subject: "Image info"
@@ -4115,6 +4395,14 @@ defmodule Image do
   ### Returns
 
   * An integer number of bands in the image.
+
+  ### Examples
+
+      iex> Image.bands(Image.new!(10, 10, color: :white))
+      3
+
+      iex> Image.bands(Image.new!(10, 10, color: [10, 20, 30, 255]))
+      4
 
   """
   @doc subject: "Image info"
@@ -4242,6 +4530,14 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> red_dot = Image.new!(1, 1, color: [255, 0, 0])
+      iex> {:ok, image} = Image.embed(red_dot, 3, 1, background_color: [0, 0, 255], x: 0, y: 0)
+      iex> {:ok, flipped} = Image.flip(image, :horizontal)
+      iex> Image.get_pixel(flipped, 2, 0)
+      {:ok, [255, 0, 0]}
+
   """
   @doc subject: "Operation"
 
@@ -4279,6 +4575,13 @@ defmodule Image do
   * `flipped_image` or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.new!(20, 10, color: :blue)
+      iex> flipped = Image.flip!(image, :vertical)
+      iex> Image.shape(flipped)
+      {20, 10, 3}
 
   """
   @doc subject: "Operation"
@@ -4327,6 +4630,13 @@ defmodule Image do
   * `{:ok, resized_image}` or
 
   * raises an exception
+
+  ### Example
+
+      iex> image = Image.new!(100, 50, color: :red)
+      iex> {:ok, resized} = Image.resize(image, 2)
+      iex> Image.shape(resized)
+      {200, 100, 3}
 
   """
 
@@ -4390,6 +4700,13 @@ defmodule Image do
 
   * raises an exception
 
+  ### Example
+
+      iex> image = Image.new!(100, 50, color: :red)
+      iex> resized = Image.resize!(image, 0.5)
+      iex> Image.shape(resized)
+      {50, 25, 3}
+
   """
 
   @doc subject: "Resize", since: "0.14.0"
@@ -4425,6 +4742,13 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, pixelated} = Image.pixelate(image)
+      iex> Image.bands(pixelated)
+      3
+
   """
   @doc subject: "Operation", since: "0.14.0"
 
@@ -4457,6 +4781,13 @@ defmodule Image do
   * `pixelated_image` or
 
   * raises an exception
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> pixelated = Image.pixelate!(image)
+      iex> Image.bands(pixelated)
+      3
 
   """
   @doc subject: "Operation", since: "0.14.0"
@@ -4564,6 +4895,18 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, thumbnail} = Image.thumbnail(image, 100)
+      iex> Image.shape(thumbnail)
+      {91, 100, 3}
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, thumbnail} = Image.thumbnail(image, "50x50", crop: :center)
+      iex> Image.shape(thumbnail)
+      {50, 50, 3}
+
   """
   @doc subject: "Resize"
 
@@ -4627,6 +4970,12 @@ defmodule Image do
   * `image` or
 
   * raises an exception.
+
+  ### Examples
+
+      iex> thumbnail = Image.thumbnail!("./test/support/images/Kip_small.jpg", 100)
+      iex> Image.shape(thumbnail)
+      {91, 100, 3}
 
   """
   @doc subject: "Resize"
@@ -4709,6 +5058,13 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> image = Image.new!(300, 200, color: [0, 100, 200])
+      iex> {:ok, avatar} = Image.avatar(image)
+      iex> Image.shape(avatar)
+      {180, 180, 4}
+
   """
   @doc subject: "Generator"
 
@@ -4775,6 +5131,13 @@ defmodule Image do
   * `avatar_image` or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.new!(300, 200, color: [0, 100, 200])
+      iex> avatar = Image.avatar!(image, shape: :square, size: 100)
+      iex> Image.shape(avatar)
+      {100, 100, 3}
 
   """
   @doc subject: "Generator"
@@ -4905,6 +5268,13 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> image = Image.new!(100, 50, color: :red)
+      iex> {:ok, cropped} = Image.crop(image, 10, 5, 40, 30)
+      iex> Image.shape(cropped)
+      {40, 30, 3}
+
   """
 
   # The shenanigans below is to avoid infinite recursion or
@@ -4968,6 +5338,13 @@ defmodule Image do
   arbitrary quadrilateral. If required, use `Image.warp_perspective/4`
   prior to cropping.
 
+  ### Example
+
+      iex> image = Image.new!(100, 50, color: :red)
+      iex> {:ok, cropped} = Image.crop(image, [{10, 5}, {49, 5}, {49, 34}, {10, 34}])
+      iex> Image.shape(cropped)
+      {40, 30, 3}
+
   """
   @doc subject: "Crop", since: "0.28.0"
 
@@ -5013,6 +5390,13 @@ defmodule Image do
   The bounding box must be a rectangle, not an
   arbitrary quadrilateral. If required, use `Image.warp_perspective/4`
   prior to cropping.
+
+  ### Example
+
+      iex> image = Image.new!(100, 50, color: :red)
+      iex> cropped = Image.crop!(image, [{10, 5}, {49, 5}, {49, 34}, {10, 34}])
+      iex> Image.shape(cropped)
+      {40, 30, 3}
 
   """
   @doc subject: "Crop", since: "0.28.0"
@@ -5071,6 +5455,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.new!(100, 50, color: :red)
+      iex> cropped = Image.crop!(image, 10, 5, 40, 30)
+      iex> Image.shape(cropped)
+      {40, 30, 3}
+
   """
   @doc subject: "Crop"
 
@@ -5123,6 +5514,13 @@ defmodule Image do
 
   * `{:error, reason}`.
 
+  ### Example
+
+      iex> image = Image.new!(100, 100, color: :red)
+      iex> {:ok, cropped} = Image.center_crop(image, 50, 40)
+      iex> Image.shape(cropped)
+      {50, 40, 3}
+
   """
   @doc subject: "Crop", since: "0.27.0"
 
@@ -5166,6 +5564,13 @@ defmodule Image do
   * `cropped_image` or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.new!(100, 100, color: :red)
+      iex> cropped = Image.center_crop!(image, 50, 40)
+      iex> Image.shape(cropped)
+      {50, 40, 3}
 
   """
   @doc subject: "Crop", since: "0.27.0"
@@ -5256,6 +5661,15 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> image = Image.new!(10, 10, color: [255, 0, 0])
+      iex> {:ok, embedded} = Image.embed(image, 20, 20, background_color: [0, 0, 255])
+      iex> Image.shape(embedded)
+      {20, 20, 3}
+      iex> Image.get_pixel(embedded, 0, 0)
+      {:ok, [0, 0, 255]}
+
   """
   @doc subject: "Resize", since: "0.27.0"
 
@@ -5299,6 +5713,13 @@ defmodule Image do
   * `embedded_image` or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.new!(10, 10, color: [255, 0, 0])
+      iex> embedded = Image.embed!(image, 20, 20, background_color: [0, 0, 255])
+      iex> Image.get_pixel(embedded, 0, 0)
+      {:ok, [0, 0, 255]}
 
   """
   @doc subject: "Operation", since: "0.27.0"
@@ -5378,6 +5799,13 @@ defmodule Image do
   * `{:ok, image}` or
 
   * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.new!(10, 10, color: [0, 255, 0])
+      iex> {:ok, replaced} = Image.replace_color(image, color: [0, 255, 0], replace_with: [255, 0, 0])
+      iex> Image.get_pixel(replaced, 5, 5)
+      {:ok, [255, 0, 0]}
 
   """
   @doc since: "0.30.0", subject: "Color"
@@ -5462,6 +5890,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.new!(10, 10, color: [0, 255, 0])
+      iex> replaced = Image.replace_color!(image, color: [0, 255, 0], replace_with: [255, 0, 0])
+      iex> Image.get_pixel!(replaced, 5, 5)
+      [255, 0, 0]
+
   """
   @doc since: "0.30.0", subject: "Color"
 
@@ -5518,6 +5953,15 @@ defmodule Image do
   * `{:error, reason}`. When the image is considered
     to be only the background color the error message
     is "Could not find anything to trim".
+
+  ### Examples
+
+      iex> background = Image.new!(30, 30, color: :white)
+      iex> square = Image.new!(10, 10, color: :red)
+      iex> composed = Image.compose!(background, square, x: 10, y: 10)
+      iex> {:ok, trimmed} = Image.trim(composed)
+      iex> Image.shape(trimmed)
+      {10, 10, 4}
 
   """
   @doc subject: "Resize", since: "0.23.0"
@@ -5577,6 +6021,15 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Examples
+
+      iex> background = Image.new!(30, 30, color: :white)
+      iex> square = Image.new!(10, 10, color: :red)
+      iex> composed = Image.compose!(background, square, x: 10, y: 10)
+      iex> trimmed = Image.trim!(composed)
+      iex> Image.shape(trimmed)
+      {10, 10, 4}
+
   """
   @doc subject: "Resize", since: "0.23.0"
 
@@ -5630,6 +6083,13 @@ defmodule Image do
     of the non-background area or
 
   * `{:error, reason}`.
+
+  ### Example
+
+      iex> square = Image.new!(10, 10, color: :white)
+      iex> {:ok, image} = Image.embed(square, 40, 40, background_color: :black)
+      iex> Image.find_trim(image)
+      {:ok, {15, 15, 10, 10}}
 
   """
   @doc subject: "Resize", since: "0.56.0"
@@ -5745,6 +6205,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> square = Image.new!(10, 10, color: :white)
+      iex> {:ok, image} = Image.embed(square, 40, 40, background_color: :black)
+      iex> Image.find_trim!(image)
+      {15, 15, 10, 10}
+
   """
   @doc subject: "Resize", since: "0.56.0"
 
@@ -5780,6 +6247,13 @@ defmodule Image do
   * `{:ok, flattened_image}` or
 
   * `{:error, reason}`
+
+  ### Example
+
+      iex> image = Image.new!(5, 5, color: [0, 255, 0, 255])
+      iex> {:ok, flattened} = Image.flatten(image)
+      iex> Image.has_alpha?(flattened)
+      false
 
   """
   @doc subject: "Operation", since: "0.23.0"
@@ -5824,6 +6298,13 @@ defmodule Image do
   * `flattened_image` or
 
   * raises an exception
+
+  ### Example
+
+      iex> image = Image.new!(4, 4, color: [255, 0, 0, 0])
+      iex> flattened = Image.flatten!(image, background_color: [0, 0, 255])
+      iex> Image.get_pixel(flattened, 0, 0)
+      {:ok, [0, 0, 255]}
 
   """
   @doc subject: "Operation", since: "0.23.0"
@@ -5872,6 +6353,13 @@ defmodule Image do
     approximate.
 
   * The dilation is implemented as a [rank filter](https://www.sciencedirect.com/science/article/abs/pii/S0031320301000474?via%3Dihub).
+
+  ### Example
+
+      iex> image = Image.new!(20, 20, color: :white)
+      iex> {:ok, dilated} = Image.dilate(image, 2)
+      iex> Image.shape(dilated)
+      {20, 20, 3}
 
   """
 
@@ -5935,6 +6423,13 @@ defmodule Image do
 
   * The dilation is implemented as a [rank filter](https://www.sciencedirect.com/science/article/abs/pii/S0031320301000474?via%3Dihub).
 
+  ### Example
+
+      iex> image = Image.new!(20, 20, color: :white)
+      iex> dilated = Image.dilate!(image, 2)
+      iex> Image.shape(dilated)
+      {20, 20, 3}
+
   """
   @doc subject: "Operation", since: "0.23.0"
 
@@ -5981,6 +6476,13 @@ defmodule Image do
 
   * The erosion is implemented as a [rank filter](https://www.sciencedirect.com/science/article/abs/pii/S0031320301000474?via%3Dihub).
 
+  ### Example
+
+      iex> image = Image.new!(20, 20, color: :white)
+      iex> {:ok, eroded} = Image.erode(image, 2)
+      iex> Image.shape(eroded)
+      {20, 20, 3}
+
   """
   @doc subject: "Operation", since: "0.23.0"
 
@@ -6025,6 +6527,13 @@ defmodule Image do
     approximate.
 
   * The erosion is implemented as a [rank filter](https://www.sciencedirect.com/science/article/abs/pii/S0031320301000474?via%3Dihub).
+
+  ### Example
+
+      iex> image = Image.new!(20, 20, color: :white)
+      iex> eroded = Image.erode!(image, 2)
+      iex> Image.shape(eroded)
+      {20, 20, 3}
 
   """
   @doc subject: "Operation", since: "0.23.0"
@@ -6131,6 +6640,13 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> image = Image.new!(20, 10, color: :blue)
+      iex> {:ok, rotated} = Image.rotate(image, 90)
+      iex> Image.shape(rotated)
+      {10, 20, 3}
+
   """
   @doc subject: "Operation"
 
@@ -6203,6 +6719,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.new!(20, 10, color: :blue)
+      iex> rotated = Image.rotate!(image, 180)
+      iex> Image.shape(rotated)
+      {20, 10, 3}
+
   """
   @doc subject: "Operation"
 
@@ -6245,6 +6768,13 @@ defmodule Image do
   * `:angle` through which the image was rotated.
     This value will be one of `0`, `90`, `180` or
     `270` representing the degrees of rotation.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, {_autorotated, flags}} = Image.autorotate(image)
+      iex> flags
+      %{flip: false, angle: 0}
 
   """
   @doc subject: "Operation"
@@ -6291,6 +6821,13 @@ defmodule Image do
   * `auto_rotated_image` or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> autorotated = Image.autorotate!(image)
+      iex> Image.shape(autorotated)
+      {300, 328, 3}
 
   """
   @doc subject: "Operation"
@@ -6362,6 +6899,13 @@ defmodule Image do
 
   See `set_orientation/2` for argument documentation.
 
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
+      iex> rotated_metadata = Image.set_orientation!(image, 6)
+      iex> Vix.Vips.Image.header_value(rotated_metadata, "orientation")
+      {:ok, 6}
+
   """
   @doc since: "0.67.0"
   @doc subject: "Metadata"
@@ -6386,6 +6930,13 @@ defmodule Image do
   * `{:ok, image_with_ripple}` or
 
   * `{:error, reason}`
+
+  ### Example
+
+      iex> image = Image.new!(20, 10, color: :blue)
+      iex> {:ok, rippled} = Image.ripple(image)
+      iex> Image.shape(rippled)
+      {20, 10, 3}
 
   """
   @dialyzer {:nowarn_function, {:ripple, 1}}
@@ -6437,6 +6988,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.new!(20, 10, color: :blue)
+      iex> rippled = Image.ripple!(image)
+      iex> Image.shape(rippled)
+      {20, 10, 3}
+
   """
   @dialyzer {:nowarn_function, {:ripple!, 1}}
   @doc subject: "Operation"
@@ -6471,6 +7029,13 @@ defmodule Image do
   * `{:ok, circular_image}` or
 
   * `{:error, reason}`
+
+  ### Example
+
+      iex> image = Image.new!(20, 10, color: :blue)
+      iex> {:ok, circular} = Image.circle(image)
+      iex> Image.shape(circular)
+      {10, 10, 4}
 
   """
   @doc subject: "Mask"
@@ -6523,6 +7088,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.new!(20, 10, color: :blue)
+      iex> circular = Image.circle!(image)
+      iex> Image.has_alpha?(circular)
+      true
+
   """
   @doc subject: "Mask"
 
@@ -6553,6 +7125,15 @@ defmodule Image do
   * `{:ok, rounded_corner_image}` or
 
   * `{:error, reason}`
+
+  ### Example
+
+      iex> image = Image.new!(30, 20, color: :red)
+      iex> {:ok, rounded} = Image.rounded(image)
+      iex> Image.shape(rounded)
+      {30, 20, 4}
+      iex> Image.has_alpha?(rounded)
+      true
 
   """
   @doc subject: "Mask"
@@ -6598,6 +7179,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.new!(30, 20, color: :red)
+      iex> rounded = Image.rounded!(image, radius: 5)
+      iex> Image.has_alpha?(rounded)
+      true
+
   """
   @doc subject: "Mask"
 
@@ -6628,6 +7216,13 @@ defmodule Image do
   * `{:ok, squircle_image}` or
 
   * `{:error, reason}`
+
+  ### Examples
+
+      iex> image = Image.new!(30, 30, color: :red)
+      iex> {:ok, squircled} = Image.squircle(image)
+      iex> Image.has_alpha?(squircled)
+      true
 
   """
   @doc subject: "Generator"
@@ -6672,6 +7267,13 @@ defmodule Image do
   * `squircle_image` or
 
   * raises an exception.
+
+  ### Examples
+
+      iex> image = Image.new!(30, 30, color: :red)
+      iex> squircled = Image.squircle!(image)
+      iex> Image.has_alpha?(squircled)
+      true
 
   """
   @doc subject: "Mask"
@@ -6771,6 +7373,13 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, minimized} = Image.minimize_metadata(image)
+      iex> Image.shape(minimized) == Image.shape(image)
+      true
+
   """
   @doc subject: "Metadata"
 
@@ -6868,6 +7477,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> minimized = Image.minimize_metadata!(image)
+      iex> Image.shape(minimized) == Image.shape(image)
+      true
+
   """
   @doc subject: "Metadata"
 
@@ -6883,6 +7499,13 @@ defmodule Image do
   Minimize metadata while keeping a caller-selected subset of
   EXIF fields. Raises on error. See `minimize_metadata/2` for
   argument and option documentation.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> minimized = Image.minimize_metadata!(image, keep: [:copyright])
+      iex> Image.shape(minimized) == Image.shape(image)
+      true
 
   """
   @doc subject: "Metadata"
@@ -6960,6 +7583,13 @@ defmodule Image do
 
     * `{:error, reason}`
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, cleaned} = Image.remove_metadata(image, :exif)
+      iex> match?({:error, _no_exif}, Image.exif(cleaned))
+      true
+
   """
   @doc subject: "Metadata"
 
@@ -7023,6 +7653,13 @@ defmodule Image do
     * `image_without_metadata_fields` or
 
     * raises an exception.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> cleaned = Image.remove_metadata!(image, :exif)
+      iex> match?({:error, _no_exif}, Image.exif(cleaned))
+      true
 
   """
   @doc subject: "Metadata"
@@ -7359,6 +7996,12 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> {:ok, gradient} = Image.radial_gradient(30, 20)
+      iex> Image.shape(gradient)
+      {30, 20, 4}
+
   """
   @doc subject: "Generator", since: "0.6.0"
 
@@ -7434,6 +8077,12 @@ defmodule Image do
   * `{:ok, gradient_image}` or
 
   * `{:error, reason}`
+
+  ### Example
+
+      iex> gradient = Image.radial_gradient!(30, 20, start_color: :blue, finish_color: :green)
+      iex> Image.shape(gradient)
+      {30, 20, 4}
 
   """
   @doc subject: "Generator", since: "0.43.0"
@@ -8261,6 +8910,15 @@ defmodule Image do
 
     * `{:error, reason}`
 
+    ### Example
+
+        iex> red = Image.new!(2, 2, color: [255, 0, 0])
+        iex> blue = Image.new!(2, 2, color: [0, 0, 255])
+        iex> image = Image.join!([red, blue], across: 2)
+        iex> {:ok, reduced} = Image.reduce_colors(image, colors: 2)
+        iex> Image.shape(reduced)
+        {4, 2, 3}
+
     """
     @doc subject: "Clusters", since: "0.50.0"
 
@@ -8332,6 +8990,15 @@ defmodule Image do
 
     * raises an exception.
 
+    ### Example
+
+        iex> red = Image.new!(2, 2, color: [255, 0, 0])
+        iex> blue = Image.new!(2, 2, color: [0, 0, 255])
+        iex> image = Image.join!([red, blue], across: 2)
+        iex> reduced = Image.reduce_colors!(image, colors: 2)
+        iex> Image.shape(reduced)
+        {4, 2, 3}
+
     """
     @doc subject: "Clusters", since: "0.51.0"
 
@@ -8370,6 +9037,12 @@ defmodule Image do
   * `{:ok, pixel_value}` or
 
   * `{:error, reason}`
+
+  ### Example
+
+      iex> image = Image.new!(4, 4, color: [50, 100, 150])
+      iex> Image.get_pixel(image, 3, 3)
+      {:ok, [50, 100, 150]}
 
   """
   @doc subject: "Operation", since: "0.3.0"
@@ -8419,6 +9092,12 @@ defmodule Image do
   * `pixel_value` or
 
   * raises an exception
+
+  ### Example
+
+      iex> image = Image.new!(4, 4, color: [50, 100, 150])
+      iex> Image.get_pixel!(image, 0, 0)
+      [50, 100, 150]
 
   """
   @doc subject: "Operation", since: "0.26.0"
@@ -8705,6 +9384,13 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, polar} = Image.to_polar_coordinates(image)
+      iex> Image.shape(polar)
+      {10, 10, 3}
+
   """
   @dialyzer {:nowarn_function, {:to_polar_coordinates, 1}}
   @doc subject: "Operation"
@@ -8742,6 +9428,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> polar = Image.to_polar_coordinates!(image)
+      iex> Image.shape(polar)
+      {10, 10, 3}
+
   """
   @dialyzer {:nowarn_function, {:to_polar_coordinates!, 1}}
   @doc subject: "Operation"
@@ -8773,6 +9466,14 @@ defmodule Image do
   * `{:ok, image_in_rectangular_coordinates}` or
 
   * `{:error, reason}`
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> polar = Image.to_polar_coordinates!(image)
+      iex> {:ok, rectangular} = Image.to_rectangular_coordinates(polar)
+      iex> Image.shape(rectangular)
+      {10, 10, 3}
 
   """
   @dialyzer {:nowarn_function, {:to_rectangular_coordinates, 1}}
@@ -8818,6 +9519,14 @@ defmodule Image do
   * `image_in_rectangular_coordinates` or
 
   * raises an exception.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> polar = Image.to_polar_coordinates!(image)
+      iex> rectangular = Image.to_rectangular_coordinates!(polar)
+      iex> Image.shape(rectangular)
+      {10, 10, 3}
 
   """
   @dialyzer {:nowarn_function, {:to_rectangular_coordinates!, 1}}
@@ -9037,6 +9746,13 @@ defmodule Image do
 
   * For complex images, only the real part is inverted.
 
+  ### Example
+
+      iex> image = Image.new!(3, 3, color: [10, 20, 30])
+      iex> {:ok, inverted} = Image.invert(image)
+      iex> Image.get_pixel(inverted, 1, 1)
+      {:ok, [245, 235, 225]}
+
   """
   @doc since: "0.42.0"
   @doc subject: "Basic Adjustments"
@@ -9069,6 +9785,13 @@ defmodule Image do
     `(-1 * pixel_value)`.
 
   * For complex images, only the real part is inverted.
+
+  ### Example
+
+      iex> image = Image.new!(3, 3, color: [10, 20, 30])
+      iex> inverted = Image.invert!(image)
+      iex> Image.get_pixel!(inverted, 1, 1)
+      [245, 235, 225]
 
   """
   @doc since: "0.42.0"
@@ -9123,6 +9846,13 @@ defmodule Image do
   * `{:ok, modulated_image}` or
 
   * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, modulated} = Image.modulate(image, brightness: 1.2, saturation: 0.8)
+      iex> Image.shape(modulated)
+      {10, 10, 3}
 
   """
   @doc since: "0.35.0"
@@ -9184,6 +9914,13 @@ defmodule Image do
   * `modulated_image` or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> modulated = Image.modulate!(image, brightness: 1.2, saturation: 0.8)
+      iex> Image.shape(modulated)
+      {10, 10, 3}
 
   """
   @doc since: "0.35.0"
@@ -9292,6 +10029,13 @@ defmodule Image do
   * `vignetted_image` or
   * raises an exception.
 
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> vignetted = Image.vignette!(image, strength: 0.8)
+      iex> Image.shape(vignetted) == Image.shape(image)
+      true
+
   """
   @doc subject: "Operation", since: "0.67.0"
 
@@ -9343,6 +10087,13 @@ defmodule Image do
   * `{:ok, adjusted_image}` or
 
   * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
+      iex> {:ok, equalized} = Image.equalize(image)
+      iex> Image.shape(equalized)
+      {1000, 542, 3}
 
   """
   @doc since: "0.35.0"
@@ -9471,6 +10222,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
+      iex> equalized = Image.equalize!(image, :luminance)
+      iex> Image.shape(equalized)
+      {1000, 542, 3}
+
   """
   @doc since: "0.35.0"
   @doc subject: "Basic Adjustments"
@@ -9558,6 +10316,13 @@ defmodule Image do
   or raises on error. See `enhance/2` for argument and option
   documentation.
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kamchatka-2019-8754.jpg")
+      iex> enhanced = Image.enhance!(image)
+      iex> Image.shape(enhanced)
+      {1000, 542, 3}
+
   """
   @doc since: "0.67.0"
   @doc subject: "Operation"
@@ -9635,6 +10400,13 @@ defmodule Image do
 
   * `{:error, reason}`.
 
+  ### Example
+
+      iex> image = Image.new!(10, 10, color: [50, 100, 150])
+      iex> {:ok, tone_mapped} = Image.apply_tone_curve(image)
+      iex> Image.shape(tone_mapped)
+      {10, 10, 3}
+
   """
   @doc since: "0.35.0"
   @doc subject: "Basic Adjustments"
@@ -9710,6 +10482,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.new!(10, 10, color: [50, 100, 150])
+      iex> tone_mapped = Image.apply_tone_curve!(image, black_point: 10)
+      iex> Image.shape(tone_mapped)
+      {10, 10, 3}
+
   """
   @doc since: "0.35.0"
   @doc subject: "Basic Adjustments"
@@ -9779,6 +10558,13 @@ defmodule Image do
 
   * `{:error, reason}`.
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, adjusted} = Image.local_contrast(image)
+      iex> Image.shape(adjusted) == Image.shape(image)
+      true
+
   """
   @doc since: "0.35.0"
   @doc subject: "Basic Adjustments"
@@ -9831,6 +10617,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> adjusted = Image.local_contrast!(image, window_size: 5)
+      iex> Image.shape(adjusted) == Image.shape(image)
+      true
+
   """
   @doc since: "0.35.0"
   @doc subject: "Operation"
@@ -9869,6 +10662,13 @@ defmodule Image do
   * `{:ok, adjusted_image}` or
 
   * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, saturated} = Image.saturation(image, 1.5)
+      iex> Image.shape(saturated) == Image.shape(image)
+      true
 
   """
   @doc since: "0.34.0"
@@ -9911,6 +10711,13 @@ defmodule Image do
   * `adjusted_image` or
 
   * raises an exception.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> saturated = Image.saturation!(image, 0.5)
+      iex> Image.shape(saturated) == Image.shape(image)
+      true
 
   """
   @doc since: "0.34.0"
@@ -10047,6 +10854,13 @@ defmodule Image do
 
   See `sepia/2` for argument and option documentation.
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> toned = Image.sepia!(image)
+      iex> Image.shape(toned) == Image.shape(image)
+      true
+
   """
   @doc since: "0.67.0"
   @doc subject: "Basic Adjustments"
@@ -10131,6 +10945,13 @@ defmodule Image do
 
   See `tint/2` for argument documentation.
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> tinted = Image.tint!(image, "#a08020")
+      iex> Image.shape(tinted) == Image.shape(image)
+      true
+
   """
   @doc since: "0.67.0"
   @doc subject: "Basic Adjustments"
@@ -10210,6 +11031,13 @@ defmodule Image do
   @doc """
   Applies an alpha-gradient fade-out to an image, or raises on
   error. See `fade/2` for argument and option documentation.
+
+  ### Example
+
+      iex> image = Image.new!(50, 50, color: :magenta)
+      iex> faded = Image.fade!(image, edges: [:bottom], length: 10)
+      iex> Image.has_alpha?(faded)
+      true
 
   """
   @doc since: "0.67.0"
@@ -10430,6 +11258,13 @@ defmodule Image do
   error. See `drop_shadow/2` for argument and option
   documentation.
 
+  ### Example
+
+      iex> image = Image.new!(30, 30, color: :red)
+      iex> shadowed = Image.drop_shadow!(image)
+      iex> Image.shape(shadowed)
+      {30, 30, 4}
+
   """
   @doc since: "0.67.0"
   @doc subject: "Operation"
@@ -10575,6 +11410,13 @@ defmodule Image do
 
   See `posterize/2` for argument documentation.
 
+  ### Example
+
+      iex> image = Image.new!(5, 5, color: [100, 150, 200])
+      iex> posterized = Image.posterize!(image, 4)
+      iex> Image.get_pixel!(posterized, 2, 2)
+      [64, 128, 192]
+
   """
   @doc since: "0.67.0"
   @doc subject: "Operation"
@@ -10643,6 +11485,13 @@ defmodule Image do
 
   See `opacity/2` for argument documentation.
 
+  ### Example
+
+      iex> image = Image.new!(5, 5, color: [10, 20, 30])
+      iex> translucent = Image.opacity!(image, 0.5)
+      iex> Image.get_pixel!(translucent, 2, 2)
+      [10, 20, 30, 127]
+
   """
   @doc since: "0.67.0"
   @doc subject: "Operation"
@@ -10685,6 +11534,13 @@ defmodule Image do
   * `{:ok, adjusted_image}` or
 
   * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, adjusted} = Image.vibrance(image, 1.2)
+      iex> Image.shape(adjusted) == Image.shape(image)
+      true
 
   """
 
@@ -10747,6 +11603,13 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> adjusted = Image.vibrance!(image, 1.2)
+      iex> Image.shape(adjusted) == Image.shape(image)
+      true
+
   """
 
   # See https://github.com/libvips/libvips/discussions/4039
@@ -10788,6 +11651,12 @@ defmodule Image do
   * This is not a general purpose curve generator. It is used by
     `Image.vibrance/3` and may, in the future, be developed into a more
     general purpose logistic curve function.
+
+  ### Example
+
+      iex> curve = Image.logistic_curve_rhs(0.5)
+      iex> Image.shape(curve)
+      {256, 1, 1}
 
   """
   # See https://github.com/libvips/libvips/discussions/4039
@@ -10835,6 +11704,13 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, smoothed} = Image.reduce_noise(image)
+      iex> Image.shape(smoothed)
+      {10, 10, 3}
+
   """
   @doc since: "0.35.0"
   @doc subject: "Operation"
@@ -10870,6 +11746,13 @@ defmodule Image do
   * `reduced_noise_image` or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> smoothed = Image.reduce_noise!(image, 5)
+      iex> Image.shape(smoothed)
+      {10, 10, 3}
 
   """
   @doc since: "0.35.0"
@@ -11143,6 +12026,13 @@ defmodule Image do
 
   * raises an exception
 
+  ### Example
+
+      iex> image = Image.new!(20, 10, color: :white)
+      iex> transformed = Image.affine!(image, [1, 0, 0, 1])
+      iex> Image.shape(transformed)
+      {20, 10, 3}
+
   """
   @doc subject: "Distortion"
 
@@ -11194,6 +12084,17 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, translated} = Image.translate(image, 3, 2, background: :black)
+      iex> Image.shape(translated)
+      {10, 10, 3}
+      iex> Image.get_pixel!(translated, 0, 0)
+      [0, 0, 0]
+      iex> Image.get_pixel!(translated, 5, 5)
+      [255, 0, 0]
+
   """
   @doc subject: "Distortion"
 
@@ -11232,6 +12133,13 @@ defmodule Image do
   * `translated_image` or
 
   * raises an exception
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> translated = Image.translate!(image, 3, 2, background: :black)
+      iex> Image.get_pixel!(translated, 0, 0)
+      [0, 0, 0]
 
   """
   @doc subject: "Distortion"
@@ -11282,6 +12190,13 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, sheared} = Image.shear(image, 0.5, 0.0)
+      iex> Image.shape(sheared)
+      {15, 10, 3}
+
   """
   @doc subject: "Distortion"
 
@@ -11318,6 +12233,13 @@ defmodule Image do
   * `sheared_image` or
 
   * raises an exception
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> sheared = Image.shear!(image, 0.5, 0.0)
+      iex> Image.shape(sheared)
+      {15, 10, 3}
 
   """
   @doc subject: "Distortion"
@@ -11694,6 +12616,15 @@ defmodule Image do
 
     * `{:error, reason}`
 
+    ### Examples
+
+        iex> image = Image.new!(100, 100, color: :white)
+        iex> source = [{20, 10}, {90, 30}, {90, 90}, {10, 80}]
+        iex> destination = [{0, 0}, {100, 0}, {100, 100}, {0, 100}]
+        iex> {:ok, warped} = Image.warp_perspective(image, source, destination)
+        iex> Image.shape(warped)
+        {100, 100, 3}
+
     """
     @doc subject: "Distortion", since: "0.28.0"
 
@@ -11762,6 +12693,15 @@ defmodule Image do
     * The image is flattened before warping and therefore any
       alpha band will be multiplied into to the image data and
       removed.
+
+    ### Examples
+
+        iex> image = Image.new!(100, 100, color: :white)
+        iex> source = [{20, 10}, {90, 30}, {90, 90}, {10, 80}]
+        iex> destination = [{0, 0}, {100, 0}, {100, 100}, {0, 100}]
+        iex> warped = Image.warp_perspective!(image, source, destination)
+        iex> Image.shape(warped)
+        {100, 100, 3}
 
     """
     @doc subject: "Distortion", since: "0.28.0"
@@ -11832,6 +12772,16 @@ defmodule Image do
       points were transformed. `destination` can be passed as
       a parameter to `Image.crop/2` to crop the transformed image
       to the subject-of-interest that was warped.
+
+    ### Examples
+
+        iex> image = Image.new!(100, 100, color: :white)
+        iex> source = [{20, 10}, {90, 30}, {90, 90}, {10, 80}]
+        iex> {:ok, destination, straightened} = Image.straighten_perspective(image, source)
+        iex> destination
+        [{20, 10}, {90, 10}, {90, 80}, {20, 80}]
+        iex> Image.shape(straightened)
+        {100, 100, 3}
 
     """
     @doc subject: "Distortion", since: "0.28.0"
@@ -11910,6 +12860,14 @@ defmodule Image do
       points were transformed. `destination` can be passed as
       a parameter to `Image.crop/2` to crop the transformed image
       to the subject-of-interest that was warped.
+
+    ### Examples
+
+        iex> image = Image.new!(100, 100, color: :white)
+        iex> source = [{20, 10}, {90, 30}, {90, 90}, {10, 80}]
+        iex> straightened = Image.straighten_perspective!(image, source)
+        iex> Image.shape(straightened)
+        {100, 100, 3}
 
     """
     @doc subject: "Distortion", since: "0.28.0"
@@ -12020,6 +12978,15 @@ defmodule Image do
 
     * `{:error, reason}`.
 
+    ### Examples
+
+        iex> image = Image.new!(100, 100, color: :white)
+        iex> source = [{20, 10}, {90, 30}, {90, 90}, {10, 80}]
+        iex> destination = [{0, 0}, {100, 0}, {100, 100}, {0, 100}]
+        iex> {:ok, matrix} = Image.transform_matrix(image, source, destination)
+        iex> Image.shape(matrix)
+        {100, 100, 2}
+
     """
     @doc subject: "Distortion", since: "0.28.0"
 
@@ -12125,6 +13092,13 @@ defmodule Image do
         `Evision` requires the data to be in `bgr` order. This function
         also reorders the data appropriately.
 
+      ### Examples
+
+          iex> image = Image.new!(4, 4, color: :red)
+          iex> {:ok, mat} = Image.to_evision(image)
+          iex> match?(%Evision.Mat{}, mat)
+          true
+
       """
       @dialyzer {:nowarn_function, {:to_evision, 2}}
 
@@ -12164,6 +13138,13 @@ defmodule Image do
       * `Image` data is arranged as `rgb` data elements whereas
         `Evision` requires the data to be in `bgr` order. This function
         also reorders the data appropriately.
+
+      ### Example
+
+          iex> mat = Evision.imread("./test/support/images/Kip_small.jpg")
+          iex> {:ok, image} = Image.from_evision(mat)
+          iex> Image.shape(image)
+          {300, 328, 3}
 
       """
       @dialyzer {:nowarn_function, {:from_evision, 1}}
@@ -12242,6 +13223,15 @@ defmodule Image do
   * `{:ok, mapped_image}` or
 
   * `{:error, reason}`
+
+  ### Example
+
+      iex> image = Image.new!(20, 20, color: :red)
+      iex> quadrilateral = [{0, 0}, {19, 0}, {19, 19}, {0, 19}]
+      iex> {:ok, matrix} = Image.transform_matrix(image, quadrilateral, quadrilateral)
+      iex> {:ok, mapped} = Image.map(image, matrix)
+      iex> Image.shape(mapped)
+      {20, 20, 3}
 
   """
   @doc subject: "Operation", since: "0.28.0"
@@ -12335,6 +13325,13 @@ defmodule Image do
   * `{:ok, comparison_metric, difference_image}` or
 
   * `{:error, reason}`
+
+  ### Example
+
+      iex> image = Image.new!(10, 10, color: [100, 110, 120])
+      iex> {:ok, metric, _difference_image} = Image.compare(image, image)
+      iex> metric
+      0.0
 
   """
   @doc since: "0.34.0"
@@ -12551,6 +13548,12 @@ defmodule Image do
 
   * `{:error, reason}`.
 
+  ### Example
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> Image.hamming_distance(image, image)
+      {:ok, 0}
+
   """
   @doc subject: "Operation", since: "0.6.0"
 
@@ -12712,6 +13715,13 @@ defmodule Image do
 
   * `{:error, reason}`
 
+  ### Example
+
+      iex> image = Image.new!(4, 4, color: [10, 20, 30, 128])
+      iex> {:ok, mask} = Image.convert_alpha_to_mask(image)
+      iex> Image.get_pixel(mask, 0, 0)
+      {:ok, [127]}
+
   """
   @doc subject: "Mask"
 
@@ -12743,6 +13753,13 @@ defmodule Image do
 
   * raises an exception
 
+  ### Example
+
+      iex> image = Image.new!(4, 4, color: [10, 20, 30, 128])
+      iex> mask = Image.convert_alpha_to_mask!(image)
+      iex> Image.shape(mask)
+      {4, 4, 1}
+
   """
   @doc subject: "Mask"
 
@@ -12770,6 +13787,15 @@ defmodule Image do
   * a list of single band images extracted
     from `image`.
 
+  ### Examples
+
+      iex> image = Image.new!(3, 3, color: [10, 20, 30])
+      iex> bands = Image.split_bands(image)
+      iex> length(bands)
+      3
+      iex> Enum.map(bands, fn band -> hd(Image.get_pixel!(band, 0, 0)) end)
+      [10, 20, 30]
+
   """
   @doc subject: "Split and join", since: "0.13.0"
 
@@ -12794,6 +13820,16 @@ defmodule Image do
     `image_bands` together or
 
   * `{:error, reason}`.
+
+  ### Example
+
+      iex> image = Image.new!(3, 3, color: [255, 0, 0])
+      iex> bands = Image.split_bands(image)
+      iex> {:ok, joined} = Image.join_bands(bands)
+      iex> Image.shape(joined)
+      {3, 3, 3}
+      iex> Image.get_pixel(joined, 1, 1)
+      {:ok, [255, 0, 0]}
 
   """
   @doc subject: "Split and join", since: "0.53.0"
@@ -12823,6 +13859,14 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.new!(3, 3, color: [255, 0, 0])
+      iex> bands = Image.split_bands(image)
+      iex> joined = Image.join_bands!(bands)
+      iex> Image.shape(joined)
+      {3, 3, 3}
+
   """
   @doc subject: "Split and join", since: "0.53.0"
 
@@ -12849,6 +13893,15 @@ defmodule Image do
   * `{:ok, and_image}` where `and_image` a single band image that is the
     result of boolean "and"ing the bands of `image` togther.
 
+  ### Example
+
+      iex> image = Image.new!(2, 2, color: [3, 6, 12])
+      iex> {:ok, anded} = Image.band_and(image)
+      iex> Image.shape(anded)
+      {2, 2, 1}
+      iex> Image.get_pixel(anded, 0, 0)
+      {:ok, [0]}
+
   """
   @doc subject: "Split and join", since: "0.60.0"
 
@@ -12873,6 +13926,12 @@ defmodule Image do
     result of boolean "and"ing the bands of `image` togther or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.new!(2, 2, color: [3, 6, 12])
+      iex> image |> Image.band_and!() |> Image.get_pixel(0, 0)
+      {:ok, [0]}
 
   """
   @doc subject: "Split and join", since: "0.60.0"
@@ -12900,6 +13959,15 @@ defmodule Image do
   * `{:ok, or_image}` where `or_image` a single band image that is the
     result of boolean "or"ing the bands of `image` togther.
 
+  ### Example
+
+      iex> image = Image.new!(2, 2, color: [3, 6, 12])
+      iex> {:ok, ored} = Image.band_or(image)
+      iex> Image.shape(ored)
+      {2, 2, 1}
+      iex> Image.get_pixel(ored, 0, 0)
+      {:ok, [15]}
+
   """
   @doc subject: "Split and join", since: "0.60.0"
 
@@ -12924,6 +13992,12 @@ defmodule Image do
     result of boolean "or"ing the bands of `image` togther or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.new!(2, 2, color: [3, 6, 12])
+      iex> image |> Image.band_or!() |> Image.get_pixel(0, 0)
+      {:ok, [15]}
 
   """
   @doc subject: "Split and join", since: "0.60.0"
@@ -12951,6 +14025,14 @@ defmodule Image do
   * `{:ok, xor_image}` where `xor_image` a single band image that is the
     result of boolean "exclusive or"ing the bands of `image` togther.
 
+  ### Example
+
+      iex> image = Image.new!(2, 2, color: [3, 6, 12])
+      iex> {:ok, xored} = Image.band_xor(image)
+      iex> {:ok, [xor_value]} = Image.get_pixel(xored, 0, 0)
+      iex> xor_value
+      9
+
   """
   @doc subject: "Split and join", since: "0.60.0"
 
@@ -12975,6 +14057,13 @@ defmodule Image do
     result of boolean "exclusive or"ing the bands of `image` togther or
 
   * raises an exception.
+
+  ### Example
+
+      iex> image = Image.new!(2, 2, color: [3, 6, 12])
+      iex> {:ok, [xor_value]} = image |> Image.band_xor!() |> Image.get_pixel(0, 0)
+      iex> xor_value
+      9
 
   """
   @doc subject: "Split and join", since: "0.60.0"
@@ -13043,6 +14132,16 @@ defmodule Image do
     directly used to access the band. For example
     `image[alpha_band(image)]`.
 
+  ### Examples
+
+      iex> image = Image.new!(5, 5, color: [10, 20, 30, 255])
+      iex> Image.alpha_band(image)
+      3
+
+      iex> image = Image.new!(5, 5, color: [10, 20, 30])
+      iex> Image.alpha_band(image)
+      nil
+
   """
   @doc subject: "Split and join"
 
@@ -13075,6 +14174,13 @@ defmodule Image do
 
   * `{:error, reason}`.
 
+  ### Example
+
+      iex> image = Image.new!(2, 2, color: [50, 100, 150])
+      iex> {:ok, cast_image} = Image.cast(image, {:u, 16})
+      iex> Image.band_format(cast_image)
+      {:u, 16}
+
   """
   @doc since: "0.30.0", subject: "Operation"
 
@@ -13106,6 +14212,12 @@ defmodule Image do
 
   * raises an exception.
 
+  ### Example
+
+      iex> image = Image.new!(2, 2, color: [50, 100, 150])
+      iex> image |> Image.cast!({:f, 32}) |> Image.band_format()
+      {:f, 32}
+
   """
   @doc since: "0.42.0", subject: "Operation"
 
@@ -13135,6 +14247,15 @@ defmodule Image do
   * `{:ok, image}` or
 
   * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(5, 5, color: [10, 20, 30, 255], bands: 4)
+      iex> {:ok, result} = Image.without_alpha_band(image, fn without_alpha ->
+      ...>   {:ok, without_alpha}
+      ...> end)
+      iex> Image.bands(result)
+      4
 
   """
   @doc since: "0.29.0", subject: "Operation"
@@ -13176,6 +14297,15 @@ defmodule Image do
   * `{:ok, image}` or
 
   * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, adjusted} = Image.with_colorspace(image, :lch, fn converted ->
+      ...>   Image.Math.multiply(converted, [1.0, 0.5, 1.0])
+      ...> end)
+      iex> Image.colorspace(adjusted)
+      :srgb
 
   """
   @doc since: "0.29.0", subject: "Operation"
@@ -13474,6 +14604,16 @@ defmodule Image do
       # .iex.exs
       import_if_available(Image, only: [preview: 1])
 
+  ### Example
+
+  This example is illustrative only since the output
+  depends on running in an iTerm2 terminal window.
+
+      # In an iex session running in an iTerm2 terminal window
+      image = Image.open!("./test/support/images/Kip_small.jpg")
+      Image.preview(image)
+      #=> An inline image preview is emitted to the terminal
+
   """
   @doc subject: "Display", since: "0.13.0"
 
@@ -13527,6 +14667,16 @@ defmodule Image do
 
       # .iex.exs
       import_if_available(Image, only: [p: 1])
+
+  ### Example
+
+  This example is illustrative only since the output
+  depends on running in an iTerm2 terminal window.
+
+      # In an iex session running in an iTerm2 terminal window
+      image = Image.open!("./test/support/images/Kip_small.jpg")
+      Image.p(image)
+      #=> An inline image preview is emitted to the terminal
 
   """
   @doc subject: "Display", since: "0.13.0"
@@ -13582,6 +14732,11 @@ defmodule Image do
 
   See `Image.put_concurrency/1`.
 
+  ### Example
+
+      iex> Image.get_concurrency() > 0
+      true
+
   """
   @doc subject: "Configuration"
 
@@ -13607,6 +14762,16 @@ defmodule Image do
   ### Returns
 
   * `{:ok, updated_concurrency}`
+
+  ### Example
+
+  This example is illustrative only since executing
+  it would change the concurrency for all other
+  image processing.
+
+      # Limit libvips to a maximum of two threads
+      Image.put_concurrency(2)
+      #=> 2
 
   """
   @doc subject: "Configuration"
@@ -13666,6 +14831,11 @@ defmodule Image do
   @doc """
   Returns the version of `libvips` in
   operation.
+
+  ### Examples
+
+      iex> match?({:ok, %Version{}}, Image.vips_version())
+      true
 
   """
   @doc subject: "Configuration"

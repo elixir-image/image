@@ -4,6 +4,8 @@ defmodule Image.PixelColorGapTest do
   alias Image.Pixel
   alias Vix.Vips.Operation
 
+  doctest Image.Histogram
+
   describe "Image.Pixel.to_pixel/3 pre-encoded list detection" do
     test "an in-range integer list passes through unchanged for an rgb16 image" do
       image = Image.new!(2, 2, color: :black) |> Image.to_colorspace!(:rgb16)

@@ -38,10 +38,14 @@ defmodule Image.YUV do
   alias Vix.Vips.Image, as: Vimage
   alias Image.Vips.Operation
 
+  # Studio-swing (limited range, 16..235) inverse coefficients matching
+  # the "Computer RGB to YCbCr" forward matrices below: 1.164384 is
+  # 255/219 (luma expansion) and the chroma coefficients are scaled by
+  # 255/224.
   @bt601_to_rgb [
-    [1.0, 0.0, 1.402],
-    [1.0, -0.344136, -0.714136],
-    [1.0, 1.772, 0.0]
+    [1.164384, 0.0, 1.596027],
+    [1.164384, -0.391762, -0.812968],
+    [1.164384, 2.017232, 0.0]
   ]
 
   # This are the "Computer RGB to YCbCr"
@@ -56,9 +60,9 @@ defmodule Image.YUV do
   # See https://mymusing.co/bt-709-yuv-to-rgb-conversion-color/
 
   @bt709_to_rgb [
-    [1.0, 0.0, 1.5748],
-    [1.0, -0.187324, -0.468124],
-    [1.0, 1.8556, 0.0]
+    [1.164384, 0.0, 1.792741],
+    [1.164384, -0.213249, -0.532909],
+    [1.164384, 2.112402, 0.0]
   ]
 
   # This are the "Computer RGB to YCbCr"
@@ -143,6 +147,17 @@ defmodule Image.YUV do
 
   * `{:error, reason}`.
 
+  ### Examples
+
+      iex> image = Image.new!(8, 8, color: :green)
+      iex> path = Path.join(System.tmp_dir!(), "yuv_new_from_file_doctest.yuv")
+      iex> :ok = Image.YUV.write_to_file(image, path, :C420)
+      iex> {:ok, rgb_image} = Image.YUV.new_from_file(path, 8, 8, :C420)
+      iex> File.rm(path)
+      :ok
+      iex> Image.shape(rgb_image)
+      {8, 8, 3}
+
   """
   @doc since: "0.41.0"
 
@@ -192,6 +207,13 @@ defmodule Image.YUV do
 
   * `{:error, reason}`.
 
+  ### Examples
+
+      iex> binary = :binary.copy(<<128>>, 3 * 8 * 8)
+      iex> {:ok, image} = Image.YUV.new_from_binary(binary, 8, 8, :C444)
+      iex> {Image.shape(image), Image.colorspace(image)}
+      {{8, 8, 3}, :srgb}
+
   """
   @doc since: "0.41.0"
 
@@ -233,6 +255,15 @@ defmodule Image.YUV do
 
   * `{:error, reason}`.
 
+  ### Examples
+
+      iex> image = Image.new!(8, 8, color: :green)
+      iex> path = Path.join(System.tmp_dir!(), "yuv_write_to_file_doctest.yuv")
+      iex> Image.YUV.write_to_file(image, path, :C420)
+      :ok
+      iex> File.rm(path)
+      :ok
+
   """
   @doc since: "0.41.0"
 
@@ -269,6 +300,13 @@ defmodule Image.YUV do
 
   * `{:error, reason}`.
 
+  ### Examples
+
+      iex> image = Image.new!(8, 8, color: :green)
+      iex> {:ok, binary} = Image.YUV.write_to_binary(image, :C420)
+      iex> byte_size(binary)
+      96
+
   """
   @doc since: "0.41.0"
 
@@ -298,6 +336,13 @@ defmodule Image.YUV do
   * `colorspace` is one of `:bt601` (the default) or
     `:bt709` that represents the colorspace of `image` before
     conversion.
+
+  ### Examples
+
+      iex> yuv_image = Image.new!(8, 8, color: [128, 128, 128])
+      iex> {:ok, rgb_image} = Image.YUV.to_rgb(yuv_image, :bt601)
+      iex> {Image.shape(rgb_image), Image.colorspace(rgb_image)}
+      {{8, 8, 3}, :srgb}
 
   """
   # See https://github.com/libvips/libvips/discussions/2561
@@ -340,6 +385,15 @@ defmodule Image.YUV do
   * `{:ok, image}` or
 
   * `{:error, reason}`.
+
+  ### Examples
+
+      iex> y = :binary.copy(<<235>>, 64)
+      iex> u = :binary.copy(<<128>>, 64)
+      iex> v = :binary.copy(<<128>>, 64)
+      iex> {:ok, image} = Image.YUV.to_rgb([y, u, v], 8, 8, :C444, :bt601)
+      iex> Image.shape(image)
+      {8, 8, 3}
 
   """
   @doc since: "0.41.0"
@@ -406,6 +460,13 @@ defmodule Image.YUV do
 
   * `{:error, reason}`.
 
+  ### Examples
+
+      iex> image = Image.new!(8, 8, color: :red)
+      iex> {:ok, [y, u, v]} = Image.YUV.to_yuv(image, :C420)
+      iex> {byte_size(y), byte_size(u), byte_size(v)}
+      {64, 16, 16}
+
   """
   @doc since: "0.41.0"
 
@@ -447,6 +508,13 @@ defmodule Image.YUV do
   * `{:ok, [y, u, v]}` or
 
   * `{:error, Image.error()}`.
+
+  ### Examples
+
+      iex> yuv_image = Image.new!(8, 8, color: [128, 128, 128])
+      iex> {:ok, [y, u, v]} = Image.YUV.encode(yuv_image, :C422)
+      iex> {byte_size(y), byte_size(u), byte_size(v)}
+      {64, 32, 32}
 
   """
   @doc since: "0.41.0"
@@ -500,6 +568,15 @@ defmodule Image.YUV do
   * `{:ok, [y, u, v]}` or
 
   * `{:error, reason}`.
+
+  ### Examples
+
+      iex> binary = :binary.copy(<<128>>, 8 * 8 + 2 * (4 * 4))
+      iex> {:ok, [y, u, v]} = Image.YUV.decode(binary, 8, 8, :C420)
+      iex> {byte_size(y), byte_size(u), byte_size(v)}
+      {64, 16, 16}
+
+      iex> {:error, %Image.Error{}} = Image.YUV.decode(<<1, 2, 3>>, 8, 8, :C444)
 
   """
   @doc since: "0.41.0"

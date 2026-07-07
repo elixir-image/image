@@ -229,6 +229,13 @@ if Image.xav_configured?() do
     Opens a video for frame extraction, raising on error.
 
     See `open/2`.
+
+    ### Example
+
+        iex> video = Image.Video.open!("./test/support/video/video_sample.mp4")
+        iex> video.fps
+        30.0
+
     """
     @doc subject: "Load and save"
     @spec open!(source()) :: t() | no_return()
@@ -292,6 +299,13 @@ if Image.xav_configured?() do
 
     * `{:ok, video}` where `video.reader` is now `nil`.
 
+    ### Example
+
+        iex> video = Image.Video.open!("./test/support/video/video_sample.mp4")
+        iex> {:ok, closed} = Image.Video.close(video)
+        iex> closed.reader
+        nil
+
     """
     @doc subject: "Load and save"
     @spec close(t()) :: {:ok, t()}
@@ -303,6 +317,14 @@ if Image.xav_configured?() do
     Closes a video, raising on error.
 
     See `close/1`.
+
+    ### Example
+
+        iex> video = Image.Video.open!("./test/support/video/video_sample.mp4")
+        iex> closed = Image.Video.close!(video)
+        iex> closed.reader
+        nil
+
     """
     @doc subject: "Load and save"
     @spec close!(t()) :: t()
@@ -536,6 +558,14 @@ if Image.xav_configured?() do
     @doc """
     Seeks the video head to a frame or millisecond offset,
     raising on error. See `seek/2`.
+
+    ### Example
+
+        iex> video = Image.Video.open!("./test/support/video/video_sample.mp4")
+        iex> %Image.Video{} = Image.Video.seek!(video, frame: 10)
+        iex> :ok
+        :ok
+
     """
     @doc subject: "Operation"
     @spec seek!(t(), seek_options()) :: t() | no_return()
@@ -563,6 +593,14 @@ if Image.xav_configured?() do
     * `{:ok, video}` after advancing or
 
     * `{:error, %Image.Error{}}`.
+
+    ### Example
+
+        iex> {:ok, video} = Image.Video.open("./test/support/video/video_sample.mp4")
+        iex> {:ok, video} = Image.Video.scrub(video, 5)
+        iex> {:ok, _image} = Image.Video.image_from_video(video)
+        iex> :ok
+        :ok
 
     """
     @doc subject: "Operation"
@@ -639,6 +677,14 @@ if Image.xav_configured?() do
     Reads a single frame from a video as an
     `t:Vix.Vips.Image.t/0`, raising on error. See
     `image_from_video/2`.
+
+    ### Example
+
+        iex> video = Image.Video.open!("./test/support/video/video_sample.mp4")
+        iex> image = Image.Video.image_from_video!(video, frame: 0)
+        iex> Image.shape(image)
+        {1920, 1080, 3}
+
     """
     @doc subject: "Operation"
     @spec image_from_video!(t(), seek_options()) :: Vimage.t() | no_return()

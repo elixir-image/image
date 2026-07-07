@@ -120,6 +120,13 @@ defmodule Image.Lqip.Css do
   Encodes an image as a packed LQIP hex value, or raises on error.
 
   See `encode/1`.
+
+  ### Example
+
+      iex> image = Image.new!(32, 32, color: :white)
+      iex> Image.Lqip.Css.encode!(image)
+      "#ffffffff"
+
   """
   @doc subject: "Operation"
 

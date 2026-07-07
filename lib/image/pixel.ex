@@ -268,6 +268,16 @@ defmodule Image.Pixel do
   @doc """
   Same as `to_pixel/3`, but raises on error.
 
+  ### Examples
+
+      iex> image = Image.new!(2, 2, color: :black)
+      iex> Image.Pixel.to_pixel!(image, :red)
+      [255, 0, 0]
+
+      iex> image = Image.new!(2, 2, color: [0, 0, 0, 255])
+      iex> Image.Pixel.to_pixel!(image, :red, alpha: 0.5)
+      [255, 0, 0, 128]
+
   """
   @spec to_pixel!(image :: Vimage.t(), color :: t(), options :: Keyword.t()) :: [number()]
   def to_pixel!(image, color, options \\ []) do
@@ -328,6 +338,14 @@ defmodule Image.Pixel do
 
   @doc """
   Same as `to_srgb/1`, but raises on error.
+
+  ### Examples
+
+      iex> Image.Pixel.to_srgb!(:red)
+      [255, 0, 0]
+
+      iex> Image.Pixel.to_srgb!("#ff000080")
+      [255, 0, 0, 128]
 
   """
   @spec to_srgb!(color :: t()) :: [0..255]
@@ -394,12 +412,22 @@ defmodule Image.Pixel do
   @doc """
   The maximum opacity value (255).
 
+  ### Examples
+
+      iex> Image.Pixel.max_opacity()
+      255
+
   """
   @spec max_opacity() :: 255
   def max_opacity, do: @max_opacity
 
   @doc """
   The minimum opacity value (0).
+
+  ### Examples
+
+      iex> Image.Pixel.min_opacity()
+      0
 
   """
   @spec min_opacity() :: 0

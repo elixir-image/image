@@ -73,6 +73,13 @@ defmodule Image.Math do
   Matrix unary minues of an
   image or a number.
 
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(-image, 0, 0)
+      [-10.0, -20.0, -30.0]
+
   """
   def -a when is_struct(a, Vimage) do
     multiply!(a, -1)
@@ -89,6 +96,13 @@ defmodule Image.Math do
   Delegates to `Kernel.+/2` if none of
   the parameters is a `t:Vix.Vips.Image.t/0`.
 
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image + 5, 0, 0)
+      [15.0, 25.0, 35.0]
+
   """
   def a + b do
     add!(a, b)
@@ -100,6 +114,13 @@ defmodule Image.Math do
 
   Delegates to `Kernel.-/2` if none of
   the parameters is a `t:Vix.Vips.Image.t/0`.
+
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image - 5, 0, 0)
+      [5.0, 15.0, 25.0]
 
   """
   def a - b do
@@ -113,6 +134,13 @@ defmodule Image.Math do
   Delegates to `Kernel.*/2` if none of
   the parameters is a `t:Vix.Vips.Image.t/0`.
 
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image * 2, 0, 0)
+      [20.0, 40.0, 60.0]
+
   """
   def a * b do
     multiply!(a, b)
@@ -124,6 +152,13 @@ defmodule Image.Math do
 
   Delegates to `Kernel.//2` if none of
   the parameters is a `t:Vix.Vips.Image.t/0`.
+
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image / 2, 0, 0)
+      [5.0, 10.0, 15.0]
 
   """
   def a / b do
@@ -137,6 +172,13 @@ defmodule Image.Math do
   Delegates to `Kernel.**/2` if none of
   the parameters is a `t:Vix.Vips.Image.t/0`.
 
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image ** 2, 0, 0)
+      [100.0, 400.0, 900.0]
+
   """
   def a ** b do
     pow!(a, b)
@@ -148,6 +190,13 @@ defmodule Image.Math do
 
   Delegates to `Kernel.</2` if none of
   the parameters is a `t:Vix.Vips.Image.t/0`.
+
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image < 20, 0, 0)
+      [255, 0, 0]
 
   """
   def a < b do
@@ -161,6 +210,13 @@ defmodule Image.Math do
   Delegates to `Kernel.<=/2` if none of
   the parameters is a `t:Vix.Vips.Image.t/0`.
 
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image <= 20, 0, 0)
+      [255, 255, 0]
+
   """
   def a <= b do
     less_than_or_equal!(a, b)
@@ -172,6 +228,13 @@ defmodule Image.Math do
 
   Delegates to `Kernel.>/2` if none of
   the parameters is a `t:Vix.Vips.Image.t/0`.
+
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image > 20, 0, 0)
+      [0, 0, 255]
 
   """
   def a > b do
@@ -185,6 +248,13 @@ defmodule Image.Math do
   Delegates to `Kernel.>=/2` if none of
   the parameters is a `t:Vix.Vips.Image.t/0`.
 
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image >= 20, 0, 0)
+      [0, 255, 255]
+
   """
   def a >= b do
     greater_than_or_equal!(a, b)
@@ -196,6 +266,13 @@ defmodule Image.Math do
 
   Delegates to `Kernel.==/2` if none of
   the parameters is a `t:Vix.Vips.Image.t/0`.
+
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image == [10, 20, 30], 0, 0)
+      [255, 255, 255]
 
   """
   def a == b do
@@ -209,6 +286,13 @@ defmodule Image.Math do
   Delegates to `Kernel.!=/2` if none of
   the parameters is a `t:Vix.Vips.Image.t/0`.
 
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image != [10, 20, 30], 0, 0)
+      [0, 0, 0]
+
   """
   def a != b do
     not_equal!(a, b)
@@ -218,6 +302,13 @@ defmodule Image.Math do
   Matrix bitwise 'and' of
   two images.
 
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image &&& image, 0, 0)
+      [10, 20, 30]
+
   """
   def a &&& b do
     boolean_and!(a, b)
@@ -226,6 +317,13 @@ defmodule Image.Math do
   @doc """
   Matrix bitwise 'or' of
   two images.
+
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> Image.get_pixel!(image ||| image, 0, 0)
+      [10, 20, 30]
 
   """
   def a ||| b do
@@ -245,6 +343,14 @@ defmodule Image.Math do
   Matrix bitwise 'left shift' of
   two images.
 
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> one = Image.new!(2, 2, color: [1, 1, 1])
+      iex> Image.get_pixel!(image <<< one, 0, 0)
+      [20, 40, 60]
+
   """
   def a <<< b do
     boolean_lshift!(a, b)
@@ -253,6 +359,14 @@ defmodule Image.Math do
   @doc """
   Matrix bitwise 'right shift' of
   two images.
+
+  ### Example
+
+      iex> use Image.Math
+      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> one = Image.new!(2, 2, color: [1, 1, 1])
+      iex> Image.get_pixel!(image >>> one, 0, 0)
+      [5, 10, 15]
 
   """
   def a >>> b do
@@ -836,6 +950,13 @@ defmodule Image.Math do
 
   * `{maximum, x_max, y_max, [{x, y}, ...])`
 
+  ### Example
+
+      iex> {:ok, image} = Vix.Vips.Image.new_from_list([[1, 2], [3, 4]])
+      iex> {maximum, x_max, y_max, _coordinates} = Image.Math.top_n(image, 2)
+      iex> {maximum, x_max, y_max}
+      {4.0, 1, 1}
+
   """
   @spec top_n(image :: Vimage.t(), n :: non_neg_integer()) ::
           {
@@ -868,6 +989,13 @@ defmodule Image.Math do
   ### Returns
 
   * `{minimum, x_min, y_min, [{x, y}, ...])`
+
+  ### Example
+
+      iex> {:ok, image} = Vix.Vips.Image.new_from_list([[1, 2], [3, 4]])
+      iex> {minimum, x_min, y_min, _coordinates} = Image.Math.bottom_n(image, 2)
+      iex> {minimum, x_min, y_min}
+      {1.0, 0, 0}
 
   """
   @spec bottom_n(image :: Vimage.t(), n :: non_neg_integer()) ::
@@ -983,6 +1111,12 @@ defmodule Image.Math do
     that the number of coordinates is the same as the requested `n`.
     Therefore it is possible - maybe even likely - that there are other
     coordinates that have the minimum value but have not been returned.
+
+  ### Example
+
+      iex> {:ok, image} = Vix.Vips.Image.new_from_list([[1, 2], [3, 4]])
+      iex> Image.Math.minpos(image, 2)
+      {1.0, [{0, 0}], nil}
 
   """
   @dialyzer {:nowarn_function, minpos: 2}

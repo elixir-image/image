@@ -35,6 +35,17 @@ defmodule Image.BackgroundColor do
     image has alpha), or
 
   * `{:error, t:Image.Error.t/0}`
+
+  ### Examples
+
+      iex> image = Image.new!(3, 3, color: :red)
+      iex> Image.BackgroundColor.resolve(image, :average)
+      {:ok, [255, 0, 0]}
+      iex> Image.BackgroundColor.resolve(image, :blue)
+      {:ok, [0, 0, 255]}
+      iex> Image.BackgroundColor.resolve(image, "#00ff00")
+      {:ok, [0, 255, 0]}
+
   """
   @spec resolve(Vimage.t(), spec()) :: {:ok, [number()]} | {:error, Image.Error.t()}
   def resolve(%Vimage{} = image, :average) do

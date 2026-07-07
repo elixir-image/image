@@ -157,6 +157,13 @@ defmodule Image.Draw do
 
   * raises an exception.
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :white)
+      iex> with_dot = Image.Draw.point!(image, 5, 5, color: :red)
+      iex> Image.get_pixel!(with_dot, 5, 5)
+      [255, 0, 0]
+
   """
 
   @doc since: "0.17.0"
@@ -363,6 +370,13 @@ defmodule Image.Draw do
 
   * raises an exception.
 
+  ### Examples
+
+      iex> image = Image.new!(20, 20, color: :white)
+      iex> with_rect = Image.Draw.rect!(image, 4, 4, 10, 10, color: :blue)
+      iex> Image.get_pixel!(with_rect, 8, 8)
+      [0, 0, 255]
+
   """
 
   @doc since: "0.17.0"
@@ -552,6 +566,13 @@ defmodule Image.Draw do
 
   * raises an exception.
 
+  ### Examples
+
+      iex> image = Image.new!(20, 20, color: :white)
+      iex> with_circle = Image.Draw.circle!(image, 10, 10, 5, color: :red)
+      iex> Image.get_pixel!(with_circle, 10, 10)
+      [255, 0, 0]
+
   """
   @doc since: "0.17.0"
 
@@ -700,6 +721,13 @@ defmodule Image.Draw do
 
   * raises an exception.
 
+  ### Examples
+
+      iex> image = Image.new!(20, 20, color: :white)
+      iex> with_line = Image.Draw.line!(image, 0, 0, 19, 19, color: :red)
+      iex> Image.get_pixel!(with_line, 0, 0)
+      [255, 0, 0]
+
   """
   @doc since: "0.17.0"
 
@@ -765,6 +793,14 @@ defmodule Image.Draw do
     function.
 
   * or `{:error, reason}`
+
+  ### Examples
+
+      iex> base = Image.new!(20, 20, color: :white)
+      iex> sub_image = Image.new!(5, 5, color: :red)
+      iex> {:ok, composed} = Image.Draw.image(base, sub_image, 2, 2)
+      iex> Image.get_pixel!(composed, 3, 3)
+      [255, 0, 0]
 
   """
   @doc since: "0.7.0"
@@ -848,6 +884,14 @@ defmodule Image.Draw do
 
   * raises an exception.
 
+  ### Examples
+
+      iex> base = Image.new!(20, 20, color: :white)
+      iex> sub_image = Image.new!(5, 5, color: :red)
+      iex> composed = Image.Draw.image!(base, sub_image, 2, 2)
+      iex> Image.get_pixel!(composed, 3, 3)
+      [255, 0, 0]
+
   """
   @doc since: "0.25.0"
 
@@ -921,6 +965,15 @@ defmodule Image.Draw do
     of the flood area.
 
   * or `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :white)
+      iex> {:ok, {flooded, box}} = Image.Draw.flood(image, 0, 0, color: :green, equal: true)
+      iex> Image.get_pixel!(flooded, 5, 5)
+      [0, 128, 0]
+      iex> box
+      %{left: 0, top: 0, width: 10, height: 10}
 
   """
   @doc since: "0.7.0"
@@ -1006,6 +1059,13 @@ defmodule Image.Draw do
 
   * raises an exception.
 
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :white)
+      iex> flooded = Image.Draw.flood!(image, 0, 0, color: :green, equal: true)
+      iex> Image.get_pixel!(flooded, 5, 5)
+      [0, 128, 0]
+
   """
   @doc since: "0.24.0"
 
@@ -1029,6 +1089,16 @@ defmodule Image.Draw do
 
   Mask is a monochrome 8-bit image with the values of `0` or `255` for transparent
   and any other value as a color to be blended into the base image.
+
+  ### Examples
+
+      iex> base = Image.new!(20, 20, color: :white)
+      iex> mask = Image.new!(5, 5, color: 255, bands: 1)
+      iex> {:ok, masked} = Image.Draw.mask(base, mask, 2, 2, color: :red)
+      iex> Image.get_pixel!(masked, 3, 3)
+      [255, 0, 0]
+      iex> Image.get_pixel!(masked, 10, 10)
+      [255, 255, 255]
 
   """
   @doc since: "0.7.0"
@@ -1073,6 +1143,13 @@ defmodule Image.Draw do
 
   Each pixel in the area left , top , width , height is
   replaced by the average of the surrounding 3x3 pixels.
+
+  ### Examples
+
+      iex> image = Image.new!(20, 20, color: :white)
+      iex> {:ok, smudged} = Image.Draw.smudge(image, 2, 2, 5, 5)
+      iex> Image.shape(smudged)
+      {20, 20, 3}
 
   """
   @doc since: "0.7.0"

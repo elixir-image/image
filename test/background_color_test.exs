@@ -3,6 +3,8 @@ defmodule Image.BackgroundColorTest do
 
   alias Image.BackgroundColor
 
+  doctest Image.BackgroundColor
+
   defp solid(color), do: Image.new!(4, 4, color: color)
 
   defp solid_in(color, colorspace),

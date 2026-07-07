@@ -31,12 +31,7 @@ defmodule Image.MixProject do
           String.Chars.Image.Exif.Gps,
           String.Chars.Image.Exif.Thumbnail,
           # Dialyzer-only support module under mix/.
-          ForDialyzer,
-          # Apparently-unused internal modules, pending a removal
-          # decision before 1.0.
-          Image.Nx,
-          Image.Exif.ReadError,
-          Image.Exif.FieldNames
+          ForDialyzer
         ]
       ],
       dialyzer: [
