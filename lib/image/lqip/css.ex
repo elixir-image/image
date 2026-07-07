@@ -136,7 +136,10 @@ defmodule Image.Lqip.Css do
   # the precompiled table
   defp nearest({r, g, b}, table) do
     {:ok, lab} = Color.convert([r / 255, g / 255, b / 255], Color.Lab)
-    {packed, _lab} = Enum.min_by(table, fn {_packed, candidate} -> Color.Distance.delta_e_2000(lab, candidate) end)
+
+    {packed, _lab} =
+      Enum.min_by(table, fn {_packed, candidate} -> Color.Distance.delta_e_2000(lab, candidate) end)
+
     packed
   end
 end

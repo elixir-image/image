@@ -7,7 +7,9 @@ defmodule Image.Lqip.Css.Test do
 
   # Builds an image from `bands`-per-pixel tuples in row-major order.
   defp image_3x3(pixels, bands) do
-    binary = for tuple <- pixels, into: <<>>, do: for(v <- Tuple.to_list(tuple), into: <<>>, do: <<v>>)
+    binary =
+      for tuple <- pixels, into: <<>>, do: for(v <- Tuple.to_list(tuple), into: <<>>, do: <<v>>)
+
     Vix.Vips.Image.new_from_binary(binary, 3, 3, bands, :VIPS_FORMAT_UCHAR)
   end
 
@@ -27,9 +29,15 @@ defmodule Image.Lqip.Css.Test do
     {:ok, image} =
       image_3x3(
         [
-          {255, 0, 0}, @filler, @filler,
-          @filler, {0, 255, 0}, @filler,
-          @filler, @filler, {0, 0, 255}
+          {255, 0, 0},
+          @filler,
+          @filler,
+          @filler,
+          {0, 255, 0},
+          @filler,
+          @filler,
+          @filler,
+          {0, 0, 255}
         ],
         3
       )
@@ -41,9 +49,15 @@ defmodule Image.Lqip.Css.Test do
     {:ok, image} =
       image_3x3(
         [
-          {255, 0, 0, 17}, {0, 0, 0, 255}, {0, 0, 0, 255},
-          {0, 0, 0, 255}, {0, 255, 0, 3}, {0, 0, 0, 255},
-          {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 255, 200}
+          {255, 0, 0, 17},
+          {0, 0, 0, 255},
+          {0, 0, 0, 255},
+          {0, 0, 0, 255},
+          {0, 255, 0, 3},
+          {0, 0, 0, 255},
+          {0, 0, 0, 255},
+          {0, 0, 0, 255},
+          {0, 0, 255, 200}
         ],
         4
       )
@@ -69,9 +83,15 @@ defmodule Image.Lqip.Css.Test do
     {:ok, image} =
       image_3x3(
         [
-          {255, 0, 0}, @filler, @filler,
-          @filler, {0, 255, 0}, @filler,
-          @filler, @filler, {0, 0, 255}
+          {255, 0, 0},
+          @filler,
+          @filler,
+          @filler,
+          {0, 255, 0},
+          @filler,
+          @filler,
+          @filler,
+          {0, 0, 255}
         ],
         3
       )

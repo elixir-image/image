@@ -6,6 +6,8 @@ This is the changelog for Image version 0.70.0 released on July 7th, 2026.  For 
 
 ### Added
 
+* Adds `Image.Lqip.Css` to encode an image as a packed [LQIP CSS](https://hexdocs.pm/image/lqip_css.html) placeholder value, with a new guide including the copy-and-paste stylesheet. Thanks to @hlindset for the PR.
+
 * Adds `Image.BackgroundColor` to resolve background color specifications (including `:average`) into concrete pixels; used by `Image.rotate/3`, affine and warp operations. Thanks to @hlindset for the PRs.
 
 * Adds `:background` color resolution to `Image.write/3` so alpha images flatten onto a resolved background when writing to formats without alpha. Thanks to @hlindset for the PR.
