@@ -145,7 +145,9 @@ defmodule Image.WriteOptionsCoverageTest do
     end
 
     test "an invalid background is rejected", %{image: image} do
-      assert {:error, %Image.Error{reason: :invalid_option}} =
+      # The specific resolution error is passed through, carrying the
+      # underlying Color error as its reason.
+      assert {:error, %Image.Error{message: "Invalid background color" <> _}} =
                Write.validate_options(image, "test.png", background: "no-such-color")
     end
 

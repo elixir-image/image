@@ -307,13 +307,15 @@ defmodule Image.Options.Write do
   # by `Image.BackgroundColor.resolve/2` (numbers, lists, CSS names, hex
   # strings). the resolved pixel's alpha band (opaque for `:average` on an
   # alpha image) is stripped.
-  defp validate_option({:background, background} = option, options, image, _image_type) do
+  defp validate_option({:background, background}, options, image, _image_type) do
     case BackgroundColor.resolve(image, background) do
       {:ok, pixel} ->
         {:cont, Keyword.put(options, :background, strip_alpha(pixel, image))}
 
-      {:error, _reason} ->
-        {:halt, {:error, invalid_option(option)}}
+      # The resolve error is already an %Image.Error{} with a more
+      # specific message than invalid_option/1 would produce.
+      {:error, reason} ->
+        {:halt, {:error, reason}}
     end
   end
 
@@ -404,14 +406,6 @@ defmodule Image.Options.Write do
 
   defp validate_option(option, _options, _image, image_type) do
     {:halt, {:error, invalid_option(option, image_type)}}
-  end
-
-  defp invalid_option(option) do
-    %Image.Error{
-      reason: :invalid_option,
-      value: option,
-      message: "Invalid option or option value: #{inspect(option)}"
-    }
   end
 
   defp invalid_option(option, image_type) do
