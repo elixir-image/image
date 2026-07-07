@@ -170,6 +170,14 @@ defmodule Image.Affine.Test do
       assert Image.get_pixel!(result, 0, 0) == [10, 20, 30]
     end
 
+    test "resolves :average against an image with an alpha band" do
+      image = Image.new!(20, 20, color: [10, 20, 30, 255])
+
+      assert {:ok, result} = Image.translate(image, 5, 0, background: :average)
+      assert Image.bands(result) == 4
+      assert Image.get_pixel!(result, 0, 0) == [10, 20, 30, 255]
+    end
+
     test "rejects an invalid :background" do
       image = white_dot(20, 20, 10, 10)
       assert {:error, _reason} = Image.translate(image, 5, 0, background: :not_a_colour)

@@ -53,26 +53,10 @@ defmodule Image.Options.WarpPerspective do
     end
   end
 
-  defp validate_option({:background, :average}, image, options) do
-    case Image.average(image) do
-      color when is_list(color) ->
-        options = Keyword.put(options, :background, color)
-        {:cont, options}
-
-      {:error, reason} ->
-        {:halt,
-         {:error,
-          %Image.Error{
-            message: "Could not get the image average: #{inspect(reason)}",
-            reason: "Could not get the image average: #{inspect(reason)}"
-          }}}
-    end
-  end
-
-  defp validate_option({:background, color} = option, image, options) do
-    case Pixel.to_pixel(image, color) do
+  defp validate_option({:background, background}, image, options) do
+    case Image.BackgroundColor.resolve(image, background) do
       {:ok, pixel} -> {:cont, Keyword.put(options, :background, pixel)}
-      _other -> {:halt, {:error, invalid_option(option)}}
+      {:error, reason} -> {:halt, {:error, reason}}
     end
   end
 
