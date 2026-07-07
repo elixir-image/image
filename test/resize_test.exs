@@ -132,4 +132,30 @@ defmodule Image.Resize.Test do
       assert_images_equal(resized, validate_path)
     end
   end
+
+  describe "thumbnail!/3 bang contract" do
+    # Regression: thumbnail! either returned {:error, _} (dimension-string
+    # clause had no else) or raised WithClauseError (path clause only matched
+    # %Image.Error{} reasons) instead of raising Image.Error.
+
+    test "raises for an invalid dimension string" do
+      image = Image.new!(100, 100, color: :red)
+
+      assert_raise Image.Error, ~r/Invalid dimensions/, fn ->
+        Image.thumbnail!(image, "axb")
+      end
+    end
+
+    test "raises for an invalid option with a path source" do
+      assert_raise Image.Error, ~r/Invalid Image.thumbnail option/, fn ->
+        Image.thumbnail!(image_path("Kip_small.jpg"), 50, bad_option: 1)
+      end
+    end
+
+    test "raises for a non-existent path" do
+      assert_raise Image.Error, fn ->
+        Image.thumbnail!("does/not/exist.jpg", 50)
+      end
+    end
+  end
 end

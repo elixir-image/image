@@ -335,7 +335,7 @@ defmodule Image.Math do
   end
 
   @spec add(number(), number()) :: {:ok, number}
-  def add(a, b) do
+  def add(a, b) when is_number(a) and is_number(b) do
     {:ok, Kernel.+(a, b)}
   end
 
@@ -363,7 +363,7 @@ defmodule Image.Math do
   end
 
   @spec subtract(number(), number()) :: {:ok, number}
-  def subtract(a, b) do
+  def subtract(a, b) when is_number(a) and is_number(b) do
     {:ok, Kernel.-(a, b)}
   end
 
@@ -416,8 +416,8 @@ defmodule Image.Math do
   end
 
   @spec divide(number(), number()) :: {:ok, number}
-  def divide(a, b) do
-    {:ok, Kernel.-(a, b)}
+  def divide(a, b) when is_number(a) and is_number(b) do
+    {:ok, Kernel./(a, b)}
   end
 
   @spec less_than(Vimage.t(), Vimage.t()) ::

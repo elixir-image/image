@@ -1108,21 +1108,34 @@ defmodule Image.Draw do
 
   @spec maybe_add_alpha(Vimage.t() | MutableImage.t(), Pixel.t()) :: Pixel.t()
 
+  # Colors resolved by `Image.Pixel.to_pixel/2` already match the image's
+  # band count (including any alpha band), so this only adjusts colors that
+  # arrive unresolved (for example via map-shaped options) and are exactly
+  # one band short of, or one band over, the image's band count.
   @doc false
-  def maybe_add_alpha(image, color) when length(color) == 3 do
-    if has_alpha?(image) do
-      List.insert_at(color, -1, Pixel.max_opacity())
-    else
-      color
+  def maybe_add_alpha(image, color) when is_list(color) do
+    bands = bands(image)
+    color_bands = length(color)
+
+    cond do
+      color_bands == bands - 1 && has_alpha?(image) ->
+        List.insert_at(color, -1, Pixel.max_opacity())
+
+      color_bands == bands + 1 && not has_alpha?(image) ->
+        List.delete_at(color, -1)
+
+      true ->
+        color
     end
   end
 
-  def maybe_add_alpha(image, color) when length(color) == 4 do
-    if has_alpha?(image) do
-      color
-    else
-      List.delete_at(color, -1)
-    end
+  defp bands(%MutableImage{} = image) do
+    {:ok, {_width, _height, bands}} = MutableImage.shape(image)
+    bands
+  end
+
+  defp bands(%Vimage{} = image) do
+    Vimage.bands(image)
   end
 
   defp has_alpha?(%MutableImage{} = image) do

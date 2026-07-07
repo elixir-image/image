@@ -94,22 +94,22 @@ defmodule Image.Exif do
 
   """
   def extract_exif(exif) do
-    <<byte_order::16, forty_two::binary-size(2), offset::binary-size(4), _rest::binary>> = exif
-
-    endian =
-      case byte_order do
-        0x4949 -> :little
-        0x4D4D -> :big
-      end
-
-    read_unsigned = &:binary.decode_unsigned(&1, endian)
-
-    # sanity check
-    with 42 <- read_unsigned.(forty_two) do
+    # EXIF payloads come from untrusted image files so a truncated or
+    # corrupt blob must produce an error, never a crash.
+    with <<byte_order::16, forty_two::binary-size(2), offset::binary-size(4), _rest::binary>> <-
+           exif,
+         {:ok, read_unsigned} <- byte_order_decoder(byte_order),
+         42 <- read_unsigned.(forty_two) do
       offset = read_unsigned.(offset)
       reshape(read_ifd({exif, offset, read_unsigned}))
+    else
+      _other -> {:error, :invalid_exif}
     end
   end
+
+  defp byte_order_decoder(0x4949), do: {:ok, &:binary.decode_unsigned(&1, :little)}
+  defp byte_order_decoder(0x4D4D), do: {:ok, &:binary.decode_unsigned(&1, :big)}
+  defp byte_order_decoder(_other), do: {:error, :invalid_exif}
 
   @spec read_ifd(context :: context()) :: map()
   defp read_ifd({exif, offset, ru} = context) do
@@ -157,14 +157,22 @@ defmodule Image.Exif do
   # Handle malformed data
   defp read_tags(_, _, _, _, result), do: Map.new(result)
 
-  def read_exif(exif_offset, {exif, _offset, ru} = context) do
-    <<_::binary-size(^exif_offset), count::binary-size(2), tags::binary>> = exif
-    count = ru.(count)
-    read_tags(count, tags, context, :exif, [])
+  def read_exif(exif_offset, {exif, _offset, ru} = context)
+      when is_integer(exif_offset) and exif_offset >= 0 do
+    case exif do
+      <<_::binary-size(^exif_offset), count::binary-size(2), tags::binary>> ->
+        read_tags(ru.(count), tags, context, :exif, [])
+
+      _ ->
+        %{}
+    end
   end
 
+  def read_exif(_exif_offset, _context), do: %{}
+
   @spec read_gps(non_neg_integer(), context()) :: %Gps{}
-  defp read_gps(gps_offset, {gps, _offset, ru} = context) do
+  defp read_gps(gps_offset, {gps, _offset, ru} = context)
+       when is_integer(gps_offset) and gps_offset >= 0 do
     case gps do
       <<_::binary-size(^gps_offset), count::binary-size(2), tags::binary>> ->
         struct(Gps, read_tags(ru.(count), tags, context, :gps, []))
@@ -173,6 +181,8 @@ defmodule Image.Exif do
         %Gps{}
     end
   end
+
+  defp read_gps(_gps_offset, _context), do: %Gps{}
 
   @spec reshape(%{exif: t()}) :: %{exif: t()}
   defp reshape(result), do: extract_thumbnail(result)

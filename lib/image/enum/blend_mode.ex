@@ -171,10 +171,9 @@ defmodule Image.BlendMode do
   end
 
   defp unknown_blend_mode_error(blend_mode) do
-    {:error,
-     %Image.Error{
-       message: "Unknown blend mode. Found #{inspect(blend_mode)}",
-       reason: "Unknown blend mode. Found #{inspect(blend_mode)}"
-     }}
+    %Image.Error{
+      message: "Unknown blend mode. Found #{inspect(blend_mode)}",
+      reason: "Unknown blend mode. Found #{inspect(blend_mode)}"
+    }
   end
 end

@@ -96,4 +96,35 @@ defmodule Image.Perspective.Test do
 
     assert_images_equal(result, validate_path)
   end
+
+  describe "straighten_perspective/3 source validation" do
+    # Regression: a malformed source fell through a `with` that had no else,
+    # returning the source list itself instead of an error (or an image from
+    # the bang variant).
+
+    test "returns an error for a source that is not four points" do
+      image = Image.new!(100, 100, color: :red)
+
+      assert {:error, %Image.Error{message: message}} =
+               Image.straighten_perspective(image, [{0, 0}, {1, 1}])
+
+      assert message =~ "quadrilateral"
+    end
+
+    test "straighten_perspective!/3 raises for a malformed source" do
+      image = Image.new!(100, 100, color: :red)
+
+      assert_raise Image.Error, ~r/quadrilateral/, fn ->
+        Image.straighten_perspective!(image, :not_a_list)
+      end
+    end
+
+    test "straightens a valid quadrilateral" do
+      image = Image.new!(100, 100, color: :red)
+      source = [{10, 10}, {90, 12}, {88, 90}, {12, 88}]
+
+      assert {:ok, [_, _, _, _], %Vix.Vips.Image{}} =
+               Image.straighten_perspective(image, source)
+    end
+  end
 end

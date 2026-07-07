@@ -15,6 +15,10 @@ defmodule Image.Blurhash.Base83 do
     end
   end
 
+  def decode_char(_other) do
+    nil
+  end
+
   def decode_number(string, length, acc \\ 0)
 
   def decode_number(rest, 0, acc) do
@@ -26,7 +30,10 @@ defmodule Image.Blurhash.Base83 do
   end
 
   def decode_number(<<char, rest::binary>>, length, acc) do
-    decode_number(rest, length - 1, acc * 83 + decode_char(char))
+    case decode_char(char) do
+      nil -> {:error, :invalid_character}
+      value -> decode_number(rest, length - 1, acc * 83 + value)
+    end
   end
 
   def encode_number(_, 0), do: ""

@@ -55,4 +55,30 @@ defmodule Image.Draw.Test do
     assert {:ok, {%Vimage{} = _image, %{left: 0, width: 1, height: 2, top: 0}}} =
              Image.new!(1, 2) |> Image.Draw.flood(0, 0, color: :white)
   end
+
+  describe "drawing on non-3-band images" do
+    # Regression: maybe_add_alpha/2 assumed 3-band = no alpha and
+    # 4-band = alpha, crashing on greyscale images and deleting the K
+    # channel of CMYK images.
+
+    test "draws a point on a greyscale image" do
+      grey = Image.new!(20, 20, color: 128) |> Image.to_colorspace!(:bw)
+
+      assert {:ok, %Vimage{}} = Image.Draw.point(grey, 5, 5, color: :white)
+    end
+
+    test "draws a rect on a CMYK image without deleting the K band" do
+      cmyk = Image.new!(20, 20, color: :white) |> Image.to_colorspace!(:cmyk)
+
+      assert {:ok, %Vimage{} = drawn} = Image.Draw.rect(cmyk, 2, 2, 5, 5, color: :red, fill: true)
+      assert Image.bands(drawn) == Image.bands(cmyk)
+    end
+
+    test "draws a circle on an image with an alpha band" do
+      rgba = Image.new!(20, 20, color: [255, 255, 255, 255])
+
+      assert {:ok, %Vimage{} = drawn} = Image.Draw.circle(rgba, 10, 10, 5, color: :blue, fill: true)
+      assert Image.bands(drawn) == 4
+    end
+  end
 end

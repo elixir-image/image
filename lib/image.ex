@@ -2780,6 +2780,17 @@ defmodule Image do
   The average is calculated for each band
   of an image and then combined.
 
+  If the image has an alpha band, the average of each
+  band is weighted by the alpha band so that transparent
+  pixels do not contribute to the average. If the image
+  is entirely transparent then the unweighted average of
+  the color bands is returned.
+
+  For integer band formats the averages are rounded to
+  the nearest integer. For float band formats (such as
+  images in the `:lab` or `:scrgb` colorspaces) the
+  averages are returned unrounded.
+
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
@@ -2801,12 +2812,50 @@ defmodule Image do
 
   @spec average(Vimage.t()) :: Pixel.t() | {:error, error()}
   def average(%Vimage{} = image) do
-    with {:ok, flattened} <- flatten(image) do
-      for i <- band_range(flattened) do
-        image[i]
-        |> Operation.avg!()
-        |> round()
+    {color, alpha} = split_alpha(image)
+
+    with {:ok, averages} <- band_averages(color, alpha) do
+      case band_format(color) do
+        {:f, _bits} -> averages
+        _integer_format -> Enum.map(averages, &round/1)
       end
+    end
+  end
+
+  # With no alpha band, or an entirely transparent image, the unweighted
+  # average of the color bands is the only meaningful answer. Otherwise
+  # each band is weighted by the alpha band so that transparent pixels
+  # do not contribute to the average.
+  defp band_averages(color, nil) do
+    collect_band_averages(color, &Operation.avg/1)
+  end
+
+  defp band_averages(color, alpha) do
+    with {:ok, alpha_average} <- Operation.avg(alpha) do
+      if alpha_average == 0.0 do
+        collect_band_averages(color, &Operation.avg/1)
+      else
+        collect_band_averages(color, fn band ->
+          with {:ok, weighted} <- Math.multiply(band, alpha),
+               {:ok, average} <- Operation.avg(weighted) do
+            {:ok, average / alpha_average}
+          end
+        end)
+      end
+    end
+  end
+
+  defp collect_band_averages(color, band_average_fun) do
+    band_range(color)
+    |> Enum.reduce_while({:ok, []}, fn index, {:ok, acc} ->
+      case band_average_fun.(color[index]) do
+        {:ok, average} -> {:cont, {:ok, [average | acc]}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      {:ok, averages} -> {:ok, Enum.reverse(averages)}
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -3189,7 +3238,7 @@ defmodule Image do
         {:cont, {x, y, Image.width(image), Image.height(image), [composition | acc]}}
 
       {:error, reason} ->
-        {:halt, reason}
+        {:halt, {:error, reason}}
     end
   end
 
@@ -3808,10 +3857,9 @@ defmodule Image do
   @spec exif(Vimage.t()) :: {:ok, map()} | {:error, error()}
   def exif(%Vimage{} = image) do
     with {:ok, exif_blob} <- Vimage.header_value(image, "exif-data"),
-         <<"Exif"::binary, 0::16, exif::binary>> <- exif_blob do
-      exif
-      |> Exif.extract_exif()
-      |> wrap(:ok)
+         <<"Exif"::binary, 0::16, exif::binary>> <- exif_blob,
+         exif_map when is_map(exif_map) <- Exif.extract_exif(exif) do
+      {:ok, exif_map}
     else
       {:error, raw} ->
         {:error, Image.Error.wrap(raw, operation: :exif)}
@@ -4511,7 +4559,7 @@ defmodule Image do
          {:ok, _path} <- file_exists?(image_path) do
       Operation.thumbnail!(image_path, length, options)
     else
-      {:error, %Image.Error{} = error} -> raise error
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -4523,8 +4571,9 @@ defmodule Image do
           Vimage.t() | no_return()
 
   def thumbnail!(image_or_path, dimensions, options) when is_binary(dimensions) do
-    with {:ok, length, options} <- Thumbnail.validate_dimensions(dimensions, options) do
-      thumbnail!(image_or_path, length, options)
+    case Thumbnail.validate_dimensions(dimensions, options) do
+      {:ok, length, options} -> thumbnail!(image_or_path, length, options)
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -7507,7 +7556,7 @@ defmodule Image do
 
     {:ok, histogram} =
       Image.mutate(histogram, fn img ->
-        pixel = [min(black - alpha_black_pixel_count, 0) | remaining_pixels]
+        pixel = [max(black - alpha_black_pixel_count, 0) | remaining_pixels]
         Vix.Vips.MutableOperation.draw_rect!(img, pixel, 0, 0, 1, 1)
       end)
 
@@ -11638,13 +11687,17 @@ defmodule Image do
             {:ok, quadrilateral(), Vimage.t()} | {:error, error()}
 
     def straighten_perspective(%Vimage{} = image, source, options \\ []) do
-      with [{sx1, sy1}, {sx2, _sy2}, {_sx3, _sy3}, {_sx4, sy4}] <- source do
-        destination = [{sx1, sy1}, {sx2, sy1}, {sx2, sy4}, {sx1, sy4}]
+      case source do
+        [{sx1, sy1}, {sx2, _sy2}, {_sx3, _sy3}, {_sx4, sy4}] ->
+          destination = [{sx1, sy1}, {sx2, sy1}, {sx2, sy4}, {sx1, sy4}]
 
-        case warp_perspective(image, source, destination, options) do
-          {:ok, warped} -> {:ok, destination, warped}
-          other -> other
-        end
+          case warp_perspective(image, source, destination, options) do
+            {:ok, warped} -> {:ok, destination, warped}
+            other -> other
+          end
+
+        other ->
+          {:error, invalid_quadrilateral_error(other)}
       end
     end
 
@@ -11712,14 +11765,18 @@ defmodule Image do
             Vimage.t() | no_return()
 
     def straighten_perspective!(%Vimage{} = image, source, options \\ []) do
-      with [{sx1, sy1}, {sx2, _sy2}, {_sx3, _sy3}, {_sx4, sy4}] <- source do
-        destination = [{sx1, sy1}, {sx2, sy1}, {sx2, sy4}, {sx1, sy4}]
-
-        case warp_perspective(image, source, destination, options) do
-          {:ok, warped} -> warped
-          {:error, reason} -> raise Image.Error, reason
-        end
+      case straighten_perspective(image, source, options) do
+        {:ok, _destination, warped} -> warped
+        {:error, reason} -> raise Image.Error, reason
       end
+    end
+
+    defp invalid_quadrilateral_error(source) do
+      message =
+        "source must be a list of four {x, y} tuples describing a quadrilateral. " <>
+          "Found #{inspect(source)}"
+
+      %Image.Error{message: message, reason: message}
     end
 
     @doc """

@@ -14,6 +14,12 @@ defmodule Image.Blurhash.Decoder do
       pixels = construct_pixel_iodata(width, height, matrix)
 
       {:ok, pixels, average_color}
+    else
+      {:error, %Image.Error{}} = error ->
+        error
+
+      {:error, _reason} ->
+        {:error, %Image.Error{message: "Invalid blurhash", reason: "Invalid blurhash"}}
     end
   end
 
