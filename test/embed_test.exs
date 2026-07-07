@@ -54,4 +54,40 @@ defmodule Image.Embed.Test do
     # {:ok, _image} = Image.write(embedded, validate_path)
     assert_images_equal(embedded, validate_path)
   end
+
+  test "Image.embed/4 with extend_mode: :background on an image with an alpha band" do
+    image_file = "penguin_with_alpha.png"
+    validate_file = "embed/penguin_with_alpha_embed_background.png"
+
+    image_path = image_path(image_file)
+    validate_path = validate_path(validate_file)
+
+    image = Image.open!(image_path, access: :random)
+    assert Image.has_alpha?(image)
+
+    {width, height, _bands} = Image.shape(image)
+    {:ok, embedded} = Image.embed(image, width, height + 50, x: 0, y: 0, extend_mode: :background)
+
+    # {:ok, _image} = Image.write(embedded, validate_path)
+    assert_images_equal(embedded, validate_path)
+  end
+
+  test "Image.embed/4 with extend_mode: :background on a single-band image" do
+    validate_file = "embed/sydney_opera_house_bw_embed_background.png"
+    validate_path = validate_path(validate_file)
+
+    image =
+      image_path("Sydney-Opera-House-BW.jpg")
+      |> Image.open!(access: :random)
+      |> Image.to_colorspace!(:bw)
+
+    {width, height, bands} = Image.shape(image)
+    assert bands == 1
+    refute Image.has_alpha?(image)
+
+    {:ok, embedded} = Image.embed(image, width, height + 50, x: 0, y: 0, extend_mode: :background)
+
+    # {:ok, _image} = Image.write(embedded, validate_path)
+    assert_images_equal(embedded, validate_path)
+  end
 end
