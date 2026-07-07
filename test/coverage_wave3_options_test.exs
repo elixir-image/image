@@ -22,6 +22,25 @@ defmodule Image.CoverageWave3.Options.Test do
       assert {:error, _} =
                Image.warp_perspective(rgb(100), from, to, background_color: :not_a_color)
     end
+
+    test ":extend defaults to background and :extend_mode is renamed for libvips" do
+      assert {:ok, options} = Image.Options.WarpPerspective.validate_options(rgb(100), [])
+      assert Keyword.get(options, :extend) == :VIPS_EXTEND_BACKGROUND
+      refute Keyword.has_key?(options, :extend_mode)
+
+      assert {:ok, options} =
+               Image.Options.WarpPerspective.validate_options(rgb(100), extend_mode: :copy)
+
+      assert Keyword.get(options, :extend) == :VIPS_EXTEND_COPY
+      refute Keyword.has_key?(options, :extend_mode)
+    end
+
+    test "only :background and :copy are valid extend modes" do
+      for extend_mode <- [:repeat, :mirror, :black, :white] do
+        assert {:error, %Image.Error{reason: :invalid_option}} =
+                 Image.Options.WarpPerspective.validate_options(rgb(100), extend_mode: extend_mode)
+      end
+    end
   end
 
   describe "Image.Options.Compose function-valued offsets" do
@@ -122,13 +141,53 @@ defmodule Image.CoverageWave3.Options.Test do
                Embed.validate_options(rgb(), 40, 40, %{extend_mode: :VIPS_EXTEND_BLACK})
     end
 
+    test "the default is a background extend with no injected background" do
+      # With no :background passed, libvips fills with its native all-zeros
+      # pixel: transparent on this alpha image.
+      assert {:ok, %{extend_mode: :VIPS_EXTEND_BACKGROUND} = options} =
+               Embed.validate_options(rgba(), 40, 40, [])
+
+      refute Map.has_key?(options, :background)
+    end
+
+    test "an explicit :background combined with a content extend_mode is an error" do
+      # A content mode consumes no color, so the combination is contradictory
+      # rather than one option silently winning.
+      assert {:error, %Image.Error{reason: :invalid_option, message: message}} =
+               Embed.validate_options(rgba(), 40, 40, background: :red, extend_mode: :copy)
+
+      assert message =~ "cannot be combined with an explicit :background"
+    end
+
+    test "a geometric extend_mode is honored when no :background is given" do
+      assert {:ok, %{extend_mode: :VIPS_EXTEND_COPY}} =
+               Embed.validate_options(rgba(), 40, 40, extend_mode: :copy)
+    end
+
+    test "extend_mode: :background explicitly selects the color fill" do
+      assert {:ok, %{extend_mode: :VIPS_EXTEND_BACKGROUND, background: [255, 0, 0, 255]}} =
+               Embed.validate_options(rgba(), 40, 40, extend_mode: :background, background: :red)
+    end
+
+    test "extend_mode: :background with no color uses the native fill" do
+      assert {:ok, %{extend_mode: :VIPS_EXTEND_BACKGROUND} = options} =
+               Embed.validate_options(rgba(), 40, 40, extend_mode: :background)
+
+      refute Map.has_key?(options, :background)
+    end
+
+    test ":background nil is treated as unset and does not override a content extend mode" do
+      assert {:ok, %{extend_mode: :VIPS_EXTEND_COPY}} =
+               Embed.validate_options(rgba(), 40, 40, background: nil, extend_mode: :copy)
+    end
+
     test ":average background color on an alpha image" do
-      assert {:ok, embedded} = Image.embed(rgba(), 40, 40, background_color: :average)
+      assert {:ok, embedded} = Image.embed(rgba(), 40, 40, background: :average)
       assert Image.shape(embedded) == {40, 40, 4}
     end
 
     test ":average background color on an rgb image" do
-      assert {:ok, embedded} = Image.embed(rgb(), 40, 40, background_color: :average)
+      assert {:ok, embedded} = Image.embed(rgb(), 40, 40, background: :average)
       assert Image.get_pixel!(embedded, 0, 0) == [10, 20, 30]
     end
 

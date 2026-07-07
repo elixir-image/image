@@ -3,7 +3,7 @@ defmodule Image.Options.Join do
   Options and option validation for `Image.join/2`.
 
   """
-  alias Image.Pixel
+  alias Image.BackgroundColor
 
   @typedoc """
   Options applicable to `Image.join/2`.
@@ -14,7 +14,7 @@ defmodule Image.Options.Join do
           | {:horizontal_spacing, non_neg_integer()}
           | {:vertical_align, :top | :middle | :bottom}
           | {:horizontal_align, :left | :center | :right}
-          | {:background_color, Pixel.t() | nil}
+          | {:background, BackgroundColor.spec() | nil}
           | {:shim, non_neg_integer()}
           | {:across, pos_integer()}
 
@@ -38,9 +38,6 @@ defmodule Image.Options.Join do
   # Default horizontal alignment of images.
   @default_horizontal_alignment :left
 
-  # Default background color of the final iamge.
-  @default_background_color nil
-
   # Default pixels between images.
   @default_shim_in_pixels 0
 
@@ -63,6 +60,8 @@ defmodule Image.Options.Join do
 
   """
   def validate_options(image, options) when is_list(options) do
+    # A nil `:background` means "unset", i.e. it falls back to the default.
+    options = Enum.reject(options, &match?({:background, nil}, &1))
     options = Keyword.merge(default_options(), options)
 
     case Enum.reduce_while(options, options, &validate_option(&1, image, &2)) do
@@ -108,17 +107,16 @@ defmodule Image.Options.Join do
      replace_option(options, :horizontal_align, :halign, Map.get(@alignment_map, horizontal_align))}
   end
 
-  defp validate_option({:background_color, nil}, _image, options) do
-    {:cont, Keyword.delete(options, :background_color)}
-  end
-
-  defp validate_option({:background_color, color} = option, image, options) do
-    case Pixel.to_pixel(image, color) do
+  # Resolved via `Image.BackgroundColor.resolve/2` (colors, `:average`, and the
+  # `{color, alpha: a}` form). The alpha band is kept so a gap can be filled with
+  # a transparent or semi-transparent color. `arrayjoin` reproduces it exactly.
+  defp validate_option({:background, background}, image, options) do
+    case BackgroundColor.resolve(image, background) do
       {:ok, pixel} ->
-        {:cont, replace_option(options, :background_color, :background, pixel)}
+        {:cont, Keyword.put(options, :background, pixel)}
 
-      _other ->
-        {:halt, {:error, invalid_option(option)}}
+      {:error, reason} ->
+        {:halt, {:error, reason}}
     end
   end
 
@@ -156,7 +154,6 @@ defmodule Image.Options.Join do
       horizontal_spacing: @default_horizontal_spacing,
       vertical_align: @default_vertical_alignment,
       horizontal_align: @default_horizontal_alignment,
-      background_color: @default_background_color,
       shim: @default_shim_in_pixels,
       across: @default_images_across
     ]

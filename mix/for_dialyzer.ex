@@ -17,10 +17,11 @@ defmodule ForDialyzer do
     penguin = Image.open!("./test/support/images/penguin_with_alpha.png")
     {width, height, _bands} = Image.shape(penguin)
 
-    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, extend_mode: :black)
-    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, extend_mode: :black, background_transparency: :transparent)
-    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, extend_mode: :black, background_transparency: :opaque)
-    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, extend_mode: :background, background_color: :green)
+    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, background: :black)
+    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, background: {:black, alpha: :transparent})
+    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, background: {:black, alpha: :opaque})
+    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, extend_mode: :mirror)
+    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, extend_mode: :background, background: :green)
 
   end
 

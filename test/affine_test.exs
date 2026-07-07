@@ -51,26 +51,11 @@ defmodule Image.Affine.Test do
                Image.affine(image, [1, 0, 0, 1], not_an_option: 1)
     end
 
-    test "accepts the :extend_mode and :output_area options" do
+    test "accepts the :output_area option" do
       image = white_dot(20, 20, 2, 3)
-      assert {:ok, %Vimage{}} = Image.affine(image, [1, 0, 0, 1], extend_mode: :mirror)
 
       {:ok, cropped} = Image.affine(image, [1, 0, 0, 1], output_area: [0, 0, 10, 10])
       assert Image.shape(cropped) == {10, 10, 3}
-    end
-
-    test "rejects an invalid :extend_mode with a structured error" do
-      image = white_dot(20, 20, 2, 3)
-
-      assert {:error, %Image.Error{reason: :invalid_extend_mode, value: :bogus}} =
-               Image.affine(image, [1, 0, 0, 1], extend_mode: :bogus)
-    end
-
-    test "rejects a non-atom/binary :extend_mode without crashing" do
-      image = white_dot(20, 20, 2, 3)
-
-      assert {:error, %Image.Error{reason: :invalid_option, value: {:extend_mode, 123}}} =
-               Image.affine(image, [1, 0, 0, 1], extend_mode: 123)
     end
 
     test "applies output displacements :odx/:ody after the matrix" do
@@ -104,24 +89,62 @@ defmodule Image.Affine.Test do
       end
     end
 
-    test "applies the documented default :extend_mode and :interpolate and leaves :background to libvips" do
+    test "defaults :extend to background, :interpolate to bilinear and no :background" do
       image = white_dot(20, 20, 2, 3)
       {:ok, options} = Image.Options.Affine.validate_options(image, [])
 
       assert Keyword.get(options, :extend) == :VIPS_EXTEND_BACKGROUND
+      refute Keyword.has_key?(options, :extend_mode)
       assert %Vix.Vips.Interpolate{} = Keyword.get(options, :interpolate)
-      # No default :background is injected so libvips keeps its native
-      # fill (transparent for alpha images, black otherwise).
+      # No :background is injected. libvips uses its native all-zeros fill.
       refute Keyword.has_key?(options, :background)
     end
 
-    test "preserves libvips' transparent fill for alpha images when :background is unset" do
-      # A translation vacates a strip of canvas. With no :background the
-      # exposed pixels must keep libvips' native transparent fill rather
-      # than being forced to opaque black.
+    test "extend_mode: :copy is renamed to :extend for libvips" do
+      image = white_dot(20, 20, 2, 3)
+      {:ok, options} = Image.Options.Affine.validate_options(image, extend_mode: :copy)
+
+      assert Keyword.get(options, :extend) == :VIPS_EXTEND_COPY
+      refute Keyword.has_key?(options, :extend_mode)
+    end
+
+    test "extend_mode: :copy avoids the edge fringe on a full-canvas scale" do
+      # A pure scale-up: the content covers the whole output canvas, so no
+      # background should ever be visible. With the default :background
+      # extend the outermost row/column still blends toward the (black)
+      # fill. :copy clamps to the content instead.
+      white = Image.new!(10, 10, color: [255, 255, 255])
+
+      {:ok, blended} = Image.affine(white, [2, 0, 0, 2])
+      assert Image.get_pixel!(blended, 19, 10) == [128, 128, 128]
+
+      {:ok, clamped} = Image.affine(white, [2, 0, 0, 2], extend_mode: :copy)
+      assert Image.get_pixel!(clamped, 19, 10) == [255, 255, 255]
+    end
+
+    test "only :background and :copy are valid extend modes" do
+      image = white_dot(20, 20, 2, 3)
+
+      for extend_mode <- [:repeat, :mirror, :black, :white] do
+        assert {:error, %Image.Error{reason: :invalid_option}} =
+                 Image.affine(image, [2, 0, 0, 2], extend_mode: extend_mode)
+      end
+    end
+
+    test "the default fill is transparent for alpha images" do
+      # A translation vacates a strip of canvas. On an alpha image the native
+      # all-zeros default keeps those pixels transparent.
       image = Image.new!(20, 20, color: [0, 0, 0, 255])
 
       {:ok, translated} = Image.translate(image, 10, 0)
+      assert Image.get_pixel!(translated, 2, 10) == [0, 0, 0, 0]
+    end
+
+    test "a nil :background is treated as unset and falls back to the default" do
+      image = Image.new!(20, 20, color: [0, 0, 0, 255])
+
+      {:ok, translated} = Image.translate(image, 10, 0, background: nil)
+      # falls back to the native default -> transparent vacated strip
       assert Image.get_pixel!(translated, 2, 10) == [0, 0, 0, 0]
     end
   end
@@ -190,8 +213,7 @@ defmodule Image.Affine.Test do
     test "fills the vacated area with the background colour" do
       image = white_dot(20, 20, 10, 10)
 
-      {:ok, result} =
-        Image.translate(image, 5, 0, background: [100, 100, 100], extend_mode: :background)
+      {:ok, result} = Image.translate(image, 5, 0, background: [100, 100, 100])
 
       assert Image.get_pixel!(result, 0, 0) == [100, 100, 100]
     end

@@ -10,7 +10,7 @@ defmodule Image.Options.Affine do
 
   alias Vix.Vips.Image, as: Vimage
   alias Vix.Vips.Interpolate
-  alias Image.Pixel
+  alias Image.BackgroundColor
 
   @typedoc """
   The interpolators that may be selected with the `:interpolate`
@@ -33,6 +33,20 @@ defmodule Image.Options.Affine do
           | :vsqbs
 
   @typedoc """
+  How the interpolator synthesizes the one-pixel fringe just beyond
+  the content edge when resampling boundary pixels.
+
+  * `:background` (the default) blends the fringe toward the
+    `:background` color. This is correct whenever the transform
+    exposes canvas.
+  * `:copy` clamps to the nearest content pixel. Use it when the
+    content fills the whole canvas, where the default would leave a
+    faint border along the outermost row and column.
+
+  """
+  @type extend_mode :: :background | :copy
+
+  @typedoc """
   The options applicable to an affine transformation.
 
   """
@@ -42,9 +56,9 @@ defmodule Image.Options.Affine do
           | {:odx, number()}
           | {:ody, number()}
           | {:interpolate, interpolate()}
-          | {:background, Pixel.t() | :average}
+          | {:background, BackgroundColor.spec() | nil}
+          | {:extend_mode, extend_mode()}
           | {:output_area, [integer()]}
-          | {:extend_mode, Image.ExtendMode.t()}
         ]
 
   # The libvips nickname for each interpolator is identical to the
@@ -52,6 +66,12 @@ defmodule Image.Options.Affine do
   @valid_interpolators ~w(nearest bilinear bicubic lbb nohalo vsqbs)a
 
   @displacement_options [:idx, :idy, :odx, :ody]
+
+  # The other libvips extend modes are deliberately not exposed: :repeat
+  # samples the opposite edge of the image into the fringe, :mirror is
+  # indistinguishable from :copy at one pixel deep, and :black/:white are
+  # colors, which belong to :background.
+  @extend_modes [background: :VIPS_EXTEND_BACKGROUND, copy: :VIPS_EXTEND_COPY]
 
   @doc """
   Validate the options for `Image.affine/3`.
@@ -65,6 +85,8 @@ defmodule Image.Options.Affine do
   @spec validate_options(Vimage.t(), Keyword.t()) ::
           {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(image, options) do
+    # A nil `:background` means "unset", i.e. it falls back to the default.
+    options = Enum.reject(options, &match?({:background, nil}, &1))
     options = Keyword.merge(default_options(), options)
 
     case Enum.reduce_while(options, options, &validate_option(&1, image, &2)) do
@@ -87,29 +109,22 @@ defmodule Image.Options.Affine do
     end
   end
 
-  # The public option is `:extend_mode`, renamed internally to `:extend` for `libvips`
-  defp validate_option({:extend_mode, extend}, _image, options)
-       when is_atom(extend) or is_binary(extend) do
-    case Image.ExtendMode.validate_extend(extend) do
-      {:ok, extend} ->
-        options =
-          options
-          |> Keyword.delete(:extend_mode)
-          |> Keyword.put(:extend, extend)
-
-        {:cont, options}
-
-      {:error, reason} ->
-        {:halt,
-         {:error, %Image.Error{reason: :invalid_extend_mode, value: extend, message: reason}}}
-    end
-  end
-
   defp validate_option({:background, background}, image, options) do
     case Image.BackgroundColor.resolve(image, background) do
       {:ok, pixel} -> {:cont, Keyword.put(options, :background, pixel)}
       {:error, reason} -> {:halt, {:error, reason}}
     end
+  end
+
+  # The public option is `:extend_mode`, renamed to `:extend` for `libvips`.
+  defp validate_option({:extend_mode, extend_mode}, _image, options)
+       when extend_mode in [:background, :copy] do
+    options =
+      options
+      |> Keyword.delete(:extend_mode)
+      |> Keyword.put(:extend, Keyword.fetch!(@extend_modes, extend_mode))
+
+    {:cont, options}
   end
 
   # The public option is `:output_area`, libvips names it `oarea`.
@@ -140,11 +155,11 @@ defmodule Image.Options.Affine do
     }
   end
 
-  # `:extend_mode` defaults to `:background` rather than `:black`: since
-  # extend only governs the antialiased edge fringe (not the canvas fill),
-  # `:background` blends the fringe toward the fill color, whereas `:black`
-  # would leave a dark fringe on a non-black background.
+  # No default `:background` is injected. When omitted, libvips uses its
+  # native all-zeros fill. `:interpolate` defaults to `:bilinear`, also
+  # libvips' own default. `:extend_mode` defaults to `:background` so the
+  # edge fringe blends into the canvas fill.
   defp default_options do
-    [extend_mode: :background, interpolate: :bilinear]
+    [interpolate: :bilinear, extend_mode: :background]
   end
 end

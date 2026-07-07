@@ -4,7 +4,9 @@ defmodule Image.Options.WarpPerspective do
 
   """
   alias Vix.Vips.Image, as: Vimage
-  alias Image.Pixel
+  alias Image.BackgroundColor
+
+  @extend_modes [background: :VIPS_EXTEND_BACKGROUND, copy: :VIPS_EXTEND_COPY]
 
   @typedoc """
   Options for Image.warp_perspective/4.
@@ -13,27 +15,12 @@ defmodule Image.Options.WarpPerspective do
   @type t :: [warp_perspective_option()]
 
   @typedoc """
-  Options applicable to `Image.embed/4`.
+  Options applicable to `Image.warp_perspective/4`.
 
   """
-  @type warp_perspective_option :: [
-          {:background, Pixel.t() | :average}
-          | {:extend_mode, extend_mode()}
-        ]
-
-  @typedoc """
-  When extending the canvas the generated
-  pixels are determined by this option.
-
-  """
-  @type extend_mode :: [
-          :black
-          | :white
-          | :copy
-          | :repeat
-          | :mirror
-          | :background
-        ]
+  @type warp_perspective_option ::
+          {:background, BackgroundColor.spec() | nil}
+          | {:extend_mode, Image.Options.Affine.extend_mode()}
 
   @doc """
   Validate the options for `Image.warp_perspective/4`.
@@ -42,6 +29,8 @@ defmodule Image.Options.WarpPerspective do
   @spec validate_options(Vimage.t(), Keyword.t()) ::
           {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(image, options) when is_list(options) do
+    # A nil `:background` means "unset", i.e. it falls back to the default.
+    options = Enum.reject(options, &match?({:background, nil}, &1))
     options = Keyword.merge(default_options(), options)
 
     case Enum.reduce_while(options, options, &validate_option(&1, image, &2)) do
@@ -60,20 +49,17 @@ defmodule Image.Options.WarpPerspective do
     end
   end
 
-  # The public option is `:extend_mode`, renamed internally to `:extend` for `libvips`
-  defp validate_option({:extend_mode, extend}, _image, options) do
-    case Image.ExtendMode.validate_extend(extend) do
-      {:ok, extend_mode} ->
-        options =
-          options
-          |> Keyword.delete(:extend_mode)
-          |> Keyword.put(:extend, extend_mode)
+  # The public option is `:extend_mode`, renamed to `:extend` for `libvips`.
+  # Only `:background` and `:copy` are exposed. See the `@extend_modes`
+  # comment in `Image.Options.Affine` for the rationale.
+  defp validate_option({:extend_mode, extend_mode}, _image, options)
+       when extend_mode in [:background, :copy] do
+    options =
+      options
+      |> Keyword.delete(:extend_mode)
+      |> Keyword.put(:extend, Keyword.fetch!(@extend_modes, extend_mode))
 
-        {:cont, options}
-
-      {:error, reason} ->
-        {:halt, {:error, reason}}
-    end
+    {:cont, options}
   end
 
   defp validate_option(option, _image, _options) do
@@ -88,10 +74,9 @@ defmodule Image.Options.WarpPerspective do
     }
   end
 
+  # `:extend_mode` defaults to `:background` so the edge fringe blends
+  # into the canvas fill.
   defp default_options do
-    [
-      extend_mode: :background,
-      background: :black
-    ]
+    [background: :black, extend_mode: :background]
   end
 end

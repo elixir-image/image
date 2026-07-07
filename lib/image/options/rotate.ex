@@ -5,7 +5,7 @@ defmodule Image.Options.Rotate do
   """
 
   alias Vix.Vips.Interpolate
-  alias Image.Pixel
+  alias Image.BackgroundColor
 
   @typedoc """
   The interpolators that may be selected with the `:interpolate`
@@ -38,7 +38,7 @@ defmodule Image.Options.Rotate do
           | {:ody, number()}
           | {:odx, number()}
           | {:interpolate, interpolate()}
-          | {:background, Pixel.t() | :average}
+          | {:background, BackgroundColor.spec() | nil}
         ]
 
   # The libvips nickname for each interpolator is identical to the
@@ -59,6 +59,8 @@ defmodule Image.Options.Rotate do
   @spec validate_options(Vix.Vips.Image.t(), Keyword.t()) ::
           {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(image, options) do
+    # A nil `:background` means "unset", i.e. it falls back to the default.
+    options = Enum.reject(options, &match?({:background, nil}, &1))
     options = Keyword.merge(default_options(), options)
 
     case Enum.reduce_while(options, options, &validate_option(&1, image, &2)) do
@@ -105,10 +107,9 @@ defmodule Image.Options.Rotate do
     }
   end
 
-  # No default `:background` is injected: when the caller omits it,
-  # `libvips` keeps its own native fill (transparent for images with
-  # an alpha band, black otherwise). `:interpolate` defaults to
-  # `:bilinear`, which is also `libvips`' own default.
+  # No default `:background` is injected. When omitted, libvips uses its
+  # native all-zeros fill. `:interpolate` defaults to `:bilinear`, which
+  # is also `libvips`' own default.
   defp default_options do
     [interpolate: :bilinear]
   end
