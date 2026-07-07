@@ -173,11 +173,13 @@ defmodule Image.MixProject do
       source_ref: "v#{@version}",
       main: "readme",
       logo: "logo.jpg",
+      assets: %{"guides/assets" => "assets"},
       extra_section: "Guides",
       extras: [
         "README.md",
         "guides/thumbnailing.md",
         "guides/performance.md",
+        "guides/lqip_css.md",
         "livebook/image_edge_masking.livemd",
         "livebook/color_clustering.livemd",
         "LICENSE.md",
