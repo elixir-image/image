@@ -7,7 +7,7 @@ defmodule Image.Options.Write do
   # Map the keyword option to the
   # Vix option.
 
-  alias Image.{ICCProfile, Pixel}
+  alias Image.{BackgroundColor, ICCProfile, Pixel}
   alias Vix.Vips.Image, as: Vimage
   import ICCProfile, only: [is_inbuilt: 1]
 
@@ -304,24 +304,11 @@ defmodule Image.Options.Write do
   end
 
   # `:average` uses the image's average color and any other value is resolved
-  # by `Image.Pixel.to_pixel/2` (numbers, lists, CSS names, hex strings).
-  defp validate_option({:background, :average}, options, image, _image_type) do
-    case Image.average(image) do
-      color when is_list(color) ->
-        {:cont, Keyword.put(options, :background, color)}
-
-      {:error, reason} ->
-        {:halt,
-         {:error,
-          %Image.Error{
-            message: "Could not get the image average: #{inspect(reason)}",
-            reason: "Could not get the image average: #{inspect(reason)}"
-          }}}
-    end
-  end
-
+  # by `Image.BackgroundColor.resolve/2` (numbers, lists, CSS names, hex
+  # strings). the resolved pixel's alpha band (opaque for `:average` on an
+  # alpha image) is stripped.
   defp validate_option({:background, background} = option, options, image, _image_type) do
-    case Pixel.to_pixel(image, background) do
+    case BackgroundColor.resolve(image, background) do
       {:ok, pixel} ->
         {:cont, Keyword.put(options, :background, strip_alpha(pixel, image))}
 
