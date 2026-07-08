@@ -13,6 +13,9 @@ defmodule Image.YUV do
   * [BT.601](https://en.wikipedia.org/wiki/Rec._601) and
     [BT.709](https://en.wikipedia.org/wiki/Rec._709) colorspaces.
 
+  * `:limited` (studio-swing, the default) and `:full` (PC/JPEG)
+    signal ranges. See `t:Image.YUV.yuv_range/0`.
+
   Performance profiling indicates this implementation is not suitable
   for real time frame processing of YUV images.
 
@@ -23,6 +26,22 @@ defmodule Image.YUV do
 
   @typedoc "YUV colorspace"
   @type yuv_colorspace :: :bt601 | :bt709
+
+  @typedoc """
+  YUV signal range.
+
+  * `:limited` (also called studio-swing or TV range) encodes luma in
+    `16..235` and chroma in `16..240`. This is the convention used by
+    most video formats (including YUV4MPEG) and is the default.
+
+  * `:full` (also called PC range or JPEG range) encodes luma and chroma
+    across the whole `0..255` range.
+
+  The range must match on encode and decode; mixing them shifts colors
+  (a full-range signal decoded as limited-range washes toward grey, and
+  vice versa).
+  """
+  @type yuv_range :: :limited | :full
 
   @typedoc "YUV data as a three-element list of binaries"
   @type yuv_list :: [binary()]
@@ -38,57 +57,96 @@ defmodule Image.YUV do
   alias Vix.Vips.Image, as: Vimage
   alias Image.Vips.Operation
 
-  # Studio-swing (limited range, 16..235) inverse coefficients matching
-  # the "Computer RGB to YCbCr" forward matrices below: 1.164384 is
-  # 255/219 (luma expansion) and the chroma coefficients are scaled by
-  # 255/224.
-  @bt601_to_rgb [
+  # ---- YUV -> RGB inverse coefficients ------------------------------------
+  #
+  # Limited-range (studio-swing, 16..235) inverse coefficients matching the
+  # limited-range forward matrices below: 1.164384 is 255/219 (luma
+  # expansion) and the chroma coefficients are scaled by 255/224.
+
+  @bt601_to_rgb_limited [
     [1.164384, 0.0, 1.596027],
     [1.164384, -0.391762, -0.812968],
     [1.164384, 2.017232, 0.0]
   ]
 
-  # This are the "Computer RGB to YCbCr"
-  # coefficients
-
-  @rgb_to_bt601 [
-    [65.738, 129.057, 25.064],
-    [-37.945, -74.494, 112.439],
-    [112.439, -94.154, -18.285]
-  ]
-
-  # See https://mymusing.co/bt-709-yuv-to-rgb-conversion-color/
-
-  @bt709_to_rgb [
+  @bt709_to_rgb_limited [
     [1.164384, 0.0, 1.792741],
     [1.164384, -0.213249, -0.532909],
     [1.164384, 2.112402, 0.0]
   ]
 
-  # This are the "Computer RGB to YCbCr"
-  # coefficients
+  # Full-range (0..255) inverse coefficients: unity luma with the standard
+  # chroma coefficients.
 
-  @rgb_to_bt709 [
+  @bt601_to_rgb_full [
+    [1.0, 0.0, 1.402],
+    [1.0, -0.344136, -0.714136],
+    [1.0, 1.772, 0.0]
+  ]
+
+  @bt709_to_rgb_full [
+    [1.0, 0.0, 1.5748],
+    [1.0, -0.187324, -0.468124],
+    [1.0, 1.8556, 0.0]
+  ]
+
+  # ---- RGB -> YUV forward coefficients (scaled by 256) --------------------
+  #
+  # Limited-range "Computer RGB to YCbCr" coefficients.
+
+  @rgb_to_bt601_limited [
+    [65.738, 129.057, 25.064],
+    [-37.945, -74.494, 112.439],
+    [112.439, -94.154, -18.285]
+  ]
+
+  @rgb_to_bt709_limited [
     [46.7428, 157.243, 15.873],
     [-25.765, -86.674, 112.439],
     [112.439, -102.129, -10.31]
   ]
 
-  # Lookup maps
+  # Full-range forward coefficients (unity luma, 0.5 chroma), scaled by 256
+  # to match the limited-range convention.
+
+  @rgb_to_bt601_full [
+    [76.544, 150.272, 29.184],
+    [-43.196416, -84.803584, 128.0],
+    [128.0, -107.184128, -20.815872]
+  ]
+
+  @rgb_to_bt709_full [
+    [54.4256, 183.0912, 18.4832],
+    [-29.330432, -98.669568, 128.0],
+    [128.0, -116.263168, -11.736832]
+  ]
+
+  # Lookup maps keyed by {colorspace, range}
 
   @to_yuv %{
-    bt601: @rgb_to_bt601,
-    bt709: @rgb_to_bt709
+    {:bt601, :limited} => @rgb_to_bt601_limited,
+    {:bt709, :limited} => @rgb_to_bt709_limited,
+    {:bt601, :full} => @rgb_to_bt601_full,
+    {:bt709, :full} => @rgb_to_bt709_full
   }
 
   @to_rgb %{
-    bt601: @bt601_to_rgb,
-    bt709: @bt709_to_rgb
+    {:bt601, :limited} => @bt601_to_rgb_limited,
+    {:bt709, :limited} => @bt709_to_rgb_limited,
+    {:bt601, :full} => @bt601_to_rgb_full,
+    {:bt709, :full} => @bt709_to_rgb_full
   }
 
-  @yuv_to_rgb_offsets [16.0, 128.0, 128.0]
+  # The luma offset is 16 for limited range and 0 for full range; the
+  # chroma offset is always 128 (unsigned representation of a signed value).
+  @offsets %{
+    limited: [16.0, 128.0, 128.0],
+    full: [0.0, 128.0, 128.0]
+  }
+
   @valid_encodings [:C444, :C422, :C420]
   @valid_colorspace [:bt601, :bt709]
+  @valid_ranges [:limited, :full]
 
   @doc """
   Returns the list of YUV chroma-subsampling encodings supported by
@@ -117,6 +175,20 @@ defmodule Image.YUV do
   def valid_colorspaces, do: @valid_colorspace
 
   @doc """
+  Returns the list of YUV signal ranges supported by this module.
+
+  See `t:Image.YUV.yuv_range/0` for the meaning of each range.
+
+  ### Examples
+
+      iex> Image.YUV.valid_ranges()
+      [:limited, :full]
+
+  """
+  @spec valid_ranges() :: [:limited | :full]
+  def valid_ranges, do: @valid_ranges
+
+  @doc """
   Converts the raw YUV data in a `.yuv` file
   into an RGB image.
 
@@ -140,6 +212,10 @@ defmodule Image.YUV do
 
   * `colorspace` is one of `:bt601` (the default) or
     `:bt709`.
+
+  * `range` is one of `:limited` (the default) or `:full`.
+    See `t:Image.YUV.yuv_range/0`. It must match the range used
+    when the data was encoded.
 
   ### Returns
 
@@ -166,14 +242,16 @@ defmodule Image.YUV do
           width :: pos_integer(),
           height :: pos_integer(),
           encoding :: yuv_encoding(),
-          colorspace :: yuv_colorspace()
+          colorspace :: yuv_colorspace(),
+          range :: yuv_range()
         ) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
-  def new_from_file(path, width, height, encoding, colorspace \\ :bt601)
-      when encoding in @valid_encodings and colorspace in @valid_colorspace do
+  def new_from_file(path, width, height, encoding, colorspace \\ :bt601, range \\ :limited)
+      when encoding in @valid_encodings and colorspace in @valid_colorspace and
+             range in @valid_ranges do
     with {:ok, binary} <- File.read(path) do
-      new_from_binary(binary, width, height, encoding, colorspace)
+      new_from_binary(binary, width, height, encoding, colorspace, range)
     end
   end
 
@@ -201,6 +279,10 @@ defmodule Image.YUV do
   * `colorspace` is one of `:bt601` (the default) or
     `:bt709`.
 
+  * `range` is one of `:limited` (the default) or `:full`.
+    See `t:Image.YUV.yuv_range/0`. It must match the range used
+    when the data was encoded.
+
   ### Returns
 
   * `{:ok, rgb_image}` or
@@ -222,14 +304,16 @@ defmodule Image.YUV do
           width :: pos_integer(),
           height :: pos_integer(),
           encoding :: yuv_encoding(),
-          colorspace :: yuv_colorspace()
+          colorspace :: yuv_colorspace(),
+          range :: yuv_range()
         ) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
-  def new_from_binary(binary, width, height, encoding, colorspace \\ :bt601)
-      when encoding in @valid_encodings and colorspace in @valid_colorspace do
+  def new_from_binary(binary, width, height, encoding, colorspace \\ :bt601, range \\ :limited)
+      when encoding in @valid_encodings and colorspace in @valid_colorspace and
+             range in @valid_ranges do
     with {:ok, decoded} <- decode(binary, width, height, encoding) do
-      to_rgb(decoded, width, height, encoding, colorspace)
+      to_rgb(decoded, width, height, encoding, colorspace, range)
     end
   end
 
@@ -248,6 +332,9 @@ defmodule Image.YUV do
 
   * `colorspace` is one of `:bt601` (the default) or
     `:bt709`.
+
+  * `range` is one of `:limited` (the default) or `:full`.
+    See `t:Image.YUV.yuv_range/0`.
 
   ### Returns
 
@@ -271,12 +358,13 @@ defmodule Image.YUV do
           image :: Vimage.t(),
           path :: Path.t(),
           encoding :: yuv_encoding(),
-          colorspace :: yuv_colorspace()
+          colorspace :: yuv_colorspace(),
+          range :: yuv_range()
         ) ::
           :ok | {:error, Image.error()}
 
-  def write_to_file(%Vimage{} = image, path, encoding, colorspace \\ :bt601) do
-    with {:ok, binary} <- write_to_binary(image, encoding, colorspace) do
+  def write_to_file(%Vimage{} = image, path, encoding, colorspace \\ :bt601, range \\ :limited) do
+    with {:ok, binary} <- write_to_binary(image, encoding, colorspace, range) do
       File.write(path, binary)
     end
   end
@@ -293,6 +381,9 @@ defmodule Image.YUV do
 
   * `colorspace` is one of `:bt601` (the default) or
     `:bt709`.
+
+  * `range` is one of `:limited` (the default) or `:full`.
+    See `t:Image.YUV.yuv_range/0`.
 
   ### Returns
 
@@ -313,12 +404,13 @@ defmodule Image.YUV do
   @spec write_to_binary(
           image :: Vimage.t(),
           encoding :: yuv_encoding(),
-          colorspace :: yuv_colorspace()
+          colorspace :: yuv_colorspace(),
+          range :: yuv_range()
         ) ::
           {:ok, binary()} | {:error, Image.error()}
 
-  def write_to_binary(%Vimage{} = image, encoding, colorspace \\ :bt601) do
-    with {:ok, [y, u, v]} <- to_yuv(image, encoding, colorspace) do
+  def write_to_binary(%Vimage{} = image, encoding, colorspace \\ :bt601, range \\ :limited) do
+    with {:ok, [y, u, v]} <- to_yuv(image, encoding, colorspace, range) do
       {:ok, :erlang.iolist_to_binary([y, u, v])}
     end
   end
@@ -337,6 +429,9 @@ defmodule Image.YUV do
     `:bt709` that represents the colorspace of `image` before
     conversion.
 
+  * `range` is one of `:limited` (the default) or `:full`.
+    See `t:Image.YUV.yuv_range/0`.
+
   ### Examples
 
       iex> yuv_image = Image.new!(8, 8, color: [128, 128, 128])
@@ -348,11 +443,12 @@ defmodule Image.YUV do
   # See https://github.com/libvips/libvips/discussions/2561
   @doc since: "0.41.0"
 
-  @spec to_rgb(image :: Vimage.t(), colorspace :: yuv_colorspace()) ::
+  @spec to_rgb(image :: Vimage.t(), colorspace :: yuv_colorspace(), range :: yuv_range()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
-  def to_rgb(%Vimage{} = image, colorspace) when colorspace in @valid_colorspace do
-    with {:ok, transform} <- Vimage.new_from_list(@to_rgb[colorspace]),
+  def to_rgb(%Vimage{} = image, colorspace, range \\ :limited)
+      when colorspace in @valid_colorspace and range in @valid_ranges do
+    with {:ok, transform} <- Vimage.new_from_list(@to_rgb[{colorspace, range}]),
          {:ok, recombed} <- Operation.recomb(image, transform),
          {:ok, rgb} <- Image.cast(recombed, {:u, 8}) do
       Operation.copy(rgb, interpretation: :VIPS_INTERPRETATION_sRGB)
@@ -380,6 +476,9 @@ defmodule Image.YUV do
     `:bt709` that represents the colorspace of `image` before
     conversion.
 
+  * `range` is one of `:limited` (the default) or `:full`.
+    See `t:Image.YUV.yuv_range/0`.
+
   ### Returns
 
   * `{:ok, image}` or
@@ -403,40 +502,43 @@ defmodule Image.YUV do
           width :: pos_integer(),
           height :: pos_integer(),
           encoding :: yuv_encoding,
-          colorspace :: yuv_colorspace()
+          colorspace :: yuv_colorspace(),
+          range :: yuv_range()
         ) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
-  def to_rgb([y, u, v], width, height, :C444, colorspace) do
+  def to_rgb(yuv, width, height, encoding, colorspace \\ :bt601, range \\ :limited)
+
+  def to_rgb([y, u, v], width, height, :C444, colorspace, range) do
     use Image.Math
 
     with {:ok, y} <- new_scaled_image(y, width, height, 1.0, 1.0),
          {:ok, u} <- new_scaled_image(u, width, height, 1.0, 1.0),
          {:ok, v} <- new_scaled_image(v, width, height, 1.0, 1.0),
          {:ok, image_444} <- Operation.bandjoin([y, u, v]) do
-      to_rgb(image_444 - @yuv_to_rgb_offsets, colorspace)
+      to_rgb(image_444 - @offsets[range], colorspace, range)
     end
   end
 
-  def to_rgb([y, u, v], width, height, :C422, colorspace) do
+  def to_rgb([y, u, v], width, height, :C422, colorspace, range) do
     use Image.Math
 
     with {:ok, y} <- new_scaled_image(y, width, height, 1.0, 1.0),
          {:ok, u} <- new_scaled_image(u, width, height, 2.0, 1.0),
          {:ok, v} <- new_scaled_image(v, width, height, 2.0, 1.0),
          {:ok, image_444} <- Operation.bandjoin([y, u, v]) do
-      to_rgb(image_444 - @yuv_to_rgb_offsets, colorspace)
+      to_rgb(image_444 - @offsets[range], colorspace, range)
     end
   end
 
-  def to_rgb([y, u, v], width, height, :C420, colorspace) do
+  def to_rgb([y, u, v], width, height, :C420, colorspace, range) do
     use Image.Math
 
     with {:ok, y} <- new_scaled_image(y, width, height, 1.0, 1.0),
          {:ok, u} <- new_scaled_image(u, width, height, 2.0, 2.0),
          {:ok, v} <- new_scaled_image(v, width, height, 2.0, 2.0),
          {:ok, image_444} <- Operation.bandjoin([y, u, v]) do
-      to_rgb(image_444 - @yuv_to_rgb_offsets, colorspace)
+      to_rgb(image_444 - @offsets[range], colorspace, range)
     end
   end
 
@@ -454,6 +556,9 @@ defmodule Image.YUV do
   * `colorspace` is one of `:bt601` (the default) or
     `:bt709`.
 
+  * `range` is one of `:limited` (the default) or `:full`.
+    See `t:Image.YUV.yuv_range/0`.
+
   ### Returns
 
   * `{:ok, [y, u, v]}` or
@@ -470,18 +575,24 @@ defmodule Image.YUV do
   """
   @doc since: "0.41.0"
 
-  @spec to_yuv(image :: Vimage.t(), encoding :: yuv_encoding(), colorspace :: yuv_colorspace()) ::
+  @spec to_yuv(
+          image :: Vimage.t(),
+          encoding :: yuv_encoding(),
+          colorspace :: yuv_colorspace(),
+          range :: yuv_range()
+        ) ::
           {:ok, yuv_list()} | {:error, Image.error()}
 
-  def to_yuv(image, encoding, colorspace \\ :bt601)
+  def to_yuv(image, encoding, colorspace \\ :bt601, range \\ :limited)
 
-  def to_yuv(%Vimage{} = image, encoding, colorspace)
-      when encoding in @valid_encodings and colorspace in @valid_colorspace do
+  def to_yuv(%Vimage{} = image, encoding, colorspace, range)
+      when encoding in @valid_encodings and colorspace in @valid_colorspace and
+             range in @valid_ranges do
     with {:ok, image} <- Image.flatten(image),
-         {:ok, transform} <- Vimage.new_from_list(@to_yuv[colorspace]),
+         {:ok, transform} <- Vimage.new_from_list(@to_yuv[{colorspace, range}]),
          {:ok, divided} <- Image.Math.divide(transform, 256.0),
          {:ok, recombed} <- Operation.recomb(image, divided),
-         {:ok, offset} <- Image.Math.add(recombed, @yuv_to_rgb_offsets),
+         {:ok, offset} <- Image.Math.add(recombed, @offsets[range]),
          {:ok, yuv} <- Image.cast(offset, {:u, 8}) do
       encode(yuv, encoding)
     end

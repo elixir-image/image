@@ -6,9 +6,11 @@
 
 * Adds `### Examples` doctest sections to more than 220 public functions across `Image` and its submodules. All examples run as doctests.
 
+* Adds a `range` argument (`:limited` or `:full`) to the `Image.YUV` encode and decode functions, and `Image.YUV.valid_ranges/0`. `:limited` (studio-swing) is the default and matches the previous behaviour.
+
 ### Fixed
 
-* Fix `Image.YUV` to use studio-swing (limited range) coefficients in both directions. Previously the encoder was studio-swing but the decoder was full-range, so YUV round trips compressed colors toward grey.
+* Fix `Image.YUV` to use studio-swing (limited range) coefficients in both directions by default. Previously the encoder was studio-swing but the decoder was full-range, so YUV round trips compressed colors toward grey.
 
 ### Removed
 
