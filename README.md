@@ -74,7 +74,7 @@ Add `:image` to your dependencies:
 ```elixir
 def deps do
   [
-    {:image, "~> 0.70"}
+    {:image, "~> 0.71"}
   ]
 end
 ```
