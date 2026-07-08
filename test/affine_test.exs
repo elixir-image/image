@@ -126,6 +126,46 @@ defmodule Image.Affine.Test do
     end
   end
 
+  describe "Image.affine/3 with a partially transparent :background" do
+    # 45-degree rotation: the output corners are exposed canvas, the
+    # center is source content.
+    @angle :math.pi() / 4
+    @rotation_45 [:math.cos(@angle), -:math.sin(@angle), :math.sin(@angle), :math.cos(@angle)]
+
+    test "the fill is reproduced exactly" do
+      image = Image.new!(20, 20, color: [255, 0, 0, 255])
+
+      {:ok, result} = Image.affine(image, @rotation_45, background: [10, 20, 30, 40])
+
+      assert Image.get_pixel!(result, 1, 1) == [10, 20, 30, 40]
+    end
+
+    test "content pixels, shape and band format are unchanged" do
+      image = Image.new!(20, 20, color: [255, 0, 0, 255])
+
+      {:ok, straight} = Image.affine(image, @rotation_45, background: [10, 20, 30, 255])
+      {:ok, result} = Image.affine(image, @rotation_45, background: [10, 20, 30, 40])
+
+      assert Image.shape(result) == Image.shape(straight)
+      assert Image.band_format(result) == Image.band_format(image)
+
+      {width, height, 4} = Image.shape(result)
+      assert Image.get_pixel!(result, div(width, 2), div(height, 2)) == [255, 0, 0, 255]
+    end
+
+    test "the fill is exact for a :rgb16 image (alpha scale 65_535)" do
+      image =
+        Image.new!(20, 20, color: [255, 0, 0, 255])
+        |> Image.to_colorspace!(:rgb16)
+
+      {:ok, result} =
+        Image.affine(image, @rotation_45, background: [4_000, 8_000, 12_000, 16_000])
+
+      assert Image.get_pixel!(result, 1, 1) == [4_000, 8_000, 12_000, 16_000]
+      assert Image.band_format(result) == {:u, 16}
+    end
+  end
+
   describe "Image.translate/4" do
     test "shifts content right and down without resizing the canvas" do
       image = white_dot(20, 20, 2, 3)

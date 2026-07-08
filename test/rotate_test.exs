@@ -92,5 +92,18 @@ defmodule Image.Rotate.Test do
       # No crash even though :interpolate/:background are resolved but unused.
       assert {:ok, %Vimage{}} = Image.rotate(image, 90, interpolate: :nearest, background: :red)
     end
+
+    test "a partially transparent :background fill is reproduced exactly" do
+      image = Image.new!(20, 20, color: [255, 0, 0, 255])
+
+      {:ok, result} = Image.rotate(image, 45, background: [10, 20, 30, 40])
+
+      # Corner is exposed canvas, center is source content.
+      assert Image.get_pixel!(result, 1, 1) == [10, 20, 30, 40]
+      assert Image.band_format(result) == Image.band_format(image)
+
+      {width, height, 4} = Image.shape(result)
+      assert Image.get_pixel!(result, div(width, 2), div(height, 2)) == [255, 0, 0, 255]
+    end
   end
 end
