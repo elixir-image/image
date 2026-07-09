@@ -54,5 +54,25 @@ defmodule Image.Write.Background.Test do
 
       assert message =~ "Invalid background color :not_a_real_color"
     end
+
+    test "the background survives a :memory write", %{rgba: rgba} do
+      # Regression: the suffix option string joined numeric arrays with ":"
+      # (".jpg[background=0:128:0]"), which libvips silently drops. Arrays
+      # must be space separated.
+      {:ok, binary} = Image.write(rgba, :memory, suffix: ".jpg", background: :green)
+      pixel = Image.get_pixel!(Image.open!(binary), 4, 4)
+
+      assert close_to?(pixel, [0, 128, 0])
+    end
+
+    test "the background survives a stream write", %{rgba: rgba, tmp_dir: tmp_dir} do
+      path = Temp.path!(suffix: ".jpg", basedir: tmp_dir)
+      stream = File.stream!(path, 2048)
+
+      {:ok, _} = Image.write(rgba, stream, background: :green)
+      pixel = Image.get_pixel!(Image.open!(path), 4, 4)
+
+      assert close_to?(pixel, [0, 128, 0])
+    end
   end
 end

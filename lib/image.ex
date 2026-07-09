@@ -917,6 +917,12 @@ defmodule Image do
     "[" <> Enum.map_join(options, ",", &loader_option/1) <> "]"
   end
 
+  # Numeric arrays (e.g. `background=0 128 0`) are space separated in a
+  # filename suffix string.
+  defp loader_option({key, [number | _rest] = value}) when is_number(number) do
+    "#{key}=" <> Enum.map_join(value, " ", &to_string/1)
+  end
+
   # Flag-valued options are passed to libvips as a list of flag atoms.
   # In a filename suffix string flags are written by name joined with `:`,
   # e.g. `keep=VIPS_FOREIGN_KEEP_EXIF:VIPS_FOREIGN_KEEP_XMP`.
