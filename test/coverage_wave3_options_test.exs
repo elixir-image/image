@@ -6,7 +6,7 @@ defmodule Image.CoverageWave3.Options.Test do
   defp rgb(size \\ 20), do: Image.new!(size, size, color: [10, 20, 30])
   defp rgba(size \\ 20), do: Image.new!(size, size, color: [10, 20, 30, 255])
 
-  describe "Image.Options.WarpPerspective" do
+  describe "Image.Options.Mapim" do
     test "an unknown option returns an error" do
       from = [{10, 10}, {90, 12}, {88, 90}, {12, 88}]
       to = [{0, 0}, {100, 0}, {100, 100}, {0, 100}]
@@ -23,13 +23,30 @@ defmodule Image.CoverageWave3.Options.Test do
                Image.warp_perspective(rgb(100), from, to, background_color: :not_a_color)
     end
 
-    test ":extend defaults to background and :extend_mode is renamed for libvips" do
-      assert {:ok, options} = Image.Options.WarpPerspective.validate_options(rgb(100), [])
+    test ":extend defaults to background" do
+      assert {:ok, options} = Image.Options.Mapim.validate_options(rgb(100), [])
+
       assert Keyword.get(options, :extend) == :VIPS_EXTEND_BACKGROUND
       refute Keyword.has_key?(options, :extend_mode)
+    end
 
+    test ":interpolate selects an interpolator from the public vocabulary" do
+      for interpolator <- [:nearest, :bilinear, :bicubic, :lbb, :nohalo, :vsqbs] do
+        assert {:ok, options} =
+                 Image.Options.Mapim.validate_options(rgb(100), interpolate: interpolator)
+
+        assert %Vix.Vips.Interpolate{} = Keyword.get(options, :interpolate)
+      end
+    end
+
+    test "rejects an unknown :interpolate value" do
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:interpolate, :unknown}}} =
+               Image.Options.Mapim.validate_options(rgb(100), interpolate: :unknown)
+    end
+
+    test ":extend_mode is renamed for libvips" do
       assert {:ok, options} =
-               Image.Options.WarpPerspective.validate_options(rgb(100), extend_mode: :copy)
+               Image.Options.Mapim.validate_options(rgb(100), extend_mode: :copy)
 
       assert Keyword.get(options, :extend) == :VIPS_EXTEND_COPY
       refute Keyword.has_key?(options, :extend_mode)
@@ -38,7 +55,7 @@ defmodule Image.CoverageWave3.Options.Test do
     test "only :background and :copy are valid extend modes" do
       for extend_mode <- [:repeat, :mirror, :black, :white] do
         assert {:error, %Image.Error{reason: :invalid_option}} =
-                 Image.Options.WarpPerspective.validate_options(rgb(100), extend_mode: extend_mode)
+                 Image.Options.Mapim.validate_options(rgb(100), extend_mode: extend_mode)
       end
     end
   end
