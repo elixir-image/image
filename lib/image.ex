@@ -6588,36 +6588,12 @@ defmodule Image do
 
     See also `Image.Pixel.to_pixel/2`.
 
-  ## Partially-transparent backgrounds
+  ## Transparent backgrounds
 
-  A fully opaque or fully transparent `:background` is reproduced
-  exactly. A *partially* transparent `:background` (an alpha band
-  value somewhere between fully opaque and fully transparent) is
-  not. To interpolate correctly `libvips` works in premultiplied-alpha
-  space, and it injects the fill color directly into that space and
-  then unpremultiplies the whole result on output. The fill therefore
-  sees only that one unpremultiply step, which scales its color bands
-  by `max / alpha`. For example, on an 8-bit image (where `max` is
-  `255`) a declared `[10, 20, 30, 40]` is filled as `[63, 127, 191,
-  40]`: the alpha is preserved, but each color band is multiplied by
-  `255 / 40`.
-
-  If you need an exact partially-transparent fill, don't pass it as
-  `:background`. Instead rotate over a transparent background and
-  composite the result onto a canvas of the desired color:
-
-      iex> image = Image.open!("./test/support/images/dice_transparent.png")
-      iex> {:ok, rotated} = Image.rotate(image, 45, background: [0, 0, 0, 0])
-      iex> canvas = Image.new!(rotated, color: [10, 20, 30, 40])
-      iex> {:ok, _filled} = Image.compose(canvas, rotated)
-
-  The color is applied by the composite rather than passed through the
-  rotate, so it is reproduced exactly. Note that this backs the
-  *entire* image: it fills every transparent pixel, not just the canvas
-  exposed by the rotate. When the source content is fully opaque the
-  two are the same region; for a source that carries its own
-  transparency (such as the dice image above) the composite also fills
-  those areas, which `:background` would leave untouched.
+  A partially transparent `:background` is reproduced exactly. The one
+  exception is a *fully* transparent fill (`alpha: 0`) with non-zero
+  color bands: color cannot be recovered from under zero alpha, so it
+  is rendered as transparent black rather than the declared color.
 
   ## Discrete rotation
 
@@ -6640,12 +6616,19 @@ defmodule Image do
 
   * `{:error, reason}`
 
-  ### Example
+  ### Examples
 
       iex> image = Image.new!(20, 10, color: :blue)
       iex> {:ok, rotated} = Image.rotate(image, 90)
       iex> Image.shape(rotated)
       {10, 20, 3}
+
+  A partially transparent `:background` fills the exposed canvas exactly:
+
+      iex> image = Image.new!(20, 20, color: [255, 0, 0, 255])
+      iex> {:ok, rotated} = Image.rotate(image, 45, background: [10, 20, 30, 40])
+      iex> Image.get_pixel!(rotated, 1, 1)
+      [10, 20, 30, 40]
 
   """
   @doc subject: "Operation"
@@ -6661,12 +6644,24 @@ defmodule Image do
     with {:ok, options} <- Options.Rotate.validate_options(image, options) do
       rot_angle = rot_angle(angle, options)
 
-      if rot_angle do
-        Operation.rot(image, rot_angle)
-      else
-        Operation.rotate(image, angle, options)
+      cond do
+        rot_angle ->
+          Operation.rot(image, rot_angle)
+
+        has_alpha?(image) ->
+          # `vips_rotate` doesn't expose the `:premultiplied` option, so alpha images
+          # run the equivalent affine through the premultiplied pipeline instead
+          premultiplied_affine(image, rotation_matrix(angle), options)
+
+        true ->
+          Operation.rotate(image, angle, options)
       end
     end
+  end
+
+  defp rotation_matrix(angle) do
+    radians = angle * :math.pi() / 180.0
+    [:math.cos(radians), -:math.sin(radians), :math.sin(radians), :math.cos(radians)]
   end
 
   defp rot_angle(angle, options) do
@@ -11911,41 +11906,12 @@ defmodule Image do
     Image.height(image)]` keeps the output the same size as the
     input, anchored at the origin.
 
-  ## Partially-transparent backgrounds
+  ## Transparent backgrounds
 
-  A fully opaque or fully transparent `:background` is reproduced
-  exactly. A *partially* transparent `:background` (an alpha band
-  value somehwere between fully opaque and fully transparent) is
-  not. To interpolate correctly `libvips` works in premultiplied-alpha
-  space, and it injects the fill color directly into that space and
-  then unpremultiplies the whole result on output. The fill therefore
-  sees only that one unpremultiply step, which scales its color bands
-  by `max / alpha`. For example, on an 8-bit image (where `max` is
-  `255`) a declared `[10, 20, 30, 40]` is filled as `[63, 127, 191,
-  40]`: the alpha is preserved, but each color band is multiplied by
-  `255 / 40`.
-
-  If you need an exact partially-transparent fill, don't pass it as
-  `:background`. Instead transform over a transparent background and
-  composite the result onto a canvas of the desired color. Here
-  `jose.png` is opaque (an alpha band is added so the exposed canvas
-  can be transparent), so the only transparency is the canvas the
-  transform exposes:
-
-      iex> image = Image.add_alpha!(Image.open!("./test/support/images/jose.png"), 255)
-      iex> angle = :math.pi() / 4
-      iex> matrix = [:math.cos(angle), -:math.sin(angle), :math.sin(angle), :math.cos(angle)]
-      iex> {:ok, rotated} = Image.affine(image, matrix, background: [0, 0, 0, 0])
-      iex> canvas = Image.new!(rotated, color: [10, 20, 30, 40])
-      iex> {:ok, _filled} = Image.compose(canvas, rotated)
-
-  The color is applied by the composite rather than passed through the
-  transform, so it is reproduced exactly. Note that the composite backs
-  the *entire* image: it fills every transparent pixel, not just the
-  canvas exposed by the transform. Because the content here is opaque
-  the two coincide; for a source that carries its own transparency the
-  composite also fills those areas, which `:background` would leave
-  untouched.
+  A partially transparent `:background` is reproduced exactly. The one
+  exception is a *fully* transparent fill (`alpha: 0`) with non-zero
+  color bands: color cannot be recovered from under zero alpha, so it
+  is rendered as transparent black rather than the declared color.
 
   ### Notes
 
@@ -11978,6 +11944,15 @@ defmodule Image do
       iex> image = Image.open!("./test/support/images/jose.png")
       iex> {:ok, _stretched} = Image.affine(image, [2, 0, 0, 1])
 
+  A partially transparent `:background` fills the exposed canvas exactly:
+
+      iex> image = Image.new!(20, 20, color: [255, 0, 0, 255])
+      iex> angle = :math.pi() / 4
+      iex> matrix = [:math.cos(angle), -:math.sin(angle), :math.sin(angle), :math.cos(angle)]
+      iex> {:ok, transformed} = Image.affine(image, matrix, background: [10, 20, 30, 40])
+      iex> Image.get_pixel!(transformed, 1, 1)
+      [10, 20, 30, 40]
+
   """
   @doc subject: "Distortion"
 
@@ -11993,7 +11968,7 @@ defmodule Image do
   def affine(%Vimage{} = image, [a, b, c, d], options)
       when is_number(a) and is_number(b) and is_number(c) and is_number(d) do
     with {:ok, options} <- Options.Affine.validate_options(image, options) do
-      Operation.affine(image, [a, b, c, d], options)
+      premultiplied_affine(image, [a, b, c, d], options)
     end
   end
 
@@ -12005,6 +11980,44 @@ defmodule Image do
        value: matrix,
        message: "Invalid affine matrix. Expected a four-element list of numbers [a, b, c, d]."
      }}
+  end
+
+  # `libvips` resamples alpha images in premultiplied-alpha space and
+  # injects the `:background` fill raw into that space, so the fill's
+  # color bands come back scaled by `max_alpha / alpha`. Premultiplying
+  # the image and the background ourselves (with `premultiplied: true`)
+  # makes the fill round-trip exactly.
+  defp premultiplied_affine(%Vimage{} = image, matrix, options) do
+    if has_alpha?(image) do
+      band_format = Vix.Vips.Image.format(image)
+
+      options =
+        options
+        |> Keyword.replace_lazy(:background, &premultiply_pixel(image, &1))
+        |> Keyword.put(:premultiplied, true)
+
+      with {:ok, premultiplied} <- Operation.premultiply(image),
+           {:ok, transformed} <- Operation.affine(premultiplied, matrix, options),
+           {:ok, unpremultiplied} <- Operation.unpremultiply(transformed) do
+        Operation.cast(unpremultiplied, band_format)
+      end
+    else
+      Operation.affine(image, matrix, options)
+    end
+  end
+
+  defp premultiply_pixel(image, pixel) do
+    # The background premultiplication must use the same alpha scale as the
+    # operations above. `Image.Pixel` encodes that scale as the opaque alpha
+    # value, so read it from there.
+    max_alpha =
+      case Pixel.to_pixel(image, :black, alpha: :opaque) do
+        {:ok, pixel} -> List.last(pixel)
+        {:error, _reason} -> 255
+      end
+
+    {color_bands, [alpha]} = Enum.split(pixel, -1)
+    Enum.map(color_bands, &(&1 * alpha / max_alpha)) ++ [alpha]
   end
 
   @doc """
