@@ -174,3 +174,11 @@ jobs:
     - name: Run Credo
       run: mix credo --strict
       if: ${{ matrix.lint }}
+
+    # Step: Build the docs and fail on any doc warning (broken references,
+    # malformed examples). Runs in the release env per the DoD.
+    - name: Check docs
+      run: mix docs --warnings-as-errors
+      if: ${{ matrix.lint }}
+      env:
+        MIX_ENV: release
