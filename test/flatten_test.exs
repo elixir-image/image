@@ -20,7 +20,7 @@ defmodule Image.FlattenTest do
     validate_path = validate_path("penguine_with_green_background.png")
 
     {:ok, image} = Image.open(image_path)
-    {:ok, result} = Image.flatten(image, background_color: :green)
+    {:ok, result} = Image.flatten(image, background: :green)
 
     # Image.write! result, validate_path
     {:ok, result} = Vix.Vips.Image.write_to_buffer(result, ".png")

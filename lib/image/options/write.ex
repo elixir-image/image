@@ -133,6 +133,10 @@ defmodule Image.Options.Write do
 
   def validate_options(%Vimage{} = image, path, options)
       when is_binary(path) and is_list(options) do
+    # A nil `:background` means "unset". Leave it out so the format's own
+    # flatten (onto black) applies, rather than trying to resolve nil.
+    options = Enum.reject(options, &match?({:background, nil}, &1))
+
     with {:ok, image_type} <- path |> Path.extname() |> image_type_from(options[:suffix]),
          {:ok, options} <- merge_image_type_options(options, image_type) do
       case Enum.reduce_while(options, options, &validate_option(&1, &2, image, image_type)) do
@@ -305,7 +309,7 @@ defmodule Image.Options.Write do
 
   # `:average` uses the image's average color and any other value is resolved
   # by `Image.BackgroundColor.resolve/2` (numbers, lists, CSS names, hex
-  # strings). the resolved pixel's alpha band (opaque for `:average` on an
+  # strings). The resolved pixel's alpha band (opaque for `:average` on an
   # alpha image) is stripped.
   defp validate_option({:background, background}, options, image, _image_type) do
     case BackgroundColor.resolve(image, background) do

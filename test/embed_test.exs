@@ -2,7 +2,25 @@ defmodule Image.Embed.Test do
   use ExUnit.Case, async: true
   import Image.TestSupport
 
-  test "Image.embed/4 with extend_mode: :black" do
+  test "Image.embed/4 with the default background gives a transparent border on an alpha image" do
+    # The default `background: :transparent` fills the border. On an alpha image
+    # that is transparent black, the same output as the explicit
+    # `background: {:black, alpha: :transparent}`.
+    image_file = "penguin_with_alpha.png"
+    validate_file = "embed/penguin_with_alpha_embed_black_transparent.png"
+
+    image_path = image_path(image_file)
+    validate_path = validate_path(validate_file)
+
+    image = Image.open!(image_path, access: :random)
+    {width, height, _bands} = Image.shape(image)
+    {:ok, embedded} = Image.embed(image, width, height + 50, x: 0, y: 0)
+
+    # {:ok, _image} = Image.write(embedded, validate_path)
+    assert_images_equal(embedded, validate_path)
+  end
+
+  test "Image.embed/4 with an explicit background: :black gives an opaque black border" do
     image_file = "penguin_with_alpha.png"
     validate_file = "embed/penguin_with_alpha_embed_black.png"
 
@@ -11,13 +29,13 @@ defmodule Image.Embed.Test do
 
     image = Image.open!(image_path, access: :random)
     {width, height, _bands} = Image.shape(image)
-    {:ok, embedded} = Image.embed(image, width, height + 50, x: 0, y: 0, extend_mode: :black)
+    {:ok, embedded} = Image.embed(image, width, height + 50, x: 0, y: 0, background: :black)
 
     # {:ok, _image} = Image.write(embedded, validate_path)
     assert_images_equal(embedded, validate_path)
   end
 
-  test "Image.embed/4 with extend_mode: :black, background_transparency: :transparent" do
+  test "Image.embed/4 with background: {:black, alpha: :transparent}" do
     image_file = "penguin_with_alpha.png"
     validate_file = "embed/penguin_with_alpha_embed_black_transparent.png"
 
@@ -31,8 +49,7 @@ defmodule Image.Embed.Test do
       Image.embed(image, width, height + 50,
         x: 0,
         y: 0,
-        extend_mode: :black,
-        background_transparency: :transparent
+        background: {:black, alpha: :transparent}
       )
 
     # {:ok, _image} = Image.write(embedded, validate_path)
@@ -49,13 +66,13 @@ defmodule Image.Embed.Test do
     image = Image.open!(image_path, access: :random)
 
     {width, height, _bands} = Image.shape(image)
-    {:ok, embedded} = Image.embed(image, width, height + 50, background_color: :blue)
+    {:ok, embedded} = Image.embed(image, width, height + 50, background: :blue)
 
     # {:ok, _image} = Image.write(embedded, validate_path)
     assert_images_equal(embedded, validate_path)
   end
 
-  test "Image.embed/4 with extend_mode: :background on an image with an alpha band" do
+  test "Image.embed/4 with an explicit opaque background on an image with an alpha band" do
     image_file = "penguin_with_alpha.png"
     validate_file = "embed/penguin_with_alpha_embed_background.png"
 
@@ -66,13 +83,13 @@ defmodule Image.Embed.Test do
     assert Image.has_alpha?(image)
 
     {width, height, _bands} = Image.shape(image)
-    {:ok, embedded} = Image.embed(image, width, height + 50, x: 0, y: 0, extend_mode: :background)
+    {:ok, embedded} = Image.embed(image, width, height + 50, x: 0, y: 0, background: :black)
 
     # {:ok, _image} = Image.write(embedded, validate_path)
     assert_images_equal(embedded, validate_path)
   end
 
-  test "Image.embed/4 with extend_mode: :background on a single-band image" do
+  test "Image.embed/4 with an explicit background on a single-band image" do
     validate_file = "embed/sydney_opera_house_bw_embed_background.png"
     validate_path = validate_path(validate_file)
 
@@ -85,7 +102,7 @@ defmodule Image.Embed.Test do
     assert bands == 1
     refute Image.has_alpha?(image)
 
-    {:ok, embedded} = Image.embed(image, width, height + 50, x: 0, y: 0, extend_mode: :background)
+    {:ok, embedded} = Image.embed(image, width, height + 50, x: 0, y: 0, background: :black)
 
     # {:ok, _image} = Image.write(embedded, validate_path)
     assert_images_equal(embedded, validate_path)

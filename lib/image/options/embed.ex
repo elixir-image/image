@@ -3,28 +3,31 @@ defmodule Image.Options.Embed do
   Options and option validation for `Image.embed/4`.
 
   """
-  alias Image.Pixel
+  alias Image.BackgroundColor
 
   @typedoc """
   Options applicable to `Image.embed/4`.
 
   """
   @type embed_option ::
-          {:background_color, Pixel.t() | :average}
-          | {:background_transparency, Pixel.transparency()}
+          {:background, BackgroundColor.spec() | nil}
           | {:extend_mode, extend_mode()}
           | {:x, non_neg_integer() | :center}
           | {:y, non_neg_integer() | :center}
 
   @typedoc """
-  When extending the canvas the generated
-  pixels are determined by this option.
+  How the generated border pixels are produced.
+
+  * `:copy`, `:repeat` and `:mirror` synthesize the border from the *image
+    content*.
+  * `:background` fills the border with the `:background` color. This is the
+    default behavior when no `:extend_mode` is given, so passing it is only
+    ever explicit documentation of intent. The color still comes from the
+    `:background` option.
 
   """
   @type extend_mode ::
-          :black
-          | :white
-          | :copy
+          :copy
           | :repeat
           | :mirror
           | :background
@@ -35,11 +38,21 @@ defmodule Image.Options.Embed do
   """
   @type embed_options :: [embed_option()]
 
+  # The extend modes that synthesize the border from the image content. All
+  # other (color/transparency) fills go through the `:background` option.
+  @content_extends [copy: :VIPS_EXTEND_COPY, repeat: :VIPS_EXTEND_REPEAT, mirror: :VIPS_EXTEND_MIRROR]
+  @content_extend_modes Keyword.keys(@content_extends)
+  @vips_content_extends Keyword.values(@content_extends)
+
   @doc """
   Validate the options for `Image.embed/4`.
 
   """
   def validate_options(image, width, height, options) when is_list(options) do
+    # A nil `:background` means "unset". It falls back to the default and does
+    # not count as an explicitly-supplied background, so it does not conflict
+    # with a content `:extend_mode`.
+    options = Enum.reject(options, &match?({:background, nil}, &1))
     user_supplied_keys = Keyword.keys(options)
     options = Keyword.merge(default_options(), options)
 
@@ -50,7 +63,7 @@ defmodule Image.Options.Embed do
       options ->
         options
         |> Map.new()
-        |> adjust_background(image, user_supplied_keys)
+        |> adjust_background(user_supplied_keys)
     end
   end
 
@@ -58,49 +71,27 @@ defmodule Image.Options.Embed do
     {:ok, options}
   end
 
-  defp validate_option({:background_color, :average}, image, _width, _height, options) do
-    case Image.average(image) do
-      color when is_list(color) ->
-        options = Keyword.put(options, :background_color, color)
-        {:cont, options}
-
-      {:error, reason} ->
-        {:halt,
-         {:error,
-          %Image.Error{
-            message: "Could not get the image average: #{inspect(reason)}",
-            reason: "Could not get the image average: #{inspect(reason)}"
-          }}}
-    end
-  end
-
-  defp validate_option({:background_color, color} = option, image, _width, _height, options) do
-    case Pixel.to_pixel(image, color) do
+  # `:average`, colors, and the `{color, alpha: a}` form are all resolved by
+  # `Image.BackgroundColor.resolve/2`. The resolved pixel keeps its alpha band
+  # (unlike `write`/`flatten`) so a transparent border can be requested.
+  defp validate_option({:background, background}, image, _width, _height, options) do
+    case BackgroundColor.resolve(image, background) do
       {:ok, pixel} ->
-        {:cont, Keyword.put(options, :background_color, pixel)}
+        {:cont, Keyword.put(options, :background, pixel)}
 
-      _other ->
-        {:halt, {:error, invalid_option(option)}}
+      # The resolve error is already an %Image.Error{} with a more specific
+      # message than invalid_option/1 would produce.
+      {:error, reason} ->
+        {:halt, {:error, reason}}
     end
   end
 
-  defp validate_option(
-         {:background_transparency, transparency} = option,
-         _image,
-         _width,
-         _height,
-         options
-       ) do
-    case Pixel.transparency(transparency) do
-      {:ok, transparency} ->
-        {:cont, Keyword.put(options, :background_transparency, transparency)}
-
-      _other ->
-        {:halt, {:error, invalid_option(option)}}
-    end
-  end
-
-  defp validate_option({:extend_mode, extend}, _image, _width, _height, options) do
+  # `:extend_mode` now only names the content-derived borders. Color and
+  # transparency fills go through `:background`, so `:black`/`:white`/
+  # `:background` are no longer extend modes, they fall through to
+  # `invalid_option/1`.
+  defp validate_option({:extend_mode, extend}, _image, _width, _height, options)
+       when extend in @content_extend_modes do
     case Image.ExtendMode.validate_extend(extend) do
       {:ok, extend_mode} ->
         options = Keyword.put(options, :extend_mode, extend_mode)
@@ -109,6 +100,14 @@ defmodule Image.Options.Embed do
       {:error, reason} ->
         {:halt, {:error, reason}}
     end
+  end
+
+  # `:background` is accepted as an explicit selector for the color fill (the
+  # default behavior). The color itself comes from the `:background` option.
+  # It is a *mode*, not a color, so it is allowed here even though `:black`/
+  # `:white` (which are colors) are not: those go through `:background`.
+  defp validate_option({:extend_mode, :background}, _image, _width, _height, options) do
+    {:cont, Keyword.put(options, :extend_mode, :VIPS_EXTEND_BACKGROUND)}
   end
 
   defp validate_option({:x, :center}, image, width, height, options) do
@@ -155,89 +154,45 @@ defmodule Image.Options.Embed do
     }
   end
 
-  @geometric_extend_modes [:VIPS_EXTEND_COPY, :VIPS_EXTEND_REPEAT, :VIPS_EXTEND_MIRROR]
-
-  # Resolves the interaction between :extend_mode, :background_color and
-  # :background_transparency.
+  # Resolves the interaction between :extend_mode and :background.
   #
-  # * A geometric extend mode (:copy, :repeat, :mirror) is always honored
-  #   as given.
+  # * A content-derived extend mode (:copy/:repeat/:mirror) synthesizes the
+  #   border from the image and consumes no color, so combining it with an
+  #   explicit :background is contradictory and returns an error. A nil
+  #   :background was stripped as "unset" and does not conflict.
   #
-  # * An explicit :background_color (or extend_mode: :background) extends
-  #   with that color, with the alpha band (when present) set from
-  #   :background_transparency.
-  #
-  # * The :black and :white extend modes on an image with an alpha band
-  #   are converted to a background extension so that the generated
-  #   pixels carry the requested :background_transparency. The color and
-  #   alpha are scaled to the image interpretation by Pixel.to_pixel/3.
-  defp adjust_background(options, image, user_supplied_keys) do
-    explicit_background? = :background_color in user_supplied_keys
+  # * Otherwise the border is filled with :background via VIPS_EXTEND_BACKGROUND.
+  #   With no user-supplied background, no background is passed and libvips
+  #   uses its native all-zeros fill.
+  defp adjust_background(options, user_supplied_keys) do
+    explicit_background? = :background in user_supplied_keys
+    content_extend = Map.get(options, :extend_mode)
 
     cond do
-      options.extend_mode in @geometric_extend_modes ->
-        {:ok, Map.delete(options, :background_transparency)}
+      content_extend in @vips_content_extends and explicit_background? ->
+        contradictory_options_error(content_extend)
 
-      explicit_background? or options.extend_mode == :VIPS_EXTEND_BACKGROUND ->
-        with {:ok, background} <- background_with_alpha(options, image) do
-          {:ok,
-           options
-           |> Map.put(:extend_mode, :VIPS_EXTEND_BACKGROUND)
-           |> Map.put(:background_color, background)
-           |> Map.delete(:background_transparency)}
-        end
-
-      Image.has_alpha?(image) ->
-        base_color = if options.extend_mode == :VIPS_EXTEND_WHITE, do: :white, else: :black
-
-        with {:ok, pixel} <-
-               Pixel.to_pixel(image, base_color, alpha: options.background_transparency) do
-          {:ok,
-           options
-           |> Map.put(:extend_mode, :VIPS_EXTEND_BACKGROUND)
-           |> Map.put(:background_color, pixel)
-           |> Map.delete(:background_transparency)}
-        end
+      content_extend in @vips_content_extends ->
+        {:ok, options}
 
       true ->
-        {:ok, Map.delete(options, :background_transparency)}
+        {:ok, Map.put(options, :extend_mode, :VIPS_EXTEND_BACKGROUND)}
     end
   end
 
-  defp background_with_alpha(options, image) do
-    color = options.background_color
-    bands = Image.bands(image)
+  defp contradictory_options_error(vips_extend) do
+    {extend_mode, _vips} = List.keyfind!(@content_extends, vips_extend, 1)
 
-    cond do
-      not Image.has_alpha?(image) ->
-        {:ok, conform_single_band(color, bands)}
-
-      length(color) == bands ->
-        with {:ok, alpha} <- background_alpha(options, image) do
-          {:ok, List.replace_at(color, -1, alpha)}
-        end
-
-      length(color) == bands - 1 ->
-        with {:ok, alpha} <- background_alpha(options, image) do
-          {:ok, color ++ [alpha]}
-        end
-
-      true ->
-        {:ok, color}
-    end
+    {:error,
+     %Image.Error{
+       reason: :invalid_option,
+       value: {:extend_mode, extend_mode},
+       message:
+         "extend_mode: #{inspect(extend_mode)} generates the border from the image " <>
+           "content and cannot be combined with an explicit :background. " <>
+           "Pass one or the other (background: nil is treated as unset)."
+     }}
   end
-
-  # The opaque alpha value in the scale of the image interpretation,
-  # adjusted by the requested :background_transparency.
-  defp background_alpha(options, image) do
-    with {:ok, pixel} <-
-           Pixel.to_pixel(image, :black, alpha: options.background_transparency) do
-      {:ok, List.last(pixel)}
-    end
-  end
-
-  defp conform_single_band(color, 1) when length(color) > 1, do: [hd(color)]
-  defp conform_single_band(color, _bands), do: color
 
   @doc false
   def normalize_dim(a, _max) when a >= 0, do: a
@@ -246,10 +201,7 @@ defmodule Image.Options.Embed do
   defp default_options do
     [
       x: :center,
-      y: :center,
-      extend_mode: :black,
-      background_color: :black,
-      background_transparency: :opaque
+      y: :center
     ]
   end
 

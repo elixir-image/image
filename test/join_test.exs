@@ -31,4 +31,15 @@ defmodule Image.Join.Test do
     # {:ok, _image} = Image.write(joined, validate_path)
     assert_images_equal(joined, validate_path)
   end
+
+  test "Image.join/2 fills the shim gaps with the :background color" do
+    validate_file = "join/rainbow_green_shim.png"
+    validate_path = validate_path(validate_file)
+
+    rainbow = rainbow()
+    {:ok, joined} = Image.join(rainbow, across: length(rainbow), shim: 6, background: :green)
+
+    # {:ok, _image} = Image.write(joined, validate_path)
+    assert_images_equal(joined, validate_path)
+  end
 end

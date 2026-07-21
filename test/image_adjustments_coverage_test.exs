@@ -394,7 +394,7 @@ defmodule Image.AdjustmentsCoverageTest do
       image = Image.new!(10, 10, color: [200, 100, 50])
       transparent = Image.add_alpha!(image, :transparent)
 
-      assert {:ok, flattened} = Image.flatten(transparent, background_color: :white)
+      assert {:ok, flattened} = Image.flatten(transparent, background: :white)
       assert Image.get_pixel!(flattened, 5, 5) == [255, 255, 255]
     end
 
@@ -405,12 +405,39 @@ defmodule Image.AdjustmentsCoverageTest do
       assert Image.get_pixel!(flattened, 5, 5) == [200, 100, 50]
     end
 
+    test "a nil background falls back to the colorspace-native default (black for sRGB)" do
+      image = Image.new!(10, 10, color: [200, 100, 50])
+      transparent = Image.add_alpha!(image, :transparent)
+
+      assert {:ok, flattened} = Image.flatten(transparent, background: nil)
+      assert Image.get_pixel!(flattened, 5, 5) == [0, 0, 0]
+    end
+
     test "flatten!/2 returns an image" do
       image = Image.new!(10, 10, color: [200, 100, 50])
       transparent = Image.add_alpha!(image, :transparent)
 
       flattened = Image.flatten!(transparent)
       refute Image.has_alpha?(flattened)
+    end
+
+    test "the default flattens onto the colorspace-native background (paper-white for CMYK)" do
+      base = Image.new!(8, 8, color: [200, 100, 50]) |> Image.to_colorspace!(:cmyk)
+      {:ok, transparent} = Image.add_alpha(base, :transparent)
+      {:ok, cmyk} = Image.Draw.rect(transparent, 0, 0, 3, 3, color: [255, 0, 0, 255, 255])
+
+      {:ok, flattened} = Image.flatten(cmyk)
+      # CMYK's native empty is no-ink / paper-white, not full-K black.
+      assert Image.get_pixel!(flattened, 6, 6) == [0, 0, 0, 0]
+    end
+
+    test "an explicit :black forces full-K black even on CMYK" do
+      base = Image.new!(8, 8, color: [200, 100, 50]) |> Image.to_colorspace!(:cmyk)
+      {:ok, transparent} = Image.add_alpha(base, :transparent)
+      {:ok, cmyk} = Image.Draw.rect(transparent, 0, 0, 3, 3, color: [255, 0, 0, 255, 255])
+
+      {:ok, flattened} = Image.flatten(cmyk, background: :black)
+      assert Image.get_pixel!(flattened, 6, 6) == [0, 0, 0, 255]
     end
   end
 

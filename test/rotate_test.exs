@@ -63,22 +63,29 @@ defmodule Image.Rotate.Test do
       assert {:error, _reason} = Image.rotate(image, 45, background: :not_a_colour)
     end
 
-    test "defaults :interpolate and leaves :background to libvips when unset" do
+    test "defaults :interpolate to bilinear and injects no :background" do
       image = white_dot(20, 20, 2, 3)
       {:ok, options} = Image.Options.Rotate.validate_options(image, [])
 
       assert %Vix.Vips.Interpolate{} = Keyword.get(options, :interpolate)
-      # No default :background is injected so libvips keeps its native
-      # fill (transparent for alpha images, black otherwise).
+      # No :background is injected. libvips uses its native all-zeros fill.
       refute Keyword.has_key?(options, :background)
     end
 
-    test "preserves libvips' transparent fill for alpha images when :background is unset" do
+    test "the default fill is transparent for alpha images" do
       image =
         Image.new!(20, 20, color: [0, 0, 0, 255])
         |> Image.Draw.rect!(2, 3, 1, 1, color: [255, 255, 255, 255])
 
       {:ok, rotated} = Image.rotate(image, 45)
+      assert Image.get_pixel!(rotated, 0, 0) == [0, 0, 0, 0]
+    end
+
+    test "a nil :background is treated as unset and falls back to the default" do
+      image = Image.new!(20, 20, color: [0, 0, 0, 255])
+
+      {:ok, rotated} = Image.rotate(image, 45, background: nil)
+      # falls back to the native default -> transparent corner
       assert Image.get_pixel!(rotated, 0, 0) == [0, 0, 0, 0]
     end
 

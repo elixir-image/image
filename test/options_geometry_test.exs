@@ -426,8 +426,8 @@ defmodule Image.Options.Geometry.Test do
       assert {:ok, %Vimage{}} = Image.join(images, shim: 2)
     end
 
-    test "with a valid :background_color", %{images: images} do
-      assert {:ok, %Vimage{}} = Image.join(images, background_color: :green, shim: 2)
+    test "with a valid :background", %{images: images} do
+      assert {:ok, %Vimage{}} = Image.join(images, background: :green, shim: 2)
     end
 
     test "with valid alignment options", %{images: images} do
@@ -443,8 +443,8 @@ defmodule Image.Options.Geometry.Test do
       assert {:error, %Image.Error{}} = Image.join(images, shim: -1)
     end
 
-    test "with an invalid :background_color", %{images: images} do
-      assert {:error, %Image.Error{}} = Image.join(images, background_color: :not_a_color)
+    test "with an invalid :background", %{images: images} do
+      assert {:error, %Image.Error{}} = Image.join(images, background: :not_a_color)
     end
 
     test "with a negative :vertical_spacing", %{images: images} do

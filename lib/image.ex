@@ -3722,14 +3722,18 @@ defmodule Image do
   * `:horizontal_align` is `:left`, `:center` or `:right`.
     The default is `:left`.
 
-  * `:background_color` is the color of any pixels generated
+  * `:background` is the color that fills any pixels generated
     between images. This can be specified as a single integer
-    which will be applied to all bands, or a list of
-    integers representing the color for each
-    band. The default is `0`, meaning black. The color
-    can also be supplied as a CSS color name as a
-    string or atom. For example: `:misty_rose`. See
-    `Color.new/2` from the Color library.
+    which will be applied to all bands, or a list of integers
+    representing the color for each band. The color can also be
+    supplied as a CSS color name as a string or atom (for example
+    `:misty_rose`), a hex string, or `:average`. Wrap it as
+    `{color, alpha: a}` for a transparent or semi-transparent fill.
+    See `Image.Pixel.to_pixel/2` for the full range of accepted
+    color forms.
+
+    If omitted, `libvips`' native all-zeros fill is used:
+    transparent for images with an alpha band, black otherwise.
 
   * `:shim` is the number of pixels of spacing between
     images in the grid. The default is `0`.
@@ -3751,8 +3755,9 @@ defmodule Image do
   by `:vertical_spacing` pixels and cropped. These default
   to the largest width and largest height of the input images.
 
-  Space between images is filled with `:background_color` .
-  This defaults to black.
+  Space between images is filled with `:background`, which defaults
+  to `:transparent` (transparent for images with an alpha band,
+  black otherwise).
 
   Images are positioned within their `:horizontal_spacing` by
   `:vertical_spacing` box at `:vertical_align` of `:bottom`,
@@ -3820,14 +3825,18 @@ defmodule Image do
   * `:horizontal_align` is `:left`, `:center` or `:right`.
     The default is `:left`.
 
-  * `:background_color` is the color of any pixels generated
+  * `:background` is the color that fills any pixels generated
     between images. This can be specified as a single integer
-    which will be applied to all bands, or a list of
-    integers representing the color for each
-    band. The default is `0`, meaning black. The color
-    can also be supplied as a CSS color name as a
-    string or atom. For example: `:misty_rose`. See
-    `Color.new/2` from the Color library.
+    which will be applied to all bands, or a list of integers
+    representing the color for each band. The color can also be
+    supplied as a CSS color name as a string or atom (for example
+    `:misty_rose`), a hex string, or `:average`. Wrap it as
+    `{color, alpha: a}` for a transparent or semi-transparent fill.
+    See `Image.Pixel.to_pixel/2` for the full range of accepted
+    color forms.
+
+    If omitted, `libvips`' native all-zeros fill is used:
+    transparent for images with an alpha band, black otherwise.
 
   * `:shim` is the number of pixels of spacing between
     images in the grid. The default is `0`.
@@ -3849,8 +3858,9 @@ defmodule Image do
   by `:vertical_spacing` pixels and cropped. These default
   to the largest width and largest height of the input images.
 
-  Space between images is filled with `:background_color` .
-  This defaults to black.
+  Space between images is filled with `:background`, which defaults
+  to `:transparent` (transparent for images with an alpha band,
+  black otherwise).
 
   Images are positioned within their `:horizontal_spacing` by
   `:vertical_spacing` box at `:vertical_align` of `:bottom`,
@@ -4539,7 +4549,7 @@ defmodule Image do
   ### Example
 
       iex> red_dot = Image.new!(1, 1, color: [255, 0, 0])
-      iex> {:ok, image} = Image.embed(red_dot, 3, 1, background_color: [0, 0, 255], x: 0, y: 0)
+      iex> {:ok, image} = Image.embed(red_dot, 3, 1, background: [0, 0, 255], x: 0, y: 0)
       iex> {:ok, flipped} = Image.flip(image, :horizontal)
       iex> Image.get_pixel(flipped, 2, 0)
       {:ok, [255, 0, 0]}
@@ -5625,41 +5635,41 @@ defmodule Image do
     It may also be `:center` (the default) in which case the
     image will be centered vertically within the canvas.
 
-  * `:background_color` defines the color of the generated background
+  * `:background` defines the color that fills the generated border
     pixels. This can be specified as a single integer which will
     be applied to all bands, or a list of integers representing
     the color for each band. The color can also be supplied as a
-    CSS color name as a string or atom. For example: `:misty_rose`.
-    It can also be supplied as a hex string of
-    the form `#rrggbb`. The default is `:black`. `:background` can
-    also be set to `:average` in which case the background will be
-    the average color of the base image. See also `Color.new/2`
-    from the Color library.
+    CSS color name as a string or atom (for example `:misty_rose`),
+    a hex string (`#rrggbb`, or `#rrggbbaa` to include an alpha), or
+    `:average` for the average color of the base image. See
+    `Image.Pixel.to_pixel/2` for the full range of accepted color
+    forms.
 
-  * `:background_transparency` defines the transparency of the
-    `:background` pixels when `image` has an alpha band.
-    The default is `:opaque`. The values are an integer in the
-    range `0..255` where `0` is transparent and `255` is opaque.
-    The number can also be a float in the range `0.0` to `1.0`.
-    In this case the float is converted to an integer in the range
-    `0..255`. Lastly, the atoms `:transparent` and `:opaque` can
-    also be used.
+    If omitted, `libvips`' native all-zeros fill is used: a
+    transparent border on images with an alpha band, black
+    otherwise.
 
-  * `:extend_mode` determines how any additional pixels
-    are generated. The values are:
+    To make the background semi-transparent (only meaningful when
+    `image` has an alpha band), wrap the color as `{color, alpha: a}`,
+    where `a` is an integer `0..255`, a float `0.0..1.0`, or the atom
+    `:opaque` / `:transparent`. For example: `{:misty_rose, alpha: 0.5}`
+    or `{:average, alpha: 128}`.
 
-    * `:black` (the default if no `background_color` is specified)
-      meaning the generated pixels are black.
-    * `:white` meaning the generated pixels are white.
+  * `:extend_mode` synthesizes the generated border from the *image
+    content* instead of a `:background` color. A content mode consumes
+    no color, so combining one with an explicit `:background` is
+    contradictory and returns an error (a `nil` background counts as
+    unset and does not conflict). The values are:
+
     * `:copy` means the generated pixels take the value of the
       nearest edge pixel of the base image.
     * `:repeat` means the generated pixels are tiles from the
       base image.
     * `:mirror` means the generated pixels are reflected tiles of
       the base image.
-    * `:background` means the generated pixels are the `:background_color`
-      color set in `options`. This is the default if a `background_color`
-      is specified.
+    * `:background` explicitly selects the background color fill,
+      which is also the default behavior when no `:extend_mode` is
+      given. The color comes from the `:background` option.
 
   ### Returns
 
@@ -5670,7 +5680,7 @@ defmodule Image do
   ### Example
 
       iex> image = Image.new!(10, 10, color: [255, 0, 0])
-      iex> {:ok, embedded} = Image.embed(image, 20, 20, background_color: [0, 0, 255])
+      iex> {:ok, embedded} = Image.embed(image, 20, 20, background: [0, 0, 255])
       iex> Image.shape(embedded)
       {20, 20, 3}
       iex> Image.get_pixel(embedded, 0, 0)
@@ -5689,10 +5699,17 @@ defmodule Image do
 
   def embed(image, width, height, options \\ []) do
     with {:ok, options} <- Options.Embed.validate_options(image, width, height, options) do
-      embed_options = [background: options.background_color, extend: options.extend_mode]
+      embed_options = embed_options(options)
       Operation.embed(image, options.x, options.y, width, height, embed_options)
     end
   end
+
+  # With no :background, none is passed and libvips uses its native fill.
+  defp embed_options(%{background: background, extend_mode: extend}),
+    do: [background: background, extend: extend]
+
+  defp embed_options(%{extend_mode: extend}),
+    do: [extend: extend]
 
   @doc """
   Embeds an image in a larger image canvas, generating
@@ -5723,7 +5740,7 @@ defmodule Image do
   ### Example
 
       iex> image = Image.new!(10, 10, color: [255, 0, 0])
-      iex> embedded = Image.embed!(image, 20, 20, background_color: [0, 0, 255])
+      iex> embedded = Image.embed!(image, 20, 20, background: [0, 0, 255])
       iex> Image.get_pixel(embedded, 0, 0)
       {:ok, [0, 0, 255]}
 
@@ -6093,7 +6110,7 @@ defmodule Image do
   ### Example
 
       iex> square = Image.new!(10, 10, color: :white)
-      iex> {:ok, image} = Image.embed(square, 40, 40, background_color: :black)
+      iex> {:ok, image} = Image.embed(square, 40, 40, background: :black)
       iex> Image.find_trim(image)
       {:ok, {15, 15, 10, 10}}
 
@@ -6214,7 +6231,7 @@ defmodule Image do
   ### Example
 
       iex> square = Image.new!(10, 10, color: :white)
-      iex> {:ok, image} = Image.embed(square, 40, 40, background_color: :black)
+      iex> {:ok, image} = Image.embed(square, 40, 40, background: :black)
       iex> Image.find_trim!(image)
       {15, 15, 10, 10}
 
@@ -6242,11 +6259,14 @@ defmodule Image do
 
   ### Options
 
-  * `:background_color` is an RGB color which is used
-    to fill the transparent parts of the image.. The color
-    can be an integer between `0..255`, a three-element list of
-    integers representing an RGB color or an atom
-    representing a CSS color name. The default is `:black`.
+  * `:background` is the pixel used when flattening the alpha. It can
+    be an integer `0..255`, a list of integers, a CSS color name as a
+    string or atom, a hex string, or `:average` (the image's average
+    color). If omitted, `libvips`' native all-zeros fill is used:
+    black in most colorspaces, paper-white in CMYK. This matches how
+    writing to a non-alpha format flattens. Pass `:black`, `:white`
+    or an explicit pixel to force a specific background. Any alpha
+    is ignored, the flattened background is always opaque.
 
   ### Returns
 
@@ -6267,17 +6287,25 @@ defmodule Image do
   @spec flatten(image :: Vimage.t(), options :: Keyword.t()) ::
           {:ok, Vimage.t()} | {:error, error()}
   def flatten(%Vimage{} = image, options \\ []) do
-    background_color = Keyword.get(options, :background_color, :black)
+    background = Keyword.get(options, :background)
 
-    with {:ok, background_color} <- Pixel.to_pixel(image, background_color) do
-      if has_alpha?(image) do
-        # Flatten strips alpha and replaces it with the background; the
-        # background must therefore be the opaque colour part only.
-        bands = Vix.Vips.Image.bands(image) - 1
-        Operation.flatten(image, background: Enum.take(background_color, bands))
-      else
+    cond do
+      not has_alpha?(image) ->
         {:ok, image}
-      end
+
+      is_nil(background) ->
+        # No (or nil) `:background`: defer to libvips' native all-zeros fill
+        # (black in most colorspaces, paper-white in CMYK), matching how
+        # writing to a non-alpha format flattens.
+        Operation.flatten(image)
+
+      true ->
+        with {:ok, resolved} <- Image.BackgroundColor.resolve(image, background) do
+          # Flatten strips alpha and replaces it with the background, so the
+          # background must be the opaque color part only.
+          bands = Vix.Vips.Image.bands(image) - 1
+          Operation.flatten(image, background: Enum.take(resolved, bands))
+        end
     end
   end
 
@@ -6293,11 +6321,14 @@ defmodule Image do
 
   ### Options
 
-  * `:background_color` is an RGB color which is used
-    to fill the transparent parts of the image.. The color
-    can be an integer between `0..255`, a three-element list of
-    integers representing an RGB color or an atom
-    representing a CSS color name. The default is `:black`.
+  * `:background` is the pixel used when flattening the alpha. It can
+    be an integer `0..255`, a list of integers, a CSS color name as a
+    string or atom, a hex string, or `:average` (the image's average
+    color). If omitted, `libvips`' native all-zeros fill is used:
+    black in most colorspaces, paper-white in CMYK. This matches how
+    writing to a non-alpha format flattens. Pass `:black`, `:white`
+    or an explicit pixel to force a specific background. Any alpha
+    is ignored, the flattened background is always opaque.
 
   ### Returns
 
@@ -6308,7 +6339,7 @@ defmodule Image do
   ### Example
 
       iex> image = Image.new!(4, 4, color: [255, 0, 0, 0])
-      iex> flattened = Image.flatten!(image, background_color: [0, 0, 255])
+      iex> flattened = Image.flatten!(image, background: [0, 0, 255])
       iex> Image.get_pixel(flattened, 0, 0)
       {:ok, [0, 0, 255]}
 
@@ -6589,10 +6620,11 @@ defmodule Image do
     Can also be set to `:average` in which case the background will
     be the average color of the base image.
 
-    When omitted, `libvips` uses its native fill: transparent for
-    images with an alpha band, black otherwise.
+    If omitted, `libvips`' native all-zeros fill is used:
+    transparent for images with an alpha band, black otherwise.
 
-    See also `Image.Pixel.to_pixel/2`.
+    See `Image.Pixel.to_pixel/2` for the full range of accepted
+    color forms.
 
   ## Transparent backgrounds
 
@@ -6655,8 +6687,10 @@ defmodule Image do
           Operation.rot(image, rot_angle)
 
         has_alpha?(image) ->
-          # `vips_rotate` doesn't expose the `:premultiplied` option, so alpha images
-          # run the equivalent affine through the premultiplied pipeline instead
+          # `vips_rotate` doesn't expose the `:premultiplied` option, so alpha
+          # images run the equivalent affine through the premultiplied pipeline.
+          # Rotate has no `:extend_mode`, so set the fringe extend explicitly.
+          options = Keyword.put(options, :extend, :VIPS_EXTEND_BACKGROUND)
           premultiplied_affine(image, rotation_matrix(angle), options)
 
         true ->
@@ -11879,27 +11913,28 @@ defmodule Image do
     in which case the background will be the average color of the
     base image.
 
-    When omitted, `libvips` uses its native fill: transparent for
-    images with an alpha band, black otherwise.
+    If omitted, `libvips`' native all-zeros fill is used:
+    transparent for images with an alpha band, black otherwise.
 
-    See also `Image.Pixel.to_pixel/2`.
+    See `Image.Pixel.to_pixel/2` for the full range of accepted
+    color forms.
 
-  * `:extend_mode` controls how the interpolator synthesises the
-    thin band of pixels just beyond the source edge when resampling
-    boundary pixels. It is visible only for transforms that sample
-    between pixels (rotation, scaling, sub-pixel translation), as a
-    one-pixel fringe along the content edge. It does *not* fill the
-    blank canvas left uncovered by the transformation - that area is
-    always filled with `:background`. The values are:
+  * `:extend_mode` controls how the interpolator synthesizes the
+    one-pixel fringe just beyond the content edge when resampling
+    boundary pixels. It does *not* fill the canvas left uncovered by
+    the transformation: that area is always filled with
+    `:background`. The values are:
 
-      * `:background` (the default) means the synthesised pixels use
-        the `:background` color.
-      * `:black` means the synthesised pixels are black.
-      * `:white` means the synthesised pixels are white.
-      * `:copy` means the synthesised pixels copy the nearest edge
-        pixel of the base image.
-      * `:repeat` means the base image is tiled.
-      * `:mirror` means the base image is reflected.
+    * `:background` (the default) blends the fringe toward the
+      `:background` color. This is correct whenever the transform
+      exposes canvas (for example a rotation or a scale-down).
+
+    * `:copy` clamps the fringe to the nearest content pixel. Use it
+      when the content fills the whole canvas (a pure scale up, a
+      sub-pixel translation, an `:output_area` inside the content),
+      where the default can leave a faint border along the outermost
+      pixels. For a pure scale, `Image.resize/3` avoids this
+      entirely.
 
   * `:output_area` is a four-element list of integers `[left, top,
     width, height]` selecting the rectangle of output space to
@@ -12094,7 +12129,7 @@ defmodule Image do
     `:background` or `:extend_mode`) is supported.
 
   Because the canvas is not resized, `:background` fills the area
-  vacated by the shift; `:extend_mode` only affects the antialiased
+  vacated by the shift. `:extend_mode` only affects the antialiased
   edge fringe on fractional (sub-pixel) shifts.
 
   ### Returns
@@ -12605,23 +12640,17 @@ defmodule Image do
       It can also be supplied as a hex string of the form `#rrggbb`.
       The default is `:black`. `:background` can also be set to `:average`
       in which case the background will be the average color of the base
-      image. See also `Color.new/2` from the Color library.
+      image. See `Image.Pixel.to_pixel/2` for the full range of accepted
+      color forms.
 
-    * `:extend_mode` controls how the interpolator synthesises the
-      thin band of pixels just beyond the source edge when resampling
-      the warped content boundary. It is visible only as a one-pixel
-      fringe along the content edge. It does *not* fill the blank
-      canvas left uncovered by the transformation — that area is
-      always filled with `:background`. The values are:
-
-      * `:background` (the default) means the synthesised pixels use
-        the `:background` color.
-      * `:black` means the synthesised pixels are black.
-      * `:white` means the synthesised pixels are white.
-      * `:copy` means the synthesised pixels copy the nearest edge
-        pixel of the base image.
-      * `:repeat` means the base image is tiled.
-      * `:mirror` means the base image is reflected.
+    * `:extend_mode` controls how the one-pixel fringe just beyond
+      the warped content edge is synthesized during interpolation.
+      The uncovered canvas is always filled with `:background`. The
+      values are `:background` (the default), which blends the
+      fringe toward the `:background` color, and `:copy`, which
+      clamps it to the nearest content pixel (useful when the warped
+      content covers the whole output). See `Image.affine/3` for
+      more detail.
 
     ### Notes
 
@@ -12693,13 +12722,12 @@ defmodule Image do
       It can also be supplied as a hex string of
       the form `#rrggbb`. The default is `:black`. `:background` can
       also be set to `:average` in which case the background will be
-      the average color of the base image. See also `Color.new/2` from the Color library.
+      the average color of the base image. See `Image.Pixel.to_pixel/2`
+      for the full range of accepted color forms.
 
-    * `:extend_mode` controls how pixels just beyond the source edge
-      are synthesised during interpolation. It is visible only as a
-      one-pixel fringe along the content edge; it does not fill the
-      blank canvas left uncovered by the transformation, which is
-      always filled by `:background`. See `Image.warp_perspective/4`.
+    The one-pixel antialiased fringe along the warped content edge
+    blends toward `:background` by default. See `Image.warp_perspective/4`
+    for the `:extend_mode` option.
 
     ### Returns
 
@@ -12766,13 +12794,12 @@ defmodule Image do
       It can also be supplied as a hex string of
       the form `#rrggbb`. The default is `:black`. `:background` can
       also be set to `:average` in which case the background will be
-      the average color of the base image. See also `Color.new/2` from the Color library.
+      the average color of the base image. See `Image.Pixel.to_pixel/2`
+      for the full range of accepted color forms.
 
-    * `:extend_mode` controls how pixels just beyond the source edge
-      are synthesised during interpolation. It is visible only as a
-      one-pixel fringe along the content edge; it does not fill the
-      blank canvas left uncovered by the transformation, which is
-      always filled by `:background`. See `Image.warp_perspective/4`.
+    The one-pixel antialiased fringe along the warped content edge
+    blends toward `:background` by default. See `Image.warp_perspective/4`
+    for the `:extend_mode` option.
 
     ### Returns
 
@@ -12854,13 +12881,8 @@ defmodule Image do
       It can also be supplied as a hex string of
       the form `#rrggbb`. The default is `:black`. `:background` can
       also be set to `:average` in which case the background will be
-      the average color of the base image. See also `Color.new/2` from the Color library.
-
-    * `:extend_mode` controls how pixels just beyond the source edge
-      are synthesised during interpolation. It is visible only as a
-      one-pixel fringe along the content edge; it does not fill the
-      blank canvas left uncovered by the transformation, which is
-      always filled by `:background`. See `Image.warp_perspective/4`.
+      the average color of the base image. See `Image.Pixel.to_pixel/2`
+      for the full range of accepted color forms.
 
     ### Returns
 

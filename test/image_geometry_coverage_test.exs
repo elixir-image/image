@@ -380,7 +380,7 @@ defmodule Image.GeometryCoverageTest do
     test "embeds with a background color" do
       image = Image.new!(20, 20, color: :white)
 
-      assert {:ok, embedded} = Image.embed(image, 40, 40, background_color: :red)
+      assert {:ok, embedded} = Image.embed(image, 40, 40, background: :red)
       assert Image.get_pixel!(embedded, 0, 0) == [255, 0, 0]
     end
 
@@ -409,7 +409,7 @@ defmodule Image.GeometryCoverageTest do
   describe "trim/2 and trim!/2" do
     setup do
       inner = Image.new!(20, 20, color: :white)
-      {:ok, framed} = Image.embed(inner, 60, 60, background_color: :black)
+      {:ok, framed} = Image.embed(inner, 60, 60, background: :black)
 
       {:ok, image: framed}
     end
@@ -443,7 +443,7 @@ defmodule Image.GeometryCoverageTest do
   describe "find_trim/2" do
     test "returns the bounding box of the non-background area" do
       inner = Image.new!(20, 20, color: :white)
-      {:ok, framed} = Image.embed(inner, 60, 60, background_color: :black)
+      {:ok, framed} = Image.embed(inner, 60, 60, background: :black)
 
       assert {:ok, {left, top, width, height}} = Image.find_trim(framed, background: :black)
       assert left == 20
