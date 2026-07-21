@@ -154,3 +154,8 @@ jobs:
     - name: Run dialyzer
       run: mix dialyzer
       if: ${{ matrix.lint }}
+
+    # Step: Enforce the Credo policy (see .credo.exs).
+    - name: Run Credo
+      run: mix credo --strict
+      if: ${{ matrix.lint }}
