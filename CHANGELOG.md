@@ -1,5 +1,23 @@
 # Changelog
 
+## Image 0.72.0
+
+This is the changelog for Image version 0.72.0 released on July 22nd, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Changed
+
+* **Breaking:** Unifies background handling under a single `:background` option across `Image.embed/4`, `Image.flatten/2`, `Image.join/2`, `Image.rotate/3` and the affine family (`Image.affine/3`, `Image.translate/4`, `Image.shear/4`, `Image.warp_perspective/4`), replacing the previous `:background_color` and `:background_transparency` options. Set a transparent or semi-transparent fill by wrapping any color as `{color, alpha: a}`. Thanks to @hlindset for the PR.
+
+* **Breaking:** An omitted or `nil` `:background` now defers to libvips' native fill everywhere (transparent for alpha images, black otherwise, paper-white in CMYK), so `Image.flatten/2` with no background matches how `Image.write/3` flattens. Previously `Image.flatten/2` and an alpha `Image.embed/4` defaulted to opaque black.
+
+### Removed
+
+* **Breaking:** Removes the `:black` and `:white` extend modes from `Image.embed/4` and narrows the affine-family `:extend_mode` to `:background | :copy`; combining a content extend mode with an explicit `:background` now errors. Use an explicit `:background` color in place of the removed modes. Thanks to @hlindset for the PR.
+
+### Fixed
+
+* Fix numeric array save options (for example `background: [0, 128, 0]`) being silently dropped on `:memory` and stream writes; the filename suffix joined array values with `:` rather than spaces, which libvips ignores. Thanks to @hlindset for the PR.
+
 ## Image 0.71.0
 
 This is the changelog for Image version 0.71.0 released on July 8th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
