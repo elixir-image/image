@@ -1,4 +1,6 @@
 defmodule ForDialyzer do
+  @moduledoc false
+
   # Juse to exorcise dialyzer errors. This module is not included
   # in the library published to hex.pm.
 
