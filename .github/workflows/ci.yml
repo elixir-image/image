@@ -33,25 +33,40 @@ jobs:
       # also work on OTP 25.
       matrix:
         include:
-          # minimum required versions
           # OTP 26.2.5.8+ is required: earlier 26.x patches reject the
           # builds.hex.pm certificate chain with a TLS key_usage_mismatch
-          # (fixed by public_key OTP-19240 / erlang/otp#9286).
-          - otp: "26.2.5.21"
-            elixir: "1.17.2-otp-26"
-          - otp: "27.2"
-            elixir: "1.17.2-otp-27"
-          - otp: "27.2"
-            elixir: "1.18.1-otp-27"
-          - otp: "28.3.1"
-            elixir: "1.19.4-otp-28"
-          # Elixir 1.20.1 is tested on both OTP 28 and OTP 29.
-          - otp: "28.3.1"
-            elixir: "1.20.1-otp-28"
-          # Canonical / standard toolchain: Elixir 1.20.1 on Erlang/OTP 29.
-          # This is the lint entry (warnings-as-errors + dialyzer).
-          - otp: "29.0.1"
-            elixir: "1.20.1-otp-29"
+          # (fixed by public_key OTP-19240 / erlang/otp#9286). The generic
+          # "26" specifier resolves to a current patch that satisfies this.
+
+          # Elixir 1.17 — supports OTP 25–27
+          - elixir: "1.17-otp-26"
+            otp: "26"
+          - elixir: "1.17-otp-27"
+            otp: "27"
+
+          # Elixir 1.18 — supports OTP 25–27
+          - elixir: "1.18-otp-26"
+            otp: "26"
+          - elixir: "1.18-otp-27"
+            otp: "27"
+
+          # Elixir 1.19 — supports OTP 26–28
+          - elixir: "1.19-otp-26"
+            otp: "26"
+          - elixir: "1.19-otp-27"
+            otp: "27"
+          - elixir: "1.19-otp-28"
+            otp: "28"
+
+          # Elixir 1.20 — supports OTP 27–29. The 1.20.2-otp-29 entry is the
+          # canonical toolchain and the lint entry (warnings-as-errors,
+          # dialyzer, credo).
+          - elixir: "1.20.2-otp-27"
+            otp: "27"
+          - elixir: "1.20.2-otp-28"
+            otp: "28"
+          - elixir: "1.20.2-otp-29"
+            otp: "29"
             lint: true
     steps:
     # Step: Setup Elixir + Erlang image as the base.
