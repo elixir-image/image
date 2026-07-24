@@ -6960,6 +6960,37 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:interpolate` selects the interpolator used to resample
+    pixels: `:nearest`, `:bilinear` (the default), `:bicubic`,
+    `:lbb`, `:nohalo` or `:vsqbs`. See
+    `t:Image.Options.Mapim.interpolate/0` for more information
+    about the available options.
+
+  * `:background` defines the color of pixels whose mapped coordinates
+    fall outside the source image. This can be specified as a single
+    integer applied to all bands, or a list of integers representing
+    the color for each band. The color can also be supplied as a CSS
+    color name as a string or atom (for example `:misty_rose`), a hex
+    string, or `:average`. Wrap it as `{color, alpha: a}` for a
+    transparent or semi-transparent fill. See
+    `Image.Pixel.to_pixel/2` for the full range of accepted color
+    forms.
+
+    If omitted, `libvips`' native all-zeros fill is used: transparent
+    for images with an alpha band, black otherwise.
+
+  ## Transparent backgrounds
+
+  An alpha band passes through the transformation. A partially
+  transparent `:background` is reproduced exactly. The one exception
+  is a *fully* transparent fill (`alpha: 0`) with non-zero color bands:
+  color cannot be recovered from under zero alpha, so it is rendered as
+  transparent black rather than the declared color.
+
   ### Returns
 
   * `{:ok, image_with_ripple}` or
@@ -6977,36 +7008,40 @@ defmodule Image do
   @dialyzer {:nowarn_function, {:ripple, 1}}
   @doc subject: "Operation"
 
-  @spec ripple(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
-  def ripple(%Vimage{} = image) do
+  @spec ripple(Vimage.t(), Options.Mapim.background_options()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def ripple(%Vimage{} = image, options \\ []) do
     use Image.Math
 
-    width = width(image)
-    height = height(image)
+    with {:ok, options} <-
+           Options.Mapim.validate_options(image, options, [:interpolate, :background]) do
+      width = width(image)
+      height = height(image)
 
-    # this makes an image where pixel (0, 0) (at the top-left) has value [0, 0],
-    # and pixel (image.width, image.height) at the bottom-right has value
-    # [image.width, image.height]
-    {:ok, index} = Operation.xyz(width, height)
+      # this makes an image where pixel (0, 0) (at the top-left) has value [0, 0],
+      # and pixel (image.width, image.height) at the bottom-right has value
+      # [image.width, image.height]
+      {:ok, index} = Operation.xyz(width, height)
 
-    # make a version with (0, 0) at the centre, negative values up and left,
-    # positive down and right
-    center = index - [width / 2, height / 2]
+      # make a version with (0, 0) at the centre, negative values up and left,
+      # positive down and right
+      center = index - [width / 2, height / 2]
 
-    # to polar space, so each pixel is now distance and angle in degrees
-    {:ok, polar} = Complex.polar(center)
+      # to polar space, so each pixel is now distance and angle in degrees
+      {:ok, polar} = Complex.polar(center)
 
-    # scale sin(distance) by 1/distance to make a wavey pattern
-    d = 10_000 * sin!(polar[0] * 3) / (1 + polar[0])
+      # scale sin(distance) by 1/distance to make a wavey pattern
+      d = 10_000 * sin!(polar[0] * 3) / (1 + polar[0])
 
-    # and back to rectangular coordinates again to make a set of vectors we can
-    # apply to the original index image
-    {:ok, joined} = Operation.bandjoin([d, polar[1]])
-    {:ok, rectangular} = Complex.rectangular(joined)
-    index = index + rectangular
+      # and back to rectangular coordinates again to make a set of vectors we can
+      # apply to the original index image
+      {:ok, joined} = Operation.bandjoin([d, polar[1]])
+      {:ok, rectangular} = Complex.rectangular(joined)
+      index = index + rectangular
 
-    # finally, use our modified index image to distort the input!
-    Operation.mapim(image, index)
+      # finally, use our modified index image to distort the input!
+      mapim(image, index, options)
+    end
   end
 
   @doc """
@@ -7016,6 +7051,8 @@ defmodule Image do
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options. See `Image.ripple/2`.
 
   ### Returns
 
@@ -7034,9 +7071,9 @@ defmodule Image do
   @dialyzer {:nowarn_function, {:ripple!, 1}}
   @doc subject: "Operation"
 
-  @spec ripple!(Vimage.t()) :: Vimage.t() | no_return()
-  def ripple!(%Vimage{} = image) do
-    case ripple(image) do
+  @spec ripple!(Vimage.t(), Options.Mapim.background_options()) :: Vimage.t() | no_return()
+  def ripple!(%Vimage{} = image, options \\ []) do
+    case ripple(image, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
@@ -9413,6 +9450,37 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:interpolate` selects the interpolator used to resample
+    pixels: `:nearest`, `:bilinear` (the default), `:bicubic`,
+    `:lbb`, `:nohalo` or `:vsqbs`. See
+    `t:Image.Options.Mapim.interpolate/0` for more information
+    about the available options.
+
+  * `:background` defines the color of pixels whose mapped coordinates
+    fall outside the source image. This can be specified as a single
+    integer applied to all bands, or a list of integers representing
+    the color for each band. The color can also be supplied as a CSS
+    color name as a string or atom (for example `:misty_rose`), a hex
+    string, or `:average`. Wrap it as `{color, alpha: a}` for a
+    transparent or semi-transparent fill. See
+    `Image.Pixel.to_pixel/2` for the full range of accepted color
+    forms.
+
+    If omitted, `libvips`' native all-zeros fill is used: transparent
+    for images with an alpha band, black otherwise.
+
+  ## Transparent backgrounds
+
+  An alpha band passes through the transformation. A partially
+  transparent `:background` is reproduced exactly. The one exception
+  is a *fully* transparent fill (`alpha: 0`) with non-zero color bands:
+  color cannot be recovered from under zero alpha, so it is rendered as
+  transparent black rather than the declared color.
+
   ### Returns
 
   * `{:ok, image_in_polar_coordinates}` or
@@ -9430,23 +9498,27 @@ defmodule Image do
   @dialyzer {:nowarn_function, {:to_polar_coordinates, 1}}
   @doc subject: "Operation"
 
-  @spec to_polar_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
-  def to_polar_coordinates(%Vimage{} = image) do
+  @spec to_polar_coordinates(Vimage.t(), Options.Mapim.background_options()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def to_polar_coordinates(%Vimage{} = image, options \\ []) do
     use Image.Math
 
-    width = width(image)
-    height = height(image)
-    min = min(width, height)
-    scale = Kernel./(min, width)
+    with {:ok, options} <-
+           Options.Mapim.validate_options(image, options, [:interpolate, :background]) do
+      width = width(image)
+      height = height(image)
+      min = min(width, height)
+      scale = Kernel./(min, width)
 
-    xy = Operation.xyz!(width, height)
-    xy = xy - [width / 2.0, height / 2.0]
-    xy = xy * 2.0 / scale
+      xy = Operation.xyz!(width, height)
+      xy = xy - [width / 2.0, height / 2.0]
+      xy = xy * 2.0 / scale
 
-    {:ok, index} = Complex.polar(xy)
-    index = index * [1.0, height / 360.0]
+      {:ok, index} = Complex.polar(xy)
+      index = index * [1.0, height / 360.0]
 
-    Operation.mapim(image, index)
+      mapim(image, index, options)
+    end
   end
 
   @doc """
@@ -9456,6 +9528,9 @@ defmodule Image do
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options. See
+    `Image.to_polar_coordinates/2`.
 
   ### Returns
 
@@ -9474,9 +9549,10 @@ defmodule Image do
   @dialyzer {:nowarn_function, {:to_polar_coordinates!, 1}}
   @doc subject: "Operation"
 
-  @spec to_polar_coordinates!(Vimage.t()) :: Vimage.t() | no_return()
-  def to_polar_coordinates!(%Vimage{} = image) do
-    case to_polar_coordinates(image) do
+  @spec to_polar_coordinates!(Vimage.t(), Options.Mapim.background_options()) ::
+          Vimage.t() | no_return()
+  def to_polar_coordinates!(%Vimage{} = image, options \\ []) do
+    case to_polar_coordinates(image, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
@@ -9489,12 +9565,20 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:interpolate` selects the interpolator used to resample
+    pixels: `:nearest`, `:bilinear` (the default), `:bicubic`,
+    `:lbb`, `:nohalo` or `:vsqbs`. See
+    `t:Image.Options.Mapim.interpolate/0` for more information
+    about the available options.
+
   ## Notes
 
-  Roundtrip to polar and back to rectangular
-  coordinates displays some image distortion,
-  likely due to rounding errors in float
-  arithmetic. Further study is required.
+  Interpolation samples immediately outside the source are clamped
+  to the nearest source pixel.
 
   ### Returns
 
@@ -9514,24 +9598,28 @@ defmodule Image do
   @dialyzer {:nowarn_function, {:to_rectangular_coordinates, 1}}
   @doc subject: "Operation"
 
-  @spec to_rectangular_coordinates(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
-  def to_rectangular_coordinates(%Vimage{} = image) do
+  @spec to_rectangular_coordinates(Vimage.t(), Options.Mapim.interpolate_options()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def to_rectangular_coordinates(%Vimage{} = image, options \\ []) do
     use Image.Math
 
-    width = width(image)
-    height = height(image)
-    min = min(width, height)
-    scale = Kernel./(min, width)
+    with {:ok, options} <- Options.Mapim.validate_options(image, options, [:interpolate]) do
+      width = width(image)
+      height = height(image)
+      min = min(width, height)
+      scale = Kernel./(min, width)
 
-    xy = Operation.xyz!(width, height)
-    xy = xy * [1.0, 360.0 / height]
+      xy = Operation.xyz!(width, height)
+      xy = xy * [1.0, 360.0 / height]
 
-    {:ok, index} = Complex.rectangular(xy)
+      {:ok, index} = Complex.rectangular(xy)
 
-    index = index * scale / 2.0
-    index = index + [width / 2.0, height / 2.0]
+      index = index * scale / 2.0
+      index = index + [width / 2.0, height / 2.0]
 
-    Operation.mapim(image, index)
+      options = Keyword.put(options, :extend, :VIPS_EXTEND_COPY)
+      mapim(image, index, options)
+    end
   end
 
   @doc """
@@ -9542,12 +9630,8 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  ## Notes
-
-  Roundtrip to polar and back to rectangular
-  coordinates displays some image distortion,
-  likely due to rounding errors in float
-  arithmetic. Further study is required.
+  * `options` is a keyword list of options. See
+    `Image.to_rectangular_coordinates/2`.
 
   ### Returns
 
@@ -9567,9 +9651,10 @@ defmodule Image do
   @dialyzer {:nowarn_function, {:to_rectangular_coordinates!, 1}}
   @doc subject: "Operation"
 
-  @spec to_rectangular_coordinates!(Vimage.t()) :: Vimage.t() | no_return()
-  def to_rectangular_coordinates!(%Vimage{} = image) do
-    case to_rectangular_coordinates(image) do
+  @spec to_rectangular_coordinates!(Vimage.t(), Options.Mapim.interpolate_options()) ::
+          Vimage.t() | no_return()
+  def to_rectangular_coordinates!(%Vimage{} = image, options \\ []) do
+    case to_rectangular_coordinates(image, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
@@ -11905,19 +11990,16 @@ defmodule Image do
 
   * `:background` defines the color of any generated background
     pixels. This can be specified as a single integer which will
-    be applied to all bands, or a list of integers representing
-    the color for each band (including an optional alpha band). The
-    color can also be supplied as a CSS color name as a string or
-    atom. For example: `:misty_rose`. It can also be supplied as a
-    hex string of the form `#rrggbb`. Can also be set to `:average`
-    in which case the background will be the average color of the
-    base image.
+    be applied to all bands, or a list of integers representing the
+    color for each band. The color can also be supplied as a CSS
+    color name as a string or atom (for example `:misty_rose`), a hex
+    string, or `:average`. Wrap it as `{color, alpha: a}` for a
+    transparent or semi-transparent fill. See
+    `Image.Pixel.to_pixel/2` for the full range of accepted color
+    forms.
 
     If omitted, `libvips`' native all-zeros fill is used:
     transparent for images with an alpha band, black otherwise.
-
-    See `Image.Pixel.to_pixel/2` for the full range of accepted
-    color forms.
 
   * `:extend_mode` controls how the interpolator synthesizes the
     one-pixel fringe just beyond the content edge when resampling
@@ -12023,12 +12105,18 @@ defmodule Image do
      }}
   end
 
+  defp premultiplied_affine(%Vimage{} = image, matrix, options) do
+    premultiplied_transform(image, options, &Operation.affine(&1, matrix, &2))
+  end
+
   # `libvips` resamples alpha images in premultiplied-alpha space and
   # injects the `:background` fill raw into that space, so the fill's
   # color bands come back scaled by `max_alpha / alpha`. Premultiplying
   # the image and the background ourselves (with `premultiplied: true`)
-  # makes the fill round-trip exactly.
-  defp premultiplied_affine(%Vimage{} = image, matrix, options) do
+  # makes the fill round-trip exactly. `transform` is a fun receiving
+  # the (possibly premultiplied) image and options, returning
+  # `{:ok, image}` or `{:error, reason}`.
+  defp premultiplied_transform(%Vimage{} = image, options, transform) do
     if has_alpha?(image) do
       band_format = Vix.Vips.Image.format(image)
 
@@ -12038,12 +12126,30 @@ defmodule Image do
         |> Keyword.put(:premultiplied, true)
 
       with {:ok, premultiplied} <- Operation.premultiply(image),
-           {:ok, transformed} <- Operation.affine(premultiplied, matrix, options),
+           {:ok, transformed} <- transform.(premultiplied, options),
            {:ok, unpremultiplied} <- Operation.unpremultiply(transformed) do
         Operation.cast(unpremultiplied, band_format)
       end
     else
-      Operation.affine(image, matrix, options)
+      transform.(image, options)
+    end
+  end
+
+  defp mapim(%Vimage{} = image, coordinate_map, options) do
+    # libvips normally handles alpha premultiplication for mapim. With an
+    # explicit non-opaque background, however, it injects the background
+    # without premultiplying its color bands, so handle that path explicitly.
+    if premultiply_explicitly?(image, options) do
+      premultiplied_transform(image, options, &Operation.mapim(&1, coordinate_map, &2))
+    else
+      Operation.mapim(image, coordinate_map, options)
+    end
+  end
+
+  defp premultiply_explicitly?(image, options) do
+    case Keyword.fetch(options, :background) do
+      {:ok, background} -> has_alpha?(image) and List.last(background) != opaque_alpha(image)
+      :error -> false
     end
   end
 
@@ -12051,14 +12157,16 @@ defmodule Image do
     # The background premultiplication must use the same alpha scale as the
     # operations above. `Image.Pixel` encodes that scale as the opaque alpha
     # value, so read it from there.
-    max_alpha =
-      case Pixel.to_pixel(image, :black, alpha: :opaque) do
-        {:ok, pixel} -> List.last(pixel)
-        {:error, _reason} -> 255
-      end
+    opaque_alpha = opaque_alpha(image)
 
     {color_bands, [alpha]} = Enum.split(pixel, -1)
-    Enum.map(color_bands, &(&1 * alpha / max_alpha)) ++ [alpha]
+    Enum.map(color_bands, &(&1 * alpha / opaque_alpha)) ++ [alpha]
+  end
+
+  defp opaque_alpha(image) do
+    image
+    |> Pixel.to_pixel!(:black, alpha: :opaque)
+    |> List.last()
   end
 
   @doc """
@@ -12627,21 +12735,28 @@ defmodule Image do
       four corners of the destination image into which the
       subject-of-interest is transformed.
 
-    * `options` is a keyword list of options. The default
-      is `[]`.
+    * `options` is a keyword list of options.
 
     ### Options
+
+    * `:interpolate` selects the interpolator used to resample
+      pixels: `:nearest`, `:bilinear` (the default), `:bicubic`,
+      `:lbb`, `:nohalo` or `:vsqbs`. See
+      `t:Image.Options.Mapim.interpolate/0` for more information
+      about the available options.
 
     * `:background` defines the color of any generated background
       pixels. This can be specified as a single integer which will
       be applied to all bands, or a list of integers representing
       the color for each band. The color can also be supplied as a
-      CSS color name as a string or atom. For example: `:misty_rose`.
-      It can also be supplied as a hex string of the form `#rrggbb`.
-      The default is `:black`. `:background` can also be set to `:average`
-      in which case the background will be the average color of the base
-      image. See `Image.Pixel.to_pixel/2` for the full range of accepted
+      CSS color name as a string or atom (for example
+      `:misty_rose`), a hex string, or `:average`. Wrap it as
+      `{color, alpha: a}` for a transparent or semi-transparent fill.
+      See `Image.Pixel.to_pixel/2` for the full range of accepted
       color forms.
+
+      If omitted, `libvips`' native all-zeros fill is used:
+      transparent for images with an alpha band, black otherwise.
 
     * `:extend_mode` controls how the one-pixel fringe just beyond
       the warped content edge is synthesized during interpolation.
@@ -12652,11 +12767,13 @@ defmodule Image do
       content covers the whole output). See `Image.affine/3` for
       more detail.
 
-    ### Notes
+    ## Transparent backgrounds
 
-    * The image is flattened before warping and therefore any
-      alpha band will be multiplied into to the image data and
-      removed.
+    An alpha band passes through the warp. A partially transparent
+    `:background` is reproduced exactly. The one exception is a
+    *fully* transparent fill (`alpha: 0`) with non-zero color bands:
+    color cannot be recovered from under zero alpha, so it is
+    rendered as transparent black rather than the declared color.
 
     ### Returns
 
@@ -12680,15 +12797,14 @@ defmodule Image do
             Vimage.t(),
             source :: quadrilateral(),
             destination :: quadrilateral(),
-            Options.WarpPerspective.t()
+            Options.Mapim.t()
           ) ::
             {:ok, Vimage.t()} | {:error, error()}
 
     def warp_perspective(%Vimage{} = image, source, destination, options \\ []) do
-      with {:ok, flattened} <- flatten(image),
-           {:ok, options} <- Options.WarpPerspective.validate_options(flattened, options),
-           {:ok, transform_map} <- transform_matrix(flattened, source, destination) do
-        Operation.mapim(flattened, transform_map, options)
+      with {:ok, options} <- Options.Mapim.validate_options(image, options),
+           {:ok, transform_map} <- transform_matrix(image, source, destination) do
+        mapim(image, transform_map, options)
       end
     end
 
@@ -12709,37 +12825,14 @@ defmodule Image do
       four corners of the destination image into which the
       subject-of-interest is transformed.
 
-    * `options` is a keyword list of options. The default
-      is `[]`.
-
-    ### Options
-
-    * `:background` defines the color of any generated background
-      pixels. This can be specified as a single integer which will
-      be applied to all bands, or a list of integers representing
-      the color for each band. The color can also be supplied as a
-      CSS color name as a string or atom. For example: `:misty_rose`.
-      It can also be supplied as a hex string of
-      the form `#rrggbb`. The default is `:black`. `:background` can
-      also be set to `:average` in which case the background will be
-      the average color of the base image. See `Image.Pixel.to_pixel/2`
-      for the full range of accepted color forms.
-
-    The one-pixel antialiased fringe along the warped content edge
-    blends toward `:background` by default. See `Image.warp_perspective/4`
-    for the `:extend_mode` option.
+    * `options` is a keyword list of options. See
+      `Image.warp_perspective/4`.
 
     ### Returns
 
     * `warped_image` or
 
     * raises an exception.
-
-    ### Notes
-
-    * The image is flattened before warping and therefore any
-      alpha band will be multiplied into to the image data and
-      removed.
 
     ### Examples
 
@@ -12757,7 +12850,7 @@ defmodule Image do
             Vimage.t(),
             source :: quadrilateral(),
             destination :: quadrilateral(),
-            Options.WarpPerspective.t()
+            Options.Mapim.t()
           ) ::
             Vimage.t() | no_return()
 
@@ -12781,21 +12874,29 @@ defmodule Image do
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
 
-    * `options` is a keyword list of options. The default
-      is `[]`.
+    * `options` is a keyword list of options.
 
     ### Options
+
+    * `:interpolate` selects the interpolator used to resample
+      pixels: `:nearest`, `:bilinear` (the default), `:bicubic`,
+      `:lbb`, `:nohalo` or `:vsqbs`. See
+      `t:Image.Options.Mapim.interpolate/0` for more information
+      about the available options.
 
     * `:background` defines the color of any generated background
       pixels. This can be specified as a single integer which will
       be applied to all bands, or a list of integers representing
       the color for each band. The color can also be supplied as a
-      CSS color name as a string or atom. For example: `:misty_rose`.
-      It can also be supplied as a hex string of
-      the form `#rrggbb`. The default is `:black`. `:background` can
-      also be set to `:average` in which case the background will be
-      the average color of the base image. See `Image.Pixel.to_pixel/2`
-      for the full range of accepted color forms.
+      CSS color name as a string or atom (for example
+      `:misty_rose`), a hex string, or `:average`. Wrap it as
+      `{color, alpha: a}` for a transparent or semi-transparent fill.
+      If omitted, `libvips`' native all-zeros fill is used:
+      transparent for images with an alpha band, black otherwise.
+      See `Image.Pixel.to_pixel/2` for the full range of accepted
+      color forms and
+      `Image.warp_perspective/4` for how transparent backgrounds
+      are handled.
 
     The one-pixel antialiased fringe along the warped content edge
     blends toward `:background` by default. See `Image.warp_perspective/4`
@@ -12808,10 +12909,6 @@ defmodule Image do
     * `{:error, reason}`
 
     ### Notes
-
-    * The image is flattened before warping and therefore any
-      alpha band will be multiplied into to the image data and
-      removed.
 
     * The returned `destination` is a four element list of
       2-tuples representing the four points to which the `source`
@@ -12835,7 +12932,7 @@ defmodule Image do
     @spec straighten_perspective(
             Vimage.t(),
             source :: quadrilateral(),
-            Options.WarpPerspective.t()
+            Options.Mapim.t()
           ) ::
             {:ok, quadrilateral(), Vimage.t()} | {:error, error()}
 
@@ -12868,21 +12965,8 @@ defmodule Image do
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
 
-    * `options` is a keyword list of options. The default
-      is `[]`.
-
-    ### Options
-
-    * `:background` defines the color of any generated background
-      pixels. This can be specified as a single integer which will
-      be applied to all bands, or a list of integers representing
-      the color for each band. The color can also be supplied as a
-      CSS color name as a string or atom. For example: `:misty_rose`.
-      It can also be supplied as a hex string of
-      the form `#rrggbb`. The default is `:black`. `:background` can
-      also be set to `:average` in which case the background will be
-      the average color of the base image. See `Image.Pixel.to_pixel/2`
-      for the full range of accepted color forms.
+    * `options` is a keyword list of options. See
+      `Image.straighten_perspective/3`.
 
     ### Returns
 
@@ -12891,10 +12975,6 @@ defmodule Image do
     * `{:error, reason}`
 
     ### Notes
-
-    * The image is flattened before warping and therefore any
-      alpha band will be multiplied into to the image data and
-      removed.
 
     * The returned `destination` is a four element list of
       2-tuples representing the four points to which the `source`
@@ -12916,7 +12996,7 @@ defmodule Image do
     @spec straighten_perspective!(
             Vimage.t(),
             source :: quadrilateral(),
-            Options.WarpPerspective.t()
+            Options.Mapim.t()
           ) ::
             Vimage.t() | no_return()
 
@@ -12952,6 +13032,44 @@ defmodule Image do
       the destination points into which the
       image is transformed.
 
+    * `options` is a keyword list of options.
+
+    ### Options
+
+    * `:interpolate` selects the interpolator used to resample
+      pixels: `:nearest`, `:bilinear`, `:bicubic` (the default),
+      `:lbb`, `:nohalo` or `:vsqbs`. See
+      `t:Image.Options.Mapim.interpolate/0` for more information
+      about the available options.
+
+    * `:background` defines the color of pixels whose mapped coordinates
+      fall outside the source image. This can be specified as a single
+      integer applied to all bands, or a list of integers representing
+      the color for each band. The color can also be supplied as a CSS
+      color name as a string or atom (for example `:misty_rose`), a hex
+      string, or `:average`. Wrap it as `{color, alpha: a}` for a
+      transparent or semi-transparent fill. See
+      `Image.Pixel.to_pixel/2` for the full range of accepted color
+      forms.
+
+      If omitted, `libvips`' native all-zeros fill is used: transparent
+      for images with an alpha band, black otherwise.
+
+    * `:extend_mode` controls how the one-pixel fringe just beyond the
+      source edge is synthesized during interpolation. The values are
+      `:background` (the default), which blends the fringe toward the
+      background, and `:copy`, which clamps it to the nearest source
+      pixel. Pixels mapped farther outside the source still use
+      `:background`.
+
+    ## Transparent backgrounds
+
+    An alpha band passes through the transformation. A partially
+    transparent `:background` is reproduced exactly. The one exception
+    is a *fully* transparent fill (`alpha: 0`) with non-zero color bands:
+    color cannot be recovered from under zero alpha, so it is rendered as
+    transparent black rather than the declared color.
+
     ### Example
 
     In this example the points around `{30,11}` are distorted to `{20,11}` and
@@ -12963,33 +13081,46 @@ defmodule Image do
     """
     @doc subject: "Distortion", since: "0.57.0"
 
-    @spec distort(image :: Vimage.t(), source :: list(point()), destination :: list(point())) ::
+    @spec distort(
+            image :: Vimage.t(),
+            source :: list(point()),
+            destination :: list(point()),
+            options :: Options.Mapim.t()
+          ) ::
             {:ok, Vimage.t()} | {:error, error()}
 
-    def distort(%Vimage{} = image, [{_x1, _y1} | _] = source, [{_x2, _y2} | _] = destination)
+    def distort(
+          %Vimage{} = image,
+          [{_x1, _y1} | _] = source,
+          [{_x2, _y2} | _] = destination,
+          options \\ []
+        )
         when length(source) == length(destination) do
       use Image.Math
 
-      index = Operation.xyz!(Image.width(image), Image.height(image))
-      couples = Enum.zip(source, destination)
+      options = Keyword.put_new(options, :interpolate, :bicubic)
 
-      {deltas, weights} =
-        Enum.reduce(couples, {[], []}, fn {p1, p2}, {deltas, weights} ->
-          {p1x, p1y} = p1
-          {p2x, p2y} = p2
+      with {:ok, options} <- Options.Mapim.validate_options(image, options) do
+        index = Operation.xyz!(Image.width(image), Image.height(image))
+        couples = Enum.zip(source, destination)
 
-          diff = index - Tuple.to_list(p2)
-          distance = diff[0] ** 2 + diff[1] ** 2
+        {deltas, weights} =
+          Enum.reduce(couples, {[], []}, fn {p1, p2}, {deltas, weights} ->
+            {p1x, p1y} = p1
+            {p2x, p2y} = p2
 
-          weight = Image.if_then_else!(distance < 1.0, 1.0, 1.0 / distance)
-          delta = weight * [p1x - p2x, p1y - p2y]
+            diff = index - Tuple.to_list(p2)
+            distance = diff[0] ** 2 + diff[1] ** 2
 
-          {[delta | deltas], [weight | weights]}
-        end)
+            weight = Image.if_then_else!(distance < 1.0, 1.0, 1.0 / distance)
+            delta = weight * [p1x - p2x, p1y - p2y]
 
-      index = index + Operation.sum!(deltas) / Operation.sum!(weights)
-      bicubic_interpolator = Vix.Vips.Interpolate.new!("bicubic")
-      Operation.mapim(image, index, interpolate: bicubic_interpolator)
+            {[delta | deltas], [weight | weights]}
+          end)
+
+        index = index + Operation.sum!(deltas) / Operation.sum!(weights)
+        mapim(image, index, options)
+      end
     end
 
     @doc """
@@ -13259,6 +13390,44 @@ defmodule Image do
   * `transform_matrix` is a matrix returned by
     `Image.transform_matrix/3`.
 
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:interpolate` selects the interpolator used to resample
+    pixels: `:nearest`, `:bilinear` (the default), `:bicubic`,
+    `:lbb`, `:nohalo` or `:vsqbs`. See
+    `t:Image.Options.Mapim.interpolate/0` for more information
+    about the available options.
+
+  * `:background` defines the color of pixels whose mapped coordinates
+    fall outside the source image. This can be specified as a single
+    integer applied to all bands, or a list of integers representing
+    the color for each band. The color can also be supplied as a CSS
+    color name as a string or atom (for example `:misty_rose`), a hex
+    string, or `:average`. Wrap it as `{color, alpha: a}` for a
+    transparent or semi-transparent fill. See
+    `Image.Pixel.to_pixel/2` for the full range of accepted color
+    forms.
+
+    If omitted, `libvips`' native all-zeros fill is used: transparent
+    for images with an alpha band, black otherwise.
+
+  * `:extend_mode` controls how the one-pixel fringe just beyond the
+    source edge is synthesized during interpolation. The values are
+    `:background` (the default), which blends the fringe toward the
+    background, and `:copy`, which clamps it to the nearest source
+    pixel. Pixels mapped farther outside the source still use
+    `:background`.
+
+  ## Transparent backgrounds
+
+  An alpha band passes through the transformation. A partially
+  transparent `:background` is reproduced exactly. The one exception
+  is a *fully* transparent fill (`alpha: 0`) with non-zero color bands:
+  color cannot be recovered from under zero alpha, so it is rendered as
+  transparent black rather than the declared color.
+
   ### Returns
 
   * `{:ok, mapped_image}` or
@@ -13277,10 +13446,11 @@ defmodule Image do
   """
   @doc subject: "Operation", since: "0.28.0"
 
-  @spec map(Vimage.t(), Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error()}
+  @spec map(Vimage.t(), Vimage.t(), Options.Mapim.t()) ::
+          {:ok, Vimage.t()} | {:error, error()}
   def map(%Vimage{} = image, %Vimage{} = transformation_matrix, options \\ []) do
-    with {:ok, options} <- Options.WarpPerspective.validate_options(image, options) do
-      Operation.mapim(image, transformation_matrix, options)
+    with {:ok, options} <- Options.Mapim.validate_options(image, options) do
+      mapim(image, transformation_matrix, options)
     end
   end
 

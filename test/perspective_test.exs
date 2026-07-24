@@ -97,6 +97,49 @@ defmodule Image.Perspective.Test do
     assert_images_equal(result, validate_path)
   end
 
+  describe "alpha pass-through" do
+    # expose canvas at the corners, so (1, 1) is pure background fill
+    @inset_source [{0, 0}, {99, 0}, {99, 99}, {0, 99}]
+    @inset_destination [{30, 30}, {70, 30}, {70, 70}, {30, 70}]
+
+    test "warp_perspective/4 keeps the alpha band" do
+      image = Image.new!(100, 100, color: [255, 0, 0, 255])
+
+      {:ok, warped} = Image.warp_perspective(image, @inset_source, @inset_destination)
+
+      assert Image.shape(warped) == {100, 100, 4}
+      assert Image.get_pixel!(warped, 50, 50) == [255, 0, 0, 255]
+    end
+
+    test "warp_perspective/4 fills exposed canvas with transparent black by default" do
+      image = Image.new!(100, 100, color: [255, 0, 0, 255])
+
+      {:ok, warped} = Image.warp_perspective(image, @inset_source, @inset_destination)
+
+      assert Image.get_pixel!(warped, 1, 1) == [0, 0, 0, 0]
+    end
+
+    test "warp_perspective/4 reproduces a partially transparent background exactly" do
+      image = Image.new!(100, 100, color: [255, 0, 0, 255])
+
+      {:ok, warped} =
+        Image.warp_perspective(image, @inset_source, @inset_destination,
+          background: [10, 20, 30, 40]
+        )
+
+      assert Image.get_pixel!(warped, 1, 1) == [10, 20, 30, 40]
+    end
+
+    test "warp_perspective/4 still zero-fills an image without an alpha band" do
+      image = Image.new!(100, 100, color: :red)
+
+      {:ok, warped} = Image.warp_perspective(image, @inset_source, @inset_destination)
+
+      assert Image.shape(warped) == {100, 100, 3}
+      assert Image.get_pixel!(warped, 1, 1) == [0, 0, 0]
+    end
+  end
+
   describe "straighten_perspective/3 source validation" do
     # Regression: a malformed source fell through a `with` that had no else,
     # returning the source list itself instead of an error (or an image from

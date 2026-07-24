@@ -4,6 +4,8 @@ defmodule Image.Test do
   alias Vix.Vips.Operation
   alias Vix.Vips.Image, as: Vimage
 
+  @mapim_background {[10, 20, 30], alpha: 40}
+
   doctest Image
   doctest Image.BandFormat
   doctest Image.Blurhash
@@ -296,6 +298,13 @@ defmodule Image.Test do
     assert_images_equal(out_path, validate_path("polar.jpg"))
   end
 
+  test "Convert to polar coordinates with a background" do
+    image = rgba_image()
+
+    assert {:ok, polar} = Image.to_polar_coordinates(image, background: @mapim_background)
+    assert Image.get_pixel!(polar, 0, 0) == [10, 20, 30, 40]
+  end
+
   test "Convert to rectangular coordinates", %{dir: dir} do
     image = validate_path("polar.jpg")
     {:ok, image} = Vimage.new_from_file(image)
@@ -307,6 +316,27 @@ defmodule Image.Test do
     assert_images_equal(out_path, validate_path("rectangular.jpg"))
   end
 
+  test "Convert to rectangular coordinates by copying the interpolation fringe" do
+    image = rgba_image()
+
+    assert {:ok, rectangular} =
+             Image.to_rectangular_coordinates(image, interpolate: :bicubic)
+
+    assert minimum_alpha(rectangular) == 255
+  end
+
+  test "map/3 keeps the alpha band and reproduces a transparent background exactly" do
+    image = rgba_image()
+    source = [{0, 0}, {99, 0}, {99, 99}, {0, 99}]
+    destination = [{30, 30}, {70, 30}, {70, 70}, {30, 70}]
+    {:ok, matrix} = Image.transform_matrix(image, source, destination)
+
+    {:ok, mapped} = Image.map(image, matrix, background: [10, 20, 30, 40])
+
+    assert Image.shape(mapped) == {100, 100, 4}
+    assert Image.get_pixel!(mapped, 1, 1) == [10, 20, 30, 40]
+  end
+
   test "Ripple Effect", %{dir: dir} do
     image = image_path("San-Francisco-2018-04-2549.jpg")
     {:ok, image} = Vimage.new_from_file(image)
@@ -316,6 +346,15 @@ defmodule Image.Test do
     assert :ok = Vimage.write_to_file(ripple, out_path)
 
     assert_images_equal(out_path, validate_path("ripple.jpg"))
+  end
+
+  test "Ripple effect with a background" do
+    image = rgba_image()
+
+    assert {:ok, rippled} =
+             Image.ripple(image, background: @mapim_background, interpolate: :nearest)
+
+    assert Image.get_pixel!(rippled, 0, 50) == [10, 20, 30, 40]
   end
 
   test "Autorotate an image", %{dir: dir} do
@@ -437,5 +476,16 @@ defmodule Image.Test do
         assert {:ok, _} = Image.write(image, "/tmp/s1.avif", compression: :avc)
       end
     end
+  end
+
+  defp rgba_image do
+    Image.new!(100, 100, color: [255, 0, 0, 255])
+  end
+
+  defp minimum_alpha(image) do
+    image
+    |> Operation.extract_band!(Image.alpha_band(image))
+    |> Image.Math.min!()
+    |> trunc()
   end
 end
