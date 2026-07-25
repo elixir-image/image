@@ -46,7 +46,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
       out_path = Temp.path!(suffix: ".jpg", basedir: dir)
       stream = File.stream!(out_path, 2048, [])
 
-      assert {:error, _reason} =
+      assert {:error, %Image.Error{}} =
                image_path("Singapore-2016-09-5887.jpg")
                |> File.stream!(2048, [])
                |> Image.open!()
@@ -70,7 +70,7 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
       out_path = Temp.path!(basedir: dir)
       stream = File.stream!(out_path, 2048, [])
 
-      assert {:error, _reason} =
+      assert {:error, %Image.Error{}} =
                image_path("Singapore-2016-09-5887.jpg")
                |> File.stream!(2048, [])
                |> Image.open!()

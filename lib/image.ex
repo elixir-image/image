@@ -794,7 +794,7 @@ defmodule Image do
 
   # JPEG signature
   def open(<<0xFF, 0xD8, 0xFF, _::binary>> = image, options) do
-    from_binary(image, options)
+    open_binary(image, options)
   end
 
   # PNG signature
@@ -804,32 +804,32 @@ defmodule Image do
     end
 
   def open(unquote(png) = image, options) do
-    from_binary(image, options)
+    open_binary(image, options)
   end
 
   # WEBP signature
   def open(<<"RIFF", _::size(32), "WEBP", _::binary>> = image, options) do
-    from_binary(image, options)
+    open_binary(image, options)
   end
 
   # GIF87a signature
   def open(<<0x47, 0x49, 0x46, 0x38, 0x37, 0x61, _::binary>> = image, options) do
-    from_binary(image, options)
+    open_binary(image, options)
   end
 
   # GIF89a signature
   def open(<<0x47, 0x49, 0x46, 0x38, 0x39, 0x61, _::binary>> = image, options) do
-    from_binary(image, options)
+    open_binary(image, options)
   end
 
   # TIF little endian
   def open(<<0x49, 0x49, 0x2A, 0x00, _::binary>> = image, options) do
-    from_binary(image, options)
+    open_binary(image, options)
   end
 
   # TIF big endian
   def open(<<0x4D, 0x4D, 0x00, 0x2A, _::binary>> = image, options) do
-    from_binary(image, options)
+    open_binary(image, options)
   end
 
   # 'heic': the usual HEIF images
@@ -844,16 +844,16 @@ defmodule Image do
 
   def open(<<_::bytes-4, "ftyp", type::bytes-4, _rest::binary>> = image, options)
       when type in @heic_types do
-    from_binary(image, options)
+    open_binary(image, options)
   end
 
   # SVG starting with either svg or xml tag
   def open(<<"<svg ", _::binary>> = image, options) do
-    from_binary(image, options)
+    open_binary(image, options)
   end
 
   def open(<<"<?xml ", _::binary>> = image, options) do
-    from_binary(image, options)
+    open_binary(image, options)
   end
 
   # A file path
@@ -869,7 +869,7 @@ defmodule Image do
   def open(%File.Stream{line_or_bytes: bytes} = image_stream, options) when is_integer(bytes) do
     with {:ok, options} <- Options.Open.validate_options(options) do
       options = loader_options(options)
-      Vix.Vips.Image.new_from_enum(image_stream, options)
+      open_enum(image_stream, options)
     end
   end
 
@@ -886,13 +886,13 @@ defmodule Image do
   def open(image_stream, options) do
     with {:ok, options} <- Options.Open.validate_options(options) do
       options = loader_options(options)
-      Vix.Vips.Image.new_from_enum(image_stream, options)
+      open_enum(image_stream, options)
     end
   end
 
   defp do_open([path], options) do
     if File.exists?(path) do
-      vix_open(path, options)
+      open_path(path, options)
     else
       {:error, Image.Error.wrap(:enoent, operation: :open, path: path)}
     end
@@ -900,16 +900,32 @@ defmodule Image do
 
   defp do_open([path, _open_options], options) do
     if File.exists?(path) do
-      vix_open(path, options)
+      open_path(path, options)
     else
       {:error, Image.Error.wrap(:enoent, operation: :open, path: path)}
     end
   end
 
-  defp vix_open(path, options) do
+  defp open_path(path, options) do
     case Vimage.new_from_file(path, options) do
       {:ok, image} -> {:ok, image}
       {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :open, path: path)}
+    end
+  end
+
+  # Rename the `:operation` from `:from_binary` to `:open` when reaching
+  # it through `open` instead of directly through `from_binary`
+  defp open_binary(image, options) do
+    case from_binary(image, options) do
+      {:ok, image} -> {:ok, image}
+      {:error, error} -> {:error, Image.Error.wrap(error, operation: :open)}
+    end
+  end
+
+  defp open_enum(image_stream, options) do
+    case Vix.Vips.Image.new_from_enum(image_stream, options) do
+      {:ok, image} -> {:ok, image}
+      {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :open)}
     end
   end
 
@@ -1056,7 +1072,7 @@ defmodule Image do
   def open!(path_or_stream_or_binary, options \\ []) do
     case open(path_or_stream_or_binary, options) do
       {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, {reason, path_or_stream_or_binary}
+      {:error, %Image.Error{} = error} -> raise error
     end
   end
 
@@ -1227,7 +1243,11 @@ defmodule Image do
   def from_binary(binary, options \\ []) when is_binary(binary) do
     with {:ok, options} <- Options.Open.validate_options(options) do
       options = Keyword.delete(options, :access)
-      Vimage.new_from_buffer(binary, options)
+
+      case Vimage.new_from_buffer(binary, options) do
+        {:ok, image} -> {:ok, image}
+        {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :from_binary)}
+      end
     end
   end
 
@@ -1660,8 +1680,8 @@ defmodule Image do
               {:ok, conn} ->
                 {:cont, conn}
 
-              {:error, :closed} = error ->
-                {:halt, error}
+              {:error, :closed} ->
+                {:halt, {:error, Image.Error.wrap(:closed, operation: :write)}}
             end
           end)
 
@@ -1688,7 +1708,11 @@ defmodule Image do
     with {:ok, options} <- Options.Write.validate_options(image, options, :require_suffix) do
       {suffix, options} = Keyword.pop(options, :suffix)
       options = suffix <> loader_options(options)
-      Vimage.write_to_buffer(image, options)
+
+      case Vimage.write_to_buffer(image, options) do
+        {:ok, binary} -> {:ok, binary}
+        {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :write)}
+      end
     end
   end
 
@@ -1715,20 +1739,20 @@ defmodule Image do
     |> Stream.run()
   rescue
     e in Vix.Vips.Image.Error ->
-      {:error, e.message}
+      {:error, Image.Error.wrap(e.message, operation: :write)}
   end
 
   defp write_path([image_path], image, options) do
     case Vimage.write_to_file(image, image_path, options) do
       :ok -> {:ok, image}
-      other -> other
+      {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :write, path: image_path)}
     end
   end
 
   defp write_path([image_path, _open_options], image, options) do
     case Vimage.write_to_file(image, image_path, options) do
       :ok -> {:ok, image}
-      other -> other
+      {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :write, path: image_path)}
     end
   end
 
@@ -1902,7 +1926,7 @@ defmodule Image do
   def write!(%Vimage{} = image, image_path, options \\ []) do
     case write(image, image_path, options) do
       {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, {reason, image_path}
+      {:error, %Image.Error{} = error} -> raise error
     end
   end
 

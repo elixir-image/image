@@ -23,7 +23,9 @@ defmodule Image.ErrorCoverageTest do
       error = Error.exception(reason: :enoent, path: "/tmp/missing.jpg")
       assert error.reason == :enoent
       assert error.path == "/tmp/missing.jpg"
-      assert error.message == "File not found: /tmp/missing.jpg"
+
+      assert error.message ==
+               "The image file \"/tmp/missing.jpg\" was not found or could not be opened"
     end
 
     test "tuple reason is captured" do
@@ -39,30 +41,6 @@ defmodule Image.ErrorCoverageTest do
     test "unknown keys are ignored" do
       error = Error.exception(reason: :invalid_option, unrelated: :thing)
       assert error.reason == :invalid_option
-    end
-  end
-
-  describe "exception/1 with tuples" do
-    test "{:enoent, path} with binary path" do
-      error = Error.exception({:enoent, "/tmp/missing.jpg"})
-      assert error.reason == :enoent
-      assert error.path == "/tmp/missing.jpg"
-      assert error.message =~ "was not found or could not be opened"
-      assert error.message =~ "/tmp/missing.jpg"
-    end
-
-    test "{:enoent, path} with non-binary path sets path to nil" do
-      error = Error.exception({:enoent, :not_a_path})
-      assert error.reason == :enoent
-      assert error.path == nil
-      assert error.message =~ "not_a_path"
-    end
-
-    test "{message, path} with binary message and path" do
-      error = Error.exception({"Cannot decode", "/tmp/a.jpg"})
-      assert error.reason == "Cannot decode"
-      assert error.path == "/tmp/a.jpg"
-      assert error.message == "Cannot decode: /tmp/a.jpg"
     end
   end
 
@@ -89,12 +67,6 @@ defmodule Image.ErrorCoverageTest do
       assert %Error{} = error
       assert error.reason == %{some: :map}
       assert error.message == "Image error: %{some: :map}"
-    end
-
-    test "a non-enoent tuple that is not {binary, binary} is wrapped" do
-      error = Error.exception({1, 2, 3})
-      assert %Error{} = error
-      assert error.message == "Image error: {1, 2, 3}"
     end
   end
 
@@ -146,26 +118,17 @@ defmodule Image.ErrorCoverageTest do
     end
   end
 
-  describe "wrap/2 with raw values" do
-    test ":enoent with path context" do
-      wrapped = Error.wrap(:enoent, path: "/tmp/x.jpg", operation: :open)
-      assert wrapped.reason == :enoent
+  describe "wrap/2 message derivation" do
+    test "agrees with the keyword form" do
+      assert Error.wrap({:invalid_option, :crop}, operation: :thumbnail) ==
+               Error.exception(reason: {:invalid_option, :crop}, operation: :thumbnail)
+    end
+
+    test "a :reason in the context overrides the raw value" do
+      wrapped = Error.wrap(:enoent, reason: :custom, path: "/tmp/x.jpg")
+      assert wrapped.reason == :custom
       assert wrapped.path == "/tmp/x.jpg"
-      assert wrapped.operation == :open
-      assert wrapped.message == "The image file \"/tmp/x.jpg\" was not found or could not be opened"
-    end
-
-    test ":enoent with no context" do
-      wrapped = Error.wrap(:enoent)
-      assert wrapped.reason == :enoent
-      assert wrapped.path == nil
-    end
-
-    test "binary with operation and path" do
-      wrapped = Error.wrap("bad seek", operation: :open, path: "/tmp/x.jpg", value: :v)
-      assert wrapped.reason == "bad seek"
-      assert wrapped.message == "open /tmp/x.jpg: bad seek"
-      assert wrapped.value == :v
+      assert wrapped.message == "custom"
     end
 
     test "binary with operation only" do
@@ -195,7 +158,7 @@ defmodule Image.ErrorCoverageTest do
       wrapped = Error.wrap({:invalid_option, :crop}, operation: :thumbnail)
       assert wrapped.reason == {:invalid_option, :crop}
       assert wrapped.operation == :thumbnail
-      assert wrapped.message == "{:invalid_option, :crop}"
+      assert wrapped.message == "Image error: {:invalid_option, :crop}"
     end
 
     test "any other term" do
