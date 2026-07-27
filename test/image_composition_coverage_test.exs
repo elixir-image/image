@@ -152,7 +152,20 @@ defmodule Image.CompositionCoverageTest do
 
   describe "Image.chroma_color/1, chroma_mask/2 and chroma_key/2" do
     test "chroma_color/1 samples the top left of the image" do
-      assert Image.chroma_color(scene()) == [0, 128, 0]
+      assert Image.chroma_color(scene()) == {:ok, [0, 128, 0]}
+    end
+
+    test "chroma_color!/1 returns the color unwrapped" do
+      assert Image.chroma_color!(scene()) == [0, 128, 0]
+    end
+
+    test "chroma_color!/1 raises when chroma_color/1 errors" do
+      # JPEG with a readable header, but truncated so opening it
+      # succeeds, but reading pixels fails
+      whole = File.read!(image_path("Hong-Kong-2015-07-1998.jpg"))
+      image = Image.from_binary!(binary_part(whole, 0, div(byte_size(whole), 2)))
+
+      assert_raise Image.Error, fn -> Image.chroma_color!(image) end
     end
 
     test "chroma_mask/2 with the default :auto color masks the background" do

@@ -2214,14 +2214,16 @@ defmodule Image do
 
   ### Returns
 
-  * An RGB color as a three-element list of
-    integers.
+  * `{:ok, color}` where `color` is an RGB color as a
+    three-element list of integers, or
+
+  * `{:error, reason}`
 
   ### Example
 
       iex> image = Image.new!(50, 50, color: [0, 255, 0])
       iex> Image.chroma_color(image)
-      [0, 255, 0]
+      {:ok, [0, 255, 0]}
 
   """
 
@@ -2231,11 +2233,45 @@ defmodule Image do
 
   @doc subject: "Operation", since: "0.13.0"
 
-  @spec chroma_color(image :: Vimage.t()) :: Pixel.t()
+  @spec chroma_color(image :: Vimage.t()) :: {:ok, [number()]} | {:error, error()}
   def chroma_color(%Vimage{} = image) do
     with {:ok, flattened} <- flatten(image),
          {:ok, cropped} <- Image.crop(flattened, 0, 0, 10, 10) do
       average(cropped)
+    end
+  end
+
+  @doc """
+  Automatically determine the chroma key
+  color of an image or raise an exception.
+
+  The top left 10x10 pixels of the flattened
+  image are averaged to produce a color sample
+  that can then be used by `Image.chroma_mask/2`,
+  `Image.chroma_key/2` and `Image.trim/2`.
+
+  ### Argument
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * An RGB color as a three-element list of integers.
+
+  ### Example
+
+      iex> image = Image.new!(50, 50, color: [0, 255, 0])
+      iex> Image.chroma_color!(image)
+      [0, 255, 0]
+
+  """
+  @doc subject: "Operation", since: "0.73.0"
+
+  @spec chroma_color!(image :: Vimage.t()) :: [number()] | no_return()
+  def chroma_color!(%Vimage{} = image) do
+    case chroma_color(image) do
+      {:ok, color} -> color
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
@@ -2330,15 +2366,17 @@ defmodule Image do
     # The mask is computed from the color bands only so any alpha
     # band is split off and the color is truncated to match.
     {color_image, _alpha} = split_alpha(image)
-    color = maybe_calculate_color(image, color)
-    color = color |> List.wrap() |> Enum.take(bands(color_image))
 
-    color_image
-    |> Math.subtract!(color)
-    |> Math.pow!(2)
-    |> Operation.bandmean!()
-    |> Math.greater_than!(3 * threshold ** 2)
-    |> wrap(:ok)
+    with {:ok, color} <- maybe_calculate_color(image, color) do
+      color = color |> List.wrap() |> Enum.take(bands(color_image))
+
+      color_image
+      |> Math.subtract!(color)
+      |> Math.pow!(2)
+      |> Operation.bandmean!()
+      |> Math.greater_than!(3 * threshold ** 2)
+      |> wrap(:ok)
+    end
   end
 
   def chroma_mask(%Vimage{} = image, %{greater_than: greater_than, less_than: less_than}) do
@@ -2353,7 +2391,7 @@ defmodule Image do
   end
 
   defp maybe_calculate_color(image, :auto), do: chroma_color(image)
-  defp maybe_calculate_color(_image, color), do: color
+  defp maybe_calculate_color(_image, color), do: {:ok, color}
 
   @doc """
   Return a chroma-based masked image or raises
@@ -3053,28 +3091,34 @@ defmodule Image do
 
   ### Returns
 
-  * A list of average pixel values which can
-    be interpreted as the average color of the
-    image.
+  * `{:ok, averages}` where `averages` is a list of average
+    pixel values which can be interpreted as the average
+    color of the image, or
+
+  * `{:error, reason}`
 
   ### Example
 
         iex> Image.open!("./test/support/images/Hong-Kong-2015-07-1998.jpg")
         ...> |> Image.average()
-        [66, 86, 106]
+        {:ok, [66, 86, 106]}
 
   """
   @doc since: "0.27.0"
 
-  @spec average(Vimage.t()) :: Pixel.t() | {:error, error()}
+  @spec average(Vimage.t()) :: {:ok, [number()]} | {:error, error()}
   def average(%Vimage{} = image) do
     {color, alpha} = split_alpha(image)
 
-    with {:ok, averages} <- band_averages(color, alpha) do
-      case band_format(color) do
-        {:f, _bits} -> averages
-        _integer_format -> Enum.map(averages, &round/1)
-      end
+    case band_averages(color, alpha) do
+      {:ok, averages} ->
+        case band_format(color) do
+          {:f, _bits} -> {:ok, averages}
+          _integer_format -> {:ok, Enum.map(averages, &round/1)}
+        end
+
+      {:error, raw} ->
+        {:error, Image.Error.wrap(raw, operation: :average)}
     end
   end
 
@@ -3141,11 +3185,11 @@ defmodule Image do
   """
   @doc since: "0.27.0"
 
-  @spec average!(Vimage.t()) :: Pixel.t() | no_return()
+  @spec average!(Vimage.t()) :: [number()] | no_return()
   def average!(%Vimage{} = image) do
     case average(image) do
+      {:ok, color} -> color
       {:error, reason} -> raise Image.Error, reason
-      color -> color
     end
   end
 
@@ -6131,8 +6175,8 @@ defmodule Image do
   end
 
   defp find_trim_to_color(image, options) do
-    with {:ok, options} <- Options.Trim.validate_options(image, options) do
-      background = maybe_calculate_color(image, options.background)
+    with {:ok, options} <- Options.Trim.validate_options(image, options),
+         {:ok, background} <- maybe_calculate_color(image, options.background) do
       threshold = options.threshold
 
       case Operation.find_trim(image, background: background, threshold: threshold) do
