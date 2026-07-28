@@ -58,7 +58,7 @@ defmodule Image.BackgroundColor do
     case Image.average(image) do
       # The average has no alpha band, so an opaque one is appended when the
       # image has alpha.
-      color when is_list(color) ->
+      {:ok, color} ->
         put_alpha_band(image, color, :opaque)
 
       {:error, reason} ->
