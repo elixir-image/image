@@ -6756,10 +6756,11 @@ defmodule Image do
 
         has_alpha?(image) ->
           # `vips_rotate` doesn't expose the `:premultiplied` option, so alpha
-          # images run the equivalent affine through the premultiplied pipeline.
+          # images run the equivalent affine, which premultiplies explicitly
+          # when the `:background` requires it.
           # Rotate has no `:extend_mode`, so set the fringe extend explicitly.
           options = Keyword.put(options, :extend, :VIPS_EXTEND_BACKGROUND)
-          premultiplied_affine(image, rotation_matrix(angle), options)
+          affine_transform(image, rotation_matrix(angle), options)
 
         true ->
           Operation.rotate(image, angle, options)
@@ -12159,7 +12160,7 @@ defmodule Image do
   def affine(%Vimage{} = image, [a, b, c, d], options)
       when is_number(a) and is_number(b) and is_number(c) and is_number(d) do
     with {:ok, options} <- Options.Affine.validate_options(image, options) do
-      premultiplied_affine(image, [a, b, c, d], options)
+      affine_transform(image, [a, b, c, d], options)
     end
   end
 
@@ -12173,8 +12174,15 @@ defmodule Image do
      }}
   end
 
-  defp premultiplied_affine(%Vimage{} = image, matrix, options) do
-    premultiplied_transform(image, options, &Operation.affine(&1, matrix, &2))
+  defp affine_transform(%Vimage{} = image, matrix, options) do
+    # libvips normally handles alpha premultiplication for affine. With an
+    # explicit non-opaque background, however, it injects the background
+    # without premultiplying its color bands, so handle that path explicitly.
+    if premultiply_explicitly?(image, options) do
+      premultiplied_transform(image, options, &Operation.affine(&1, matrix, &2))
+    else
+      Operation.affine(image, matrix, options)
+    end
   end
 
   # `libvips` resamples alpha images in premultiplied-alpha space and
