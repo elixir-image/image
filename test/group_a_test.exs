@@ -199,7 +199,8 @@ defmodule Image.GroupA.Test do
     end
 
     test ":chroma_subsampling rejected on PNG", %{hk: image} do
-      assert {:error, _} = Image.write(image, :memory, suffix: ".png", chroma_subsampling: :on)
+      assert {:error, %Image.Error{}} =
+               Image.write(image, :memory, suffix: ".png", chroma_subsampling: :on)
     end
 
     test ":lossy true/false on WebP toggles lossless wire format", %{hk: image} do
@@ -212,7 +213,7 @@ defmodule Image.GroupA.Test do
     end
 
     test ":lossy rejected on JPEG", %{hk: image} do
-      assert {:error, _} = Image.write(image, :memory, suffix: ".jpg", lossy: true)
+      assert {:error, %Image.Error{}} = Image.write(image, :memory, suffix: ".jpg", lossy: true)
     end
   end
 end

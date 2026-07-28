@@ -128,7 +128,7 @@ defmodule ImageGapCoverageTest do
       {:ok, image} = Operation.black(4, 4, bands: 5)
       path = Path.join(dir, "gap_write_stream_error.jpg")
       stream = File.stream!(path, 2048)
-      assert {:error, _reason} = Image.write(image, stream, suffix: ".jpg")
+      assert {:error, %Image.Error{}} = Image.write(image, stream, suffix: ".jpg")
     end
   end
 

@@ -50,8 +50,6 @@ defmodule Image.Error do
 
       raise Image.Error, "free form message"
 
-      raise Image.Error, {:enoent, "/tmp/foo.jpg"}
-
   Or convert a raw `{:error, raw}` tuple coming from libvips with
   `Image.Error.wrap/2`:
 
@@ -88,24 +86,6 @@ defmodule Image.Error do
     fields = Keyword.take(opts, [:message, :reason, :operation, :path, :value])
     struct = struct!(__MODULE__, fields)
     %{struct | message: Keyword.get(opts, :message) || format_message(struct)}
-  end
-
-  # ---- raise Image.Error, {:enoent, path} ---------------------------------
-
-  def exception({:enoent, path}) do
-    %__MODULE__{
-      reason: :enoent,
-      path: to_path(path),
-      message: "The image file #{inspect(path)} was not found or could not be opened"
-    }
-  end
-
-  def exception({message, path}) when is_binary(message) and is_binary(path) do
-    %__MODULE__{
-      reason: message,
-      path: path,
-      message: "#{message}: #{path}"
-    }
   end
 
   # ---- raise Image.Error, "free form" -------------------------------------
@@ -190,77 +170,32 @@ defmodule Image.Error do
     end)
   end
 
-  def wrap(:enoent, context) do
-    path = Keyword.get(context, :path)
-
-    %__MODULE__{
-      reason: :enoent,
-      path: path,
-      operation: Keyword.get(context, :operation),
-      value: Keyword.get(context, :value),
-      message: "The image file #{inspect(path)} was not found or could not be opened"
-    }
-  end
-
-  def wrap(raw, context) when is_binary(raw) do
-    operation = Keyword.get(context, :operation)
-    path = Keyword.get(context, :path)
-    value = Keyword.get(context, :value)
-
-    %__MODULE__{
-      reason: Keyword.get(context, :reason, raw),
-      operation: operation,
-      path: path,
-      value: value,
-      message: format_libvips(operation, path, raw)
-    }
-  end
-
-  def wrap(raw, context) when is_atom(raw) do
-    operation = Keyword.get(context, :operation)
-    path = Keyword.get(context, :path)
-    value = Keyword.get(context, :value)
-
-    %__MODULE__{
-      reason: Keyword.get(context, :reason, raw),
-      operation: operation,
-      path: path,
-      value: value,
-      message: Atom.to_string(raw)
-    }
-  end
-
-  def wrap({reason_atom, _} = raw, context) when is_atom(reason_atom) do
-    %__MODULE__{
+  # Build with exception/1 so that one function derives the message
+  # for every construction route.
+  def wrap(raw, context) do
+    exception(
       reason: Keyword.get(context, :reason, raw),
       operation: Keyword.get(context, :operation),
       path: Keyword.get(context, :path),
-      value: Keyword.get(context, :value),
-      message: inspect(raw)
-    }
-  end
-
-  def wrap(other, context) do
-    %__MODULE__{
-      reason: Keyword.get(context, :reason, other),
-      operation: Keyword.get(context, :operation),
-      path: Keyword.get(context, :path),
-      value: Keyword.get(context, :value),
-      message: "Image error: #{inspect(other)}"
-    }
+      value: Keyword.get(context, :value)
+    )
   end
 
   ## Internals --------------------------------------------------------------
 
-  defp to_path(path) when is_binary(path), do: path
-  defp to_path(_), do: nil
-
   defp format_message(%__MODULE__{} = error) do
     cond do
-      is_binary(error.reason) -> format_libvips(error.operation, error.path, error.reason)
-      error.reason == :enoent and error.path -> "File not found: #{error.path}"
-      is_atom(error.reason) and not is_nil(error.reason) -> Atom.to_string(error.reason)
-      true -> "Image error: #{inspect(error.reason)}"
+      is_binary(error.reason) ->
+        format_libvips(error.operation, error.path, error.reason)
+
+      error.reason == :enoent and error.path ->
+        "The image file #{inspect(error.path)} was not found or could not be opened"
+
+      is_atom(error.reason) and not is_nil(error.reason) ->
+        Atom.to_string(error.reason)
+
+      true ->
+        "Image error: #{inspect(error.reason)}"
     end
   end
 

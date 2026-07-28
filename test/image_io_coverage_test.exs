@@ -42,6 +42,13 @@ defmodule Image.IoCoverageTest do
       assert {:ok, %Vimage{} = image} = Image.open(svg)
       assert Image.width(image) == 10
     end
+
+    test "an image data failure reports the entry point that was called" do
+      blob = :binary.copy(<<0xFF, 0xD8, 0xFF>>, 40)
+
+      assert {:error, %Image.Error{operation: :open, path: nil}} = Image.open(blob)
+      assert {:error, %Image.Error{operation: :from_binary, path: nil}} = Image.from_binary(blob)
+    end
   end
 
   describe "Image.open/2 from paths and streams" do
@@ -53,14 +60,19 @@ defmodule Image.IoCoverageTest do
       assert {:error, %Image.Error{reason: :enoent}} = Image.open("no/such/image.jpg")
     end
 
-    test "open!/2 raises for a non-existent path" do
-      assert_raise Image.Error, fn ->
-        Image.open!("no/such/image.jpg")
-      end
+    test "open!/2 raises the same reason open/2 returns" do
+      path = "/no/such/file.jpg"
+      {:error, returned} = Image.open(path)
+
+      raised = assert_raise Image.Error, fn -> Image.open!(path) end
+
+      assert raised.reason == returned.reason
+      assert raised.reason == :enoent
+      assert raised.path == path
     end
 
     test "returns an error for invalid open options" do
-      assert {:error, _reason} = Image.open(image_path("Kip_small.jpg"), access: :bogus)
+      assert {:error, %Image.Error{}} = Image.open(image_path("Kip_small.jpg"), access: :bogus)
     end
 
     test "opens a File.Stream created with a byte size" do
@@ -87,6 +99,13 @@ defmodule Image.IoCoverageTest do
 
       assert {:ok, %Vimage{}} = Image.open(stream)
     end
+
+    test "returns a structured error when a stream is not an image" do
+      assert {:error, %Image.Error{} = error} = Image.open(File.stream!("mix.exs", 2048))
+      assert error.operation == :open
+      assert error.path == nil
+      assert is_binary(error.reason)
+    end
   end
 
   describe "Image.from_binary/2 and from_svg/2" do
@@ -96,7 +115,7 @@ defmodule Image.IoCoverageTest do
     end
 
     test "from_binary/2 returns an error for garbage data" do
-      assert {:error, _reason} = Image.from_binary(<<1, 2, 3, 4>>)
+      assert {:error, %Image.Error{}} = Image.from_binary(<<1, 2, 3, 4>>)
     end
 
     test "from_binary!/2 returns an image" do
@@ -117,7 +136,7 @@ defmodule Image.IoCoverageTest do
     end
 
     test "from_svg/2 returns an error for invalid SVG" do
-      assert {:error, _reason} = Image.from_svg("this is not svg")
+      assert {:error, %Image.Error{}} = Image.from_svg("this is not svg")
     end
 
     test "from_svg!/2 raises for invalid SVG" do
@@ -222,7 +241,7 @@ defmodule Image.IoCoverageTest do
 
     test "returns an error for invalid write options", %{image: image, dir: dir} do
       path = Temp.path!(suffix: ".jpg", basedir: dir)
-      assert {:error, _reason} = Image.write(image, path, quality: "high")
+      assert {:error, %Image.Error{}} = Image.write(image, path, quality: "high")
     end
 
     test "write!/3 returns the image", %{image: image, dir: dir} do
@@ -237,6 +256,13 @@ defmodule Image.IoCoverageTest do
         Image.write!(image, path)
       end
     end
+
+    test "returns a structured error when the path cannot be written", %{image: image} do
+      assert {:error, %Image.Error{} = error} = Image.write(image, "/no/such/dir/out.png")
+      assert error.operation == :write
+      assert error.path == "/no/such/dir/out.png"
+      assert is_binary(error.reason)
+    end
   end
 
   describe "Image.write/3 to memory and streams" do
@@ -245,9 +271,30 @@ defmodule Image.IoCoverageTest do
       {:ok, %{image: image}}
     end
 
+    test "write!/3 raises the struct write/3 returned" do
+      image = Image.new!(2, 2)
+      {:error, returned} = Image.write(image, :memory, suffix: ".bogus")
+
+      raised = assert_raise Image.Error, fn -> Image.write!(image, :memory, suffix: ".bogus") end
+
+      assert raised.reason == returned.reason
+      assert raised.path == nil
+    end
+
     test "writes a jpeg to memory", %{image: image} do
       assert {:ok, <<0xFF, 0xD8, 0xFF, _::binary>>} =
                Image.write(image, :memory, suffix: ".jpg", quality: 50)
+    end
+
+    # In order to test errors from libvips, we create a JPEG with 70_000
+    # pixels, which exceeds the JPEG dimension limit, so the encoder fails
+    # after option validation has passed
+    test "returns a structured error when the encoder fails" do
+      wide = Image.new!(70_000, 2, color: :red)
+
+      assert {:error, %Image.Error{} = error} = Image.write(wide, :memory, suffix: ".jpg")
+      assert error.operation == :write
+      assert error.path == nil
     end
 
     test "writes a png to memory", %{image: image} do
