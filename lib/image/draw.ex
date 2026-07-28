@@ -13,7 +13,6 @@ defmodule Image.Draw do
   alias Vix.Vips.Image, as: Vimage
   alias Vix.Vips.MutableImage
   alias Image.Vips.MutableOperation
-  alias Image.Pixel
   alias Image.Options
 
   import Image, only: :macros
@@ -104,24 +103,19 @@ defmodule Image.Draw do
   def point(%Vimage{} = image, left, top, options)
       when is_integer(left) and is_integer(top) and left >= 0 and top >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(image, :point, options) do
-      color = maybe_add_alpha(image, options.color)
-
       Vimage.mutate(image, fn mut_img ->
-        MutableOperation.draw_rect(mut_img, color, left, top, 1, 1)
+        MutableOperation.draw_rect(mut_img, options.color, left, top, 1, 1)
       end)
     end
   end
 
   def point(%MutableImage{} = image, left, top, options) when is_point(left, top) do
     with {:ok, options} <- Options.Draw.validate_options(image, :point, options) do
-      color = maybe_add_alpha(image, options.color)
-
-      case MutableOperation.draw_rect(image, color, left, top, 1, 1) do
+      case MutableOperation.draw_rect(image, options.color, left, top, 1, 1) do
         :ok -> {:ok, image}
         other -> other
       end
     end
-    |> maybe_wrap()
   end
 
   @doc """
@@ -272,10 +266,8 @@ defmodule Image.Draw do
       when is_image(image_type) and is_box(left, top, width, height) do
     with {:ok, options} <- Options.Draw.validate_options(image, :rect, options) do
       %{stroke_width: stroke_width, fill: fill} = options
-      color = maybe_add_alpha(image, options.color)
-      rect(image, left, top, width, height, color, stroke_width, fill)
+      rect(image, left, top, width, height, options.color, stroke_width, fill)
     end
-    |> maybe_wrap()
   end
 
   # If the stroke width is 1 then use the underlying Vips call.
@@ -477,10 +469,8 @@ defmodule Image.Draw do
       when is_image(image_type) and is_circle(cx, cy, radius) do
     with {:ok, options} <- Options.Draw.validate_options(image, :circle, options) do
       %{stroke_width: stroke_width, fill: fill, color: color} = options
-      color = maybe_add_alpha(image, color)
       circle(image, cx, cy, radius, color, stroke_width, fill)
     end
-    |> maybe_wrap()
   end
 
   # When drawing a circle with a stroke_wiodth of > 1 then
@@ -661,21 +651,22 @@ defmodule Image.Draw do
              is_integer(x2) and is_integer(y2) and x2 >= 0 and y2 >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(image, :line, options) do
       Image.mutate(image, fn mut_img ->
-        line(mut_img, x1, y1, x2, y2, options)
+        do_line(mut_img, x1, y1, x2, y2, options)
       end)
     end
-    |> maybe_wrap()
   end
 
   def line(%MutableImage{} = image, x1, y1, x2, y2, options)
       when is_integer(x1) and is_integer(y1) and x1 >= 0 and y1 >= 0 and
              is_integer(x2) and is_integer(y2) and x2 >= 0 and y2 >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(image, :line, options) do
-      color = maybe_add_alpha(image, options.color)
-      :ok = MutableOperation.draw_line(image, color, x1, y1, x2, y2)
-      {:ok, image}
+      do_line(image, x1, y1, x2, y2, options)
     end
-    |> maybe_wrap()
+  end
+
+  defp do_line(%MutableImage{} = image, x1, y1, x2, y2, options) do
+    :ok = MutableOperation.draw_line(image, options.color, x1, y1, x2, y2)
+    {:ok, image}
   end
 
   @doc """
@@ -823,19 +814,21 @@ defmodule Image.Draw do
     # Image.mutate/2.
     with {:ok, options} <- Options.Draw.validate_options(image, :image, options) do
       Image.mutate(image, fn mut_img ->
-        image(mut_img, sub_image, top, left, options)
+        do_image(mut_img, sub_image, top, left, options)
       end)
     end
-    |> maybe_wrap()
   end
 
   def image(%MutableImage{} = image, %Vimage{} = sub_image, top, left, options)
       when is_integer(top) and is_integer(left) and top >= 0 and left >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(image, :image, options) do
-      :ok = MutableOperation.draw_image(image, sub_image, top, left, Map.to_list(options))
-      {:ok, image}
+      do_image(image, sub_image, top, left, options)
     end
-    |> maybe_wrap()
+  end
+
+  defp do_image(%MutableImage{} = image, %Vimage{} = sub_image, top, left, options) do
+    :ok = MutableOperation.draw_image(image, sub_image, top, left, Map.to_list(options))
+    {:ok, image}
   end
 
   @doc """
@@ -989,10 +982,8 @@ defmodule Image.Draw do
   def flood(%image_type{} = image, left, top, options \\ [])
       when is_image(image_type) and is_point(left, top) do
     with {:ok, options} <- Options.Draw.validate_options(image, :flood, options) do
-      color = maybe_add_alpha(image, options.color)
-      flood(image, left, top, color, options.equal)
+      flood(image, left, top, options.color, options.equal)
     end
-    |> maybe_wrap()
   end
 
   defp flood(%Vimage{} = image, left, top, color, equal) do
@@ -1119,23 +1110,18 @@ defmodule Image.Draw do
   def mask(%Vimage{} = image, %Vimage{} = mask, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(image, :mask, options) do
-      color = maybe_add_alpha(image, options.color)
-
       Image.mutate(image, fn mut_img ->
-        MutableOperation.draw_mask(mut_img, color, mask, x, y)
+        MutableOperation.draw_mask(mut_img, options.color, mask, x, y)
       end)
     end
-    |> maybe_wrap()
   end
 
   def mask(%MutableImage{} = image, %Vimage{} = mask, x, y, options)
       when is_integer(x) and is_integer(y) and x >= 0 and y >= 0 do
     with {:ok, options} <- Options.Draw.validate_options(image, :mask, options) do
-      color = maybe_add_alpha(image, options.color)
-      :ok = MutableOperation.draw_mask(image, color, mask, x, y)
+      :ok = MutableOperation.draw_mask(image, options.color, mask, x, y)
       {:ok, image}
     end
-    |> maybe_wrap()
   end
 
   @doc """
@@ -1174,7 +1160,6 @@ defmodule Image.Draw do
         MutableOperation.draw_smudge(mut_img, left, top, width, height)
       end)
     end
-    |> maybe_wrap()
   end
 
   def smudge(%MutableImage{} = image, left, top, width, height, options)
@@ -1184,59 +1169,5 @@ defmodule Image.Draw do
       :ok = MutableOperation.draw_smudge(image, left, top, width, height)
       {:ok, image}
     end
-    |> maybe_wrap()
-  end
-
-  ## Helpers
-
-  @spec maybe_add_alpha(Vimage.t() | MutableImage.t(), Pixel.t()) :: Pixel.t()
-
-  # Colors resolved by `Image.Pixel.to_pixel/2` already match the image's
-  # band count (including any alpha band), so this only adjusts colors that
-  # arrive unresolved (for example via map-shaped options) and are exactly
-  # one band short of, or one band over, the image's band count.
-  @doc false
-  def maybe_add_alpha(image, color) when is_list(color) do
-    bands = bands(image)
-    color_bands = length(color)
-
-    cond do
-      color_bands == bands - 1 && has_alpha?(image) ->
-        List.insert_at(color, -1, Pixel.max_opacity())
-
-      color_bands == bands + 1 && not has_alpha?(image) ->
-        List.delete_at(color, -1)
-
-      true ->
-        color
-    end
-  end
-
-  defp bands(%MutableImage{} = image) do
-    {:ok, {_width, _height, bands}} = MutableImage.shape(image)
-    bands
-  end
-
-  defp bands(%Vimage{} = image) do
-    Vimage.bands(image)
-  end
-
-  defp has_alpha?(%MutableImage{} = image) do
-    case MutableImage.has_alpha?(image) do
-      {:ok, true} -> true
-      {:ok, false} -> false
-    end
-  end
-
-  defp has_alpha?(%Vimage{} = image) do
-    Vimage.has_alpha?(image)
-  end
-
-  defp maybe_wrap({:ok, result}) do
-    {:ok, result}
-  end
-
-  defp maybe_wrap(error) do
-    error
   end
 end

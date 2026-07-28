@@ -16,7 +16,7 @@ defmodule Image.Options.Blur do
   Options list for Image.blur/2
 
   """
-  @type blur_options :: [blur_option()] | map()
+  @type blur_options :: [blur_option()]
 
   @default_blur_sigma 5
 
@@ -41,10 +41,6 @@ defmodule Image.Options.Blur do
       options ->
         {:ok, Map.new(options)}
     end
-  end
-
-  def validate_options(%{} = options) do
-    {:ok, options}
   end
 
   defp validate_option({:sigma, sigma}, options) when is_number(sigma) and sigma > 0 do

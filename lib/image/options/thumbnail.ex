@@ -52,7 +52,7 @@ defmodule Image.Options.Thumbnail do
   See `t:Image.Options.Resize.resize_options/0`.
 
   """
-  def validate_options(options) do
+  def validate_options(options) when is_list(options) do
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
       {:error, value} ->
         {:error, value}

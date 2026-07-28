@@ -187,6 +187,17 @@ defmodule Image.DrawCoverage.Test do
       assert Image.get_pixel!(drawn, 15, 15) == [255, 255, 255]
     end
 
+    test "the :mode option selects how the sub-image combines" do
+      base = Image.new!(20, 20, color: [10, 20, 30])
+      sub_image = Image.new!(5, 5, color: [10, 10, 10])
+
+      assert {:ok, set} = Draw.image(base, sub_image, 2, 2, mode: :set)
+      assert {:ok, add} = Draw.image(base, sub_image, 2, 2, mode: :add)
+
+      assert Image.get_pixel!(set, 3, 3) == [10, 10, 10]
+      assert Image.get_pixel!(add, 3, 3) == [20, 30, 40]
+    end
+
     test "returns an error for an invalid combine mode" do
       sub_image = Image.new!(5, 5, color: :green)
 
@@ -316,11 +327,6 @@ defmodule Image.DrawCoverage.Test do
   end
 
   describe "Image.Options.Draw" do
-    test "validate_options/3 passes a map through unchanged" do
-      options = %{color: [1, 2, 3]}
-      assert Image.Options.Draw.validate_options(white_image(), :point, options) == {:ok, options}
-    end
-
     test "default options for each draw operation" do
       assert Image.Options.Draw.default_options(:point) == [color: :black]
       assert Image.Options.Draw.default_options(:line) == [color: :black]

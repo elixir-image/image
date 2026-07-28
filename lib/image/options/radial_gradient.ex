@@ -15,9 +15,9 @@ defmodule Image.Options.RadialGradient do
           | {:radius, number()}
 
   @typedoc """
-  Options list or map for `Image.radial_gradient/3`.
+  Options list for `Image.radial_gradient/3`.
   """
-  @type radial_gradient_options :: [radial_gradient_option()] | map()
+  @type radial_gradient_options :: [radial_gradient_option()]
 
   @default_start_color [0.0, 0.0, 0.0, 0.0]
   @default_finish_color [0.0, 0.0, 0.0, 255.0]

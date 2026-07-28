@@ -19,7 +19,7 @@ defmodule Image.Options.ToneCurve do
           | {:mid_points, tone_adjustment()}
           | {:highlights, tone_adjustment()}
 
-  @type tone_curve_options :: [tone_curve_option()] | map()
+  @type tone_curve_options :: [tone_curve_option()]
 
   @typedoc """
   Range for setting the black point and

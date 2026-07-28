@@ -23,7 +23,6 @@ defmodule Image.Options.Meme do
             | {:justify, boolean()}
             | {:transform, text_transform()}
           ]
-          | map()
 
   @doc """
   Validate the options for `Image.meme/3`.
@@ -53,10 +52,6 @@ defmodule Image.Options.Meme do
 
         {:ok, Map.new(options)}
     end
-  end
-
-  def validate_options(%{} = options) do
-    {:ok, options}
   end
 
   defp validate_option({:font, font}, options) when is_binary(font) do

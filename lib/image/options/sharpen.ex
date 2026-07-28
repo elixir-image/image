@@ -20,7 +20,7 @@ defmodule Image.Options.Sharpen do
   Options applicable to Image.sharpen/2
 
   """
-  @type sharpen_options :: [sharpen_option()] | map()
+  @type sharpen_options :: [sharpen_option()]
 
   @doc """
   Validate the options for `Image.sharpen/2`.
@@ -38,10 +38,6 @@ defmodule Image.Options.Sharpen do
       options ->
         {:ok, Map.new(options)}
     end
-  end
-
-  def validate_options(%{} = options) do
-    {:ok, options}
   end
 
   defp validate_option({:sigma, sigma}, options)

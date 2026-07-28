@@ -153,11 +153,6 @@ defmodule Image.CoverageWave3.Options.Test do
   describe "Image.Options.Embed" do
     alias Image.Options.Embed
 
-    test "map options pass through validate_options" do
-      assert {:ok, %{extend_mode: :VIPS_EXTEND_BLACK}} =
-               Embed.validate_options(rgb(), 40, 40, %{extend_mode: :VIPS_EXTEND_BLACK})
-    end
-
     test "the default is a background extend with no injected background" do
       # With no :background passed, libvips fills with its native all-zeros
       # pixel: transparent on this alpha image.
@@ -273,18 +268,9 @@ defmodule Image.CoverageWave3.Options.Test do
     test "default_vibrance_threshold/0" do
       assert Image.Options.Vibrance.default_vibrance_threshold() == 60
     end
-
-    test "map options pass through validate_options" do
-      assert {:ok, %{threshold: 50}} = Image.Options.Vibrance.validate_options(%{threshold: 50})
-    end
   end
 
-  describe "Image.Options.Trim and ChromaKey passthrough clauses" do
-    test "trim map options pass through" do
-      assert {:ok, %{background: [0, 0, 0]}} =
-               Image.Options.Trim.validate_options(rgb(), %{background: [0, 0, 0], threshold: 10})
-    end
-
+  describe "Image.Options.Trim and ChromaKey" do
     test "trim with :alpha background option" do
       assert {:ok, _} = Image.Options.Trim.validate_options(rgba(), background: :alpha)
     end
@@ -293,11 +279,6 @@ defmodule Image.CoverageWave3.Options.Test do
       canvas = Image.new!(30, 30, color: [255, 0, 0, 255])
       assert {:ok, options} = Image.Options.Trim.validate_options(canvas, background: :red)
       assert options.background == [255, 0, 0]
-    end
-
-    test "chroma_key map options pass through" do
-      assert {:ok, %{color: [0, 255, 0]}} =
-               Image.Options.ChromaKey.validate_options(rgb(), %{color: [0, 255, 0], threshold: 20})
     end
 
     test "chroma_key :sigma and :min_amplitude options" do

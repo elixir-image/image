@@ -18,7 +18,6 @@ defmodule Image.Options.ChromaKey do
             | {:sigma, float()}
             | {:min_amplitude, float()}
           ]
-          | map()
 
   @doc """
   Validate the options for `Image.chroma_key/2`.
@@ -34,10 +33,6 @@ defmodule Image.Options.ChromaKey do
       options ->
         select_strategy(Map.new(options))
     end
-  end
-
-  def validate_options(_image, %{} = options) do
-    {:ok, options}
   end
 
   defp validate_option({:color, :auto}, _image, options) do
@@ -105,9 +100,6 @@ defmodule Image.Options.ChromaKey do
   end
 
   defp default_options do
-    [
-      color: :auto,
-      threshold: 20
-    ]
+    [color: :auto, threshold: 20]
   end
 end

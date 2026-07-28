@@ -18,7 +18,7 @@ defmodule Image.Options.Compare do
           | {:sigma, float()}
           | {:min_amplitude, float()}
 
-  @type compare_options :: [compare_option()] | map()
+  @type compare_options :: [compare_option()]
 
   # Ussed by Image.compare/3 and defines the
   # default metric to be used.

@@ -12,9 +12,9 @@ defmodule Image.Options.Histogram do
           | {:height, pos_integer() | :auto}
 
   @typedoc """
-  Options list or map for `Image.Histogram.as_svg/2`.
+  Options list for `Image.Histogram.as_svg/2`.
   """
-  @type histogram_options :: [histogram_option()] | map()
+  @type histogram_options :: [histogram_option()]
 
   @doc """
   Validate the options for `Image.Histogram.as_svg/2`.

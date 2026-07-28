@@ -24,6 +24,16 @@ defmodule Image.Options.BlurEffects.Test do
       assert {:ok, %Vimage{}} = Image.blur(image, min_amplitude: 0.1)
     end
 
+    test ":min_amplitude changes the mask size and so the result" do
+      image = Image.new!(60, 60, color: :white) |> Image.Draw.rect!(20, 20, 20, 20, color: :black)
+
+      {:ok, coarse} = Image.blur(image, sigma: 3.0, min_amplitude: 0.9)
+      {:ok, accurate} = Image.blur(image, sigma: 3.0, min_amplitude: 0.001)
+
+      assert Image.get_pixel!(coarse, 30, 18) == [255, 255, 255]
+      assert Image.get_pixel!(accurate, 30, 18) == [176, 176, 176]
+    end
+
     test "with a zero :sigma", %{image: image} do
       assert {:error, %Image.Error{message: message}} = Image.blur(image, sigma: 0)
       assert message =~ "Invalid option"
@@ -43,10 +53,6 @@ defmodule Image.Options.BlurEffects.Test do
 
     test "with an unknown option", %{image: image} do
       assert {:error, %Image.Error{}} = Image.blur(image, radius: 3)
-    end
-
-    test "validate_options/1 passes a map through unchanged" do
-      assert {:ok, %{sigma: 1}} = Image.Options.Blur.validate_options(%{sigma: 1})
     end
   end
 

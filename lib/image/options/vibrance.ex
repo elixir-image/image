@@ -14,7 +14,7 @@ defmodule Image.Options.Vibrance do
   Options list for Image.vibrance/3
 
   """
-  @type vibrance_options :: [vibrance_option()] | map()
+  @type vibrance_options :: [vibrance_option()]
 
   @default_vibrance_threshold 60
 
@@ -39,10 +39,6 @@ defmodule Image.Options.Vibrance do
       options ->
         {:ok, Map.new(options)}
     end
-  end
-
-  def validate_options(%{} = options) do
-    {:ok, options}
   end
 
   defp validate_option({:threshold, threshold}, options)

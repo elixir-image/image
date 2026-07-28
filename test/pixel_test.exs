@@ -88,6 +88,18 @@ defmodule Image.PixelTest do
     test "opaque yields full alpha", %{image: image} do
       assert {:ok, [0, 0, 0, 255]} = Pixel.to_pixel(image, :opaque)
     end
+
+    test "a list one band short gains the missing alpha", %{image: image} do
+      assert {:ok, [255, 0, 0, 255]} = Pixel.to_pixel(image, [255, 0, 0])
+    end
+  end
+
+  describe "to_pixel/3 fits a list color to the image band count" do
+    test "a list one band over a non-alpha image loses the extra value" do
+      {:ok, image} = Image.new(2, 2, color: [0, 0, 0])
+
+      assert {:ok, [255, 0, 0]} = Pixel.to_pixel(image, [255, 0, 0, 255])
+    end
   end
 
   describe "to_pixel/3 against a Lab image" do

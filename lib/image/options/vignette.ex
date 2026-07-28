@@ -18,7 +18,7 @@ defmodule Image.Options.Vignette do
   Options list for `Image.vignette/2`.
 
   """
-  @type vignette_options :: [vignette_option()] | map()
+  @type vignette_options :: [vignette_option()]
 
   @default_strength 0.5
 
@@ -38,10 +38,6 @@ defmodule Image.Options.Vignette do
       {:error, value} -> {:error, value}
       options -> {:ok, normalize(Map.new(options))}
     end
-  end
-
-  def validate_options(%{} = options) do
-    {:ok, normalize(options)}
   end
 
   defp validate_option({:strength, strength}, options) when is_number(strength) do

@@ -2373,18 +2373,16 @@ defmodule Image do
 
   @doc subject: "Mask", since: "0.13.0"
 
-  @spec chroma_mask(image :: Vimage.t(), options :: ChromaKey.chroma_key_options() | map()) ::
+  @spec chroma_mask(image :: Vimage.t(), options :: ChromaKey.chroma_key_options()) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def chroma_mask(image, options \\ [])
-
-  def chroma_mask(%Vimage{} = image, options) when is_list(options) do
+  def chroma_mask(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.ChromaKey.validate_options(image, options) do
-      chroma_mask(image, options)
+      do_chroma_mask(image, options)
     end
   end
 
-  def chroma_mask(%Vimage{} = image, %{color: color, threshold: threshold}) do
+  defp do_chroma_mask(%Vimage{} = image, %{color: color, threshold: threshold}) do
     alias Image.Math
 
     # The mask is computed from the color bands only so any alpha
@@ -2392,7 +2390,7 @@ defmodule Image do
     {color_image, _alpha} = split_alpha(image)
 
     with {:ok, color} <- maybe_calculate_color(image, color) do
-      color = color |> List.wrap() |> Enum.take(bands(color_image))
+      color = Enum.take(color, bands(color_image))
 
       color_image
       |> Math.subtract!(color)
@@ -2403,7 +2401,7 @@ defmodule Image do
     end
   end
 
-  def chroma_mask(%Vimage{} = image, %{greater_than: greater_than, less_than: less_than}) do
+  defp do_chroma_mask(%Vimage{} = image, %{greater_than: greater_than, less_than: less_than}) do
     alias Image.Math
 
     with {:ok, greater} <- Math.greater_than(image, greater_than),
@@ -2553,7 +2551,7 @@ defmodule Image do
 
   def chroma_key(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.ChromaKey.validate_options(image, options),
-         {:ok, mask} <- chroma_mask(image, options),
+         {:ok, mask} <- do_chroma_mask(image, options),
          {:ok, flattened} <- flatten(image) do
       Operation.bandjoin([flattened, mask])
     end
@@ -2674,8 +2672,13 @@ defmodule Image do
 
   def blur(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Blur.validate_options(options) do
-      Operation.gaussblur(image, options.sigma, "min-ampl": options.min_amplitude)
+      do_blur(image, options)
     end
+  end
+
+  # Takes validated options so `feather/2` can blur without validating twice.
+  defp do_blur(%Vimage{} = image, options) do
+    Operation.gaussblur(image, options.sigma, "min-ampl": options.min_amplitude)
   end
 
   @doc """
@@ -3002,37 +3005,40 @@ defmodule Image do
 
   def feather(%Vimage{} = image, options \\ []) do
     with {:ok, options} <- Options.Blur.validate_options(options) do
-      margin = round(options.sigma * 2)
+      do_feather(image, options)
+    end
+  end
 
-      cond do
-        has_alpha?(image) ->
-          {image, alpha} = split_alpha(image)
+  defp do_feather(%Vimage{} = image, options) do
+    margin = round(options.sigma * 2)
 
-          with {:ok, feathered} <- feather(alpha, options) do
-            Operation.bandjoin([image, feathered])
-          end
+    cond do
+      has_alpha?(image) ->
+        {image, alpha} = split_alpha(image)
 
-        bands(image) == 1 and (width(image) <= 2 * margin or height(image) <= 2 * margin) ->
-          message =
-            "Image of size {#{width(image)}, #{height(image)}} is too small to feather " <>
-              "with sigma #{inspect(options.sigma)}. The image must be larger than " <>
-              "{#{2 * margin}, #{2 * margin}}"
+        with {:ok, feathered} <- do_feather(alpha, options) do
+          Operation.bandjoin([image, feathered])
+        end
 
-          {:error, %Image.Error{message: message, reason: message}}
+      bands(image) == 1 and (width(image) <= 2 * margin or height(image) <= 2 * margin) ->
+        message =
+          "Image of size {#{width(image)}, #{height(image)}} is too small to feather " <>
+            "with sigma #{inspect(options.sigma)}. The image must be larger than " <>
+            "{#{2 * margin}, #{2 * margin}}"
 
-        bands(image) == 1 ->
-          crop!(image, margin, margin, width(image) - 2 * margin, height(image) - 2 * margin)
-          |> Operation.embed!(margin, margin, width(image), height(image))
-          |> blur!(options)
-          |> wrap(:ok)
+        {:error, %Image.Error{message: message, reason: message}}
 
-        true ->
-          {:error,
-           %Image.Error{
-             message: "Image has no alpha band and is not a single band image",
-             reason: "Image has no alpha band and is not a single band image"
-           }}
-      end
+      bands(image) == 1 ->
+        crop!(image, margin, margin, width(image) - 2 * margin, height(image) - 2 * margin)
+        |> Operation.embed!(margin, margin, width(image), height(image))
+        |> do_blur(options)
+
+      true ->
+        {:error,
+         %Image.Error{
+           message: "Image has no alpha band and is not a single band image",
+           reason: "Image has no alpha band and is not a single band image"
+         }}
     end
   end
 

@@ -13,7 +13,6 @@ defmodule Image.Options.Draw do
             {:fill, boolean()}
             | {:color, Pixel.t()}
           ]
-          | map()
 
   @type rect ::
           [
@@ -21,40 +20,34 @@ defmodule Image.Options.Draw do
             | {:color, Pixel.t()}
             | {:stroke_width, pos_integer()}
           ]
-          | map()
 
   @type point ::
           [
             {:color, Pixel.t()}
           ]
-          | map()
 
   @type flood ::
           [
             {:equal, boolean()}
             | {:color, Pixel.t()}
           ]
-          | map()
 
   @type mask ::
           [
             {:color, Pixel.t()}
           ]
-          | map()
 
   @type line ::
           [
             {:color, Pixel.t()}
           ]
-          | map()
 
-  @type smudge :: [] | map()
+  @type smudge :: []
 
   @type image ::
           [
             {:mode, CombineMode.t()}
           ]
-          | map()
 
   @doc false
   def default_options(:circle) do
@@ -119,11 +112,7 @@ defmodule Image.Options.Draw do
   Validate the options for `Image.Draw`.
 
   """
-  def validate_options(_image, _type, %{} = options) do
-    {:ok, options}
-  end
-
-  def validate_options(image, type, options) do
+  def validate_options(image, type, options) when is_list(options) do
     options = Keyword.merge(default_options(type), options)
 
     options =
