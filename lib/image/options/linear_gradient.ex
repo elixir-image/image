@@ -14,9 +14,9 @@ defmodule Image.Options.LinearGradient do
           | {:angle, number()}
 
   @typedoc """
-  Options list or map for `Image.linear_gradient/2`.
+  Options list for `Image.linear_gradient/2`.
   """
-  @type linear_gradient_options :: [linear_gradient_option()] | map()
+  @type linear_gradient_options :: [linear_gradient_option()]
 
   @default_start_color [0.0, 0.0, 0.0, 0.0]
   @default_finish_color [0.0, 0.0, 0.0, 255.0]

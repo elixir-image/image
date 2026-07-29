@@ -30,10 +30,6 @@ defmodule Image.Options.Trim do
     end
   end
 
-  def validate_options(_image, %{} = options) do
-    {:ok, options}
-  end
-
   defp validate_option({:background, :auto}, _image, options) do
     {:cont, options}
   end

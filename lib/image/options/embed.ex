@@ -67,10 +67,6 @@ defmodule Image.Options.Embed do
     end
   end
 
-  def validate_options(_image, _width, _height, %{} = options) do
-    {:ok, options}
-  end
-
   # `:average`, colors, and the `{color, alpha: a}` form are all resolved by
   # `Image.BackgroundColor.resolve/2`. The resolved pixel keeps its alpha band
   # (unlike `write`/`flatten`) so a transparent border can be requested.

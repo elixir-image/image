@@ -12,9 +12,9 @@ defmodule Image.Options.LocalContrast do
           | {:max_slope, non_neg_integer()}
 
   @typedoc """
-  Options list or map for `Image.local_contrast/2`.
+  Options list for `Image.local_contrast/2`.
   """
-  @type local_contrast_options :: [local_contrast_option()] | map()
+  @type local_contrast_options :: [local_contrast_option()]
 
   # Default window size in pixels over which the
   # local contrast is evaluated

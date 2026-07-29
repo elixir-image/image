@@ -16,7 +16,7 @@ defmodule Image.Options.Blurhash do
   Options list for Image.Blurhash.encode/2
 
   """
-  @type blurhash_options :: [blurhash_option()] | map()
+  @type blurhash_options :: [blurhash_option()]
 
   @default_x_components 4
   @default_y_components 3

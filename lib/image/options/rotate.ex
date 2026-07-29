@@ -58,7 +58,7 @@ defmodule Image.Options.Rotate do
   """
   @spec validate_options(Vix.Vips.Image.t(), Keyword.t()) ::
           {:ok, Keyword.t()} | {:error, Image.error()}
-  def validate_options(image, options) do
+  def validate_options(image, options) when is_list(options) do
     # A nil `:background` means "unset", i.e. it falls back to the default.
     options = Enum.reject(options, &match?({:background, nil}, &1))
     options = Keyword.merge(default_options(), options)

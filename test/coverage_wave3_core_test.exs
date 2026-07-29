@@ -5,7 +5,6 @@ defmodule Image.CoverageWave3.Core.Test do
   alias Image.Draw
 
   defp rgb, do: Image.new!(20, 20, color: [10, 20, 30])
-  defp rgba, do: Image.new!(20, 20, color: [10, 20, 30, 255])
 
   # An image with mismatched band count that makes most binary
   # libvips operations fail, exercising the bang raise branches.
@@ -64,7 +63,7 @@ defmodule Image.CoverageWave3.Core.Test do
     end
   end
 
-  describe "Image.Draw default arguments and band-adjusted map colors" do
+  describe "Image.Draw default arguments" do
     test "point, rect, circle, line, flood, mask with default options" do
       mask = Image.new!(5, 5, color: 255) |> Image.to_colorspace!(:bw)
 
@@ -81,26 +80,6 @@ defmodule Image.CoverageWave3.Core.Test do
       assert %Vix.Vips.Image{} = Draw.circle!(rgb(), 10, 10, 4)
       assert %Vix.Vips.Image{} = Draw.line!(rgb(), 0, 0, 9, 9)
       assert %Vix.Vips.Image{} = Draw.flood!(rgb(), 0, 0)
-    end
-
-    test "a map color one band short of an alpha image gains an alpha value" do
-      # Map options bypass validation, so maybe_add_alpha adjusts the
-      # band count.
-      assert {:ok, drawn} = Draw.point(rgba(), 1, 1, %{color: [255, 0, 0]})
-      assert Image.get_pixel!(drawn, 1, 1) == [255, 0, 0, 255]
-    end
-
-    test "a map color one band over a non-alpha image loses the extra value" do
-      assert {:ok, drawn} = Draw.point(rgb(), 1, 1, %{color: [255, 0, 0, 255]})
-      assert Image.get_pixel!(drawn, 1, 1) == [255, 0, 0]
-    end
-
-    test "a map color on a mutable image is band-adjusted" do
-      assert {:ok, _} =
-               Image.mutate(rgba(), fn mutable ->
-                 {:ok, _} = Draw.point(mutable, 1, 1, %{color: [255, 0, 0]})
-                 :ok
-               end)
     end
   end
 

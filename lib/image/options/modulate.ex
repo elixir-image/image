@@ -20,7 +20,7 @@ defmodule Image.Options.Modulate do
   Options applicable to Image.modulate/2
 
   """
-  @type modulate_options :: [modulate_option()] | map()
+  @type modulate_options :: [modulate_option()]
 
   @doc """
   Validate the options for `Image.modulate/2`.
@@ -38,10 +38,6 @@ defmodule Image.Options.Modulate do
       options ->
         {:ok, Map.new(options)}
     end
-  end
-
-  def validate_options(%{} = options) do
-    {:ok, options}
   end
 
   defp validate_option({:brightness, brightness}, options) when is_multiplier(brightness) do
