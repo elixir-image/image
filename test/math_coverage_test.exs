@@ -489,5 +489,62 @@ defmodule Image.MathCoverage.Test do
       quotient = Math.divide!(100, grey_image(100))
       assert Image.get_pixel!(quotient, 0, 0) == [1.0, 1.0, 1.0]
     end
+
+    test "divide!/2 with image and list" do
+      quotient = Math.divide!(grey_image(100), [2, 4, 5])
+      assert Image.get_pixel!(quotient, 0, 0) == [50.0, 25.0, 20.0]
+    end
+
+    test "pow!/2 with two images" do
+      power = Math.pow!(grey_image(2), grey_image(3))
+      assert Image.get_pixel!(power, 0, 0) == [8.0, 8.0, 8.0]
+    end
+  end
+
+  describe "comparison bang functions with images" do
+    test "less_than!/2 with an image and a list" do
+      comparison = Math.less_than!(grey_image(100), [50, 100, 150])
+      assert Image.get_pixel!(comparison, 0, 0) == [0, 0, 255]
+    end
+
+    test "less_than_or_equal!/2 with two images" do
+      comparison = Math.less_than_or_equal!(grey_image(100), grey_image(30))
+      assert Image.get_pixel!(comparison, 0, 0) == [0, 0, 0]
+    end
+
+    test "less_than_or_equal!/2 with an image and a list" do
+      comparison = Math.less_than_or_equal!(grey_image(100), [50, 100, 150])
+      assert Image.get_pixel!(comparison, 0, 0) == [0, 255, 255]
+    end
+
+    test "greater_than!/2 with two images" do
+      comparison = Math.greater_than!(grey_image(100), grey_image(30))
+      assert Image.get_pixel!(comparison, 0, 0) == [255, 255, 255]
+    end
+
+    test "greater_than!/2 with an image and a list" do
+      comparison = Math.greater_than!(grey_image(100), [50, 100, 150])
+      assert Image.get_pixel!(comparison, 0, 0) == [255, 0, 0]
+    end
+
+    test "greater_than_or_equal!/2 with two images" do
+      comparison = Math.greater_than_or_equal!(grey_image(100), grey_image(30))
+      assert Image.get_pixel!(comparison, 0, 0) == [255, 255, 255]
+    end
+
+    test "greater_than_or_equal!/2 with an image and a list" do
+      comparison = Math.greater_than_or_equal!(grey_image(100), [50, 100, 150])
+      assert Image.get_pixel!(comparison, 0, 0) == [255, 255, 0]
+    end
+
+    test "equal!/2 with two images" do
+      comparison = Math.equal!(grey_image(100), grey_image(100))
+      assert Image.get_pixel!(comparison, 0, 0) == [255, 255, 255]
+    end
+
+    test "not_equal!/2 with two images" do
+      comparison = Math.not_equal!(grey_image(100), grey_image(30))
+      assert Image.get_pixel!(comparison, 0, 0) == [255, 255, 255]
+    end
   end
 end

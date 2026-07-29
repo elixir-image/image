@@ -49,13 +49,9 @@ defmodule Image.TestSupport do
     MapSet.member?(@supported_heif_compressions, compression)
   end
 
-  @dialyzer {:nowarn_function, {:assert_files_equal, 2}}
   def assert_files_equal(expected, result) do
     assert File.read!(expected) == File.read!(result)
   end
-
-  @dialyzer {:nowarn_function, {:assert_images_equal, 2}}
-  @dialyzer {:nowarn_function, {:assert_images_equal, 3}}
 
   def assert_images_equal(calculated_image, validate, similarity \\ @acceptable_similarity)
 
@@ -88,7 +84,6 @@ defmodule Image.TestSupport do
   # From: https://github.com/libvips/libvips/discussions/2232
   # Calculate a single number for the match between two images, calculate the sum
   # of squares of differences,
-  @dialyzer {:nowarn_function, {:compare_images, 3}}
   def compare_images(calculated_image, validate_image, acceptable_similarity) do
     alias Image.Math
     validate_path = Image.filename(validate_image)

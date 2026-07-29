@@ -121,8 +121,6 @@ defmodule Image.BandFormat do
     end
   end
 
-  @dialyzer {:nowarn_function, {:nx_format, 1}}
-
   @doc """
   Returns the `Image` format type for an
   `Nx` format type.

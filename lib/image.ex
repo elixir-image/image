@@ -7080,7 +7080,6 @@ defmodule Image do
       {20, 10, 3}
 
   """
-  @dialyzer {:nowarn_function, {:ripple, 1}}
   @doc subject: "Operation"
 
   @spec ripple(Vimage.t(), Options.Mapim.background_options()) ::
@@ -7143,7 +7142,6 @@ defmodule Image do
       {20, 10, 3}
 
   """
-  @dialyzer {:nowarn_function, {:ripple!, 1}}
   @doc subject: "Operation"
 
   @spec ripple!(Vimage.t(), Options.Mapim.background_options()) :: Vimage.t() | no_return()
@@ -9570,7 +9568,6 @@ defmodule Image do
       {10, 10, 3}
 
   """
-  @dialyzer {:nowarn_function, {:to_polar_coordinates, 1}}
   @doc subject: "Operation"
 
   @spec to_polar_coordinates(Vimage.t(), Options.Mapim.background_options()) ::
@@ -9621,7 +9618,6 @@ defmodule Image do
       {10, 10, 3}
 
   """
-  @dialyzer {:nowarn_function, {:to_polar_coordinates!, 1}}
   @doc subject: "Operation"
 
   @spec to_polar_coordinates!(Vimage.t(), Options.Mapim.background_options()) ::
@@ -9670,7 +9666,6 @@ defmodule Image do
       {10, 10, 3}
 
   """
-  @dialyzer {:nowarn_function, {:to_rectangular_coordinates, 1}}
   @doc subject: "Operation"
 
   @spec to_rectangular_coordinates(Vimage.t(), Options.Mapim.interpolate_options()) ::
@@ -9723,7 +9718,6 @@ defmodule Image do
       {10, 10, 3}
 
   """
-  @dialyzer {:nowarn_function, {:to_rectangular_coordinates!, 1}}
   @doc subject: "Operation"
 
   @spec to_rectangular_coordinates!(Vimage.t(), Options.Mapim.interpolate_options()) ::
@@ -11419,12 +11413,10 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error()}
   def drop_shadow(%Vimage{} = image, options \\ []) do
     color = Keyword.get(options, :color, :black)
-    opacity = Keyword.get(options, :opacity, 0.5)
-    sigma = Keyword.get(options, :sigma, 5.0)
     dx = Keyword.get(options, :dx, 0)
-    dy = Keyword.get(options, :dy, round(sigma * 2))
 
-    with :ok <- validate_drop_shadow_args(opacity, sigma) do
+    with {:ok, {opacity, sigma}} <- validate_drop_shadow_args(options) do
+      dy = Keyword.get(options, :dy, round(sigma * 2))
       image = if has_alpha?(image), do: image, else: add_alpha!(image, :opaque)
       width = width(image)
       height = height(image)
@@ -11472,24 +11464,29 @@ defmodule Image do
     end
   end
 
-  defp validate_drop_shadow_args(opacity, sigma) do
+  defp validate_drop_shadow_args(options) do
+    opacity = Keyword.get(options, :opacity, 0.5)
+    sigma = Keyword.get(options, :sigma, 5.0)
+
     cond do
       not (is_number(opacity) and opacity >= 0.0 and opacity <= 1.0) ->
         {:error,
          %Image.Error{
-           message: ":opacity must be a number in [0.0, 1.0]",
-           reason: ":opacity must be a number in [0.0, 1.0]"
+           reason: :invalid_option,
+           value: {:opacity, opacity},
+           message: ":opacity must be a number in [0.0, 1.0]. Found #{inspect(opacity)}"
          }}
 
       not (is_number(sigma) and sigma > 0.0) ->
         {:error,
          %Image.Error{
-           message: ":sigma must be a positive number",
-           reason: ":sigma must be a positive number"
+           reason: :invalid_option,
+           value: {:sigma, sigma},
+           message: ":sigma must be a positive number. Found #{inspect(sigma)}"
          }}
 
       true ->
-        :ok
+        {:ok, {opacity, sigma}}
     end
   end
 
@@ -12551,11 +12548,6 @@ defmodule Image do
 
     """
 
-    # For some reason dialyzer thinks Vix.Vips.Image.write_to_tensor/1
-    # can only return `{:error, _}`.
-    @dialyzer {:nowarn_function, {:to_nx, 1}}
-    @dialyzer {:nowarn_function, {:to_nx, 2}}
-
     @default_shape :hwb
 
     @doc subject: "Matrix", since: "0.5.0"
@@ -12641,11 +12633,6 @@ defmodule Image do
 
     """
     @doc subject: "Matrix", since: "0.27.0"
-
-    # Because of the dialyzer issue for to_nx/2, dialyzer then
-    # thinks this function has no local return.
-    @dialyzer {:nowarn_function, {:to_nx!, 1}}
-    @dialyzer {:nowarn_function, {:to_nx!, 2}}
 
     @spec to_nx!(image :: Vimage.t(), options :: Keyword.t()) ::
             Nx.Tensor.t() | no_return()
@@ -13354,7 +13341,6 @@ defmodule Image do
           true
 
       """
-      @dialyzer {:nowarn_function, {:to_evision, 2}}
 
       @doc subject: "Matrix", since: "0.9.0"
 
@@ -13401,7 +13387,6 @@ defmodule Image do
           {300, 328, 3}
 
       """
-      @dialyzer {:nowarn_function, {:from_evision, 1}}
 
       @doc subject: "Matrix", since: "0.9.0"
 
@@ -13643,8 +13628,6 @@ defmodule Image do
     end
   end
 
-  @dialyzer {:nowarn_function, {:compare_by_metric, 4}}
-
   # Mean square error
   # mse = ((a - b) ** 2).avg()
 
@@ -13711,8 +13694,6 @@ defmodule Image do
       Operation.cast(composed, Vix.Vips.Image.format(image))
     end
   end
-
-  @dialyzer {:nowarn_function, {:format_size, 1}}
 
   defp format_size(image) do
     case Image.BandFormat.nx_format(image) do
@@ -13969,7 +13950,6 @@ defmodule Image do
       upright.
 
     """
-    @dialyzer {:nowarn_function, {:skew_angle, 1}}
     @doc subject: "Operation"
 
     @spec skew_angle(Vimage.t()) :: float()

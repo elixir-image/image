@@ -951,8 +951,6 @@ defmodule Image.Text do
   # For transparent text we need to render the text in
   # white which is then converted later to a transparency
   # mask
-  @dialyzer {:nowarn_function, {:render_text, 2}}
-
   defp render_text(text, %{text_fill_color: :transparent} = options) do
     render_text(text, Map.put(options, :text_fill_color, :white))
   end

@@ -35,7 +35,6 @@ defmodule Image.MixProject do
         ]
       ],
       dialyzer: [
-        ignore_warnings: ".dialyzer_ignore_warnings",
         plt_add_apps: ~w(mix nx plug evision ex_unit)a
       ],
       compilers: Mix.compilers()

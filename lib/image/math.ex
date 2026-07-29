@@ -423,7 +423,7 @@ defmodule Image.Math do
     {:ok, Kernel.**(a, b)}
   end
 
-  @spec cos(Vimage.t()) :: {:ok, Vimage.t()}
+  @spec cos(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def cos(%Vimage{} = image) do
     Operation.math(image, :VIPS_OPERATION_MATH_COS)
   end
@@ -433,7 +433,7 @@ defmodule Image.Math do
     {:ok, :math.cos(other)}
   end
 
-  @spec sin(Vimage.t()) :: {:ok, Vimage.t()}
+  @spec sin(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def sin(%Vimage{} = image) do
     Operation.math(image, :VIPS_OPERATION_MATH_SIN)
   end
@@ -671,7 +671,7 @@ defmodule Image.Math do
     Kernel.>(a, b)
   end
 
-  @spec greater_than_or_equal!(Vimage.t(), Image.pixel()) :: Vimage.t() | no_return()
+  @spec greater_than_or_equal!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
   def greater_than_or_equal!(%Vimage{} = image, value) do
     case greater_than_or_equal(image, value) do
       {:ok, image} -> image
@@ -684,7 +684,7 @@ defmodule Image.Math do
     Kernel.>=(a, b)
   end
 
-  @spec equal!(Vimage.t(), Image.pixel()) :: Vimage.t() | no_return()
+  @spec equal!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
   def equal!(%Vimage{} = image, value) do
     case equal(image, value) do
       {:ok, image} -> image
@@ -697,7 +697,7 @@ defmodule Image.Math do
     Kernel.==(a, b)
   end
 
-  @spec not_equal!(Vimage.t(), Image.pixel()) :: Vimage.t() | no_return()
+  @spec not_equal!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
   def not_equal!(%Vimage{} = image, value) do
     case not_equal(image, value) do
       {:ok, image} -> image
@@ -710,7 +710,7 @@ defmodule Image.Math do
     Kernel.!=(a, b)
   end
 
-  @spec add!(Vimage.t(), Image.pixel() | number()) :: Vimage.t() | no_return()
+  @spec add!(Vimage.t(), Vimage.t() | Image.pixel() | number()) :: Vimage.t() | no_return()
   def add!(%Vimage{} = image, value) do
     case add(image, value) do
       {:ok, image} -> image
@@ -731,7 +731,7 @@ defmodule Image.Math do
     Kernel.+(a, b)
   end
 
-  @spec subtract!(Vimage.t(), Image.pixel()) :: Vimage.t() | no_return()
+  @spec subtract!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
   def subtract!(%Vimage{} = image, value) do
     case subtract(image, value) do
       {:ok, image} -> image
@@ -752,7 +752,7 @@ defmodule Image.Math do
     Kernel.-(a, b)
   end
 
-  @spec multiply!(Vimage.t(), Image.pixel() | number()) :: Vimage.t() | no_return()
+  @spec multiply!(Vimage.t(), Vimage.t() | Image.pixel() | number()) :: Vimage.t() | no_return()
   def multiply!(%Vimage{} = image, value) do
     case multiply(image, value) do
       {:ok, image} -> image
@@ -773,7 +773,7 @@ defmodule Image.Math do
     Kernel.*(a, b)
   end
 
-  @spec divide!(Vimage.t(), Image.pixel()) :: Vimage.t() | no_return()
+  @spec divide!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
   def divide!(%Vimage{} = image, value) do
     case divide(image, value) do
       {:ok, image} -> image
@@ -826,7 +826,7 @@ defmodule Image.Math do
     end
   end
 
-  @spec pow!(Vimage.t(), number()) :: Vimage.t() | no_return()
+  @spec pow!(Vimage.t(), Vimage.t() | number()) :: Vimage.t() | no_return()
   def pow!(%Vimage{} = image, value) do
     case pow(image, value) do
       {:ok, image} -> image
@@ -839,8 +839,6 @@ defmodule Image.Math do
     Kernel.**(a, b)
   end
 
-  @dialyzer {:nowarn_function, {:cos!, 1}}
-
   @spec cos!(Vimage.t()) :: Vimage.t() | no_return()
   def cos!(%Vimage{} = image) do
     case cos(image) do
@@ -848,8 +846,6 @@ defmodule Image.Math do
       {:error, reason} -> raise Image.Error, reason
     end
   end
-
-  @dialyzer {:nowarn_function, {:sin!, 1}}
 
   @spec sin!(Vimage.t()) :: Vimage.t() | no_return()
   def sin!(%Vimage{} = image) do
@@ -1068,7 +1064,6 @@ defmodule Image.Math do
             max_coordinates :: [Image.point(), ...],
             maybe_overflow :: :maybe_overflow | nil
           }
-  @dialyzer {:nowarn_function, maxpos: 2}
   def maxpos(%Vimage{} = image, n \\ 10) when is_integer(n) do
     band_format = Image.band_format(image)
     {:ok, {max, opts}} = Operation.max(image, size: n)
@@ -1119,7 +1114,6 @@ defmodule Image.Math do
       {1.0, [{0, 0}], nil}
 
   """
-  @dialyzer {:nowarn_function, minpos: 2}
   @spec minpos(image :: Vimage.t(), n :: non_neg_integer()) ::
           {
             maximum :: number(),
