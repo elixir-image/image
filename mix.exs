@@ -137,7 +137,7 @@ defmodule Image.MixProject do
 
   defp package do
     [
-      maintainers: ["Kip Cole"],
+      maintainers: ["Kip Cole", "Håvard Lindset"],
       licenses: ["Apache-2.0"],
       links: links(),
       files: [
