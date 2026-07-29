@@ -43,7 +43,7 @@ defmodule Image.Options.Trim do
       {:ok, pixel} ->
         # libvips find_trim compares against the color bands only, so
         # any alpha band value is dropped from the resolved pixel.
-        {:cont, Keyword.put(options, :background, strip_alpha(pixel, image))}
+        {:cont, Keyword.put(options, :background, Pixel.strip_alpha(pixel, image))}
 
       _other ->
         {:halt, {:error, invalid_option(option)}}
@@ -57,14 +57,6 @@ defmodule Image.Options.Trim do
 
   defp validate_option(option, _image, _options) do
     {:halt, {:error, invalid_option(option)}}
-  end
-
-  defp strip_alpha(pixel, image) do
-    if Image.has_alpha?(image) and length(pixel) == Image.bands(image) do
-      Enum.take(pixel, length(pixel) - 1)
-    else
-      pixel
-    end
   end
 
   defp invalid_option(option) do

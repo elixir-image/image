@@ -314,7 +314,7 @@ defmodule Image.Options.Write do
   defp validate_option({:background, background}, options, image, _image_type) do
     case BackgroundColor.resolve(image, background) do
       {:ok, pixel} ->
-        {:cont, Keyword.put(options, :background, strip_alpha(pixel, image))}
+        {:cont, Keyword.put(options, :background, Pixel.strip_alpha(pixel, image))}
 
       # The resolve error is already an %Image.Error{} with a more
       # specific message than invalid_option/1 would produce.
@@ -440,14 +440,6 @@ defmodule Image.Options.Write do
 
   defp delete_all_type_options(options) do
     Enum.reduce(@suffix_values, options, &Keyword.delete(&2, &1))
-  end
-
-  defp strip_alpha(pixel, image) do
-    if Image.has_alpha?(image) do
-      Enum.take(pixel, length(pixel) - 1)
-    else
-      pixel
-    end
   end
 
   # Range 1..10
