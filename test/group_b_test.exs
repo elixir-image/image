@@ -124,13 +124,24 @@ defmodule Image.GroupB.Test do
     end
 
     test "rejects out-of-range :opacity", %{cat: image} do
-      assert {:error, %Image.Error{}} = Image.drop_shadow(image, opacity: 1.5)
-      assert {:error, %Image.Error{}} = Image.drop_shadow(image, opacity: -0.1)
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:opacity, 1.5}}} =
+               Image.drop_shadow(image, opacity: 1.5)
+
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:opacity, -0.1}}} =
+               Image.drop_shadow(image, opacity: -0.1)
     end
 
     test "rejects non-positive :sigma", %{cat: image} do
-      assert {:error, %Image.Error{}} = Image.drop_shadow(image, sigma: 0)
-      assert {:error, %Image.Error{}} = Image.drop_shadow(image, sigma: -1.0)
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:sigma, 0}}} =
+               Image.drop_shadow(image, sigma: 0)
+
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:sigma, -1.0}}} =
+               Image.drop_shadow(image, sigma: -1.0)
+    end
+
+    test "rejects non-numeric :sigma when :dy is derived from it", %{cat: image} do
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:sigma, "5.0"}}} =
+               Image.drop_shadow(image, sigma: "5.0")
     end
   end
 
