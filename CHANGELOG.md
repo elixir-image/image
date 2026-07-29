@@ -1,5 +1,51 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+* Adds `:background` and `:interpolate` options to the `mapim`-based transformations. `Image.ripple/2`, `Image.to_polar_coordinates/2` and `Image.distort/4` gain both, `Image.to_rectangular_coordinates/2`, `Image.warp_perspective/4`, `Image.straighten_perspective/3` and `Image.map/3` gain `:interpolate`, and `Image.distort/4` also gains `:extend_mode` (`:background` or `:copy`). `:interpolate` defaults to `:bilinear` except for `Image.distort/4`, which keeps its `:bicubic` default. ([#216](https://github.com/elixir-image/image/pull/216))
+
+* Adds `Image.chroma_color!/1` as a companion to `Image.chroma_color/1`. ([#219](https://github.com/elixir-image/image/pull/219))
+
+### Changed
+
+* **Breaking:** `Image.average/1` and `Image.chroma_color/1` now return `{:ok, [number()]} | {:error, Image.Error.t()}` instead of a bare list on success. The previous success type was documented as `Pixel.t()` but was always a list of numbers. ([#219](https://github.com/elixir-image/image/pull/219))
+
+* **Breaking:** `Image.warp_perspective/4` and `Image.straighten_perspective/3` now preserve image alpha instead of always flattening, so the band count and pixels of the result may change. An omitted `:background` defers to libvips' fill rather than defaulting to `:black`, matching the other background-taking functions. Images without alpha are unaffected, since libvips fills those with black. ([#216](https://github.com/elixir-image/image/pull/216))
+
+* **Breaking:** `Image.map/3` now fills exposed pixels of an alpha image with transparent black rather than opaque black, matching the `:background` default of the other `mapim` transformations. ([#216](https://github.com/elixir-image/image/pull/216))
+
+* **Breaking:** `Image.to_rectangular_coordinates/2` now clamps boundary samples to the source edge color instead of blending towards a zero fill. ([#216](https://github.com/elixir-image/image/pull/216))
+
+* **Breaking:** The `Image.Options.*` validators accept keyword lists only. Passing a pre-validated map now raises `FunctionClauseError`, and `map()` is removed from 22 option union types. This affects `Image.blur/2`, `Image.feather/2`, `Image.sharpen/2`, `Image.modulate/2`, `Image.vignette/2`, `Image.embed/4`, `Image.chroma_mask/2`, `Image.chroma_key/2`, `Image.trim/2`, `Image.find_trim/2`, `Image.vibrance/3`, `Image.rotate/3`, `Image.affine/3`, `Image.shear/4`, `Image.resize/3`, `Image.thumbnail/3`, the `Image.Draw` functions and all their `!` variants. Prevalidation saved about 1% in benchmarks, while silently accepting maps meant unmerged defaults and unnoticed misspelled keys. Hoist the color resolution instead if the validation cost matters in a tight loop. ([#220](https://github.com/elixir-image/image/pull/220))
+
+* **Breaking:** `Image.from_binary/2` returns `{:error, %Image.Error{}}` rather than `{:error, binary}`, and `Image.write/3` to a `Plug.Conn` returns `%Image.Error{reason: :closed}` rather than `{:error, :closed}`. Every error path in `Image.open/2` and `Image.write/3` now returns a structured `Image.Error` with `:operation` set. ([#218](https://github.com/elixir-image/image/pull/218))
+
+* **Breaking:** `Image.Error.exception(reason: :enoent, path: path)` now produces `Image.Error.wrap/2`'s message, and a `{atom, value}` reason built through `Image.Error.wrap/2` gains the `"Image error: "` prefix. ([#218](https://github.com/elixir-image/image/pull/218))
+
+* **Breaking:** `Image.drop_shadow/2` returns `{:error, %Image.Error{}}` for a non-numeric `:sigma` instead of raising `ArithmeticError`, and its `:opacity` and `:sigma` errors now carry `reason: :invalid_option` with `value` set to `{:opacity, value}` or `{:sigma, value}`. Validation still covers only `:opacity` and `:sigma`. `:dx`, `:dy` and unknown options remain unvalidated pending a move to an `Image.Options.DropShadow` module. ([#221](https://github.com/elixir-image/image/pull/221))
+
+* `Image.affine/3` and `Image.rotate/3` now premultiply alpha explicitly only when the background is non-opaque, since libvips handles the other cases itself. `Image.shear/4` and `Image.translate/4` inherit this. ([#217](https://github.com/elixir-image/image/pull/217))
+
+### Fixed
+
+* Fix `Image.warp_perspective/4`, `Image.straighten_perspective/3` and `Image.map/3` reproducing non-opaque backgrounds incorrectly. ([#216](https://github.com/elixir-image/image/pull/216))
+
+* Fix `Image.chroma_mask/2` and `Image.find_trim/2` using an error tuple as a pixel when an `:auto` color lookup failed. They now propagate the error. ([#219](https://github.com/elixir-image/image/pull/219))
+
+* Fix `Image.open!/2` putting the whole image into the error's `:path` and interpolating it into `:message`. ([#218](https://github.com/elixir-image/image/pull/218))
+
+* Fix the specs for `Image.Math.cos/1` and `Image.Math.sin/1`, which omitted `{:error, Image.error()}`, and for eight math operators, which omitted the `Vimage.t()` they already accepted. All `@dialyzer` opt-outs and the `.dialyzer_ignore_warnings` file are removed. ([#221](https://github.com/elixir-image/image/pull/221))
+
+### Removed
+
+* **Breaking:** Removes `Image.Options.WarpPerspective`, replaced by `Image.Options.Mapim`. ([#216](https://github.com/elixir-image/image/pull/216))
+
+* **Breaking:** Removes `Image.Options.Meme.validate_options/1` and `Image.Draw.maybe_add_alpha/2`. ([#220](https://github.com/elixir-image/image/pull/220))
+
+* **Breaking:** Removes the `Image.Error` tuple constructors. `raise Image.Error, {:enoent, path}` and `raise Image.Error, {message, path}` now fall through to the catch-all clause. ([#218](https://github.com/elixir-image/image/pull/218))
+
 ## Image 0.72.0
 
 This is the changelog for Image version 0.72.0 released on July 22nd, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
