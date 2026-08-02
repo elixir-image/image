@@ -2390,7 +2390,7 @@ defmodule Image do
     {color_image, _alpha} = split_alpha(image)
 
     with {:ok, color} <- maybe_calculate_color(image, color) do
-      color = Enum.take(color, bands(color_image))
+      color = Pixel.strip_alpha(color, image)
 
       color_image
       |> Math.subtract!(color)
@@ -6377,8 +6377,7 @@ defmodule Image do
         with {:ok, resolved} <- Image.BackgroundColor.resolve(image, background) do
           # Flatten strips alpha and replaces it with the background, so the
           # background must be the opaque color part only.
-          bands = Vix.Vips.Image.bands(image) - 1
-          Operation.flatten(image, background: Enum.take(resolved, bands))
+          Operation.flatten(image, background: Pixel.strip_alpha(resolved, image))
         end
     end
   end

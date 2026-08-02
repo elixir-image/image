@@ -8,6 +8,8 @@
 
 * Adds `Image.chroma_color!/1` as a companion to `Image.chroma_color/1`. ([#219](https://github.com/elixir-image/image/pull/219))
 
+* Adds `Image.Pixel.strip_alpha/2` which returns a resolved pixel without its alpha component. It consolidates the truncation that `Image.flatten/2`, `Image.chroma_mask/2`, `Image.Options.Trim` and `Image.Options.Write` each did separately before. ([#222](https://github.com/elixir-image/image/pull/222))
+
 ### Changed
 
 * **Breaking:** `Image.average/1` and `Image.chroma_color/1` now return `{:ok, [number()]} | {:error, Image.Error.t()}` instead of a bare list on success. The previous success type was documented as `Pixel.t()` but was always a list of numbers. ([#219](https://github.com/elixir-image/image/pull/219))

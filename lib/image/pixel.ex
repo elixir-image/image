@@ -288,6 +288,53 @@ defmodule Image.Pixel do
   end
 
   @doc """
+  Returns a resolved pixel without its alpha component, if it
+  has one.
+
+  ### Arguments
+
+  * `pixel` is a list of numbers in `image`'s band layout, such as
+    the output of `to_pixel/3`.
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `pixel` without its last element if `image` has an alpha band
+    and `pixel` spans all of `image`'s bands, or
+
+  * `pixel` unchanged. A pixel that does not span the image's
+    bands exactly has no identifiable alpha component, so it is
+    left alone.
+
+  ### Notes
+
+  * The band count is the only check, so a pixel resolved against
+    another image of the same band count is truncated just the same.
+
+  ### Examples
+
+      iex> {:ok, image} = Image.new(2, 2, color: [0, 0, 0, 255])
+      iex> {:ok, pixel} = Image.Pixel.to_pixel(image, :red)
+      iex> Image.Pixel.strip_alpha(pixel, image)
+      [255, 0, 0]
+
+      iex> {:ok, image} = Image.new(2, 2, color: :black)
+      iex> {:ok, pixel} = Image.Pixel.to_pixel(image, :red)
+      iex> Image.Pixel.strip_alpha(pixel, image)
+      [255, 0, 0]
+
+  """
+  @spec strip_alpha(pixel :: [number()], image :: Vimage.t()) :: [number()]
+  def strip_alpha(pixel, %Vimage{} = image) when is_list(pixel) do
+    if Vimage.has_alpha?(image) and length(pixel) == Vimage.bands(image) do
+      Enum.take(pixel, length(pixel) - 1)
+    else
+      pixel
+    end
+  end
+
+  @doc """
   Resolves a color input to an sRGB pixel `[r, g, b]` (or
   `[r, g, b, a]`) with channels in `0..255`, regardless of any
   image context.

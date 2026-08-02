@@ -205,6 +205,26 @@ defmodule Image.PixelTest do
     end
   end
 
+  describe "strip_alpha/2" do
+    test "drops the last band of a full pixel on an alpha image" do
+      {:ok, image} = Image.new(2, 2, color: [0, 0, 0, 255])
+
+      assert [255, 0, 0] == Pixel.strip_alpha([255, 0, 0, 128], image)
+    end
+
+    test "returns the pixel unchanged on an image without alpha" do
+      {:ok, image} = Image.new(2, 2, color: [0, 0, 0])
+
+      assert [255, 0, 0] == Pixel.strip_alpha([255, 0, 0], image)
+    end
+
+    test "returns a pixel shorter than the image's bands unchanged" do
+      {:ok, image} = Image.new(2, 2, color: [0, 0, 0, 255])
+
+      assert [255, 0, 0] == Pixel.strip_alpha([255, 0, 0], image)
+    end
+  end
+
   describe "transparency/1" do
     test "atoms" do
       assert {:ok, 0} = Pixel.transparency(:none)
