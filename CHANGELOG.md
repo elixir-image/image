@@ -52,6 +52,8 @@
 
 * **Breaking:** Removes the `Image.Error` tuple constructors. `raise Image.Error, {:enoent, path}` and `raise Image.Error, {message, path}` now fall through to the catch-all clause. ([#218](https://github.com/elixir-image/image/pull/218))
 
+* **Breaking:** Removes the `:sigma` and `:min_amplitude` options from `Image.chroma_mask/2`, `Image.chroma_key/2` and `Image.replace_color/2`. They were accepted and validated, but never read by any code path. ([#224](https://github.com/elixir-image/image/pull/224))
+
 ## Image 0.72.0
 
 This is the changelog for Image version 0.72.0 released on July 22nd, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

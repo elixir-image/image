@@ -98,6 +98,17 @@ defmodule Image.ChromaKey.Test do
     end
   end
 
+  describe "unknown options" do
+    setup do
+      {:ok, %{image: Image.new!(10, 10, color: [0, 255, 0])}}
+    end
+
+    test "an unknown option is an error", %{image: image} do
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:unknown, 1}}} =
+               Image.chroma_mask(image, unknown: 1)
+    end
+  end
+
   describe "color range bounds" do
     test ":greater_than is the lower bound and :less_than the upper bound" do
       dark = Image.new!(1, 1, color: [0, 0, 0])

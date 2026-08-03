@@ -18,8 +18,6 @@ defmodule Image.Options.ChromaKey do
             | {:threshold, non_neg_integer()}
             | {:greater_than, Pixel.t()}
             | {:less_than, Pixel.t()}
-            | {:sigma, float()}
-            | {:min_amplitude, float()}
           ]
 
   @doc """
@@ -55,15 +53,6 @@ defmodule Image.Options.ChromaKey do
   defp validate_option({:threshold, threshold}, _image, options)
        when is_integer(threshold) and threshold >= 0 do
     {:cont, options}
-  end
-
-  defp validate_option({:sigma, sigma}, _image, options) when is_number(sigma) and sigma > 0 do
-    {:cont, options}
-  end
-
-  defp validate_option({:min_amplitude, min_amplitude}, _image, options)
-       when is_float(min_amplitude) do
-    {:cont, Keyword.put(options, :min_amplitude, min_amplitude)}
   end
 
   defp validate_option(option, _image, _options) do
