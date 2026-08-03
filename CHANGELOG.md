@@ -40,6 +40,8 @@
 
 * Fix the specs for `Image.Math.cos/1` and `Image.Math.sin/1`, which omitted `{:error, Image.error()}`, and for eight math operators, which omitted the `Vimage.t()` they already accepted. All `@dialyzer` opt-outs and the `.dialyzer_ignore_warnings` file are removed. ([#221](https://github.com/elixir-image/image/pull/221))
 
+* Fix the `:greater_than` and `:less_than` documentation for `Image.chroma_mask/2`, `Image.chroma_key/2` and `Image.replace_color/2`, which described the bounds the wrong way round in all six places they appeared. The mask covers the range between the two, so `:greater_than` is the lower bound and `:less_than` the upper. ([#224](https://github.com/elixir-image/image/pull/224))
+
 ### Removed
 
 * **Breaking:** Removes `Image.Options.WarpPerspective`, replaced by `Image.Options.Mapim`. ([#216](https://github.com/elixir-image/image/pull/216))

@@ -2332,7 +2332,9 @@ defmodule Image do
 
   #### Threshold strategy
 
-  * `:color` is an RGB color which represents the the
+  Masks colors within a threshold of a single color.
+
+  * `:color` is an RGB color which represents the
     chroma key to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
@@ -2346,13 +2348,16 @@ defmodule Image do
 
   #### Color range strategy
 
-  * `:greater_than` is an RGB color which represents the upper
+  Masks colors falling between two bounds. Both options
+  are required.
+
+  * `:greater_than` is an RGB color which represents the lower
      end of the color range to be masked. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
      representing a CSS color name.
 
-  * `:less_than` is an RGB color which represents the lower
+  * `:less_than` is an RGB color which represents the upper
      end of the color range to be masked. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
@@ -2437,7 +2442,9 @@ defmodule Image do
 
   #### Threshold strategy
 
-  * `:color` is an RGB color which represents the the
+  Masks colors within a threshold of a single color.
+
+  * `:color` is an RGB color which represents the
     chroma key to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
@@ -2451,13 +2458,16 @@ defmodule Image do
 
   #### Color range strategy
 
-  * `:greater_than` is an RGB color which represents the upper
+  Masks colors falling between two bounds. Both options
+  are required.
+
+  * `:greater_than` is an RGB color which represents the lower
      end of the color range to be masked. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
      representing a CSS color name.
 
-   * `:less_than` is an RGB color which represents the lower
+   * `:less_than` is an RGB color which represents the upper
      end of the color range to be masked. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
@@ -2508,7 +2518,9 @@ defmodule Image do
 
   #### Threshold strategy
 
-  * `:color` is an RGB color which represents the the
+  Masks colors within a threshold of a single color.
+
+  * `:color` is an RGB color which represents the
     chroma key to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
@@ -2522,13 +2534,16 @@ defmodule Image do
 
   #### Color range strategy
 
-  * `:greater_than` is an RGB color which represents the upper
+  Masks colors falling between two bounds. Both options
+  are required.
+
+  * `:greater_than` is an RGB color which represents the lower
      end of the color range to be masked. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
      representing a CSS color name.
 
-  *  `:less_than` is an RGB color which represents the lower
+  *  `:less_than` is an RGB color which represents the upper
      end of the color range to be masked. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
@@ -2583,7 +2598,9 @@ defmodule Image do
 
   #### Threshold strategy
 
-  * `:color` is an RGB color which represents the the
+  Masks colors within a threshold of a single color.
+
+  * `:color` is an RGB color which represents the
     chroma key to be masked. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
@@ -2597,13 +2614,16 @@ defmodule Image do
 
   #### Color range strategy
 
-  * `:greater_than` is an RGB color which represents the upper
+  Masks colors falling between two bounds. Both options
+  are required.
+
+  * `:greater_than` is an RGB color which represents the lower
      end of the color range to be masked. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
      representing a CSS color name.
 
-  *  `:less_than` is an RGB color which represents the lower
+  *  `:less_than` is an RGB color which represents the upper
      end of the color range to be masked. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
@@ -5865,7 +5885,9 @@ defmodule Image do
 
   #### Threshold strategy
 
-  * `:color` is an RGB color which represents the the
+  Masks colors within a threshold of a single color.
+
+  * `:color` is an RGB color which represents the
     chroma key to be selected. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
@@ -5873,19 +5895,22 @@ defmodule Image do
     `:auto` in which the average of the top left `10x10`
     pixels of the image is used.
 
-  * `:threshold`is a positive integer to indicate the
+  * `:threshold` is a positive integer to indicate the
     threshold around `:color` when calculating the mask.
     The default is `20`.
 
   #### Color range strategy
 
-  * `:greater_than` is an RGB color which represents the upper
+  Masks colors falling between two bounds. Both options
+  are required.
+
+  * `:greater_than` is an RGB color which represents the lower
      end of the color range to be selected. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
      representing a CSS color name.
 
-  * `:less_than` is an RGB color which represents the lower
+  * `:less_than` is an RGB color which represents the upper
      end of the color range to be selected. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
@@ -5955,7 +5980,9 @@ defmodule Image do
 
   #### Threshold strategy
 
-  * `:color` is an RGB color which represents the the
+  Masks colors within a threshold of a single color.
+
+  * `:color` is an RGB color which represents the
     chroma key to be selected. The color can be an
     integer between `0..255`, a three-element list of
     integers representing an RGB color or an atom
@@ -5963,19 +5990,22 @@ defmodule Image do
     `:auto` in which the average of the top left `10x10`
     pixels of the image is used.
 
-  * `:threshold`is a positive integer to indicate the
+  * `:threshold` is a positive integer to indicate the
     threshold around `:color` when calculating the mask.
     The default is `20`.
 
   #### Color range strategy
 
-  * `:greater_than` is an RGB color which represents the upper
+  Masks colors falling between two bounds. Both options
+  are required.
+
+  * `:greater_than` is an RGB color which represents the lower
      end of the color range to be selected. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
      representing a CSS color name.
 
-  * `:less_than` is an RGB color which represents the lower
+  * `:less_than` is an RGB color which represents the upper
      end of the color range to be selected. The color can be an
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
