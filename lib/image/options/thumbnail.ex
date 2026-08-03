@@ -151,6 +151,7 @@ defmodule Image.Options.Thumbnail do
       options
       |> Keyword.put(:crop, :VIPS_INTERESTING_NONE)
       |> Keyword.put(:size, :VIPS_SIZE_BOTH)
+      |> Keyword.delete(:fit)
 
     {:cont, options}
   end
