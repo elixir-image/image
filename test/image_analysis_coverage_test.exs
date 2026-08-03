@@ -152,6 +152,24 @@ defmodule Image.AnalysisCoverageTest do
     test "reduce_colors!/2 returns an image", %{image: image} do
       assert %Vimage{} = Image.reduce_colors!(image, colors: 2, key: Nx.Random.key(1))
     end
+
+    test "k_means/2 returns an error for an invalid option value", %{image: image} do
+      assert {:error,
+              %Image.Error{
+                reason: :invalid_option,
+                operation: :k_means,
+                value: {:num_clusters, 0}
+              }} = Image.k_means(image, num_clusters: 0)
+    end
+
+    test "reduce_colors/2 returns an error for an unknown option", %{image: image} do
+      assert {:error,
+              %Image.Error{
+                reason: :invalid_option,
+                operation: :reduce_colors,
+                value: [:unknown_option]
+              }} = Image.reduce_colors(image, unknown_option: true)
+    end
   end
 
   describe "Image.preview/1 and Image.p/1" do
