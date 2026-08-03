@@ -2328,7 +2328,10 @@ defmodule Image do
 
   There are two masking strategies available: the
   thresholding strategy (default) and the color
-  range strategy.
+  range strategy. They are mutually exclusive:
+  combining options from both strategies, or
+  supplying only one of `:greater_than` and
+  `:less_than`, returns an error.
 
   #### Threshold strategy
 
@@ -2387,7 +2390,7 @@ defmodule Image do
     end
   end
 
-  defp do_chroma_mask(%Vimage{} = image, %{color: color, threshold: threshold}) do
+  defp do_chroma_mask(%Vimage{} = image, %{strategy: :threshold, color: color, threshold: threshold}) do
     alias Image.Math
 
     # The mask is computed from the color bands only so any alpha
@@ -2406,7 +2409,11 @@ defmodule Image do
     end
   end
 
-  defp do_chroma_mask(%Vimage{} = image, %{greater_than: greater_than, less_than: less_than}) do
+  defp do_chroma_mask(%Vimage{} = image, %{
+         strategy: :range,
+         greater_than: greater_than,
+         less_than: less_than
+       }) do
     alias Image.Math
 
     with {:ok, greater} <- Math.greater_than(image, greater_than),
@@ -2438,7 +2445,10 @@ defmodule Image do
 
   There are two masking strategies available: the
   thresholding strategy (default) and the color
-  range strategy.
+  range strategy. They are mutually exclusive:
+  combining options from both strategies, or
+  supplying only one of `:greater_than` and
+  `:less_than`, returns an error.
 
   #### Threshold strategy
 
@@ -2514,7 +2524,10 @@ defmodule Image do
 
   There are two masking strategies available: the
   thresholding strategy (default) and the color
-  range strategy.
+  range strategy. They are mutually exclusive:
+  combining options from both strategies, or
+  supplying only one of `:greater_than` and
+  `:less_than`, returns an error.
 
   #### Threshold strategy
 
@@ -2594,7 +2607,10 @@ defmodule Image do
 
   There are two masking strategies available: the
   thresholding strategy (default) and the color
-  range strategy.
+  range strategy. They are mutually exclusive:
+  combining options from both strategies, or
+  supplying only one of `:greater_than` and
+  `:less_than`, returns an error.
 
   #### Threshold strategy
 
@@ -5881,7 +5897,10 @@ defmodule Image do
   There are two strategies available for selecting the
   color or color range to be replaced: the
   thresholding strategy (default) and the color
-  range strategy.
+  range strategy. They are mutually exclusive:
+  combining options from both strategies, or
+  supplying only one of `:greater_than` and
+  `:less_than`, returns an error.
 
   #### Threshold strategy
 
@@ -5976,7 +5995,10 @@ defmodule Image do
   There are two strategies available for selecting the
   color or color range to be replaced: the
   thresholding strategy (default) and the color
-  range strategy.
+  range strategy. They are mutually exclusive:
+  combining options from both strategies, or
+  supplying only one of `:greater_than` and
+  `:less_than`, returns an error.
 
   #### Threshold strategy
 

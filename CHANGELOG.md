@@ -28,6 +28,8 @@
 
 * **Breaking:** `Image.drop_shadow/2` returns `{:error, %Image.Error{}}` for a non-numeric `:sigma` instead of raising `ArithmeticError`, and its `:opacity` and `:sigma` errors now carry `reason: :invalid_option` with `value` set to `{:opacity, value}` or `{:sigma, value}`. Validation still covers only `:opacity` and `:sigma`. `:dx`, `:dy` and unknown options remain unvalidated pending a move to an `Image.Options.DropShadow` module. ([#221](https://github.com/elixir-image/image/pull/221))
 
+* **Breaking:** `Image.chroma_mask/2`, `Image.chroma_key/2`, `Image.replace_color/2` and their `!` variants now return `{:error, %Image.Error{reason: :invalid_option}}` when options from both masking strategies are supplied, or when only one of `:greater_than` and `:less_than` is supplied. The two strategies were always documented as mutually exclusive, but nothing enforced it: the color range strategy won and `:color` and `:threshold` were silently discarded, and a lone bound was discarded and replaced by auto chroma detection with the default threshold. ([#224](https://github.com/elixir-image/image/pull/224))
+
 * `Image.affine/3` and `Image.rotate/3` now premultiply alpha explicitly only when the background is non-opaque, since libvips handles the other cases itself. `Image.shear/4` and `Image.translate/4` inherit this. ([#217](https://github.com/elixir-image/image/pull/217))
 
 ### Fixed
