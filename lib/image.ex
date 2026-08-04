@@ -13551,7 +13551,7 @@ defmodule Image do
       completely different),
 
     * [:mse](https://en.wikipedia.org/wiki/Mean_squared_error) which
-      is the mean squared error (default). The returned value is a float
+      is the mean squared error. The returned value is a float
       indicating how similar the images are. A value of
       `0.0` means the images are the same. The number itself it simply a
       measure of the error difference between images. A larger number means
@@ -13614,7 +13614,11 @@ defmodule Image do
   @doc since: "0.34.0"
   @doc subject: "Operation"
 
-  @spec compare(Vimage.t(), Vimage.t(), Keyword.t()) ::
+  @spec compare(
+          image_1 :: Vimage.t(),
+          image_2 :: Vimage.t(),
+          options :: Options.Compare.compare_options()
+        ) ::
           {:ok, number, Vimage.t()} | {:error, error()}
   def compare(%Vimage{} = image_1, %Vimage{} = image_2, options \\ []) when is_list(options) do
     with {:ok, options} <- Options.Compare.validate_options(image_1, options),

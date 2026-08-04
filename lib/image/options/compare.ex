@@ -11,12 +11,17 @@ defmodule Image.Options.Compare do
 
   """
   @type compare_option ::
-          {:color, Pixel.t() | :auto}
-          | {:threshold, non_neg_integer()}
-          | {:greater_than, Pixel.t()}
-          | {:less_than, Pixel.t()}
-          | {:sigma, float()}
-          | {:min_amplitude, float()}
+          {:metric, metric()}
+          | {:saturation, number()}
+          | {:brightness, number()}
+          | {:difference_boost, number()}
+          | {:difference_color, Pixel.t()}
+
+  @typedoc """
+  The comparison metric used by `Image.compare/3`.
+
+  """
+  @type metric :: :ae | :mse | :rmse
 
   @type compare_options :: [compare_option()]
 
