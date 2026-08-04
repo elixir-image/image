@@ -170,7 +170,7 @@ defmodule Image.Draw do
         ) ::
           Vimage.t() | MutableImage.t() | no_return()
 
-  def point!(image, left, top, options) do
+  def point!(image, left, top, options \\ []) do
     case point(image, left, top, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
