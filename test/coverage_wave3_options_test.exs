@@ -280,11 +280,6 @@ defmodule Image.CoverageWave3.Options.Test do
       assert {:ok, options} = Image.Options.Trim.validate_options(canvas, background: :red)
       assert options.background == [255, 0, 0]
     end
-
-    test "chroma_key :sigma and :min_amplitude options" do
-      green = Image.new!(20, 20, color: [0, 255, 0])
-      assert {:ok, _} = Image.chroma_key(green, sigma: 2.0, min_amplitude: 0.05)
-    end
   end
 
   describe "Image.Options.New" do

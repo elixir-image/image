@@ -28,6 +28,8 @@
 
 * **Breaking:** `Image.drop_shadow/2` returns `{:error, %Image.Error{}}` for a non-numeric `:sigma` instead of raising `ArithmeticError`, and its `:opacity` and `:sigma` errors now carry `reason: :invalid_option` with `value` set to `{:opacity, value}` or `{:sigma, value}`. Validation still covers only `:opacity` and `:sigma`. `:dx`, `:dy` and unknown options remain unvalidated pending a move to an `Image.Options.DropShadow` module. ([#221](https://github.com/elixir-image/image/pull/221))
 
+* **Breaking:** `Image.chroma_mask/2`, `Image.chroma_key/2`, `Image.replace_color/2` and their `!` variants now return `{:error, %Image.Error{reason: :invalid_option}}` when options from both masking strategies are supplied, or when only one of `:greater_than` and `:less_than` is supplied. The two strategies were always documented as mutually exclusive, but nothing enforced it: the color range strategy won and `:color` and `:threshold` were silently discarded, and a lone bound was discarded and replaced by auto chroma detection with the default threshold. ([#224](https://github.com/elixir-image/image/pull/224))
+
 * `Image.affine/3` and `Image.rotate/3` now premultiply alpha explicitly only when the background is non-opaque, since libvips handles the other cases itself. `Image.shear/4` and `Image.translate/4` inherit this. ([#217](https://github.com/elixir-image/image/pull/217))
 
 ### Fixed
@@ -40,6 +42,8 @@
 
 * Fix the specs for `Image.Math.cos/1` and `Image.Math.sin/1`, which omitted `{:error, Image.error()}`, and for eight math operators, which omitted the `Vimage.t()` they already accepted. All `@dialyzer` opt-outs and the `.dialyzer_ignore_warnings` file are removed. ([#221](https://github.com/elixir-image/image/pull/221))
 
+* Fix the `:greater_than` and `:less_than` documentation for `Image.chroma_mask/2`, `Image.chroma_key/2` and `Image.replace_color/2`, which described the bounds the wrong way round in all six places they appeared. The mask covers the range between the two, so `:greater_than` is the lower bound and `:less_than` the upper. ([#224](https://github.com/elixir-image/image/pull/224))
+
 ### Removed
 
 * **Breaking:** Removes `Image.Options.WarpPerspective`, replaced by `Image.Options.Mapim`. ([#216](https://github.com/elixir-image/image/pull/216))
@@ -47,6 +51,8 @@
 * **Breaking:** Removes `Image.Options.Meme.validate_options/1` and `Image.Draw.maybe_add_alpha/2`. ([#220](https://github.com/elixir-image/image/pull/220))
 
 * **Breaking:** Removes the `Image.Error` tuple constructors. `raise Image.Error, {:enoent, path}` and `raise Image.Error, {message, path}` now fall through to the catch-all clause. ([#218](https://github.com/elixir-image/image/pull/218))
+
+* **Breaking:** Removes the `:sigma` and `:min_amplitude` options from `Image.chroma_mask/2`, `Image.chroma_key/2` and `Image.replace_color/2`. They were accepted and validated, but never read by any code path. ([#224](https://github.com/elixir-image/image/pull/224))
 
 ## Image 0.72.0
 
