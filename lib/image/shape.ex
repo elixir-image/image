@@ -82,7 +82,7 @@ defmodule Image.Shape do
         iex> {:ok, rectangle} = Image.Shape.rect(50, 100, fill_color: :red, stroke_color: :yellow)
 
   """
-  @doc since: "1.27.0"
+  @doc since: "0.27.0"
 
   @spec rect(width :: pos_integer(), height :: pos_integer(), options :: Keyword.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
@@ -149,7 +149,7 @@ defmodule Image.Shape do
         iex> rectangle = Image.Shape.rect!(50, 100, fill_color: :red, stroke_color: :yellow)
 
   """
-  @doc since: "1.27.0"
+  @doc since: "0.27.0"
 
   @spec rect!(width :: pos_integer(), height :: pos_integer(), options :: Keyword.t()) ::
           Vimage.t() | no_return()
@@ -539,7 +539,7 @@ defmodule Image.Shape do
         iex> {:ok, circle} = Image.Shape.circle(50, fill_color: :green, stroke_color: :blue)
 
   """
-  @doc since: "1.38.0"
+  @doc since: "0.38.0"
 
   @spec circle(radius :: pos_integer(), options :: Keyword.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
@@ -603,7 +603,7 @@ defmodule Image.Shape do
         iex> circle = Image.Shape.circle!(50, fill_color: :green, stroke_color: :blue)
 
   """
-  @doc since: "1.38.0"
+  @doc since: "0.38.0"
 
   @spec circle!(radius :: pos_integer(), options :: Keyword.t()) ::
           Vimage.t() | no_return()
@@ -652,7 +652,7 @@ defmodule Image.Shape do
         iex> {:ok, ellipse} = Image.Shape.ellipse(50, 100, fill_color: :green, stroke_color: :none)
 
   """
-  @doc since: "1.38.0"
+  @doc since: "0.38.0"
 
   @spec ellipse(x_radius :: pos_integer(), y_radius :: pos_integer(), options :: Keyword.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
@@ -721,7 +721,7 @@ defmodule Image.Shape do
         iex> ellipse = Image.Shape.ellipse!(50, 100, fill_color: :green, stroke_color: :none)
 
   """
-  @doc since: "1.38.0"
+  @doc since: "0.38.0"
 
   @spec ellipse!(x_radius :: pos_integer(), y_radius :: pos_integer(), options :: Keyword.t()) ::
           Vimage.t() | no_return()
@@ -776,7 +776,7 @@ defmodule Image.Shape do
         iex> {:ok, line} = Image.Shape.line(5, 5, 50, 50, stroke_width: 10, stroke_color: :white)
 
   """
-  @doc since: "1.38.0"
+  @doc since: "0.38.0"
 
   @spec line(
           x1 :: pos_integer(),
@@ -854,7 +854,7 @@ defmodule Image.Shape do
         iex> line = Image.Shape.line!(5, 5, 50, 50, stroke_width: 10, stroke_color: :white)
 
   """
-  @doc since: "1.38.0"
+  @doc since: "0.38.0"
 
   @spec line!(
           x1 :: pos_integer(),
