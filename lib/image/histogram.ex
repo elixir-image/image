@@ -26,7 +26,7 @@ defmodule Image.Histogram do
   The histograms generated in this module have red, green,
   blue and luminance layers and can be returned as either an
   [svg](https://en.wikipedia.org/wiki/SVG) string or as an
-  `t:Vimage.t/0`.
+  `t:Vix.Vips.Image.t/0`.
 
   The current implementation does not applying any scale
   compression or expansion and therefore where the image

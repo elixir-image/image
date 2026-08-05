@@ -2045,12 +2045,12 @@ defmodule Image do
   * `condition_image` is any image. Typically it is an image
     formed by the relation operations such as `Image.Math.greater_than/2`.
 
-  * `if_image_or_color` is either an `t:Vimage.t/0` or
+  * `if_image_or_color` is either an `t:Vix.Vips.Image.t/0` or
     a `t:Image.Pixel.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
 
-  * `else_image_or_color` is either an `t:Vimage.t/0` or
+  * `else_image_or_color` is either an `t:Vix.Vips.Image.t/0` or
     a `t:Image.Pixel.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
@@ -2162,12 +2162,12 @@ defmodule Image do
   * `condition_image` is any image. Typically it is an image
     formed by the relation operations such as `Image.Math.greater_than/2`.
 
-  * `if_image_or_color` is either an `t:Vimage.t/0` or
+  * `if_image_or_color` is either an `t:Vix.Vips.Image.t/0` or
     a `t:Image.Pixel.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
 
-  * `else_image_or_color` is either an `t:Vimage.t/0` or
+  * `else_image_or_color` is either an `t:Vix.Vips.Image.t/0` or
     a `t:Image.Pixel.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
@@ -3806,7 +3806,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image_list` is a non-empty list of `t:Vimage.t/0`
+  * `image_list` is a non-empty list of `t:Vix.Vips.Image.t/0`
     images.
 
   * `options` is a keyword list of options.
@@ -3909,7 +3909,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image_list` is a non-empty list of `t:Vimage.t/0`
+  * `image_list` is a non-empty list of `t:Vix.Vips.Image.t/0`
     images.
 
   * `options` is a keyword list of options.
@@ -8627,7 +8627,7 @@ defmodule Image do
   @doc """
   Returns the histogram for an image.
 
-  The histogram is returned as a `t:Vimage.t/0`
+  The histogram is returned as a `t:Vix.Vips.Image.t/0`
   that is a 255 by 1 pixel image with the same numbers of
   bands as the source image.
 
@@ -11878,7 +11878,7 @@ defmodule Image do
 
   ### Returns
 
-  * A single band `t:Vimage.t/0` representing the right hand side
+  * A single band `t:Vix.Vips.Image.t/0` representing the right hand side
     (positive numbers) of the logistic curve.
 
   ### Notes
@@ -12550,7 +12550,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`
 
     * `options` is a keyword list of options
 
@@ -12636,7 +12636,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`
 
     * `options` is a keyword list of options
 
@@ -12838,7 +12838,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -12928,7 +12928,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -12981,7 +12981,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`.
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -13072,7 +13072,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`.
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -13135,7 +13135,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`.
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
     * `source` is a list of 2-tuples representing the source
        points in `image`.
@@ -13247,7 +13247,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -13353,7 +13353,7 @@ defmodule Image do
 
       ### Arguments
 
-      * `image` is any `t:Vimage.t/0`.
+      * `image` is any `t:Vix.Vips.Image.t/0`.
 
       * `convert_to_bgr` is a boolean indicating if the
         color order should be converted from `RGB` to `BGR`
@@ -13458,7 +13458,7 @@ defmodule Image do
 
       ### Arguments
 
-      * `image` is any `t:Vimage.t/0`.
+      * `image` is any `t:Vix.Vips.Image.t/0`.
 
       ### Returns
 
@@ -13495,7 +13495,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`
 
   * `transform_matrix` is a matrix returned by
     `Image.transform_matrix/3`.
