@@ -1788,7 +1788,7 @@ defmodule Image do
     ### Notes
 
     * Due to the nature of the interaction between Req and Vix, error
-      responses from the embedded `Reg.get/2` are swallowed and a generic
+      responses from the embedded `Req.get/2` are swallowed and a generic
       `{:error, %Image.Error{message: "Failed to find loader for the source", reason: "Failed to find loader for the source"}}` may be returned instead.
 
     ### Example
@@ -5396,7 +5396,7 @@ defmodule Image do
   """
 
   # The shenanigans below is to avoid infinite recursion or
-  # hard-to-explain errors if `Image.map_pages/2` is called with
+  # hard-to-explain errors if `Image.map_join_pages/2` is called with
   # `Image.crop/5` as its function argument.
 
   @doc subject: "Crop"
@@ -6912,7 +6912,7 @@ defmodule Image do
 
   ### Flags
 
-  A two-entry `Keyword.t` is returned indicating what actions
+  A two-entry `t:Keyword.t/0` is returned indicating what actions
   were taken:
 
   * `:flip` which is a boolean indicating if the image
