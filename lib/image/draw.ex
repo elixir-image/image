@@ -38,11 +38,11 @@ defmodule Image.Draw do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` or a
-    `t:MutableImage.t/0` upon which the rectangle
-    will be drawn. If `image` is a `t:MutableImage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    `t:Vix.Vips.MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:Vix.Vips.MutableImage.t/0`
     it will be mutated directly. If `image` is a
-    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    `t:Vix.Vips.Image.t/0` it will be copied to a `t:Vix.Vips.MutableImage.t/0`
     and then mutated.
 
   * `left` is the 0-based offset from the
@@ -124,11 +124,11 @@ defmodule Image.Draw do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` or a
-    `t:MutableImage.t/0` upon which the rectangle
-    will be drawn. If `image` is a `t:MutableImage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    `t:Vix.Vips.MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:Vix.Vips.MutableImage.t/0`
     it will be mutated directly. If `image` is a
-    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    `t:Vix.Vips.Image.t/0` it will be copied to a `t:Vix.Vips.MutableImage.t/0`
     and then mutated.
 
   * `left` is the 0-based offset from the
@@ -182,11 +182,11 @@ defmodule Image.Draw do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` or a
-    `t:MutableImage.t/0` upon which the rectangle
-    will be drawn. If `image` is a `t:MutableImage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    `t:Vix.Vips.MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:Vix.Vips.MutableImage.t/0`
     it will be mutated directly. If `image` is a
-    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    `t:Vix.Vips.Image.t/0` it will be copied to a `t:Vix.Vips.MutableImage.t/0`
     and then mutated.
 
   * `left` is the 0-based offset from the
@@ -309,11 +309,11 @@ defmodule Image.Draw do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` or a
-    `t:MutableImage.t/0` upon which the rectangle
-    will be drawn. If `image` is a `t:MutableImage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    `t:Vix.Vips.MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:Vix.Vips.MutableImage.t/0`
     it will be mutated directly. If `image` is a
-    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    `t:Vix.Vips.Image.t/0` it will be copied to a `t:Vix.Vips.MutableImage.t/0`
     and then mutated.
 
   * `left` is the 0-based offset from the
@@ -395,11 +395,11 @@ defmodule Image.Draw do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` or a
-    `t:MutableImage.t/0` upon which the rectangle
-    will be drawn. If `image` is a `t:MutableImage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    `t:Vix.Vips.MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:Vix.Vips.MutableImage.t/0`
     it will be mutated directly. If `image` is a
-    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    `t:Vix.Vips.Image.t/0` it will be copied to a `t:Vix.Vips.MutableImage.t/0`
     and then mutated.
 
   * `cx` is the 0-based offset from the
@@ -513,11 +513,11 @@ defmodule Image.Draw do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` or a
-    `t:MutableImage.t/0` upon which the rectangle
-    will be drawn. If `image` is a `t:MutableImage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    `t:Vix.Vips.MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:Vix.Vips.MutableImage.t/0`
     it will be mutated directly. If `image` is a
-    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    `t:Vix.Vips.Image.t/0` it will be copied to a `t:Vix.Vips.MutableImage.t/0`
     and then mutated.
 
   * `cx` is the 0-based offset from the
@@ -587,11 +587,11 @@ defmodule Image.Draw do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` or a
-    `t:MutableImage.t/0` upon which the rectangle
-    will be drawn. If `image` is a `t:MutableImage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    `t:Vix.Vips.MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:Vix.Vips.MutableImage.t/0`
     it will be mutated directly. If `image` is a
-    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    `t:Vix.Vips.Image.t/0` it will be copied to a `t:Vix.Vips.MutableImage.t/0`
     and then mutated.
 
   * `x1`, `y1` are the 0-based offsets from the `left`
@@ -675,11 +675,11 @@ defmodule Image.Draw do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` or a
-    `t:MutableImage.t/0` upon which the rectangle
-    will be drawn. If `image` is a `t:MutableImage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    `t:Vix.Vips.MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:Vix.Vips.MutableImage.t/0`
     it will be mutated directly. If `image` is a
-    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    `t:Vix.Vips.Image.t/0` it will be copied to a `t:Vix.Vips.MutableImage.t/0`
     and then mutated.
 
   * `x1`, `y1` are the 0-based offsets from the `left`
@@ -745,14 +745,14 @@ defmodule Image.Draw do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` or a
-    `t:MutableImage.t/0` upon which the rectangle
-    will be drawn. If `image` is a `t:MutableImage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    `t:Vix.Vips.MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:Vix.Vips.MutableImage.t/0`
     it will be mutated directly. If `image` is a
-    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    `t:Vix.Vips.Image.t/0` it will be copied to a `t:Vix.Vips.MutableImage.t/0`
     and then mutated.
 
-  * `sub_image` is any `t:Vimage.t/0` that
+  * `sub_image` is any `t:Vix.Vips.Image.t/0` that
     is drawn on top of `image`.
 
   * `left` is the 0-based offset from the
@@ -837,14 +837,14 @@ defmodule Image.Draw do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` or a
-    `t:MutableImage.t/0` upon which the rectangle
-    will be drawn. If `image` is a `t:MutableImage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    `t:Vix.Vips.MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:Vix.Vips.MutableImage.t/0`
     it will be mutated directly. If `image` is a
-    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    `t:Vix.Vips.Image.t/0` it will be copied to a `t:Vix.Vips.MutableImage.t/0`
     and then mutated.
 
-  * `sub_image` is any `t:Vimage.t/0` that
+  * `sub_image` is any `t:Vix.Vips.Image.t/0` that
     is drawn on top of `image`.
 
   * `left` is the 0-based offset from the
@@ -919,11 +919,11 @@ defmodule Image.Draw do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` or a
-    `t:MutableImage.t/0` upon which the rectangle
-    will be drawn. If `image` is a `t:MutableImage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    `t:Vix.Vips.MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:Vix.Vips.MutableImage.t/0`
     it will be mutated directly. If `image` is a
-    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    `t:Vix.Vips.Image.t/0` it will be copied to a `t:Vix.Vips.MutableImage.t/0`
     and then mutated.
 
   * `left` is the 0-based offset from the
@@ -1013,11 +1013,11 @@ defmodule Image.Draw do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` or a
-    `t:MutableImage.t/0` upon which the rectangle
-    will be drawn. If `image` is a `t:MutableImage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0` or a
+    `t:Vix.Vips.MutableImage.t/0` upon which the rectangle
+    will be drawn. If `image` is a `t:Vix.Vips.MutableImage.t/0`
     it will be mutated directly. If `image` is a
-    `t:Vimage.t/0` it will be copied to a `t:MutableImage.t/0`
+    `t:Vix.Vips.Image.t/0` it will be copied to a `t:Vix.Vips.MutableImage.t/0`
     and then mutated.
 
   * `left` is the 0-based offset from the

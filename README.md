@@ -30,7 +30,7 @@ Documentation can be found at <https://hexdocs.pm/image>.
 
 * **ICC colour profiles** — `Image.ICCProfile` for libvips' built-in profiles (`:srgb`, `:cmyk`, `:p3`) and arbitrary `.icc` files.
 
-* **Image streaming** — open and write directly from `File.Stream`s, Plug `Conn`s, in-memory binaries, and S3 sources.
+* **Image streaming** — open and write directly from `File.Stream`s, `Plug.Conn`s, in-memory binaries, and S3 sources.
 
 * **Optional integrations** — each is compiled only when its optional dependency is present:
 
@@ -38,7 +38,7 @@ Documentation can be found at <https://hexdocs.pm/image>.
 
   * QR code encoding and decoding via the sibling [`image_qrcode`](https://hex.pm/packages/image_qrcode) package (Nayuki QR-Code-generator + quirc; no `:evision` dependency).
 
-  * `Image.k_means` via [Scholar](https://hex.pm/packages/scholar).
+  * `Image.k_means/2` via [Scholar](https://hex.pm/packages/scholar).
 
   * `Image.to_nx/2` / `Image.from_nx/1` via [Nx](https://hex.pm/packages/nx).
 

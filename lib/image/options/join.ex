@@ -24,11 +24,11 @@ defmodule Image.Options.Join do
   """
   @type join_options :: [join_option()]
 
-  # Ussed by Image.join/2 and defines the
+  # Used by Image.join/2 and defines the
   # vertical spacing in pixels between images.
   @default_vertical_spacing 0
 
-  # Ussed by Image.join/2 and defines the
+  # Used by Image.join/2 and defines the
   # horizontal spacing in pixels between images.
   @default_horizontal_spacing 0
 
@@ -41,7 +41,7 @@ defmodule Image.Options.Join do
   # Default pixels between images.
   @default_shim_in_pixels 0
 
-  # Default umber of images across the grid.
+  # Default number of images across the grid.
   @default_images_across 1
 
   # Maps from api values to libvips values

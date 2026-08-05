@@ -13,7 +13,7 @@ defmodule Image.Options.Text do
           | {:dpi, pos_integer()}
           | {:text_fill_color, Pixel.t()}
           | {:text_stroke_width, pos_integer()}
-          | {:font_weigtht, atom()}
+          | {:font_weight, atom()}
           | {:background_fill_color, Pixel.t()}
           | {:background_stroke_color, Pixel.t()}
           | {:background_stroke_width, pos_integer()}

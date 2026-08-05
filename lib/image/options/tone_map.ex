@@ -24,7 +24,7 @@ defmodule Image.Options.ToneCurve do
   @typedoc """
   Range for setting the black point and
   white point. The range is 0..100 reflecting
-  the values of L* in the `Lab` colorspace.
+  the values of L* in the Lab colorspace.
   """
   @type set_point :: 0..100
 

@@ -154,7 +154,7 @@ defmodule Image.BandFormat do
 
   ### Arguments
 
-  * Any `t:Vimage.t/0` of format in the list
+  * Any `t:Vix.Vips.Image.t/0` of format in the list
     returned by `Image.BandFormat.known_band_formats/0`.
 
   ### Returns
@@ -193,7 +193,7 @@ defmodule Image.BandFormat do
 
   ### Arguments
 
-  * Any `t:Vimage.t/0` of format in the list
+  * Any `t:Vix.Vips.Image.t/0` of format in the list
     returned by `Image.BandFormat.known_band_formats/0`.
 
   ### Returns

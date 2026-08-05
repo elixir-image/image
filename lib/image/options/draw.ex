@@ -1,7 +1,7 @@
 defmodule Image.Options.Draw do
   @moduledoc """
   Options and options validation for the
-  drawing functionss.
+  drawing functions.
 
   """
 

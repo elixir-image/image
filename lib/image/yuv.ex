@@ -320,7 +320,7 @@ defmodule Image.YUV do
   @doc """
   Writes an image to a YUV file as raw YUV data.
 
-  It is recommeneded, but not required, that the path
+  It is recommended, but not required, that the path
   name use a `.yuv` suffix.
 
   ### Arguments
@@ -374,7 +374,7 @@ defmodule Image.YUV do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `encoding` is one of `:C444`, `:C422` or
     `:C420`.
@@ -421,7 +421,7 @@ defmodule Image.YUV do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` that is in a YUV
+  * `image` is any `t:Vix.Vips.Image.t/0` that is in a YUV
     colorspace such as that returned from `Image.YUV.new_from_file/5`
     or `Image.YUV.new_from_binary/5`.
 
@@ -548,7 +548,7 @@ defmodule Image.YUV do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `encoding` is one of `:C444`, `:C422` or
     `:C420`.
@@ -607,7 +607,7 @@ defmodule Image.YUV do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0` that is in a YUV
+  * `image` is any `t:Vix.Vips.Image.t/0` that is in a YUV
     colorspace such as that returned from `Image.YUV.new_from_file/5`
     or `Image.YUV.new_from_binary/5`.
 

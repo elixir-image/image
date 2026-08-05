@@ -6,7 +6,7 @@ defmodule Image do
 
   `Image` is intended to provide well-documented common image processing functions in
   an idiomatic Elixir functional style as a layer above the very comprehensive set
-  of functions in `Vix` and `libvips`.
+  of functions in Vix and libvips.
 
   In a very simple image resizing
   [benchmark](https://github.com/kipcole9/image/blob/main/bench/image_resize.exs),
@@ -143,7 +143,7 @@ defmodule Image do
   @type pixel :: [number()] | number()
 
   @typedoc """
-  Representaton of a coordinate in an image.
+  Representation of a coordinate in an image.
 
   The first number is the displacement on the
   x-axis (starting at 0 from the left) and the
@@ -314,7 +314,7 @@ defmodule Image do
   represent a rectangle (not an arbitrary quadrilateral),
 
   The order of points is top_left -> top right -> bottom
-  right -> bottm left.
+  right -> bottom left.
 
   """
   @doc subject: "Guard"
@@ -1609,7 +1609,7 @@ defmodule Image do
   for each known image type. For example:
 
       Image.write(image, image_path, minimize_file_size: true,
-        png: [compress: 60, lossy: true],
+        png: [compression: 7, lossy: true],
         jpg: [quality: 70],
         webp: [quality: 5])
 
@@ -1627,7 +1627,7 @@ defmodule Image do
   ### Returns
 
   * `{:ok, image}`, or `{:ok, binary}` if the destination is
-    `:memory`) or `{:ok, conn}` if the destination is a `t:Plug.Connt.t/0` or
+    `:memory`) or `{:ok, conn}` if the destination is a `t:Plug.Conn.t/0` or
 
   * `{:error, reason}`
 
@@ -1788,7 +1788,7 @@ defmodule Image do
     ### Notes
 
     * Due to the nature of the interaction between Req and Vix, error
-      responses from the embedded `Reg.get/2` are swallowed and a generic
+      responses from the embedded `Req.get/2` are swallowed and a generic
       `{:error, %Image.Error{message: "Failed to find loader for the source", reason: "Failed to find loader for the source"}}` may be returned instead.
 
     ### Example
@@ -2045,12 +2045,12 @@ defmodule Image do
   * `condition_image` is any image. Typically it is an image
     formed by the relation operations such as `Image.Math.greater_than/2`.
 
-  * `if_image_or_color` is either an `t:Vimage.t/0` or
+  * `if_image_or_color` is either an `t:Vix.Vips.Image.t/0` or
     a `t:Image.Pixel.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
 
-  * `else_image_or_color` is either an `t:Vimage.t/0` or
+  * `else_image_or_color` is either an `t:Vix.Vips.Image.t/0` or
     a `t:Image.Pixel.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
@@ -2162,12 +2162,12 @@ defmodule Image do
   * `condition_image` is any image. Typically it is an image
     formed by the relation operations such as `Image.Math.greater_than/2`.
 
-  * `if_image_or_color` is either an `t:Vimage.t/0` or
+  * `if_image_or_color` is either an `t:Vix.Vips.Image.t/0` or
     a `t:Image.Pixel.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
 
-  * `else_image_or_color` is either an `t:Vimage.t/0` or
+  * `else_image_or_color` is either an `t:Vix.Vips.Image.t/0` or
     a `t:Image.Pixel.t/0`. If a color is provided then
     an image is constructed with the same shape as `condition_image`
     filled with the provided color.
@@ -2841,7 +2841,7 @@ defmodule Image do
     guideline, use `0.5` for 4 pixels/mm (display resolution),
     `1.0` for 12 pixels/mm and `1.5` for 16 pixels/mm (300 dpi == 12
     pixels/mm). These figures refer to the image raster, not the half-tone
-    resolution. The default is `0.5`.
+    resolution. The default is `1.0`.
 
   ### Returns
 
@@ -2957,7 +2957,7 @@ defmodule Image do
     guideline, use `0.5` for 4 pixels/mm (display resolution),
     `1.0` for 12 pixels/mm and `1.5` for 16 pixels/mm (300 dpi == 12
     pixels/mm). These figures refer to the image raster, not the half-tone
-    resolution. The default is `0.5`.
+    resolution. The default is `1.0`.
 
   ### Returns
 
@@ -3806,7 +3806,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image_list` is a non-empty list of `t:Vimage.t/0`
+  * `image_list` is a non-empty list of `t:Vix.Vips.Image.t/0`
     images.
 
   * `options` is a keyword list of options.
@@ -3909,7 +3909,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image_list` is a non-empty list of `t:Vimage.t/0`
+  * `image_list` is a non-empty list of `t:Vix.Vips.Image.t/0`
     images.
 
   * `options` is a keyword list of options.
@@ -4026,12 +4026,12 @@ defmodule Image do
     image.
 
   * `:font` is the name of the font family to be applied.
-    The default is `Impact`.
+    The default is `"Impact"`.
 
   * `:font_file` is the path name to a font file that will be
     loaded. The default is `:default` which will load the included
-    `Impact` font if the font family is `Impact`. If the font family
-    is not `Impact` and the `:font_file` is `:default` then the
+    `Impact` font if the font family is `"Impact"`. If the font family
+    is not `"Impact"` and the `:font_file` is `:default` then the
     font displayed is resolved by the underlying operating system.
     If `:font_file` is a string, then it is expected to be a valid
     font file. If `:font_file` is set to a path then the `:font` option
@@ -4113,15 +4113,15 @@ defmodule Image do
     image.
 
   * `:font` is the name of the font family to be applied.
-    The default is `Impact`. If the font family name is `"Impact"`
+    The default is `"Impact"`. If the font family name is `"Impact"`
     then the included `unicode.impact.ttf` font file will also be
     loaded. This ensures that the `Impact` font is available on all
     systems.
 
   * `:font_file` is the path name to a font file that will be
     loaded. The default is `:default` which will load the included
-    `Impact` font if the font family is `Impact`. If the font family
-    is not `Impact` and the `:font_file` is `:default` then the
+    `Impact` font if the font family is `"Impact"`. If the font family
+    is not `"Impact"` and the `:font_file` is `:default` then the
     font displayed is resolved by the underlying operating system.
     If `:font_file` is a string, then it is expected to be a valid
     font file. If `:font_file` is set to a path then the `:font` option
@@ -4739,10 +4739,6 @@ defmodule Image do
 
   ### Options
 
-  * `:centre` is a boolean indicating whether to use
-    the centre downsampling convention. The default is
-    `false`.
-
   * `:interpolate` defines which resampling kernel to apply.
     The options are `:nearest`, `:linear`, `:cubic`,
     `:mitchell`, `:lanczos2` or `:lanczos3` (the default).
@@ -4807,10 +4803,6 @@ defmodule Image do
   * `options` is a keyword list of options.
 
   ### Options
-
-  * `:centre` is a boolean indicating whether to use
-    the centre downsampling convention. The default is
-    `false`.
 
   * `:interpolate` defines which resampling kernel to apply.
     The options are `:nearest`, `:linear`, `:cubic`,
@@ -5158,7 +5150,7 @@ defmodule Image do
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `options` is a keyword list of options. The
-    default is `[shape: :circle, crop: :none, size: #{Image.Options.Avatar.default_avatar_size()}]`.
+    default is `[shape: :circle, crop: :center, size: #{Image.Options.Avatar.default_avatar_size()}]`.
 
   ### Options
 
@@ -5174,7 +5166,7 @@ defmodule Image do
     format is `:circle` or `:squircle` an appropriate image
     mask is applied.
 
-  * `:crop_focus` is one of `:center`, `:entropy`,
+  * `:crop` is one of `:center`, `:entropy`,
     `:attention`, `:low`, `:high`. The default is `:center`.
     For details see `t:Image.Options.Crop.crop_focus/0`.
 
@@ -5232,7 +5224,7 @@ defmodule Image do
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `options` is a keyword list of options. The
-    default is `[shape: :circle, crop: :none, size: #{Image.Options.Avatar.default_avatar_size()}]`.
+    default is `[shape: :circle, crop: :center, size: #{Image.Options.Avatar.default_avatar_size()}]`.
 
   ### Options
 
@@ -5248,7 +5240,7 @@ defmodule Image do
     format is `:circle` or `:squircle` an appropriate image
     mask is applied.
 
-  * `:crop_focus` is one of `:center`, `:entropy`,
+  * `:crop` is one of `:center`, `:entropy`,
     `:attention`, `:low`, `:high`. The default is `:center`.
     For details see `t:Image.Options.Crop.crop_focus/0`.
 
@@ -5299,7 +5291,7 @@ defmodule Image do
   end
 
   # thumbnail/2 takes a size argument but its to establish the
-  # length of the *maxixum** side. We need the size of the *minimum*
+  # length of the *maximum* side. We need the size of the *minimum*
   # size
 
   defp calculate_size_from_option(image, size) do
@@ -5404,7 +5396,7 @@ defmodule Image do
   """
 
   # The shenanigans below is to avoid infinite recursion or
-  # hard-to-explain errors if `Image.map_pages/2` is called with
+  # hard-to-explain errors if `Image.map_join_pages/2` is called with
   # `Image.crop/5` as its function argument.
 
   @doc subject: "Crop"
@@ -6920,7 +6912,7 @@ defmodule Image do
 
   ### Flags
 
-  A two-entry `Keyword.t` is returned indicating what actions
+  A two-entry `t:Keyword.t/0` is returned indicating what actions
   were taken:
 
   * `:flip` which is a boolean indicating if the image
@@ -7979,7 +7971,7 @@ defmodule Image do
   # up the full requested angle.
 
   # Note that this implementation is a linear interpolation.
-  # In a future release it may be possible to impleement a quadratic
+  # In a future release it may be possible to implement a quadratic
   # curve fit (see https://www.youtube.com/watch?v=vEvbNG-kRyY)
 
   # Vertical gradient
@@ -8025,7 +8017,7 @@ defmodule Image do
   end
 
   # When creating a linear gradient on an angle we create the linear
-  # vertical grdient and then rotate it. Since rotation will result in
+  # vertical gradient and then rotate it. Since rotation will result in
   # the effective image area being smaller than the original image (and
   # will also be surrounded by black space pixels) we need to size the
   # gradient to be that size which, when center cropped, returns a gradient
@@ -8157,7 +8149,7 @@ defmodule Image do
     pixels.
 
   * `options` is a keyword list of options. See
-    `t:Image.Options.RadialrGradient.radial_gradient_option/0`.
+    `t:Image.Options.RadialGradient.radial_gradient_option/0`.
 
   ### Options
 
@@ -8239,7 +8231,7 @@ defmodule Image do
     pixels.
 
   * `options` is a keyword list of options. See
-    `t:Image.Options.RadialrGradient.radial_gradient_option/0`.
+    `t:Image.Options.RadialGradient.radial_gradient_option/0`.
 
   ### Options
 
@@ -8635,7 +8627,7 @@ defmodule Image do
   @doc """
   Returns the histogram for an image.
 
-  The histogram is returned as a `t:Vimage.t/0`
+  The histogram is returned as a `t:Vix.Vips.Image.t/0`
   that is a 255 by 1 pixel image with the same numbers of
   bands as the source image.
 
@@ -10297,7 +10289,7 @@ defmodule Image do
   end
 
   @doc """
-  Equalizes the histogram of an imaage.
+  Equalizes the histogram of an image.
 
   Equalization is the process of expanding the
   tone range of an image by stretching the darkest
@@ -10312,7 +10304,7 @@ defmodule Image do
   * `bands` determines which bands are equalized. The
     value may be one of:
 
-    * `:all` (defaalt) means that all bands are eqalized
+    * `:all` (default) means that all bands are equalized
       such that the darkest tones are expanded to black and the
       lightest tones are expanded to white.
 
@@ -10324,10 +10316,10 @@ defmodule Image do
       color shifts detected.
 
     * `:luminance` means that only the luminance band is
-      equqlized to fill between 1% and 99% of the tone range.
+      equalized to fill between 1% and 99% of the tone range.
       The image is converted to the `:lab` color space, the
       `l` band is equalized and the image is converted back to
-      its origianal color space.
+      its original color space.
 
   ### Returns
 
@@ -10446,7 +10438,7 @@ defmodule Image do
   * `bands` determines which bands are equalized. The
     value may be one of:
 
-    * `:all` (defaalt) means that all bands are eqalized
+    * `:all` (default) means that all bands are equalized
       such that the darkest tones are expanded to black and the
       lightest tones are expanded to white.
 
@@ -10458,10 +10450,10 @@ defmodule Image do
       color shifts detected.
 
     * `:luminance` means that only the luminance band is
-      equqlized to fill between 1% and 99% of the tone range.
+      equalized to fill between 1% and 99% of the tone range.
       The image is converted to the `:lab` color space, the
       `l` band is equalized and the image is converted back to
-      its origianal color space.
+      its original color space.
 
   ### Returns
 
@@ -11893,7 +11885,7 @@ defmodule Image do
 
   ### Returns
 
-  * A single band `t:Vimage.t/0` representing the right hand side
+  * A single band `t:Vix.Vips.Image.t/0` representing the right hand side
     (positive numbers) of the logistic curve.
 
   ### Notes
@@ -12040,7 +12032,7 @@ defmodule Image do
   It renders the image to memory as a binary (therefore executing a full
   image pipeline) and then decomposes the binary into a list of lists.
 
-  As a result it can consume considerable amounst of memory and time
+  As a result it can consume considerable amounts of memory and time
   for anything other than small images.
 
   ### Example
@@ -12565,7 +12557,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`
 
     * `options` is a keyword list of options
 
@@ -12592,7 +12584,7 @@ defmodule Image do
     ### Note
 
     * The image type, `t:Vix.Vips.Image.t/0` stores data in
-      `{width, height, band}` format. However when the data is conerted
+      `{width, height, band}` format. However when the data is converted
       into an `t:Nx.Tensor.t/0` the data is written in `{height, width, band}`
       format.
 
@@ -12651,7 +12643,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`
 
     * `options` is a keyword list of options
 
@@ -12678,7 +12670,7 @@ defmodule Image do
     ### Note
 
     * The image type, `t:Vix.Vips.Image.t/0` stores data in
-      `{width, height, band}` format. However when the data is conerted
+      `{width, height, band}` format. However when the data is converted
       into an `t:Nx.Tensor.t/0` the data is written in `{height, width, band}`
       format.
 
@@ -12853,7 +12845,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -12943,7 +12935,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -12996,7 +12988,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`.
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -13087,7 +13079,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`.
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -13150,7 +13142,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`.
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
     * `source` is a list of 2-tuples representing the source
        points in `image`.
@@ -13262,7 +13254,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vimage.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -13368,7 +13360,7 @@ defmodule Image do
 
       ### Arguments
 
-      * `image` is any `t:Vimage.t/0`.
+      * `image` is any `t:Vix.Vips.Image.t/0`.
 
       * `convert_to_bgr` is a boolean indicating if the
         color order should be converted from `RGB` to `BGR`
@@ -13473,7 +13465,7 @@ defmodule Image do
 
       ### Arguments
 
-      * `image` is any `t:Vimage.t/0`.
+      * `image` is any `t:Vix.Vips.Image.t/0`.
 
       ### Returns
 
@@ -13510,7 +13502,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vimage.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`
 
   * `transform_matrix` is a matrix returned by
     `Image.transform_matrix/3`.
@@ -13598,7 +13590,7 @@ defmodule Image do
     is `:ae`. The valid metrics are:
 
     * [:ae](https://en.wikipedia.org/wiki/Sum_of_absolute_differences) which returns
-      the absolute nuber of pixels that are different between the two images.
+      the absolute number of pixels that are different between the two images.
       The returned value is conformed to the range of the underlying image format.
       Therefore the returned value is between `0.0` (images appear to be the same)
       and `1.0` (meaning the images appear completely different).
@@ -14848,7 +14840,7 @@ defmodule Image do
 
   * `{:ok, list_of_images}` or
 
-  * `{:error, reasom}`
+  * `{:error, reason}`
 
   ### Notes
 

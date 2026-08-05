@@ -10,7 +10,7 @@ defmodule Image.Options.Compose do
   """
 
   @typedoc """
-  Image compoositions options
+  Image composition options
 
   """
   @type t :: list(composition_option())
