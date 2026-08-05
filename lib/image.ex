@@ -6,7 +6,7 @@ defmodule Image do
 
   `Image` is intended to provide well-documented common image processing functions in
   an idiomatic Elixir functional style as a layer above the very comprehensive set
-  of functions in `Vix` and `libvips`.
+  of functions in Vix and libvips.
 
   In a very simple image resizing
   [benchmark](https://github.com/kipcole9/image/blob/main/bench/image_resize.exs),

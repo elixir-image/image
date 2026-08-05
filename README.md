@@ -30,7 +30,7 @@ Documentation can be found at <https://hexdocs.pm/image>.
 
 * **ICC colour profiles** — `Image.ICCProfile` for libvips' built-in profiles (`:srgb`, `:cmyk`, `:p3`) and arbitrary `.icc` files.
 
-* **Image streaming** — open and write directly from `File.Stream`s, Plug `Conn`s, in-memory binaries, and S3 sources.
+* **Image streaming** — open and write directly from `File.Stream`s, `Plug.Conn`s, in-memory binaries, and S3 sources.
 
 * **Optional integrations** — each is compiled only when its optional dependency is present:
 
