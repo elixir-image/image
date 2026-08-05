@@ -68,7 +68,7 @@ defmodule Image.Options.Open do
 
   @typedoc """
   The file access mode when opening
-  image files. The default in `:sequential`.
+  image files. The default is `:random`.
 
   """
   @type file_access :: :sequential | :random

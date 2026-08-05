@@ -62,7 +62,7 @@ defmodule Image.Shape do
     to draw the rectangle. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the rectangle. The default is `:black`.
+    of the rectangle. The default is `:white`.
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
@@ -129,7 +129,7 @@ defmodule Image.Shape do
     to draw the rectangle. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the rectangle. The default is `:black`.
+    of the rectangle. The default is `:white`.
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
@@ -195,7 +195,7 @@ defmodule Image.Shape do
     to draw the polygon. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the polygon. The default is `:black`
+    of the polygon. The default is `:white`
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
@@ -353,7 +353,7 @@ defmodule Image.Shape do
     to draw the polygon. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the polygon. The default is `:black`.
+    of the polygon. The default is `:white`.
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
@@ -522,7 +522,7 @@ defmodule Image.Shape do
     to draw the circle. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the circle. The default is `:black`.
+    of the circle. The default is `:white`.
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
@@ -586,7 +586,7 @@ defmodule Image.Shape do
     to draw the circle. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the circle. The default is `:black`.
+    of the circle. The default is `:white`.
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
@@ -635,7 +635,7 @@ defmodule Image.Shape do
     to draw the ellipse. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the ellipse. The default is `:black`.
+    of the ellipse. The default is `:white`.
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
@@ -704,7 +704,7 @@ defmodule Image.Shape do
     to draw the rectangle. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the polygon. The default is `:black`
+    of the polygon. The default is `:white`
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
@@ -759,7 +759,7 @@ defmodule Image.Shape do
     to draw the line. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the line. The default is `:black`.
+    of the line. The default is `:white`.
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent
@@ -837,7 +837,7 @@ defmodule Image.Shape do
     to draw the rectangle. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the polygon. The default is `:black`
+    of the polygon. The default is `:white`
 
   * `:opacity` is the opacity as a float between
     `0.0` and `1.0` where `0.0` is completely transparent

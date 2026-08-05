@@ -1609,7 +1609,7 @@ defmodule Image do
   for each known image type. For example:
 
       Image.write(image, image_path, minimize_file_size: true,
-        png: [compress: 60, lossy: true],
+        png: [compression: 7, lossy: true],
         jpg: [quality: 70],
         webp: [quality: 5])
 
@@ -2841,7 +2841,7 @@ defmodule Image do
     guideline, use `0.5` for 4 pixels/mm (display resolution),
     `1.0` for 12 pixels/mm and `1.5` for 16 pixels/mm (300 dpi == 12
     pixels/mm). These figures refer to the image raster, not the half-tone
-    resolution. The default is `0.5`.
+    resolution. The default is `1.0`.
 
   ### Returns
 
@@ -2957,7 +2957,7 @@ defmodule Image do
     guideline, use `0.5` for 4 pixels/mm (display resolution),
     `1.0` for 12 pixels/mm and `1.5` for 16 pixels/mm (300 dpi == 12
     pixels/mm). These figures refer to the image raster, not the half-tone
-    resolution. The default is `0.5`.
+    resolution. The default is `1.0`.
 
   ### Returns
 
@@ -4026,12 +4026,12 @@ defmodule Image do
     image.
 
   * `:font` is the name of the font family to be applied.
-    The default is `Impact`.
+    The default is `"Impact"`.
 
   * `:font_file` is the path name to a font file that will be
     loaded. The default is `:default` which will load the included
-    `Impact` font if the font family is `Impact`. If the font family
-    is not `Impact` and the `:font_file` is `:default` then the
+    `Impact` font if the font family is `"Impact"`. If the font family
+    is not `"Impact"` and the `:font_file` is `:default` then the
     font displayed is resolved by the underlying operating system.
     If `:font_file` is a string, then it is expected to be a valid
     font file. If `:font_file` is set to a path then the `:font` option
@@ -4113,15 +4113,15 @@ defmodule Image do
     image.
 
   * `:font` is the name of the font family to be applied.
-    The default is `Impact`. If the font family name is `"Impact"`
+    The default is `"Impact"`. If the font family name is `"Impact"`
     then the included `unicode.impact.ttf` font file will also be
     loaded. This ensures that the `Impact` font is available on all
     systems.
 
   * `:font_file` is the path name to a font file that will be
     loaded. The default is `:default` which will load the included
-    `Impact` font if the font family is `Impact`. If the font family
-    is not `Impact` and the `:font_file` is `:default` then the
+    `Impact` font if the font family is `"Impact"`. If the font family
+    is not `"Impact"` and the `:font_file` is `:default` then the
     font displayed is resolved by the underlying operating system.
     If `:font_file` is a string, then it is expected to be a valid
     font file. If `:font_file` is set to a path then the `:font` option
@@ -4739,10 +4739,6 @@ defmodule Image do
 
   ### Options
 
-  * `:centre` is a boolean indicating whether to use
-    the centre downsampling convention. The default is
-    `false`.
-
   * `:interpolate` defines which resampling kernel to apply.
     The options are `:nearest`, `:linear`, `:cubic`,
     `:mitchell`, `:lanczos2` or `:lanczos3` (the default).
@@ -4807,10 +4803,6 @@ defmodule Image do
   * `options` is a keyword list of options.
 
   ### Options
-
-  * `:centre` is a boolean indicating whether to use
-    the centre downsampling convention. The default is
-    `false`.
 
   * `:interpolate` defines which resampling kernel to apply.
     The options are `:nearest`, `:linear`, `:cubic`,
@@ -5158,7 +5150,7 @@ defmodule Image do
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `options` is a keyword list of options. The
-    default is `[shape: :circle, crop: :none, size: #{Image.Options.Avatar.default_avatar_size()}]`.
+    default is `[shape: :circle, crop: :center, size: #{Image.Options.Avatar.default_avatar_size()}]`.
 
   ### Options
 
@@ -5174,7 +5166,7 @@ defmodule Image do
     format is `:circle` or `:squircle` an appropriate image
     mask is applied.
 
-  * `:crop_focus` is one of `:center`, `:entropy`,
+  * `:crop` is one of `:center`, `:entropy`,
     `:attention`, `:low`, `:high`. The default is `:center`.
     For details see `t:Image.Options.Crop.crop_focus/0`.
 
@@ -5232,7 +5224,7 @@ defmodule Image do
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `options` is a keyword list of options. The
-    default is `[shape: :circle, crop: :none, size: #{Image.Options.Avatar.default_avatar_size()}]`.
+    default is `[shape: :circle, crop: :center, size: #{Image.Options.Avatar.default_avatar_size()}]`.
 
   ### Options
 
@@ -5248,7 +5240,7 @@ defmodule Image do
     format is `:circle` or `:squircle` an appropriate image
     mask is applied.
 
-  * `:crop_focus` is one of `:center`, `:entropy`,
+  * `:crop` is one of `:center`, `:entropy`,
     `:attention`, `:low`, `:high`. The default is `:center`.
     For details see `t:Image.Options.Crop.crop_focus/0`.
 
