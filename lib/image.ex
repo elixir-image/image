@@ -8959,17 +8959,18 @@ defmodule Image do
 
       with {:ok, srgb_image} <- Image.to_colorspace(image, :srgb),
            {:ok, target_image} <-
-             Image.new(1, 1, color: :black, interpretation: original_colorspace) do
+             Image.new(1, 1, color: :black, interpretation: original_colorspace),
+           {:ok, model} <- Image.Scholar.k_means(srgb_image, options) do
         k_means =
-          srgb_image
-          |> Image.Scholar.k_means(options)
-          |> Map.fetch!(:clusters)
+          model.clusters
           |> Nx.to_list()
           |> Enum.map(fn rgb -> Enum.map(rgb, &round/1) end)
           |> Enum.sort()
           |> Enum.map(fn rgb -> Pixel.to_pixel!(target_image, rgb) end)
 
         {:ok, k_means}
+      else
+        {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :k_means)}
       end
     end
 
@@ -9119,6 +9120,13 @@ defmodule Image do
     @doc subject: "Clusters", since: "0.50.0"
 
     def reduce_colors(%Vimage{} = image, options \\ []) do
+      case do_reduce_colors(image, options) do
+        {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :reduce_colors)}
+        other -> other
+      end
+    end
+
+    defp do_reduce_colors(image, options) do
       with {:ok, image} <- to_colorspace(image, :srgb) do
         kmeans_num_clusters =
           Keyword.get(options, :colors, @default_clusters)
@@ -9136,16 +9144,15 @@ defmodule Image do
           |> to_nx!()
           |> Nx.reshape({height * width, bands})
 
-        model =
-          Scholar.Cluster.KMeans.fit(nx_reshaped, options)
+        with {:ok, model} <- Image.Scholar.fit(nx_reshaped, options) do
+          indicies =
+            Nx.as_type(model.labels, :u8)
 
-        indicies =
-          Nx.as_type(model.labels, :u8)
-
-        model.clusters
-        |> Nx.take(indicies)
-        |> Nx.reshape({height, width, bands})
-        |> Image.from_nx()
+          model.clusters
+          |> Nx.take(indicies)
+          |> Nx.reshape({height, width, bands})
+          |> Image.from_nx()
+        end
       end
     end
 
