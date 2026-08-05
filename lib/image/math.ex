@@ -996,10 +996,10 @@ defmodule Image.Math do
   """
   @spec bottom_n(image :: Vimage.t(), n :: non_neg_integer()) ::
           {
-            minimim :: float(),
-            x_max :: non_neg_integer(),
-            y_max :: non_neg_integer(),
-            max_coordinates :: [Image.point(), ...]
+            minimum :: float(),
+            x_min :: non_neg_integer(),
+            y_min :: non_neg_integer(),
+            min_coordinates :: [Image.point(), ...]
           }
 
   def bottom_n(%Vimage{} = image, n \\ 10) when is_integer(n) do

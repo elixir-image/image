@@ -25,7 +25,7 @@ defmodule Image.Options.Compare do
 
   @type compare_options :: [compare_option()]
 
-  # Ussed by Image.compare/3 and defines the
+  # Used by Image.compare/3 and defines the
   # default metric to be used.
   @default_compare_metric :ae
 

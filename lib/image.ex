@@ -143,7 +143,7 @@ defmodule Image do
   @type pixel :: [number()] | number()
 
   @typedoc """
-  Representaton of a coordinate in an image.
+  Representation of a coordinate in an image.
 
   The first number is the displacement on the
   x-axis (starting at 0 from the left) and the
@@ -314,7 +314,7 @@ defmodule Image do
   represent a rectangle (not an arbitrary quadrilateral),
 
   The order of points is top_left -> top right -> bottom
-  right -> bottm left.
+  right -> bottom left.
 
   """
   @doc subject: "Guard"
@@ -1627,7 +1627,7 @@ defmodule Image do
   ### Returns
 
   * `{:ok, image}`, or `{:ok, binary}` if the destination is
-    `:memory`) or `{:ok, conn}` if the destination is a `t:Plug.Connt.t/0` or
+    `:memory`) or `{:ok, conn}` if the destination is a `t:Plug.Conn.t/0` or
 
   * `{:error, reason}`
 
@@ -5291,7 +5291,7 @@ defmodule Image do
   end
 
   # thumbnail/2 takes a size argument but its to establish the
-  # length of the *maxixum** side. We need the size of the *minimum*
+  # length of the *maximum* side. We need the size of the *minimum*
   # size
 
   defp calculate_size_from_option(image, size) do
@@ -7971,7 +7971,7 @@ defmodule Image do
   # up the full requested angle.
 
   # Note that this implementation is a linear interpolation.
-  # In a future release it may be possible to impleement a quadratic
+  # In a future release it may be possible to implement a quadratic
   # curve fit (see https://www.youtube.com/watch?v=vEvbNG-kRyY)
 
   # Vertical gradient
@@ -8017,7 +8017,7 @@ defmodule Image do
   end
 
   # When creating a linear gradient on an angle we create the linear
-  # vertical grdient and then rotate it. Since rotation will result in
+  # vertical gradient and then rotate it. Since rotation will result in
   # the effective image area being smaller than the original image (and
   # will also be surrounded by black space pixels) we need to size the
   # gradient to be that size which, when center cropped, returns a gradient
@@ -8149,7 +8149,7 @@ defmodule Image do
     pixels.
 
   * `options` is a keyword list of options. See
-    `t:Image.Options.RadialrGradient.radial_gradient_option/0`.
+    `t:Image.Options.RadialGradient.radial_gradient_option/0`.
 
   ### Options
 
@@ -8231,7 +8231,7 @@ defmodule Image do
     pixels.
 
   * `options` is a keyword list of options. See
-    `t:Image.Options.RadialrGradient.radial_gradient_option/0`.
+    `t:Image.Options.RadialGradient.radial_gradient_option/0`.
 
   ### Options
 
@@ -10282,7 +10282,7 @@ defmodule Image do
   end
 
   @doc """
-  Equalizes the histogram of an imaage.
+  Equalizes the histogram of an image.
 
   Equalization is the process of expanding the
   tone range of an image by stretching the darkest
@@ -10297,7 +10297,7 @@ defmodule Image do
   * `bands` determines which bands are equalized. The
     value may be one of:
 
-    * `:all` (defaalt) means that all bands are eqalized
+    * `:all` (default) means that all bands are equalized
       such that the darkest tones are expanded to black and the
       lightest tones are expanded to white.
 
@@ -10309,10 +10309,10 @@ defmodule Image do
       color shifts detected.
 
     * `:luminance` means that only the luminance band is
-      equqlized to fill between 1% and 99% of the tone range.
+      equalized to fill between 1% and 99% of the tone range.
       The image is converted to the `:lab` color space, the
       `l` band is equalized and the image is converted back to
-      its origianal color space.
+      its original color space.
 
   ### Returns
 
@@ -10431,7 +10431,7 @@ defmodule Image do
   * `bands` determines which bands are equalized. The
     value may be one of:
 
-    * `:all` (defaalt) means that all bands are eqalized
+    * `:all` (default) means that all bands are equalized
       such that the darkest tones are expanded to black and the
       lightest tones are expanded to white.
 
@@ -10443,10 +10443,10 @@ defmodule Image do
       color shifts detected.
 
     * `:luminance` means that only the luminance band is
-      equqlized to fill between 1% and 99% of the tone range.
+      equalized to fill between 1% and 99% of the tone range.
       The image is converted to the `:lab` color space, the
       `l` band is equalized and the image is converted back to
-      its origianal color space.
+      its original color space.
 
   ### Returns
 
@@ -12025,7 +12025,7 @@ defmodule Image do
   It renders the image to memory as a binary (therefore executing a full
   image pipeline) and then decomposes the binary into a list of lists.
 
-  As a result it can consume considerable amounst of memory and time
+  As a result it can consume considerable amounts of memory and time
   for anything other than small images.
 
   ### Example
@@ -12577,7 +12577,7 @@ defmodule Image do
     ### Note
 
     * The image type, `t:Vix.Vips.Image.t/0` stores data in
-      `{width, height, band}` format. However when the data is conerted
+      `{width, height, band}` format. However when the data is converted
       into an `t:Nx.Tensor.t/0` the data is written in `{height, width, band}`
       format.
 
@@ -12663,7 +12663,7 @@ defmodule Image do
     ### Note
 
     * The image type, `t:Vix.Vips.Image.t/0` stores data in
-      `{width, height, band}` format. However when the data is conerted
+      `{width, height, band}` format. However when the data is converted
       into an `t:Nx.Tensor.t/0` the data is written in `{height, width, band}`
       format.
 
@@ -13583,7 +13583,7 @@ defmodule Image do
     is `:ae`. The valid metrics are:
 
     * [:ae](https://en.wikipedia.org/wiki/Sum_of_absolute_differences) which returns
-      the absolute nuber of pixels that are different between the two images.
+      the absolute number of pixels that are different between the two images.
       The returned value is conformed to the range of the underlying image format.
       Therefore the returned value is between `0.0` (images appear to be the same)
       and `1.0` (meaning the images appear completely different).
@@ -14833,7 +14833,7 @@ defmodule Image do
 
   * `{:ok, list_of_images}` or
 
-  * `{:error, reasom}`
+  * `{:error, reason}`
 
   ### Notes
 

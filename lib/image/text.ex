@@ -70,7 +70,7 @@ defmodule Image.Text do
     `:ultrabold`, `:heavy` or an integer between `1` and `1_000`.
     The default is `:normal` which is equivalent to `400`.
 
-  * `:font_file` is a path to any `.ttf` font file. If specfied,
+  * `:font_file` is a path to any `.ttf` font file. If specified,
     the `:font` parameter is also required. Note that this option
     is not supported on MacOS systems.
 
@@ -241,7 +241,7 @@ defmodule Image.Text do
   * `:font_size` is an integer font size in pixels. The
     default is `50`.
 
-  * `:font_file` is a path to any `.ttf` font file. If specfied,
+  * `:font_file` is a path to any `.ttf` font file. If specified,
     the `:font` parameter is also required. Note that this option
     is not supported on MacOS systems.
 

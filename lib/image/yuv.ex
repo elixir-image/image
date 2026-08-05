@@ -320,7 +320,7 @@ defmodule Image.YUV do
   @doc """
   Writes an image to a YUV file as raw YUV data.
 
-  It is recommeneded, but not required, that the path
+  It is recommended, but not required, that the path
   name use a `.yuv` suffix.
 
   ### Arguments

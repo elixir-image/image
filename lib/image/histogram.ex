@@ -390,7 +390,7 @@ defmodule Image.Histogram do
   end
 
   # Here we are expanding the list of 100
-  # luminanace values into a list of 256
+  # luminance values into a list of 256
   # luminance values. Its a bit ad-hoc but
   # reasonably efficient.
 

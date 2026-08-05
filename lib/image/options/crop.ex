@@ -56,7 +56,7 @@ defmodule Image.Options.Crop do
   # after cropping. Indeed that is already the behaviour for
   # :center and :attention.
 
-  # Note too that we use US English spelling as apposed
+  # Note too that we use US English spelling as opposed
   # to the libvips British English spelling. The
   # assumption being that most developers expect
   # US English.
@@ -74,7 +74,7 @@ defmodule Image.Options.Crop do
   @inverse_crop Map.values(@crop_map)
 
   @doc """
-  Validates options to `Iamge.crop/5`.
+  Validates options to `Image.crop/5`.
 
   """
   def validate_options(options) do
