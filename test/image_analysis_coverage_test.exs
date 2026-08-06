@@ -4,6 +4,8 @@ defmodule Image.AnalysisCoverageTest do
   import Image.TestSupport
   alias Vix.Vips.Image, as: Vimage
 
+  doctest Image.Scholar
+
   describe "Image.delta_e/3" do
     test "identical colors have zero difference in all versions" do
       for version <- [:de00, :de76, :decmc] do
@@ -169,6 +171,125 @@ defmodule Image.AnalysisCoverageTest do
                 operation: :reduce_colors,
                 value: [:unknown_option]
               }} = Image.reduce_colors(image, unknown_option: true)
+    end
+
+    test "reduce_colors/2 preserves the band format of the image" do
+      image = Image.new!(2, 2, color: [255, 0, 0])
+
+      assert {:ok, reduced} = Image.reduce_colors(image, colors: 1, key: Nx.Random.key(1))
+      assert Image.band_format(reduced) == Image.band_format(image)
+
+      pixels = Image.to_nx!(reduced) |> Nx.to_flat_list()
+      assert pixels == List.flatten(List.duplicate([255, 0, 0], 4))
+    end
+
+    test "reduce_colors/2 rounds cluster colors rather than truncating them" do
+      # The two pixels are one apart, so the single centroid lands on
+      # exactly 100.5, where rounding and truncating disagree.
+      image =
+        Image.join!(
+          [Image.new!(1, 1, color: [100, 100, 100]), Image.new!(1, 1, color: [101, 101, 101])],
+          across: 2
+        )
+
+      assert {:ok, reduced} = Image.reduce_colors(image, colors: 1, key: Nx.Random.key(1))
+      assert Image.to_nx!(reduced) |> Nx.to_flat_list() == List.duplicate(101, 6)
+    end
+
+    test "reduce_colors/2 returns an error for a single-pixel image" do
+      assert {:error, %Image.Error{operation: :reduce_colors, message: message}} =
+               Image.reduce_colors(Image.new!(1, 1, color: :red), colors: 2)
+
+      assert message =~ "at least 2 samples"
+    end
+
+    test "reduce_colors/2 clamps :colors to the number of unique colors" do
+      image =
+        Image.join!([Image.new!(2, 2, color: :red), Image.new!(2, 2, color: :blue)], across: 2)
+
+      assert {:ok, 2} = Image.Scholar.unique_color_count(image)
+
+      assert {:ok, reduced} = Image.reduce_colors(image, colors: 100, key: Nx.Random.key(1))
+      assert {:ok, 2} = Image.Scholar.unique_color_count(reduced)
+    end
+
+    test "reduce_colors/2 uses more than 256 colors when asked" do
+      image =
+        image_path("Hong-Kong-2015-07-1998.jpg")
+        |> Image.open!()
+        |> Image.thumbnail!(40)
+
+      assert {:ok, {_counts, colors}} = Image.Scholar.unique_colors(image)
+      assert Nx.axis_size(colors, 0) > 300
+
+      assert {:ok, reduced} =
+               Image.reduce_colors(image,
+                 colors: 300,
+                 key: Nx.Random.key(1),
+                 num_runs: 1,
+                 max_iterations: 5
+               )
+
+      assert {:ok, {_counts, reduced_colors}} = Image.Scholar.unique_colors(reduced)
+      assert Nx.axis_size(reduced_colors, 0) > 256
+    end
+  end
+
+  describe "Image.Scholar.fit/3" do
+    test "returns an error when Scholar raises outside its option schema" do
+      samples = Nx.tensor([1, 2, 3, 4])
+
+      assert {:error, %Image.Error{reason: :invalid_option, message: message}} =
+               Image.Scholar.fit(samples, num_clusters: 2, key: Nx.Random.key(1))
+
+      assert message =~ "expected input tensor to have shape"
+    end
+  end
+
+  describe "Image.Scholar.unique_color_count/1" do
+    setup do
+      image =
+        image_path("Kip_small.jpg")
+        |> Image.open!()
+        |> Image.thumbnail!(32)
+
+      {:ok, %{image: image}}
+    end
+
+    test "agrees with unique_colors/1", %{image: image} do
+      assert {:ok, {_counts, colors}} = Image.Scholar.unique_colors(image)
+      assert {:ok, count} = Image.Scholar.unique_color_count(image)
+      assert count == Nx.axis_size(colors, 0)
+    end
+
+    test "an image and its tensor give the same answer", %{image: image} do
+      assert {:ok, count} = Image.Scholar.unique_color_count(image)
+      assert {:ok, ^count} = Image.Scholar.unique_color_count(Image.to_nx!(image))
+    end
+
+    test "counts a single pixel without calling Nx.diff/1" do
+      assert {:ok, 1} = Image.Scholar.unique_color_count(Image.new!(1, 1, color: :red))
+    end
+
+    test "returns an error for a greyscale image, which it cannot encode", %{image: image} do
+      assert {:error, %Image.Error{message: message}} =
+               Image.Scholar.unique_color_count(Image.to_colorspace!(image, :bw))
+
+      assert message =~ "3- or 4-band"
+    end
+
+    test "returns an error for a 16-bit image, which it cannot encode", %{image: image} do
+      assert {:error, %Image.Error{message: message}} =
+               Image.Scholar.unique_color_count(Image.cast!(image, {:u, 16}))
+
+      assert message =~ "8-bit unsigned"
+    end
+
+    test "returns an error for a tensor that is not an image", %{image: image} do
+      assert {:error, %Image.Error{message: message}} =
+               Image.Scholar.unique_color_count(Nx.flatten(Image.to_nx!(image)))
+
+      assert message =~ "rank 1"
     end
   end
 

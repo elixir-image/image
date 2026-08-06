@@ -6,8 +6,9 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
     [Scholar](https://hex.pm/packages/scholar) machine-learning
     primitives.
 
-    The primary public API is `unique_colors/1` and `k_means/2`
-    which underpin `Image.k_means/2` and `Image.reduce_colors/2`.
+    The public API is `unique_colors/1`, `unique_color_count/1` and
+    `k_means/2`, which underpin `Image.k_means/2` and
+    `Image.reduce_colors/2`.
 
     """
 
@@ -102,20 +103,130 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
       end
     end
 
+    @doc """
+    Returns the number of unique colors in an image.
+
+    Prefer this over `unique_colors/1` when only the count is
+    needed.
+
+    ### Arguments
+
+    * `image_or_tensor` is any 3- or 4-band `t:Vix.Vips.Image.t/0` with
+      `{:u, 8}` band format, or the `{height, width, bands}` tensor of
+      such an image as returned by `Image.to_nx/2`. Pass the tensor when
+      one is already to hand, to avoid converting the image twice.
+
+    ### Returns
+
+    * `{:ok, count}` or
+
+    * `{:error, reason}`.
+
+    ### Example
+
+        iex> Image.Scholar.unique_color_count(Image.new!(4, 4, color: :red))
+        {:ok, 1}
+
+    """
+    @spec unique_color_count(image_or_tensor :: Vimage.t() | Nx.Tensor.t()) ::
+            {:ok, non_neg_integer()} | {:error, Image.Error.t()}
+
+    def unique_color_count(image_or_tensor)
+
+    def unique_color_count(%Vimage{} = image) do
+      with {:ok, tensor} <- Image.to_nx(image) do
+        unique_color_count(tensor)
+      end
+    end
+
+    # The rank is checked first so the band lookup below cannot raise.
+    def unique_color_count(%Nx.Tensor{} = tensor) do
+      cond do
+        Nx.rank(tensor) != 3 ->
+          {:error,
+           scholar_error(
+             "unique_color_count requires a {height, width, bands} tensor. " <>
+               "Found rank #{Nx.rank(tensor)}"
+           )}
+
+        Nx.axis_size(tensor, 2) not in [3, 4] ->
+          {:error,
+           scholar_error(
+             "unique_color_count requires a 3- or 4-band image. " <>
+               "Found #{Nx.axis_size(tensor, 2)} bands"
+           )}
+
+        Nx.type(tensor) != {:u, 8} ->
+          {:error,
+           scholar_error(
+             "unique_color_count requires an 8-bit unsigned image. " <>
+               "Found #{inspect(Nx.type(tensor))}"
+           )}
+
+        true ->
+          {:ok, do_unique_color_count(tensor, Nx.axis_size(tensor, 2))}
+      end
+    end
+
+    defp do_unique_color_count(tensor, bands) do
+      encoded =
+        tensor
+        |> encode_colors(bands)
+        |> Nx.flatten()
+        |> Nx.sort()
+
+      # Nx.diff/1 needs at least two elements, so a single pixel is counted
+      # directly. Otherwise the distinct count is one more than the number
+      # of adjacent unequal pairs.
+      if Nx.size(encoded) < 2 do
+        Nx.size(encoded)
+      else
+        Nx.to_number(Nx.sum(Nx.not_equal(diff(encoded), 0))) + 1
+      end
+    end
+
     defp scholar_error(message) do
       %Image.Error{message: message, reason: message}
     end
 
-    # Scholar.Cluster.KMeans.fit/2 validates its options with
-    # NimbleOptions.validate!/2 which raises on an invalid or unknown
-    # option, so translate the exception to {:error, %Image.Error{}} here
-    # at the boundary
+    # Scholar.Cluster.KMeans.fit/2 raises rather than returning an error:
+    # NimbleOptions.ValidationError for an invalid or unknown option, and
+    # ArgumentError for the checks it makes outside its schema. Both are
+    # translated to {:error, %Image.Error{}} here at the boundary.
+    #
+    # `max_clusters` bounds `:num_clusters`, which cannot exceed the
+    # number of distinct samples to cluster.
     @doc false
-    def fit(samples, options) do
-      {:ok, Scholar.Cluster.KMeans.fit(samples, options)}
+    def fit(samples, options, max_clusters \\ nil) do
+      # Scholar raises ArithmeticError for a lone sample rather than
+      # validating it, so it is checked here to keep the message useful.
+      if Nx.axis_size(samples, 0) < 2 do
+        {:error,
+         scholar_error(
+           "K-means requires at least 2 samples to cluster. " <>
+             "Found #{Nx.axis_size(samples, 0)}"
+         )}
+      else
+        {:ok, Scholar.Cluster.KMeans.fit(samples, clamp_clusters(options, max_clusters))}
+      end
     rescue
       exception in NimbleOptions.ValidationError ->
         {:error, invalid_option(exception)}
+
+      exception in ArgumentError ->
+        {:error, %Image.Error{reason: :invalid_option, message: Exception.message(exception)}}
+    end
+
+    defp clamp_clusters(options, nil), do: options
+
+    defp clamp_clusters(options, max_clusters) do
+      case Keyword.fetch(options, :num_clusters) do
+        {:ok, num_clusters} when is_integer(num_clusters) ->
+          Keyword.put(options, :num_clusters, Kernel.min(num_clusters, max_clusters))
+
+        _other ->
+          options
+      end
     end
 
     # An unknown option sets :key to the list of unknown keys and leaves
@@ -159,8 +270,6 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
     """
     def k_means(%Vimage{} = image, options \\ []) do
       with {:ok, {_count, colors}} <- unique_colors(image) do
-        # K-means requires at least as many samples as clusters, so
-        # the cluster count is clamped to the number of unique colors.
         # A single unique color (solid image) is duplicated because
         # the random centroid initialisation needs at least 2 samples.
         unique_count = Nx.axis_size(colors, 0)
@@ -168,16 +277,7 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
         colors =
           if unique_count == 1, do: Nx.concatenate([colors, colors]), else: colors
 
-        options =
-          case Keyword.fetch(options, :num_clusters) do
-            {:ok, num_clusters} when is_integer(num_clusters) ->
-              Keyword.put(options, :num_clusters, Kernel.min(num_clusters, unique_count))
-
-            _other ->
-              options
-          end
-
-        fit(colors, options)
+        fit(colors, options, unique_count)
       end
     end
 

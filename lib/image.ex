@@ -9066,9 +9066,9 @@ defmodule Image do
     @doc """
     Reduces the number of colors in an image.
 
-    Takes the `k_means/2` of the image and then
-    re-colors the image using the returned cluster
-    colors.
+    Applies K-means clustering to the pixels of the image
+    and then re-colors each pixel with the color of the
+    cluster it was assigned to.
 
     ### Arguments
 
@@ -9080,6 +9080,9 @@ defmodule Image do
 
     * `:colors` is the number of distinct colors to be
       used in the returned image. The default is `#{@default_clusters}`.
+      An image cannot have more distinct colors than it started
+      with, so `:colors` is clamped to the number of unique colors
+      in the image.
 
     * See also `Scholar.Cluster.KMeans.fit/2` for the
       available options.
@@ -9088,6 +9091,9 @@ defmodule Image do
 
     * Note the performance considerations described in
       `Image.k_means/2` since they also apply to this function.
+
+    * The image is converted to the `:srgb` colorspace before
+      clustering and the returned image is in that colorspace.
 
     * If the intent is to reduce colors in order to
       reduce the size of an image file it is strongly advised to
@@ -9111,6 +9117,9 @@ defmodule Image do
     """
     @doc subject: "Clusters", since: "0.50.0"
 
+    @spec reduce_colors(image :: Vimage.t(), options :: Keyword.t()) ::
+            {:ok, Vimage.t()} | {:error, error()}
+
     def reduce_colors(%Vimage{} = image, options \\ []) do
       case do_reduce_colors(image, options) do
         {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :reduce_colors)}
@@ -9119,32 +9128,25 @@ defmodule Image do
     end
 
     defp do_reduce_colors(image, options) do
-      with {:ok, image} <- to_colorspace(image, :srgb) do
-        kmeans_num_clusters =
-          Keyword.get(options, :colors, @default_clusters)
+      options =
+        options
+        |> Keyword.put(:num_clusters, Keyword.get(options, :colors, @default_clusters))
+        |> Keyword.delete(:colors)
 
-        options =
-          options
-          |> Keyword.put(:num_clusters, kmeans_num_clusters)
-          |> Keyword.delete(:colors)
-
-        {width, height, bands} =
-          Image.shape(image)
-
-        nx_reshaped =
-          image
-          |> to_nx!()
-          |> Nx.reshape({height * width, bands})
-
-        with {:ok, model} <- Image.Scholar.fit(nx_reshaped, options) do
-          indicies =
-            Nx.as_type(model.labels, :u8)
-
-          model.clusters
-          |> Nx.take(indicies)
-          |> Nx.reshape({height, width, bands})
-          |> Image.from_nx()
-        end
+      with {:ok, image} <- to_colorspace(image, :srgb),
+           {:ok, tensor} <- to_nx(image),
+           {width, height, bands} = Image.shape(image),
+           nx_reshaped = Nx.reshape(tensor, {height * width, bands}),
+           {:ok, unique_count} <- Image.Scholar.unique_color_count(tensor),
+           {:ok, model} <- Image.Scholar.fit(nx_reshaped, options, unique_count) do
+        # The clusters are floats, so the recolored image is rounded
+        # back into the band format of the image being clustered.
+        model.clusters
+        |> Nx.take(model.labels)
+        |> Nx.round()
+        |> Nx.as_type(Image.band_format(image))
+        |> Nx.reshape({height, width, bands})
+        |> Image.from_nx()
       end
     end
 
@@ -9152,9 +9154,9 @@ defmodule Image do
     Reduces the number of colors in an image or
     raises an exception.
 
-    Takes the `k_means/2` of the image and then
-    re-colors the image using the returned cluster
-    colors.
+    Applies K-means clustering to the pixels of the image
+    and then re-colors each pixel with the color of the
+    cluster it was assigned to.
 
     ### Arguments
 
@@ -9166,6 +9168,9 @@ defmodule Image do
 
     * `:colors` is the number of distinct colors to be
       used in the returned image. The default is `#{@default_clusters}`.
+      An image cannot have more distinct colors than it started
+      with, so `:colors` is clamped to the number of unique colors
+      in the image.
 
     * See also `Scholar.Cluster.KMeans.fit/2` for the
       available options.
@@ -9174,6 +9179,9 @@ defmodule Image do
 
     * Note the performance considerations described in
       `Image.k_means/2` since they also apply to this function.
+
+    * The image is converted to the `:srgb` colorspace before
+      clustering and the returned image is in that colorspace.
 
     * If the intent is to reduce colors in order to
       reduce the size of an image file it is strongly advised to
@@ -9196,6 +9204,9 @@ defmodule Image do
 
     """
     @doc subject: "Clusters", since: "0.51.0"
+
+    @spec reduce_colors!(image :: Vimage.t(), options :: Keyword.t()) ::
+            Vimage.t() | no_return()
 
     def reduce_colors!(%Vimage{} = image, options \\ []) do
       case reduce_colors(image, options) do
