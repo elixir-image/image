@@ -36,6 +36,8 @@
 
 * **Breaking:** `Image.reduce_colors/2` returns `{:u, 8}` instead of `{:f, 32}`. K-means produced a float image, and nothing cast it back. The result is now rounded into the band format it clustered. libvips truncated these float values when casting on save, so output values can change by up to 1 per channel after this change. ([#229](https://github.com/elixir-image/image/pull/229))
 
+* **Breaking:** `Image.reduce_colors/2` returns the image in the colorspace it was given. A `:cmyk` image returns four bands and a greyscale image returns one, where previously every image came back as 3-band `:srgb`. ([#229](https://github.com/elixir-image/image/pull/229))
+
 * `Image.reduce_colors/2` clamps `:colors` to the number of unique colors in the image. Previously a `:colors` greater than the image's pixel count failed. ([#229](https://github.com/elixir-image/image/pull/229))
 
 * `Image.affine/3` and `Image.rotate/3` now premultiply alpha explicitly only when the background is non-opaque, since libvips handles the other cases itself. `Image.shear/4` and `Image.translate/4` inherit this. ([#217](https://github.com/elixir-image/image/pull/217))

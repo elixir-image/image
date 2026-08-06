@@ -196,6 +196,19 @@ defmodule Image.AnalysisCoverageTest do
       assert Image.to_nx!(reduced) |> Nx.to_flat_list() == List.duplicate(101, 6)
     end
 
+    test "reduce_colors/2 returns the image in its original colorspace", %{image: image} do
+      for colorspace <- [:srgb, :cmyk, :bw, :grey16, :rgb16, :hsv] do
+        source = Image.to_colorspace!(image, colorspace)
+
+        assert {:ok, reduced} =
+                 Image.reduce_colors(source, colors: 4, key: Nx.Random.key(1), num_runs: 1)
+
+        assert Image.colorspace(reduced) == colorspace
+        assert Image.bands(reduced) == Image.bands(source)
+        assert Image.band_format(reduced) == Image.band_format(source)
+      end
+    end
+
     test "reduce_colors/2 returns an error for a single-pixel image" do
       assert {:error, %Image.Error{operation: :reduce_colors, message: message}} =
                Image.reduce_colors(Image.new!(1, 1, color: :red), colors: 2)

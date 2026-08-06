@@ -9092,8 +9092,10 @@ defmodule Image do
     * Note the performance considerations described in
       `Image.k_means/2` since they also apply to this function.
 
-    * The image is converted to the `:srgb` colorspace before
-      clustering and the returned image is in that colorspace.
+    * Clustering is performed in the `:srgb` colorspace and the
+      result is converted back to the colorspace of `image`. The
+      colors of a 16-bit image are therefore drawn from an 8-bit
+      palette.
 
     * If the intent is to reduce colors in order to
       reduce the size of an image file it is strongly advised to
@@ -9133,20 +9135,26 @@ defmodule Image do
         |> Keyword.put(:num_clusters, Keyword.get(options, :colors, @default_clusters))
         |> Keyword.delete(:colors)
 
-      with {:ok, image} <- to_colorspace(image, :srgb),
-           {:ok, tensor} <- to_nx(image),
-           {width, height, bands} = Image.shape(image),
+      colorspace = Image.colorspace(image)
+
+      with {:ok, srgb} <- to_colorspace(image, :srgb),
+           {:ok, tensor} <- to_nx(srgb),
+           {width, height, bands} = Image.shape(srgb),
            nx_reshaped = Nx.reshape(tensor, {height * width, bands}),
            {:ok, unique_count} <- Image.Scholar.unique_color_count(tensor),
-           {:ok, model} <- Image.Scholar.fit(nx_reshaped, options, unique_count) do
-        # The clusters are floats, so the recolored image is rounded
-        # back into the band format of the image being clustered.
-        model.clusters
-        |> Nx.take(model.labels)
-        |> Nx.round()
-        |> Nx.as_type(Image.band_format(image))
-        |> Nx.reshape({height, width, bands})
-        |> Image.from_nx()
+           {:ok, model} <- Image.Scholar.fit(nx_reshaped, options, unique_count),
+           # The clusters are floats, so the recolored image is rounded
+           # back into the band format of the image being clustered.
+           {:ok, reduced} <-
+             model.clusters
+             |> Nx.take(model.labels)
+             |> Nx.round()
+             |> Nx.as_type(Image.band_format(srgb))
+             |> Nx.reshape({height, width, bands})
+             |> Image.from_nx() do
+        # Clustering happens in :srgb, so the result is returned to the
+        # colorspace the caller passed in.
+        to_colorspace(reduced, colorspace)
       end
     end
 
@@ -9180,8 +9188,10 @@ defmodule Image do
     * Note the performance considerations described in
       `Image.k_means/2` since they also apply to this function.
 
-    * The image is converted to the `:srgb` colorspace before
-      clustering and the returned image is in that colorspace.
+    * Clustering is performed in the `:srgb` colorspace and the
+      result is converted back to the colorspace of `image`. The
+      colors of a 16-bit image are therefore drawn from an 8-bit
+      palette.
 
     * If the intent is to reduce colors in order to
       reduce the size of an image file it is strongly advised to
