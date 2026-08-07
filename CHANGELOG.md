@@ -34,6 +34,12 @@
 
 * **Breaking:** `Image.k_means/2` and `Image.reduce_colors/2` return `{:error, %Image.Error{reason: :invalid_option}}` for an invalid or unknown option instead of raising `NimbleOptions.ValidationError`. `Image.k_means!/2` and `Image.reduce_colors!/2` raise `Image.Error` rather than the NimbleOptions exception. `operation` is set to `k_means` or `reduce_colors`, and `value` is `{key, value}` for an invalid value or the list of keys for unknown options. ([#227](https://github.com/elixir-image/image/pull/227))
 
+* **Breaking:** `Image.reduce_colors/2` returns `{:u, 8}` instead of `{:f, 32}`. K-means produced a float image, and nothing cast it back. The result is now rounded into the band format it clustered. libvips truncated these float values when casting on save, so output values can change by up to 1 per channel after this change. ([#229](https://github.com/elixir-image/image/pull/229))
+
+* **Breaking:** `Image.reduce_colors/2` returns the image in the colorspace it was given. A `:cmyk` image returns four bands and a greyscale image returns one, where previously every image came back as 3-band `:srgb`. ([#229](https://github.com/elixir-image/image/pull/229))
+
+* `Image.reduce_colors/2` clamps `:colors` to the number of unique colors in the image. Previously a `:colors` greater than the image's pixel count failed. ([#229](https://github.com/elixir-image/image/pull/229))
+
 * `Image.affine/3` and `Image.rotate/3` now premultiply alpha explicitly only when the background is non-opaque, since libvips handles the other cases itself. `Image.shear/4` and `Image.translate/4` inherit this. ([#217](https://github.com/elixir-image/image/pull/217))
 
 ### Fixed
@@ -47,6 +53,12 @@
 * Fix the specs for `Image.Math.cos/1` and `Image.Math.sin/1`, which omitted `{:error, Image.error()}`, and for eight math operators, which omitted the `Vimage.t()` they already accepted. All `@dialyzer` opt-outs and the `.dialyzer_ignore_warnings` file are removed. ([#221](https://github.com/elixir-image/image/pull/221))
 
 * Fix the `:greater_than` and `:less_than` documentation for `Image.chroma_mask/2`, `Image.chroma_key/2` and `Image.replace_color/2`, which described the bounds the wrong way round in all six places they appeared. The mask covers the range between the two, so `:greater_than` is the lower bound and `:less_than` the upper. ([#224](https://github.com/elixir-image/image/pull/224))
+
+* Fix `Image.reduce_colors/2` silently producing wrong output above 256 colors. A cast to `{:u, 8}` wrapped every color index above 255 back around (256 became 0, 257 became 1, and so on), so those pixels were painted with the color reached by the wraparound. ([#229](https://github.com/elixir-image/image/pull/229))
+
+* Fix `Image.reduce_colors/2` raising instead of returning an error tuple, both for the `ArgumentError` that `Scholar.Cluster.KMeans.fit/2` raises for checks it makes outside its option schema, and for the `ArithmeticError` it raises when given a single sample. ([#229](https://github.com/elixir-image/image/pull/229))
+
+* Fix `Image.reduce_colors/2` raising when the image could not be converted to a tensor. ([#229](https://github.com/elixir-image/image/pull/229))
 
 ### Removed
 
@@ -107,6 +119,8 @@ This is the changelog for Image version 0.70.0 released on July 8th, 2026.  For 
 * Adds `:background` color resolution to `Image.write/3` so alpha images flatten onto a resolved background when writing to formats without alpha. Thanks to @hlindset for the PR.
 
 * Adds `Image.YUV.valid_encodings/0` and `Image.YUV.valid_colorspaces/0`.
+
+* Adds `Image.Scholar.unique_color_count/1`, which returns the number of distinct colors in an image and accepts either an image or its tensor. ([#229](https://github.com/elixir-image/image/pull/229))
 
 ### Changed
 
