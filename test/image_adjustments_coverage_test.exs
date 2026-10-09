@@ -482,7 +482,7 @@ defmodule Image.AdjustmentsCoverageTest do
       image = Image.new!(10, 10, color: [10, 20, 30])
       opaque = Image.add_alpha!(image, :opaque)
 
-      assert {:ok, translucent} = Image.opacity(opaque, 0.5)
+      assert {:ok, translucent} = Image.multiply_alpha(opaque, 0.5)
       [_red, _green, _blue, alpha] = Image.get_pixel!(translucent, 5, 5)
       assert_in_delta alpha, 128, 1
     end
@@ -490,7 +490,7 @@ defmodule Image.AdjustmentsCoverageTest do
     test "adds an alpha band to an image without one" do
       image = Image.new!(10, 10, color: [10, 20, 30])
 
-      assert {:ok, translucent} = Image.opacity(image, 0.25)
+      assert {:ok, translucent} = Image.multiply_alpha(image, 0.25)
       assert Image.bands(translucent) == 4
       [_red, _green, _blue, alpha] = Image.get_pixel!(translucent, 5, 5)
       assert_in_delta alpha, 64, 1
@@ -499,7 +499,7 @@ defmodule Image.AdjustmentsCoverageTest do
     test "a factor of 0.0 makes the image fully transparent" do
       image = Image.new!(10, 10, color: [10, 20, 30])
 
-      assert {:ok, transparent} = Image.opacity(image, 0.0)
+      assert {:ok, transparent} = Image.multiply_alpha(image, 0.0)
       [_red, _green, _blue, alpha] = Image.get_pixel!(transparent, 5, 5)
       assert alpha == 0
     end
@@ -507,7 +507,7 @@ defmodule Image.AdjustmentsCoverageTest do
     test "opacity!/2 returns an image" do
       image = Image.new!(10, 10, color: [10, 20, 30])
 
-      assert %Vimage{} = Image.opacity!(image, 0.5)
+      assert %Vimage{} = Image.multiply_alpha!(image, 0.5)
     end
   end
 

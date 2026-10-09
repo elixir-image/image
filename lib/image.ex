@@ -1114,11 +1114,17 @@ defmodule Image do
   @spec from_svg(svg :: binary(), options :: Open.image_open_options()) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def from_svg(svg, options \\ []) when is_binary(svg) do
+  def from_svg(svg, options \\ [])
+
+  def from_svg(svg, options) when is_binary(svg) do
     case Operation.svgload_buffer(svg, options) do
       {:ok, {image, _flags}} -> {:ok, image}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  def from_svg(svg, _options) do
+    invalid_argument(:invalid_svg, "svg", svg, "a binary containing SVG markup")
   end
 
   @doc """
@@ -1173,7 +1179,7 @@ defmodule Image do
   @spec from_svg!(svg :: binary(), options :: Open.image_open_options()) ::
           Vimage.t() | no_return()
 
-  def from_svg!(svg, options \\ []) when is_binary(svg) do
+  def from_svg!(svg, options \\ []) do
     case from_svg(svg, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -1227,7 +1233,9 @@ defmodule Image do
   @spec from_binary(binary :: binary(), options :: Open.image_open_options()) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def from_binary(binary, options \\ []) when is_binary(binary) do
+  def from_binary(binary, options \\ [])
+
+  def from_binary(binary, options) when is_binary(binary) do
     with {:ok, options} <- Options.Open.validate_options(options) do
       options = Keyword.delete(options, :access)
 
@@ -1236,6 +1244,10 @@ defmodule Image do
         {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :from_binary)}
       end
     end
+  end
+
+  def from_binary(binary, _options) do
+    invalid_argument(:invalid_binary, "binary", binary, "a binary")
   end
 
   @doc """
@@ -1271,7 +1283,7 @@ defmodule Image do
   @spec from_binary!(binary :: binary(), options :: Open.image_open_options()) ::
           Vimage.t() | no_return()
 
-  def from_binary!(binary, options \\ []) when is_binary(binary) do
+  def from_binary!(binary, options \\ []) do
     case from_binary(binary, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -4064,7 +4076,9 @@ defmodule Image do
   @spec meme(image :: Vimage.t(), headline :: String.t(), options :: Options.Meme.meme_options()) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def meme(%Vimage{} = image, headline, options \\ []) when is_binary(headline) do
+  def meme(image, headline, options \\ [])
+
+  def meme(%Vimage{} = image, headline, options) when is_binary(headline) do
     with {:ok, options} <- Options.Meme.validate_options(image, options),
          {:ok, width} <- text_box_width(image, options),
          {:ok, headline} <- text_overlay(headline, options.headline_size, width, options),
@@ -4072,6 +4086,10 @@ defmodule Image do
          {:ok, with_headline} <- compose(image, headline, headline_location(image, headline)) do
       compose(with_headline, text, text_location(image, text))
     end
+  end
+
+  def meme(%Vimage{} = _image, headline, _options) do
+    invalid_argument(:invalid_headline, "headline", headline, "a binary")
   end
 
   @doc """
@@ -4159,7 +4177,7 @@ defmodule Image do
   @spec meme!(image :: Vimage.t(), headline :: String.t(), options :: Options.Meme.meme_options()) ::
           Vimage.t() | no_return()
 
-  def meme!(%Vimage{} = image, headline, options \\ []) when is_binary(headline) do
+  def meme!(%Vimage{} = image, headline, options \\ []) do
     case meme(image, headline, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -4758,7 +4776,9 @@ defmodule Image do
   @spec resize(Vimage.t(), scale :: number(), options :: Resize.resize_options()) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def resize(%Vimage{} = image, scale, options \\ []) when scale >= 0 do
+  def resize(image, scale, options \\ [])
+
+  def resize(%Vimage{} = image, scale, options) when is_number(scale) and scale >= 0 do
     with {:ok, options} <- Resize.validate_options(options) do
       if has_alpha?(image) do
         # Pre-multiply the alpha so the resize doesn't bleed
@@ -4776,6 +4796,15 @@ defmodule Image do
         Operation.resize(image, scale, options)
       end
     end
+  end
+
+  def resize(%Vimage{} = _image, scale, _options) do
+    invalid_argument(
+      :invalid_scale,
+      "scale",
+      scale,
+      "a number greater than or equal to 0"
+    )
   end
 
   @doc """
@@ -4823,7 +4852,7 @@ defmodule Image do
   @spec resize!(Vimage.t(), scale :: number(), options :: Resize.resize_options()) ::
           Vimage.t() | no_return()
 
-  def resize!(%Vimage{} = image, scale, options \\ []) when scale >= 0 do
+  def resize!(%Vimage{} = image, scale, options \\ []) do
     case resize(image, scale, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -4864,10 +4893,16 @@ defmodule Image do
   @spec pixelate(image :: Vimage.t(), scale :: number()) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def pixelate(%Vimage{} = image, scale \\ @pixelate_scale) when is_number(scale) and scale > 0 do
+  def pixelate(image, scale \\ @pixelate_scale)
+
+  def pixelate(%Vimage{} = image, scale) when is_number(scale) and scale > 0 do
     image
     |> resize!(scale)
     |> resize(1 / scale, interpolate: :nearest)
+  end
+
+  def pixelate(%Vimage{} = _image, scale) do
+    invalid_argument(:invalid_scale, "scale", scale, "a number greater than 0")
   end
 
   @doc """
@@ -4904,8 +4939,7 @@ defmodule Image do
   @spec pixelate!(image :: Vimage.t(), scale :: number()) ::
           Vimage.t() | no_return()
 
-  def pixelate!(%Vimage{} = image, scale \\ @pixelate_scale)
-      when is_number(scale) and scale > 0 do
+  def pixelate!(%Vimage{} = image, scale \\ @pixelate_scale) do
     case pixelate(image, scale) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -6525,10 +6559,21 @@ defmodule Image do
   @spec dilate(image :: Vimage.t(), radius :: pos_integer) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def dilate(image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
+  def dilate(image, radius \\ 1)
+
+  def dilate(image, radius) when is_integer(radius) and radius in @rank_radius_range do
     radius = radius + radius * 2
     index = radius * radius - 1
     Operation.rank(image, radius, radius, index)
+  end
+
+  def dilate(_image, radius) do
+    invalid_argument(
+      :invalid_radius,
+      "radius",
+      radius,
+      "an integer in #{inspect(@rank_radius_range)}"
+    )
   end
 
   @doc """
@@ -6579,8 +6624,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.23.0"
 
   @spec dilate!(image :: Vimage.t(), radius :: pos_integer) :: Vimage.t() | no_return()
-  def dilate!(%Vimage{} = image, radius \\ 1)
-      when is_integer(radius) and radius in @rank_radius_range do
+  def dilate!(%Vimage{} = image, radius \\ 1) do
     case dilate(image, radius) do
       {:ok, dilated} -> dilated
       {:error, reason} -> raise Image.Error, reason
@@ -6634,9 +6678,20 @@ defmodule Image do
   @spec erode(image :: Vimage.t(), radius :: pos_integer()) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def erode(image, radius \\ 1) when is_integer(radius) and radius in @rank_radius_range do
+  def erode(image, radius \\ 1)
+
+  def erode(image, radius) when is_integer(radius) and radius in @rank_radius_range do
     radius = radius + radius * 2
     Operation.rank(image, radius, radius, 0)
+  end
+
+  def erode(_image, radius) do
+    invalid_argument(
+      :invalid_radius,
+      "radius",
+      radius,
+      "an integer in #{inspect(@rank_radius_range)}"
+    )
   end
 
   @doc """
@@ -6684,8 +6739,7 @@ defmodule Image do
   @doc subject: "Operation", since: "0.23.0"
 
   @spec erode!(image :: Vimage.t(), radius :: pos_integer()) :: Vimage.t() | no_return()
-  def erode!(%Vimage{} = image, radius \\ 1)
-      when is_integer(radius) and radius in @rank_radius_range do
+  def erode!(%Vimage{} = image, radius \\ 1) do
     case erode(image, radius) do
       {:ok, eroded} -> eroded
       {:error, reason} -> raise Image.Error, reason
@@ -6786,7 +6840,9 @@ defmodule Image do
         ) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def rotate(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
+  def rotate(image, angle, options \\ [])
+
+  def rotate(%Vimage{} = image, angle, options) when is_number(angle) do
     with {:ok, options} <- Options.Rotate.validate_options(image, options) do
       rot_angle = rot_angle(angle, options)
 
@@ -6806,6 +6862,10 @@ defmodule Image do
           Operation.rotate(image, angle, options)
       end
     end
+  end
+
+  def rotate(%Vimage{} = _image, angle, _options) do
+    invalid_argument(:invalid_angle, "angle", angle, "a number of degrees")
   end
 
   defp rotation_matrix(angle) do
@@ -6880,7 +6940,7 @@ defmodule Image do
         ) ::
           Vimage.t() | no_return()
 
-  def rotate!(%Vimage{} = image, angle, options \\ []) when is_number(angle) do
+  def rotate!(%Vimage{} = image, angle, options \\ []) do
     case rotate(image, angle, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -7028,13 +7088,17 @@ defmodule Image do
   @doc since: "0.67.0"
   @doc subject: "Metadata"
 
-  @spec set_orientation(image :: Vimage.t(), orientation :: 1..8) ::
+  @spec set_orientation(image :: Vimage.t(), orientation :: integer()) ::
           {:ok, Vimage.t()} | {:error, error()}
   def set_orientation(%Vimage{} = image, orientation)
       when is_integer(orientation) and orientation in 1..8 do
     Vimage.mutate(image, fn mut_img ->
       Vix.Vips.MutableImage.set(mut_img, "orientation", :gint, orientation)
     end)
+  end
+
+  def set_orientation(%Vimage{} = _image, orientation) do
+    invalid_argument(:invalid_orientation, "orientation", orientation, "an integer in 1..8")
   end
 
   @doc """
@@ -7054,7 +7118,7 @@ defmodule Image do
   @doc since: "0.67.0"
   @doc subject: "Metadata"
 
-  @spec set_orientation!(image :: Vimage.t(), orientation :: 1..8) :: Vimage.t() | no_return()
+  @spec set_orientation!(image :: Vimage.t(), orientation :: integer()) :: Vimage.t() | no_return()
   def set_orientation!(%Vimage{} = image, orientation) do
     case set_orientation(image, orientation) do
       {:ok, image} -> image
@@ -9832,6 +9896,15 @@ defmodule Image do
     end)
   end
 
+  def brightness(%Vimage{} = _image, brightness) do
+    invalid_argument(
+      :invalid_brightness,
+      "brightness",
+      brightness,
+      "a number greater than or equal to 0"
+    )
+  end
+
   @doc """
   Apply a percentage adjustment to an image's brightness
   (luminance) or raises an exception.
@@ -9864,7 +9937,7 @@ defmodule Image do
   @doc subject: "Basic Adjustments"
 
   @spec brightness!(image :: Vimage.t(), brightness :: float()) :: Vimage.t() | no_return()
-  def brightness!(%Vimage{} = image, brightness) when is_multiplier(brightness) do
+  def brightness!(%Vimage{} = image, brightness) do
     case brightness(image, brightness) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -10933,6 +11006,15 @@ defmodule Image do
     end)
   end
 
+  def saturation(%Vimage{} = _image, saturation) do
+    invalid_argument(
+      :invalid_saturation,
+      "saturation",
+      saturation,
+      "a number greater than or equal to 0"
+    )
+  end
+
   @doc """
   Apply an adjustment to an image's saturation
   (chroma) or raises an exception.
@@ -10975,7 +11057,7 @@ defmodule Image do
   @doc subject: "Basic Adjustments"
 
   @spec saturation!(image :: Vimage.t(), saturation :: float()) :: Vimage.t() | no_return()
-  def saturation!(%Vimage{} = image, saturation) when is_multiplier(saturation) do
+  def saturation!(%Vimage{} = image, saturation) do
     case saturation(image, saturation) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -10997,7 +11079,7 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `exponent` is a positive float. The default is `1.0`.
+  * `exponent` is a positive number. The default is `1.0`.
     Values in `(0.0, 1.0)` darken; values in `(1.0, ∞)`
     brighten. Imgix's `gam=`, Cloudflare's `gamma=`, and
     Cloudinary's `e_gamma:` all use this convention.
@@ -11017,10 +11099,16 @@ defmodule Image do
   @doc since: "0.67.0"
   @doc subject: "Basic Adjustments"
 
-  @spec gamma(image :: Vimage.t(), exponent :: float()) ::
+  @spec gamma(image :: Vimage.t(), exponent :: number()) ::
           {:ok, Vimage.t()} | {:error, error()}
-  def gamma(%Vimage{} = image, exponent \\ 1.0) when is_multiplier(exponent) and exponent > 0.0 do
+  def gamma(image, exponent \\ 1.0)
+
+  def gamma(%Vimage{} = image, exponent) when is_multiplier(exponent) and exponent > 0.0 do
     Operation.gamma(image, exponent: exponent)
+  end
+
+  def gamma(%Vimage{} = _image, exponent) do
+    invalid_argument(:invalid_exponent, "exponent", exponent, "a number greater than 0.0")
   end
 
   @doc """
@@ -11037,8 +11125,8 @@ defmodule Image do
   @doc since: "0.67.0"
   @doc subject: "Basic Adjustments"
 
-  @spec gamma!(image :: Vimage.t(), exponent :: float()) :: Vimage.t() | no_return()
-  def gamma!(%Vimage{} = image, exponent \\ 1.0) when is_multiplier(exponent) and exponent > 0.0 do
+  @spec gamma!(image :: Vimage.t(), exponent :: number()) :: Vimage.t() | no_return()
+  def gamma!(%Vimage{} = image, exponent \\ 1.0) do
     case gamma(image, exponent) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -11065,7 +11153,7 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `strength` is a float in `[0.0, 1.0]`. The default is
+  * `strength` is a number in `[0.0, 1.0]`. The default is
     `1.0` (full sepia). `0.0` is the identity (no change);
     intermediate values blend the sepia matrix with the
     identity, matching imgix's `sepia=N` 0–100 percentage
@@ -11087,9 +11175,11 @@ defmodule Image do
   @doc since: "0.67.0"
   @doc subject: "Basic Adjustments"
 
-  @spec sepia(image :: Vimage.t(), strength :: float()) ::
+  @spec sepia(image :: Vimage.t(), strength :: number()) ::
           {:ok, Vimage.t()} | {:error, error()}
-  def sepia(%Vimage{} = image, strength \\ 1.0)
+  def sepia(image, strength \\ 1.0)
+
+  def sepia(%Vimage{} = image, strength)
       when is_multiplier(strength) and strength <= 1.0 do
     matrix = blend_with_identity(@sepia_matrix, strength)
 
@@ -11098,6 +11188,10 @@ defmodule Image do
         Operation.recomb(srgb, m)
       end
     end)
+  end
+
+  def sepia(%Vimage{} = _image, strength) do
+    invalid_argument(:invalid_strength, "strength", strength, "a number in 0.0..1.0")
   end
 
   @doc """
@@ -11116,9 +11210,8 @@ defmodule Image do
   @doc since: "0.67.0"
   @doc subject: "Basic Adjustments"
 
-  @spec sepia!(image :: Vimage.t(), strength :: float()) :: Vimage.t() | no_return()
-  def sepia!(%Vimage{} = image, strength \\ 1.0)
-      when is_multiplier(strength) and strength <= 1.0 do
+  @spec sepia!(image :: Vimage.t(), strength :: number()) :: Vimage.t() | no_return()
+  def sepia!(%Vimage{} = image, strength \\ 1.0) do
     case sepia(image, strength) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -11713,6 +11806,10 @@ defmodule Image do
     end)
   end
 
+  def posterize(%Vimage{} = _image, levels) do
+    invalid_argument(:invalid_levels, "levels", levels, "an integer in 2..256")
+  end
+
   @doc """
   Reduces an image's tonal range to `levels` distinct values
   per band, or raises on error.
@@ -11739,13 +11836,13 @@ defmodule Image do
   end
 
   @doc """
-  Multiplies an image's alpha channel by `factor`.
+  Multiplies an image's alpha band by `factor`.
 
   If the image has no alpha band, an opaque one is added first
   so that `factor < 1.0` produces a translucent result. The
-  colour bands are not changed; this is intentional — opacity
-  is an *alpha* operation, distinct from a brightness or
-  saturation curve.
+  colour bands are not changed; this is intentional — the
+  operation is an *alpha* adjustment, distinct from a brightness
+  or saturation curve.
 
   ### Arguments
 
@@ -11758,10 +11855,12 @@ defmodule Image do
     Cloudinary's `o_<n>` and ImageKit's `e-opacity` both use
     this `0..1` (or `0..100` percentage) convention.
 
-    Note that `factor` is a multiplier, not a `t:Image.Pixel.opacity/0`.
-    It scales whatever alpha each pixel already has, so the integer `1`
-    means unchanged here rather than the `1/255` it means wherever an
-    opacity is set.
+    Note that `factor` is a multiplier, not a
+    `t:Image.Pixel.opacity/0`. It scales whatever alpha each pixel
+    already has, so the integer `1` means unchanged here rather
+    than the `1/255` it means wherever an opacity is set. Use
+    `Image.add_alpha/2` or `Image.Pixel.put_alpha/3` to set an
+    opacity rather than scale one.
 
   ### Returns
 
@@ -11772,18 +11871,18 @@ defmodule Image do
   ### Examples
 
       iex> image = Image.open!("./test/support/images/cat.png")
-      iex> {:ok, _half} = Image.opacity(image, 0.5)
+      iex> {:ok, _half} = Image.multiply_alpha(image, 0.5)
 
       iex> image = Image.open!("./test/support/images/cat.png")
-      iex> {:error, %Image.Error{reason: :invalid_factor}} = Image.opacity(image, 1.5)
+      iex> {:error, %Image.Error{reason: :invalid_factor}} = Image.multiply_alpha(image, 1.5)
 
   """
-  @doc since: "0.67.0"
+  @doc since: "0.73.0"
   @doc subject: "Operation"
 
-  @spec opacity(image :: Vimage.t(), factor :: number()) ::
+  @spec multiply_alpha(image :: Vimage.t(), factor :: number()) ::
           {:ok, Vimage.t()} | {:error, error()}
-  def opacity(%Vimage{} = image, factor)
+  def multiply_alpha(%Vimage{} = image, factor)
       when is_multiplier(factor) and factor <= 1.0 do
     image =
       if has_alpha?(image), do: image, else: add_alpha!(image, :opaque)
@@ -11803,38 +11902,67 @@ defmodule Image do
     end
   end
 
-  def opacity(%Vimage{} = _image, factor) do
-    {:error,
-     %Image.Error{
-       reason: :invalid_factor,
-       value: factor,
-       message: "Invalid factor #{inspect(factor)}. Must be a number in 0.0..1.0"
-     }}
+  def multiply_alpha(%Vimage{} = _image, factor) do
+    invalid_argument(:invalid_factor, "factor", factor, "a number in 0.0..1.0")
   end
 
   @doc """
-  Multiplies an image's alpha channel by `factor`, or raises on
+  Multiplies an image's alpha band by `factor`, or raises on
   error.
 
-  See `opacity/2` for argument documentation.
+  See `multiply_alpha/2` for argument documentation.
 
   ### Example
 
       iex> image = Image.new!(5, 5, color: [10, 20, 30])
-      iex> translucent = Image.opacity!(image, 0.5)
+      iex> translucent = Image.multiply_alpha!(image, 0.5)
       iex> Image.get_pixel!(translucent, 2, 2)
       [10, 20, 30, 127]
 
   """
-  @doc since: "0.67.0"
+  @doc since: "0.73.0"
   @doc subject: "Operation"
 
-  @spec opacity!(image :: Vimage.t(), factor :: number()) :: Vimage.t() | no_return()
-  def opacity!(%Vimage{} = image, factor) do
-    case opacity(image, factor) do
+  @spec multiply_alpha!(image :: Vimage.t(), factor :: number()) :: Vimage.t() | no_return()
+  def multiply_alpha!(%Vimage{} = image, factor) do
+    case multiply_alpha(image, factor) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
+  end
+
+  @doc """
+  Multiplies an image's alpha band by `factor`.
+
+  Renamed to `multiply_alpha/2`, which says what the operation
+  does and keeps `opacity` for the value callers set rather than
+  the factor they scale by.
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Operation"
+  @deprecated "Use Image.multiply_alpha/2 instead"
+
+  @spec opacity(image :: Vimage.t(), factor :: number()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+  def opacity(%Vimage{} = image, factor) do
+    multiply_alpha(image, factor)
+  end
+
+  @doc """
+  Multiplies an image's alpha band by `factor`, or raises on
+  error.
+
+  Renamed to `multiply_alpha!/2`.
+
+  """
+  @doc since: "0.67.0"
+  @doc subject: "Operation"
+  @deprecated "Use Image.multiply_alpha!/2 instead"
+
+  @spec opacity!(image :: Vimage.t(), factor :: number()) :: Vimage.t() | no_return()
+  def opacity!(%Vimage{} = image, factor) do
+    multiply_alpha!(image, factor)
   end
 
   @doc """
@@ -11889,7 +12017,9 @@ defmodule Image do
         ) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def vibrance(%Vimage{} = image, vibrance, options \\ []) when is_multiplier(vibrance) do
+  def vibrance(image, vibrance, options \\ [])
+
+  def vibrance(%Vimage{} = image, vibrance, options) when is_multiplier(vibrance) do
     use Image.Math
 
     with {:ok, options} <- Options.Vibrance.validate_options(options) do
@@ -11902,6 +12032,15 @@ defmodule Image do
         Image.join_bands([image[0], chroma, image[2]])
       end)
     end
+  end
+
+  def vibrance(%Vimage{} = _image, vibrance, _options) do
+    invalid_argument(
+      :invalid_vibrance,
+      "vibrance",
+      vibrance,
+      "a number greater than or equal to 0"
+    )
   end
 
   @doc """
@@ -12485,9 +12624,15 @@ defmodule Image do
         ) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def translate(%Vimage{} = image, dx, dy, options \\ [])
+  def translate(image, dx, dy, options \\ [])
+
+  def translate(%Vimage{} = image, dx, dy, options)
       when is_number(dx) and is_number(dy) do
     affine(image, [1, 0, 0, 1], Keyword.merge(options, idx: dx, idy: dy))
+  end
+
+  def translate(%Vimage{} = _image, dx, dy, _options) do
+    invalid_argument(:invalid_displacement, "displacement", {dx, dy}, "a pair of numbers")
   end
 
   @doc """
@@ -12587,9 +12732,15 @@ defmodule Image do
         ) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def shear(%Vimage{} = image, sx, sy, options \\ [])
+  def shear(image, sx, sy, options \\ [])
+
+  def shear(%Vimage{} = image, sx, sy, options)
       when is_number(sx) and is_number(sy) do
     affine(image, [1, sx, sy, 1], options)
+  end
+
+  def shear(%Vimage{} = _image, sx, sy, _options) do
+    invalid_argument(:invalid_shear, "shear factors", {sx, sy}, "a pair of numbers")
   end
 
   @doc """
@@ -13895,7 +14046,9 @@ defmodule Image do
   @spec dhash(image :: Vimage.t(), hash_size :: pos_integer()) ::
           {:ok, image_hash()} | {:error, error()}
 
-  def dhash(%Vimage{} = image, hash_size_bits \\ 64)
+  def dhash(image, hash_size_bits \\ 64)
+
+  def dhash(%Vimage{} = image, hash_size_bits)
       when is_integer(hash_size_bits) and hash_size_bits > 0 do
     hash_size = round(:math.sqrt(hash_size_bits))
 
@@ -13904,6 +14057,10 @@ defmodule Image do
       dhash = for <<_::7, v::1 <- pixels>>, into: <<>>, do: <<v::1>>
       {:ok, dhash}
     end
+  end
+
+  def dhash(%Vimage{} = _image, hash_size_bits) do
+    invalid_argument(:invalid_hash_size, "hash size", hash_size_bits, "a positive integer")
   end
 
   defp dhash_pixels(image, convolution, hash_size) do
@@ -14252,8 +14409,16 @@ defmodule Image do
   @spec join_bands(image_list :: [Vimage.t()]) ::
           {:ok, Vimage.t()} | {:error, error()}
 
-  def join_bands(bands) when is_list(bands) do
-    Operation.bandjoin(bands)
+  def join_bands([%Vimage{} | _rest] = bands) do
+    if Enum.all?(bands, &is_struct(&1, Vimage)) do
+      Operation.bandjoin(bands)
+    else
+      invalid_argument(:invalid_bands, "bands", bands, "a list of images")
+    end
+  end
+
+  def join_bands(bands) do
+    invalid_argument(:invalid_bands, "bands", bands, "a non-empty list of images")
   end
 
   @doc """
@@ -14288,7 +14453,7 @@ defmodule Image do
   @spec join_bands!(image_list :: [Vimage.t()]) ::
           Vimage.t() | no_return()
 
-  def join_bands!(bands) when is_list(bands) do
+  def join_bands!(bands) do
     case join_bands(bands) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -15365,5 +15530,19 @@ defmodule Image do
   @doc false
   def xav_configured? do
     match?({:module, _module}, Code.ensure_compiled(Xav.Reader))
+  end
+
+  # Builds the error returned by the fall-through clause of a function
+  # whose other clauses are guarded. Keeping it in one place means every
+  # such function reports an invalid argument the same way: a reason the
+  # caller can match on, the offending value, and a message naming what
+  # was expected.
+  defp invalid_argument(reason, name, value, expected) do
+    {:error,
+     %Image.Error{
+       reason: reason,
+       value: value,
+       message: "Invalid #{name} #{inspect(value)}. Must be #{expected}"
+     }}
   end
 end

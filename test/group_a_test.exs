@@ -2,7 +2,7 @@ defmodule Image.GroupA.Test do
   @moduledoc """
   Tests for the Group-A `image_plug`-driven additions:
   `Image.gamma/2`, `Image.sepia/2`, `Image.posterize/2`,
-  `Image.opacity/2`, `Image.set_orientation/2`, and the
+  `Image.multiply_alpha/2`, `Image.set_orientation/2`, and the
   `:lossy` / `:chroma_subsampling` write options.
 
   Also covers the `add_alpha/2` constant fix where `:opaque`
@@ -39,9 +39,24 @@ defmodule Image.GroupA.Test do
       assert r2 < r
     end
 
-    test "rejects non-positive exponents", %{cat: image} do
-      assert_raise FunctionClauseError, fn -> Image.gamma(image, 0.0) end
-      assert_raise FunctionClauseError, fn -> Image.gamma(image, -0.5) end
+    test "returns an error for non-positive exponents", %{cat: image} do
+      assert {:error, %Image.Error{reason: :invalid_exponent, value: +0.0}} =
+               Image.gamma(image, 0.0)
+
+      assert {:error, %Image.Error{reason: :invalid_exponent, value: -0.5}} =
+               Image.gamma(image, -0.5)
+    end
+
+    test "returns an error for an exponent of the wrong type", %{cat: image} do
+      for exponent <- [nil, "", :"", :bad, [1], %{}] do
+        assert {:error, %Image.Error{reason: :invalid_exponent, value: ^exponent}} =
+                 Image.gamma(image, exponent),
+               "#{inspect(exponent)} was not rejected"
+      end
+    end
+
+    test "gamma!/2 raises Image.Error, not FunctionClauseError", %{cat: image} do
+      assert_raise Image.Error, fn -> Image.gamma!(image, 0.0) end
     end
 
     test "gamma! raises only on invalid input", %{cat: image} do
@@ -82,9 +97,24 @@ defmodule Image.GroupA.Test do
       assert (b >= min(b0, bf) and b <= max(b0, bf)) or abs(b - (b0 + bf) / 2) < 5
     end
 
-    test "rejects out-of-range strengths", %{cat: image} do
-      assert_raise FunctionClauseError, fn -> Image.sepia(image, 1.5) end
-      assert_raise FunctionClauseError, fn -> Image.sepia(image, -0.1) end
+    test "returns an error for out-of-range strengths", %{cat: image} do
+      assert {:error, %Image.Error{reason: :invalid_strength, value: 1.5}} =
+               Image.sepia(image, 1.5)
+
+      assert {:error, %Image.Error{reason: :invalid_strength, value: -0.1}} =
+               Image.sepia(image, -0.1)
+    end
+
+    test "returns an error for a strength of the wrong type", %{cat: image} do
+      for strength <- [nil, "", :"", :bad, [1], %{}] do
+        assert {:error, %Image.Error{reason: :invalid_strength, value: ^strength}} =
+                 Image.sepia(image, strength),
+               "#{inspect(strength)} was not rejected"
+      end
+    end
+
+    test "sepia!/2 raises Image.Error, not FunctionClauseError", %{cat: image} do
+      assert_raise Image.Error, fn -> Image.sepia!(image, 1.5) end
     end
   end
 
@@ -107,29 +137,44 @@ defmodule Image.GroupA.Test do
       assert Image.get_pixel!(p, 100, 100) == orig
     end
 
-    test "rejects out-of-range levels", %{hk: image} do
-      assert_raise FunctionClauseError, fn -> Image.posterize(image, 1) end
-      assert_raise FunctionClauseError, fn -> Image.posterize(image, 257) end
+    test "returns an error for out-of-range levels", %{hk: image} do
+      assert {:error, %Image.Error{reason: :invalid_levels, value: 1}} =
+               Image.posterize(image, 1)
+
+      assert {:error, %Image.Error{reason: :invalid_levels, value: 257}} =
+               Image.posterize(image, 257)
+    end
+
+    test "returns an error for levels of the wrong type", %{hk: image} do
+      for levels <- [nil, "", :"", :bad, [1], %{}] ++ [2.5] do
+        assert {:error, %Image.Error{reason: :invalid_levels, value: ^levels}} =
+                 Image.posterize(image, levels),
+               "#{inspect(levels)} was not rejected"
+      end
+    end
+
+    test "posterize!/2 raises Image.Error, not FunctionClauseError", %{hk: image} do
+      assert_raise Image.Error, fn -> Image.posterize!(image, 1) end
     end
   end
 
-  describe "Image.opacity/2" do
+  describe "Image.multiply_alpha/2" do
     test "halves the alpha band at factor 0.5", %{cat: image} do
       [_, _, _, a0] = Image.get_pixel!(image, 270, 180)
-      {:ok, half} = Image.opacity(image, 0.5)
+      {:ok, half} = Image.multiply_alpha(image, 0.5)
       [_, _, _, a] = Image.get_pixel!(half, 270, 180)
       assert_in_delta a, a0 * 0.5, 1.0
     end
 
     test "factor 0.0 produces alpha = 0 (fully transparent)", %{cat: image} do
-      {:ok, gone} = Image.opacity(image, 0.0)
+      {:ok, gone} = Image.multiply_alpha(image, 0.0)
       [_, _, _, a] = Image.get_pixel!(gone, 270, 180)
       assert a == 0
     end
 
     test "adds an opaque alpha band when missing, then scales", %{hk: image} do
       refute Image.has_alpha?(image)
-      {:ok, half} = Image.opacity(image, 0.5)
+      {:ok, half} = Image.multiply_alpha(image, 0.5)
       assert Image.has_alpha?(half)
       [_, _, _, a] = Image.get_pixel!(half, 100, 100)
       assert_in_delta a, 127, 1
@@ -137,23 +182,34 @@ defmodule Image.GroupA.Test do
 
     test "returns an error for factors outside [0, 1]", %{cat: image} do
       assert {:error, %Image.Error{reason: :invalid_factor, value: 1.5}} =
-               Image.opacity(image, 1.5)
+               Image.multiply_alpha(image, 1.5)
 
       assert {:error, %Image.Error{reason: :invalid_factor, value: -0.5}} =
-               Image.opacity(image, -0.5)
+               Image.multiply_alpha(image, -0.5)
     end
 
     test "returns an error for any non-numeric factor", %{cat: image} do
       for factor <- [nil, "", :"", :opaque, "0.5", [0.5], %{}, {0.5}] do
         assert {:error, %Image.Error{reason: :invalid_factor, value: ^factor}} =
-                 Image.opacity(image, factor),
+                 Image.multiply_alpha(image, factor),
                "#{inspect(factor)} was not rejected"
       end
     end
 
-    test "opacity!/2 raises Image.Error, not FunctionClauseError", %{cat: image} do
-      assert_raise Image.Error, fn -> Image.opacity!(image, 1.5) end
-      assert_raise Image.Error, fn -> Image.opacity!(image, -0.5) end
+    test "multiply_alpha!/2 raises Image.Error, not FunctionClauseError", %{cat: image} do
+      assert_raise Image.Error, fn -> Image.multiply_alpha!(image, 1.5) end
+      assert_raise Image.Error, fn -> Image.multiply_alpha!(image, -0.5) end
+    end
+
+    test "the deprecated Image.opacity/2 still delegates", %{cat: image} do
+      assert {:ok, half} = deprecated(:opacity, [image, 0.5])
+      assert {:ok, expected} = Image.multiply_alpha(image, 0.5)
+
+      assert Image.get_pixel!(half, 270, 180) == Image.get_pixel!(expected, 270, 180)
+
+      assert %Vix.Vips.Image{} = deprecated(:opacity!, [image, 0.5])
+
+      assert {:error, %Image.Error{reason: :invalid_factor}} = deprecated(:opacity, [image, 1.5])
     end
 
     test "scales the alpha band to the interpretation, not to 8 bits" do
@@ -163,7 +219,7 @@ defmodule Image.GroupA.Test do
         image = Image.to_colorspace!(base, interpretation)
         alpha_max = Image.Pixel.alpha_for!(image, :opaque)
 
-        {:ok, half} = Image.opacity(image, 0.5)
+        {:ok, half} = Image.multiply_alpha(image, 0.5)
         [_, _, _, alpha] = Image.get_pixel!(half, 10, 10)
 
         # Half opacity is half of the alpha band's own range, whether
@@ -190,9 +246,24 @@ defmodule Image.GroupA.Test do
       assert Image.get_pixel!(with_o, 100, 100) == orig
     end
 
-    test "rejects out-of-range orientations", %{hk: image} do
-      assert_raise FunctionClauseError, fn -> Image.set_orientation(image, 0) end
-      assert_raise FunctionClauseError, fn -> Image.set_orientation(image, 9) end
+    test "returns an error for out-of-range orientations", %{hk: image} do
+      assert {:error, %Image.Error{reason: :invalid_orientation, value: 0}} =
+               Image.set_orientation(image, 0)
+
+      assert {:error, %Image.Error{reason: :invalid_orientation, value: 9}} =
+               Image.set_orientation(image, 9)
+    end
+
+    test "returns an error for an orientation of the wrong type", %{hk: image} do
+      for orientation <- [nil, "", :"", :bad, [1], %{}] do
+        assert {:error, %Image.Error{reason: :invalid_orientation, value: ^orientation}} =
+                 Image.set_orientation(image, orientation),
+               "#{inspect(orientation)} was not rejected"
+      end
+    end
+
+    test "set_orientation!/2 raises Image.Error, not FunctionClauseError", %{hk: image} do
+      assert_raise Image.Error, fn -> Image.set_orientation!(image, 0) end
     end
   end
 
@@ -252,5 +323,11 @@ defmodule Image.GroupA.Test do
     test ":lossy rejected on JPEG", %{hk: image} do
       assert {:error, %Image.Error{}} = Image.write(image, :memory, suffix: ".jpg", lossy: true)
     end
+  end
+
+  # Calls a deprecated delegate without resolving it at compile time, so
+  # exercising it here does not emit a deprecation warning on every run.
+  defp deprecated(function, arguments) do
+    apply(Image, function, arguments)
   end
 end
