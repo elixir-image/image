@@ -106,72 +106,72 @@ defmodule Image.BackgroundColorTest do
     end
   end
 
-  describe "resolve/2 with a {color, alpha: a} spec" do
-    test "applies the alpha to the color on an image with alpha" do
+  describe "resolve/2 with a {color, opacity: o} spec" do
+    test "applies the opacity to the color on an image with alpha" do
       image = solid([0, 0, 0, 255])
-      assert BackgroundColor.resolve(image, {:red, alpha: 0.5}) == {:ok, [255, 0, 0, 128]}
+      assert BackgroundColor.resolve(image, {:red, opacity: 0.5}) == {:ok, [255, 0, 0, 128]}
     end
 
-    test "resolves :average first, then applies the alpha, on an image with alpha" do
+    test "resolves :average first, then applies the opacity, on an image with alpha" do
       image = solid([10, 20, 30, 255])
-      assert BackgroundColor.resolve(image, {:average, alpha: 0.5}) == {:ok, [10, 20, 30, 128]}
+      assert BackgroundColor.resolve(image, {:average, opacity: 0.5}) == {:ok, [10, 20, 30, 128]}
     end
 
     test "supports fully-transparent via the :transparent atom" do
       image = solid([0, 0, 0, 255])
-      assert BackgroundColor.resolve(image, {:black, alpha: :transparent}) == {:ok, [0, 0, 0, 0]}
+      assert BackgroundColor.resolve(image, {:black, opacity: :transparent}) == {:ok, [0, 0, 0, 0]}
     end
 
-    test "strips the alpha on an image without an alpha band (color)" do
+    test "strips the opacity on an image without an alpha band (color)" do
       image = solid([0, 0, 0])
-      assert BackgroundColor.resolve(image, {:red, alpha: 0.5}) == {:ok, [255, 0, 0]}
+      assert BackgroundColor.resolve(image, {:red, opacity: 0.5}) == {:ok, [255, 0, 0]}
     end
 
-    test "strips the alpha on an image without an alpha band (:average)" do
+    test "strips the opacity on an image without an alpha band (:average)" do
       image = solid([10, 20, 30])
-      assert BackgroundColor.resolve(image, {:average, alpha: 0.5}) == {:ok, [10, 20, 30]}
+      assert BackgroundColor.resolve(image, {:average, opacity: 0.5}) == {:ok, [10, 20, 30]}
     end
 
     test "wraps an invalid color in an Image.Error" do
       image = solid([0, 0, 0, 255])
 
       assert {:error, %Image.Error{} = error} =
-               BackgroundColor.resolve(image, {:definitely_not_a_color, alpha: 0.5})
+               BackgroundColor.resolve(image, {:definitely_not_a_color, opacity: 0.5})
 
       assert error.message =~ "Invalid background color :definitely_not_a_color"
     end
 
-    test "reports an invalid alpha value as an alpha error, not a color error" do
+    test "reports an invalid opacity as an opacity error, not a color error" do
       image = solid([0, 0, 0, 255])
 
-      assert {:error, %Image.Error{} = error} = BackgroundColor.resolve(image, {:red, alpha: 5.0})
-      assert error.message =~ "Invalid alpha 5.0"
+      assert {:error, %Image.Error{reason: :invalid_opacity, value: 5.0}} =
+               BackgroundColor.resolve(image, {:red, opacity: 5.0})
     end
 
-    test "validates the alpha even on an image without an alpha band" do
+    test "validates the opacity even on an image without an alpha band" do
       # The alpha would be dropped, but an invalid value still errors so that
       # validity does not depend on the image's band layout.
       image = solid([0, 0, 0])
 
-      assert {:error, %Image.Error{} = error} = BackgroundColor.resolve(image, {:red, alpha: 5.0})
-      assert error.message =~ "Invalid alpha 5.0"
+      assert {:error, %Image.Error{reason: :invalid_opacity, value: 5.0}} =
+               BackgroundColor.resolve(image, {:red, opacity: 5.0})
     end
 
-    test "a misspelled or missing :alpha key is an error, not a raise" do
+    test "a misspelled or missing :opacity key is an error, not a raise" do
       image = solid([0, 0, 0, 255])
 
       assert {:error, %Image.Error{} = error} =
-               BackgroundColor.resolve(image, {:red, opacity: 0.5})
+               BackgroundColor.resolve(image, {:red, transparency: 0.5})
 
-      assert error.message =~ "expected {color, alpha: transparency}"
+      assert error.message =~ "expected {color, opacity: opacity}"
       assert {:error, %Image.Error{}} = BackgroundColor.resolve(image, {:red, []})
     end
 
-    test "extra keys alongside :alpha are rejected" do
+    test "extra keys alongside :opacity are rejected" do
       image = solid([0, 0, 0, 255])
 
       assert {:error, %Image.Error{}} =
-               BackgroundColor.resolve(image, {:red, [alpha: 0.5, bogus: 1]})
+               BackgroundColor.resolve(image, {:red, [opacity: 0.5, bogus: 1]})
     end
   end
 
@@ -185,13 +185,11 @@ defmodule Image.BackgroundColorTest do
       assert error.message =~ "Invalid background color :definitely_not_a_color"
     end
 
-    test "preserves the underlying reason from Image.Pixel" do
+    test "reports an invalid color with a structured reason" do
       image = solid([0, 0, 0])
 
-      assert {:error, %Image.Error{reason: reason}} =
+      assert {:error, %Image.Error{reason: :invalid_color, value: "not-a-hex"}} =
                BackgroundColor.resolve(image, "not-a-hex")
-
-      assert reason == %Color.UnknownColorNameError{name: "not-a-hex"}
     end
   end
 end

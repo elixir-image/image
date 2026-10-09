@@ -64,9 +64,10 @@ defmodule Image.Shape do
   * `:stroke_color` is the color used for the outline
     of the rectangle. The default is `:white`.
 
-  * `:opacity` is the opacity as a float between
-    `0.0` and `1.0` where `0.0` is completely transparent
-    and `1.0` is completely opaque. The default is `0.7`.
+  * `:opacity` is any `t:Image.Pixel.opacity/0`: a
+    float in `0.0..1.0`, an integer in `0..255` as the
+    same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   * `:rotation` is the number of degrees to rotate the
     axis of a generated rectangle.
@@ -131,9 +132,10 @@ defmodule Image.Shape do
   * `:stroke_color` is the color used for the outline
     of the rectangle. The default is `:white`.
 
-  * `:opacity` is the opacity as a float between
-    `0.0` and `1.0` where `0.0` is completely transparent
-    and `1.0` is completely opaque. The default is `0.7`.
+  * `:opacity` is any `t:Image.Pixel.opacity/0`: a
+    float in `0.0..1.0`, an integer in `0..255` as the
+    same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   * `:rotation` is the number of degrees to rotate the
     axis of a generated rectangle.
@@ -197,9 +199,10 @@ defmodule Image.Shape do
   * `:stroke_color` is the color used for the outline
     of the polygon. The default is `:white`
 
-  * `:opacity` is the opacity as a float between
-    `0.0` and `1.0` where `0.0` is completely transparent
-    and `1.0` is completely opaque. The default is `0.7`.
+  * `:opacity` is any `t:Image.Pixel.opacity/0`: a
+    float in `0.0..1.0`, an integer in `0..255` as the
+    same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   * `:rotation` is the number of degrees to rotate the
     axis of a generated n-sided polygon. This option is
@@ -355,9 +358,10 @@ defmodule Image.Shape do
   * `:stroke_color` is the color used for the outline
     of the polygon. The default is `:white`.
 
-  * `:opacity` is the opacity as a float between
-    `0.0` and `1.0` where `0.0` is completely transparent
-    and `1.0` is completely opaque. The default is `0.7`.
+  * `:opacity` is any `t:Image.Pixel.opacity/0`: a
+    float in `0.0..1.0`, an integer in `0..255` as the
+    same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   ### Notes
 
@@ -524,9 +528,10 @@ defmodule Image.Shape do
   * `:stroke_color` is the color used for the outline
     of the circle. The default is `:white`.
 
-  * `:opacity` is the opacity as a float between
-    `0.0` and `1.0` where `0.0` is completely transparent
-    and `1.0` is completely opaque. The default is `0.7`.
+  * `:opacity` is any `t:Image.Pixel.opacity/0`: a
+    float in `0.0..1.0`, an integer in `0..255` as the
+    same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   ### Returns
 
@@ -588,9 +593,10 @@ defmodule Image.Shape do
   * `:stroke_color` is the color used for the outline
     of the circle. The default is `:white`.
 
-  * `:opacity` is the opacity as a float between
-    `0.0` and `1.0` where `0.0` is completely transparent
-    and `1.0` is completely opaque. The default is `0.7`.
+  * `:opacity` is any `t:Image.Pixel.opacity/0`: a
+    float in `0.0..1.0`, an integer in `0..255` as the
+    same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   ### Returns
 
@@ -637,9 +643,10 @@ defmodule Image.Shape do
   * `:stroke_color` is the color used for the outline
     of the ellipse. The default is `:white`.
 
-  * `:opacity` is the opacity as a float between
-    `0.0` and `1.0` where `0.0` is completely transparent
-    and `1.0` is completely opaque. The default is `0.7`.
+  * `:opacity` is any `t:Image.Pixel.opacity/0`: a
+    float in `0.0..1.0`, an integer in `0..255` as the
+    same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   ### Returns
 
@@ -706,9 +713,10 @@ defmodule Image.Shape do
   * `:stroke_color` is the color used for the outline
     of the polygon. The default is `:white`
 
-  * `:opacity` is the opacity as a float between
-    `0.0` and `1.0` where `0.0` is completely transparent
-    and `1.0` is completely opaque. The default is `0.7`.
+  * `:opacity` is any `t:Image.Pixel.opacity/0`: a
+    float in `0.0..1.0`, an integer in `0..255` as the
+    same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   ### Returns
 
@@ -761,9 +769,10 @@ defmodule Image.Shape do
   * `:stroke_color` is the color used for the outline
     of the line. The default is `:white`.
 
-  * `:opacity` is the opacity as a float between
-    `0.0` and `1.0` where `0.0` is completely transparent
-    and `1.0` is completely opaque. The default is `0.7`.
+  * `:opacity` is any `t:Image.Pixel.opacity/0`: a
+    float in `0.0..1.0`, an integer in `0..255` as the
+    same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   ### Returns
 
@@ -839,9 +848,10 @@ defmodule Image.Shape do
   * `:stroke_color` is the color used for the outline
     of the polygon. The default is `:white`
 
-  * `:opacity` is the opacity as a float between
-    `0.0` and `1.0` where `0.0` is completely transparent
-    and `1.0` is completely opaque. The default is `0.7`.
+  * `:opacity` is any `t:Image.Pixel.opacity/0`: a
+    float in `0.0..1.0`, an integer in `0..255` as the
+    same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   ### Returns
 

@@ -168,14 +168,6 @@ defmodule Image do
   @type aspect :: :landscape | :portrait | :square
 
   @typedoc """
-  The level of transparency for an alpha band
-  where `0` means fully opaque and `255` means
-  fully transparent.
-
-  """
-  @type transparency :: 0..255 | :opaque | :transparent
-
-  @typedoc """
   An image bounding box being a four element list
   of 2-tuples representing the points of a rectangle
   in the order top left -> top right -> bottom right ->
@@ -257,11 +249,6 @@ defmodule Image do
   # curve when equalizing luminance.
   @min_luminance 1.0
   @max_luminance 99.0
-
-  # Standard libvips/RGBA convention: alpha 255 = fully
-  # opaque (visible), alpha 0 = fully transparent (invisible).
-  @opaque_ 255
-  @transparent 0
 
   # How many bins to use to calculate an approximate
   # dominant color. The maximum is 256. Larger numbers
@@ -3272,11 +3259,11 @@ defmodule Image do
 
   OR
 
-  * an integer in the range `0..255` representing the
-    alpha-band fill value, using the standard libvips / RGBA
-    convention: `255` is fully opaque, `0` is fully
-    transparent. The atoms `:opaque` and `:transparent` may
-    also be provided in place of `255` and `0` respectively.
+  * an opacity, which is any `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`,
+    an integer in `0..255` as the same value in 8-bit notation, or
+    `:transparent` / `:opaque`. The band added is scaled to `image`, so
+    `:opaque` is `65535` on a 16-bit image, `1.0` on an scRGB one, and
+    `255` everywhere else.
 
   ### Returns
 
@@ -3291,10 +3278,18 @@ defmodule Image do
       iex> Image.get_pixel(with_alpha, 0, 0)
       {:ok, [10, 20, 30, 128]}
 
+      iex> image = Image.new!(3, 3, color: [10, 20, 30])
+      iex> {:ok, with_alpha} = Image.add_alpha(image, 0.5)
+      iex> Image.get_pixel(with_alpha, 0, 0)
+      {:ok, [10, 20, 30, 128]}
+
   """
   @doc subject: "Operation", since: "0.13.0"
 
-  @spec add_alpha(image :: Vimage.t(), alpha_image :: Vimage.t() | transparency()) ::
+  @spec add_alpha(image :: Vimage.t(), alpha_image :: Vimage.t()) ::
+          {:ok, Vimage.t()} | {:error, error()}
+
+  @spec add_alpha(image :: Vimage.t(), opacity :: Image.Pixel.opacity()) ::
           {:ok, Vimage.t()} | {:error, error()}
 
   def add_alpha(%Vimage{} = image, %Vimage{} = alpha_image) do
@@ -3318,18 +3313,12 @@ defmodule Image do
     end
   end
 
-  def add_alpha(%Vimage{} = image, transparency) when transparency in 0..255 do
-    with {:ok, alpha_image} <- Image.new(image, bands: 1, color: transparency) do
+  def add_alpha(%Vimage{} = image, opacity) do
+    with {:ok, alpha} <- Image.Pixel.alpha_for(image, opacity),
+         {:ok, alpha_image} <-
+           Image.new(image, bands: 1, color: [alpha], format: band_format(image)) do
       add_alpha(image, alpha_image)
     end
-  end
-
-  def add_alpha(%Vimage{} = image, :transparent) do
-    add_alpha(image, @transparent)
-  end
-
-  def add_alpha(%Vimage{} = image, :opaque) do
-    add_alpha(image, @opaque_)
   end
 
   @doc """
@@ -3380,8 +3369,9 @@ defmodule Image do
   """
   @doc subject: "Operation", since: "0.13.0"
 
-  @spec add_alpha!(image :: Vimage.t(), alpha_image :: Vimage.t() | Image.Pixel.t()) ::
-          Vimage.t() | no_return()
+  @spec add_alpha!(image :: Vimage.t(), alpha_image :: Vimage.t()) :: Vimage.t() | no_return()
+
+  @spec add_alpha!(image :: Vimage.t(), opacity :: Image.Pixel.opacity()) :: Vimage.t() | no_return()
 
   def add_alpha!(%Vimage{} = image, alpha_image) do
     case add_alpha(image, alpha_image) do
@@ -3838,7 +3828,7 @@ defmodule Image do
     representing the color for each band. The color can also be
     supplied as a CSS color name as a string or atom (for example
     `:misty_rose`), a hex string, or `:average`. Wrap it as
-    `{color, alpha: a}` for a transparent or semi-transparent fill.
+    `{color, opacity: o}` for a transparent or semi-transparent fill.
     See `Image.Pixel.to_pixel/2` for the full range of accepted
     color forms.
 
@@ -3941,7 +3931,7 @@ defmodule Image do
     representing the color for each band. The color can also be
     supplied as a CSS color name as a string or atom (for example
     `:misty_rose`), a hex string, or `:average`. Wrap it as
-    `{color, alpha: a}` for a transparent or semi-transparent fill.
+    `{color, opacity: o}` for a transparent or semi-transparent fill.
     See `Image.Pixel.to_pixel/2` for the full range of accepted
     color forms.
 
@@ -5752,10 +5742,10 @@ defmodule Image do
     otherwise.
 
     To make the background semi-transparent (only meaningful when
-    `image` has an alpha band), wrap the color as `{color, alpha: a}`,
-    where `a` is an integer `0..255`, a float `0.0..1.0`, or the atom
-    `:opaque` / `:transparent`. For example: `{:misty_rose, alpha: 0.5}`
-    or `{:average, alpha: 128}`.
+    `image` has an alpha band), wrap the color as `{color, opacity: o}`,
+    where `o` is an integer `0..255`, a float `0.0..1.0`, or the atom
+    `:opaque` / `:transparent`. For example: `{:misty_rose, opacity: 0.5}`
+    or `{:average, opacity: 128}`.
 
   * `:extend_mode` synthesizes the generated border from the *image
     content* instead of a `:background` color. A content mode consumes
@@ -6746,7 +6736,7 @@ defmodule Image do
   ## Transparent backgrounds
 
   A partially transparent `:background` is reproduced exactly. The one
-  exception is a *fully* transparent fill (`alpha: 0`) with non-zero
+  exception is a *fully* transparent fill (`opacity: 0`) with non-zero
   color bands: color cannot be recovered from under zero alpha, so it
   is rendered as transparent black rather than the declared color.
 
@@ -7093,7 +7083,7 @@ defmodule Image do
     integer applied to all bands, or a list of integers representing
     the color for each band. The color can also be supplied as a CSS
     color name as a string or atom (for example `:misty_rose`), a hex
-    string, or `:average`. Wrap it as `{color, alpha: a}` for a
+    string, or `:average`. Wrap it as `{color, opacity: o}` for a
     transparent or semi-transparent fill. See
     `Image.Pixel.to_pixel/2` for the full range of accepted color
     forms.
@@ -7105,7 +7095,7 @@ defmodule Image do
 
   An alpha band passes through the transformation. A partially
   transparent `:background` is reproduced exactly. The one exception
-  is a *fully* transparent fill (`alpha: 0`) with non-zero color bands:
+  is a *fully* transparent fill (`opacity: 0`) with non-zero color bands:
   color cannot be recovered from under zero alpha, so it is rendered as
   transparent black rather than the declared color.
 
@@ -9609,7 +9599,7 @@ defmodule Image do
     integer applied to all bands, or a list of integers representing
     the color for each band. The color can also be supplied as a CSS
     color name as a string or atom (for example `:misty_rose`), a hex
-    string, or `:average`. Wrap it as `{color, alpha: a}` for a
+    string, or `:average`. Wrap it as `{color, opacity: o}` for a
     transparent or semi-transparent fill. See
     `Image.Pixel.to_pixel/2` for the full range of accepted color
     forms.
@@ -9621,7 +9611,7 @@ defmodule Image do
 
   An alpha band passes through the transformation. A partially
   transparent `:background` is reproduced exactly. The one exception
-  is a *fully* transparent fill (`alpha: 0`) with non-zero color bands:
+  is a *fully* transparent fill (`opacity: 0`) with non-zero color bands:
   color cannot be recovered from under zero alpha, so it is rendered as
   transparent black rather than the declared color.
 
@@ -11450,7 +11440,7 @@ defmodule Image do
   * `:color` is the shadow colour. Any value
     `Image.Pixel.to_pixel/3` accepts. Default `:black`.
 
-  * `:opacity` is a float in `[0.0, 1.0]` controlling the
+  * `:opacity` is any `t:Image.Pixel.opacity/0` controlling the
     shadow's overall intensity. Default `0.5`.
 
   * `:sigma` is the Gaussian blur sigma applied to the
@@ -11539,26 +11529,40 @@ defmodule Image do
     opacity = Keyword.get(options, :opacity, 0.5)
     sigma = Keyword.get(options, :sigma, 5.0)
 
-    cond do
-      not (is_number(opacity) and opacity >= 0.0 and opacity <= 1.0) ->
+    with {:ok, opacity} <- validate_drop_shadow_opacity(opacity),
+         :ok <- validate_drop_shadow_sigma(sigma) do
+      {:ok, {opacity, sigma}}
+    end
+  end
+
+  defp validate_drop_shadow_opacity(opacity) do
+    case Image.Pixel.opacity_fraction(opacity) do
+      {:ok, normalized} ->
+        {:ok, normalized}
+
+      {:error, _reason} ->
         {:error,
          %Image.Error{
            reason: :invalid_option,
            value: {:opacity, opacity},
-           message: ":opacity must be a number in [0.0, 1.0]. Found #{inspect(opacity)}"
+           message:
+             ":opacity must be a float in 0.0..1.0, an integer in 0..255, " <>
+               ":transparent or :opaque. Found #{inspect(opacity)}"
          }}
-
-      not (is_number(sigma) and sigma > 0.0) ->
-        {:error,
-         %Image.Error{
-           reason: :invalid_option,
-           value: {:sigma, sigma},
-           message: ":sigma must be a positive number. Found #{inspect(sigma)}"
-         }}
-
-      true ->
-        {:ok, {opacity, sigma}}
     end
+  end
+
+  defp validate_drop_shadow_sigma(sigma) when is_number(sigma) and sigma > 0.0 do
+    :ok
+  end
+
+  defp validate_drop_shadow_sigma(sigma) do
+    {:error,
+     %Image.Error{
+       reason: :invalid_option,
+       value: {:sigma, sigma},
+       message: ":sigma must be a positive number. Found #{inspect(sigma)}"
+     }}
   end
 
   defp combine_masks_min([single]), do: single
@@ -12136,7 +12140,7 @@ defmodule Image do
     be applied to all bands, or a list of integers representing the
     color for each band. The color can also be supplied as a CSS
     color name as a string or atom (for example `:misty_rose`), a hex
-    string, or `:average`. Wrap it as `{color, alpha: a}` for a
+    string, or `:average`. Wrap it as `{color, opacity: o}` for a
     transparent or semi-transparent fill. See
     `Image.Pixel.to_pixel/2` for the full range of accepted color
     forms.
@@ -12175,7 +12179,7 @@ defmodule Image do
   ## Transparent backgrounds
 
   A partially transparent `:background` is reproduced exactly. The one
-  exception is a *fully* transparent fill (`alpha: 0`) with non-zero
+  exception is a *fully* transparent fill (`opacity: 0`) with non-zero
   color bands: color cannot be recovered from under zero alpha, so it
   is rendered as transparent black rather than the declared color.
 
@@ -12298,25 +12302,22 @@ defmodule Image do
 
   defp premultiply_explicitly?(image, options) do
     case Keyword.fetch(options, :background) do
-      {:ok, background} -> has_alpha?(image) and List.last(background) != opaque_alpha(image)
+      {:ok, background} -> has_alpha?(image) and not opaque?(background, image)
       :error -> false
     end
   end
 
+  defp opaque?(pixel, image) do
+    List.last(pixel) == Pixel.alpha_for!(image, :opaque)
+  end
+
   defp premultiply_pixel(image, pixel) do
     # The background premultiplication must use the same alpha scale as the
-    # operations above. `Image.Pixel` encodes that scale as the opaque alpha
-    # value, so read it from there.
-    opaque_alpha = opaque_alpha(image)
+    # operations above.
+    opaque_alpha = Pixel.alpha_for!(image, :opaque)
 
     {color_bands, [alpha]} = Enum.split(pixel, -1)
     Enum.map(color_bands, &(&1 * alpha / opaque_alpha)) ++ [alpha]
-  end
-
-  defp opaque_alpha(image) do
-    image
-    |> Pixel.to_pixel!(:black, alpha: :opaque)
-    |> List.last()
   end
 
   @doc """
@@ -12891,7 +12892,7 @@ defmodule Image do
       the color for each band. The color can also be supplied as a
       CSS color name as a string or atom (for example
       `:misty_rose`), a hex string, or `:average`. Wrap it as
-      `{color, alpha: a}` for a transparent or semi-transparent fill.
+      `{color, opacity: o}` for a transparent or semi-transparent fill.
       See `Image.Pixel.to_pixel/2` for the full range of accepted
       color forms.
 
@@ -12911,7 +12912,7 @@ defmodule Image do
 
     An alpha band passes through the warp. A partially transparent
     `:background` is reproduced exactly. The one exception is a
-    *fully* transparent fill (`alpha: 0`) with non-zero color bands:
+    *fully* transparent fill (`opacity: 0`) with non-zero color bands:
     color cannot be recovered from under zero alpha, so it is
     rendered as transparent black rather than the declared color.
 
@@ -13030,7 +13031,7 @@ defmodule Image do
       the color for each band. The color can also be supplied as a
       CSS color name as a string or atom (for example
       `:misty_rose`), a hex string, or `:average`. Wrap it as
-      `{color, alpha: a}` for a transparent or semi-transparent fill.
+      `{color, opacity: o}` for a transparent or semi-transparent fill.
       If omitted, `libvips`' native all-zeros fill is used:
       transparent for images with an alpha band, black otherwise.
       See `Image.Pixel.to_pixel/2` for the full range of accepted
@@ -13187,7 +13188,7 @@ defmodule Image do
       integer applied to all bands, or a list of integers representing
       the color for each band. The color can also be supplied as a CSS
       color name as a string or atom (for example `:misty_rose`), a hex
-      string, or `:average`. Wrap it as `{color, alpha: a}` for a
+      string, or `:average`. Wrap it as `{color, opacity: o}` for a
       transparent or semi-transparent fill. See
       `Image.Pixel.to_pixel/2` for the full range of accepted color
       forms.
@@ -13206,7 +13207,7 @@ defmodule Image do
 
     An alpha band passes through the transformation. A partially
     transparent `:background` is reproduced exactly. The one exception
-    is a *fully* transparent fill (`alpha: 0`) with non-zero color bands:
+    is a *fully* transparent fill (`opacity: 0`) with non-zero color bands:
     color cannot be recovered from under zero alpha, so it is rendered as
     transparent black rather than the declared color.
 
@@ -13543,7 +13544,7 @@ defmodule Image do
     integer applied to all bands, or a list of integers representing
     the color for each band. The color can also be supplied as a CSS
     color name as a string or atom (for example `:misty_rose`), a hex
-    string, or `:average`. Wrap it as `{color, alpha: a}` for a
+    string, or `:average`. Wrap it as `{color, opacity: o}` for a
     transparent or semi-transparent fill. See
     `Image.Pixel.to_pixel/2` for the full range of accepted color
     forms.
@@ -13562,7 +13563,7 @@ defmodule Image do
 
   An alpha band passes through the transformation. A partially
   transparent `:background` is reproduced exactly. The one exception
-  is a *fully* transparent fill (`alpha: 0`) with non-zero color bands:
+  is a *fully* transparent fill (`opacity: 0`) with non-zero color bands:
   color cannot be recovered from under zero alpha, so it is rendered as
   transparent black rather than the declared color.
 

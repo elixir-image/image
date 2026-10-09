@@ -290,13 +290,13 @@ defmodule Image.Options.Text do
   end
 
   @doc false
-  def validate_opacity(_option, opacity, options)
-      when is_float(opacity) and opacity >= 0.0 and opacity <= 1.0 do
-    {:cont, options}
-  end
-
-  def validate_opacity(option, opacity, _options) do
-    {:halt, {:error, invalid_option(option, opacity)}}
+  # Any `t:Image.Pixel.opacity/0`, normalized to the 0.0..1.0 fraction
+  # the drawing operations multiply by.
+  def validate_opacity(option, opacity, options) do
+    case Image.Pixel.opacity_fraction(opacity) do
+      {:ok, normalized} -> {:cont, Keyword.put(options, option, normalized)}
+      {:error, _reason} -> {:halt, {:error, invalid_option(option, opacity)}}
+    end
   end
 
   @doc false

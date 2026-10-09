@@ -309,11 +309,47 @@ defmodule Image.AdjustmentsCoverageTest do
       assert Image.get_pixel!(with_alpha, 5, 5) == [10, 20, 30, 0]
     end
 
-    test "adds an alpha band with an integer transparency" do
+    test "adds an alpha band with an integer opacity" do
       image = Image.new!(10, 10, color: [10, 20, 30])
 
       assert {:ok, with_alpha} = Image.add_alpha(image, 128)
       assert Image.get_pixel!(with_alpha, 5, 5) == [10, 20, 30, 128]
+    end
+
+    test "scales an integer opacity to a 16-bit alpha band" do
+      image = Image.to_colorspace!(Image.new!(10, 10, color: [10, 20, 30]), :rgb16)
+
+      assert {:ok, with_alpha} = Image.add_alpha(image, 128)
+      assert List.last(Image.get_pixel!(with_alpha, 5, 5)) == 32_896
+    end
+
+    test "scales an integer opacity to an scRGB alpha band" do
+      image = Image.to_colorspace!(Image.new!(10, 10, color: [10, 20, 30]), :scrgb)
+
+      assert {:ok, with_alpha} = Image.add_alpha(image, 128)
+      assert_in_delta List.last(Image.get_pixel!(with_alpha, 5, 5)), 0.50196, 1.0e-5
+    end
+
+    test "an opaque alpha band is fully opaque in every interpretation" do
+      for {colorspace, opaque} <- [srgb: 255, rgb16: 65_535, grey16: 65_535, scrgb: 1.0] do
+        image = Image.to_colorspace!(Image.new!(10, 10, color: [10, 20, 30]), colorspace)
+
+        assert {:ok, with_alpha} = Image.add_alpha(image, :opaque)
+
+        assert List.last(Image.get_pixel!(with_alpha, 5, 5)) == opaque,
+               "#{colorspace} opaque alpha was #{List.last(Image.get_pixel!(with_alpha, 5, 5))}"
+      end
+    end
+
+    test "adds an alpha band with a float opacity" do
+      for {colorspace, half} <- [srgb: 128, rgb16: 32_768, scrgb: 0.5] do
+        image = Image.to_colorspace!(Image.new!(10, 10, color: [10, 20, 30]), colorspace)
+
+        assert {:ok, with_alpha} = Image.add_alpha(image, 0.5)
+
+        assert List.last(Image.get_pixel!(with_alpha, 5, 5)) == half,
+               "#{colorspace} half alpha was #{List.last(Image.get_pixel!(with_alpha, 5, 5))}"
+      end
     end
 
     test "adds an alpha band from a single-band image" do

@@ -2,7 +2,7 @@ defmodule Image.Distortion.Test do
   use ExUnit.Case, async: true
   import Image.TestSupport
 
-  @background {[10, 20, 30], alpha: 40}
+  @background {[10, 20, 30], opacity: 40}
 
   test "Image.distort/3" do
     image_file = "koala.gif"

@@ -40,7 +40,11 @@ defmodule Image.Options.Embed do
 
   # The extend modes that synthesize the border from the image content. All
   # other (color/transparency) fills go through the `:background` option.
-  @content_extends [copy: :VIPS_EXTEND_COPY, repeat: :VIPS_EXTEND_REPEAT, mirror: :VIPS_EXTEND_MIRROR]
+  @content_extends [
+    copy: :VIPS_EXTEND_COPY,
+    repeat: :VIPS_EXTEND_REPEAT,
+    mirror: :VIPS_EXTEND_MIRROR
+  ]
   @content_extend_modes Keyword.keys(@content_extends)
   @vips_content_extends Keyword.values(@content_extends)
 
@@ -67,7 +71,7 @@ defmodule Image.Options.Embed do
     end
   end
 
-  # `:average`, colors, and the `{color, alpha: a}` form are all resolved by
+  # `:average`, colors, and the `{color, opacity: o}` form are all resolved by
   # `Image.BackgroundColor.resolve/2`. The resolved pixel keeps its alpha band
   # (unlike `write`/`flatten`) so a transparent border can be requested.
   defp validate_option({:background, background}, image, _width, _height, options) do

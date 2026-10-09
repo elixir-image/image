@@ -10,11 +10,35 @@
 
 * Adds `Image.Pixel.strip_alpha/2` which returns a resolved pixel without its alpha component. It consolidates the truncation that `Image.flatten/2`, `Image.chroma_mask/2`, `Image.Options.Trim` and `Image.Options.Write` each did separately before. ([#222](https://github.com/elixir-image/image/pull/222))
 
+* Adds `Image.Pixel.put_alpha/3` and `Image.Pixel.put_alpha!/3`, which return a pixel with its alpha component set to a given opacity, scaled to the image's alpha band. The pixel is returned unchanged when the image has no alpha band. ([#231](https://github.com/elixir-image/image/pull/231))
+
+* Adds `Image.Pixel.opacity_fraction/1` and `Image.Pixel.opacity_fraction!/1`, which return an opacity as a fraction of full opacity. Unlike `Image.Pixel.alpha_for/2` the result belongs to no particular image. ([#231](https://github.com/elixir-image/image/pull/231))
+
+* Adds `Image.Pixel.alpha_for/2` and `Image.Pixel.alpha_for!/2`, which scale an opacity to the alpha band of a given image, whose range depends on the interpretation. ([#231](https://github.com/elixir-image/image/pull/231))
+
 ### Changed
+
+* `Image.Pixel.to_pixel/3` now applies the `:opacity` option to a color given as a list of numbers. It was previously ignored for those, so `to_pixel(image, [255, 0, 0, 255], opacity: 0.5)` returned a fully opaque pixel. ([#231](https://github.com/elixir-image/image/pull/231))
+
+* The `:opacity` options of `Image.Shape` and the `:background_fill_opacity` / `:background_stroke_opacity` options of `Image.Text.text/2` accept any `t:Image.Pixel.opacity/0` rather than only a float, so every function taking an opacity now accepts the same values. ([#231](https://github.com/elixir-image/image/pull/231))
+
+* **Breaking:** The `:opacity` option of `Image.drop_shadow/2` accepts any `t:Image.Pixel.opacity/0` rather than any number in `0.0..1.0`. `opacity: 1` previously meant fully opaque and is now 8-bit notation for `1/255`, as it is everywhere else. Use `1.0` instead. Only `1` changes meaning, since `0` remains fully transparent. ([#231](https://github.com/elixir-image/image/pull/231))
+
+* **Breaking:** `Image.Pixel` returns an `Image.Error` on every error path. An unsupported interpretation was a bare string and is now `reason: :unsupported_interpretation`, and an invalid color was the `Color` library's own exception (`Color.UnknownColorNameError`, `Color.InvalidHexError`, `Color.InvalidColorError`) and is now `reason: :invalid_color` with the color in `value` and the original text as the message. This reaches every function that resolves a color, including the `:background` options. ([#231](https://github.com/elixir-image/image/pull/231))
+
+* **Breaking:** An invalid opacity reports `reason: :invalid_opacity` instead of `:invalid_transparency`. ([#231](https://github.com/elixir-image/image/pull/231))
 
 * **Breaking:** `Image.Pixel.to_pixel/3` returns linear light values for an `:scrgb` image. It previously returned gamma encoded sRGB, so a color drawn onto an scRGB image came out too bright and desaturated. This affects every function that resolves a color against an scRGB image. ([#230](https://github.com/elixir-image/image/pull/230))
 
 * **Breaking:** `Image.Pixel.to_pixel/3` returns relative luminance (CIE `Y`) for a single band `:scrgb` image. It previously returned a `0..255` integer, so `:white` resolved to `255` rather than `1.0`. ([#230](https://github.com/elixir-image/image/pull/230))
+
+* **Breaking:** `Image.Pixel.to_pixel/3` no longer rounds a float `:opacity` to a byte before scaling it. `opacity: 0.5` resolves to `0.5` on an `:scrgb` image and `32768` on a 16-bit image, where both previously went via `128` and came out as `0.50196` and `32896`. Interpretations with an 8-bit alpha band are unaffected, including Lab and LCH. ([#231](https://github.com/elixir-image/image/pull/231))
+
+* `Image.add_alpha/2` accepts a float in `0.0..1.0` as well as the integer and atom forms it already took. An integer is a fraction of 255, so a float is the only way to add exactly half opacity to a 16-bit or `:scrgb` image. ([#231](https://github.com/elixir-image/image/pull/231))
+
+* `Image.add_alpha/2` returns `{:error, %Image.Error{reason: :invalid_opacity}}` for an invalid opacity, where it previously raised `FunctionClauseError`. ([#231](https://github.com/elixir-image/image/pull/231))
+
+* **Breaking:** `Image.add_alpha/2` scales the alpha band it adds to the image's interpretation. `:opaque` resolves to `65535` on a 16-bit image and `1.0` on an `:scrgb` image, where it previously wrote `255` into both, leaving 16-bit images 0.4% opaque and scRGB images out of range. An integer is now a fraction of `255`, so `128` means the same opacity everywhere. Interpretations with an 8-bit alpha band are unaffected, including Lab and LCH. ([#231](https://github.com/elixir-image/image/pull/231))
 
 * **Breaking:** `Image.average/1` and `Image.chroma_color/1` now return `{:ok, [number()]} | {:error, Image.Error.t()}` instead of a bare list on success. The previous success type was documented as `Pixel.t()` but was always a list of numbers. ([#219](https://github.com/elixir-image/image/pull/219))
 
@@ -65,6 +89,14 @@
 * Fix `Image.reduce_colors/2` raising when the image could not be converted to a tensor. ([#229](https://github.com/elixir-image/image/pull/229))
 
 ### Removed
+
+* **Breaking:** Removes `Image.Pixel.transparency/1`, `Image.Pixel.max_opacity/0` and `Image.Pixel.min_opacity/0`. Use `Image.Pixel.alpha_for/2` for a value to write into an image's alpha band, or `Image.Pixel.opacity_fraction/1` for the opacity itself. ([#231](https://github.com/elixir-image/image/pull/231))
+
+* **Breaking:** Removes the `t:Image.transparency/0` and `t:Image.Pixel.transparency/0` types. Use `t:Image.Pixel.opacity/0`, which is now the only opacity type. ([#231](https://github.com/elixir-image/image/pull/231))
+
+* **Breaking:** Removes the `:alpha` option of `Image.Pixel.to_pixel/3` and the `{color, alpha: alpha}` background form. Use `:opacity` and `{color, opacity: opacity}`, which are the same options under new names. ([#231](https://github.com/elixir-image/image/pull/231))
+
+* **Breaking:** Removes `:none` as an opacity, though not as a color. Use `:transparent` instead, which it was a synonym for. ([#231](https://github.com/elixir-image/image/pull/231))
 
 * **Breaking:** Removes `Image.Options.WarpPerspective`, replaced by `Image.Options.Mapim`. ([#216](https://github.com/elixir-image/image/pull/216))
 

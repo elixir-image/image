@@ -4,7 +4,7 @@ defmodule Image.Test do
   alias Vix.Vips.Operation
   alias Vix.Vips.Image, as: Vimage
 
-  @mapim_background {[10, 20, 30], alpha: 40}
+  @mapim_background {[10, 20, 30], opacity: 40}
 
   doctest Image
   doctest Image.BandFormat

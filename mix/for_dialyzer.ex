@@ -20,8 +20,8 @@ defmodule ForDialyzer do
     {width, height, _bands} = Image.shape(penguin)
 
     {:ok, _embed_1} = Image.embed(penguin, width, height + 50, background: :black)
-    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, background: {:black, alpha: :transparent})
-    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, background: {:black, alpha: :opaque})
+    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, background: {:black, opacity: :transparent})
+    {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, background: {:black, opacity: :opaque})
     {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, extend_mode: :mirror)
     {:ok, _embed_1} = Image.embed(penguin, width, height + 50, x: 0, y: 0, extend_mode: :background, background: :green)
 

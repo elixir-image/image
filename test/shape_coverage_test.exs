@@ -70,6 +70,14 @@ defmodule Image.ShapeCoverage.Test do
       assert message == "Invalid value \"abc\" in polygon points string"
     end
 
+    test "accepts an 8-bit or atom :opacity, normalizing it to a float" do
+      assert {:ok, opts} = Image.Options.Shape.validate_polygon_options(opacity: 128)
+      assert_in_delta opts[:opacity], 128 / 255, 1.0e-6
+
+      assert {:ok, opts} = Image.Options.Shape.validate_polygon_options(opacity: :opaque)
+      assert opts[:opacity] == 1.0
+    end
+
     test "returns an error for an invalid opacity" do
       assert {:error, %Image.Error{message: "Invalid option or option value: opacity: 3.0"}} =
                Shape.polygon([[0, 0], [10, 0], [5, 8]], opacity: 3.0)

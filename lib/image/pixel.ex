@@ -11,6 +11,24 @@ defmodule Image.Pixel do
   numeric lists) without worrying about whether the target image is
   sRGB, Lab, scRGB, CMYK, or 16-bit.
 
+  ## Opacity, alpha and color
+
+  An **opacity** (`t:opacity/0`) is the value a caller supplies,
+  expressed relative to full opacity rather than to any image:
+  `:transparent`, `:opaque`, a float in `0.0..1.0`, or an integer
+  in `0..255` as the same value in 8-bit notation.
+
+  An **alpha** is what an opacity becomes, the content of an image's
+  alpha band. `alpha_for/2` scales an opacity to a given image's
+  band, which runs to `65535` for 16-bit and `1.0` for scRGB, and
+  `put_alpha/3` sets it on an existing pixel. Prefer a float when
+  the alpha band is not 8-bit: an integer is a fraction of 255, so
+  it cannot reach every value of a 16-bit or scRGB band.
+
+  A **color** may be `:none`, `:transparent` or `:opaque` on top of
+  everything `Color.new/2` accepts. All three resolve to black, the
+  first two fully transparent.
+
   ## Example
 
       iex> {:ok, image} = Image.new(2, 2, color: :black)
@@ -33,8 +51,8 @@ defmodule Image.Pixel do
 
   This includes any input accepted by `Color.new/2` (a `Color.*`
   struct, a numeric list of length 3..5, a hex string, a CSS named
-  color string or atom), plus the Image-specific transparency aliases
-  `:none`, `:transparent`, and `:opaque`.
+  color string or atom), plus `:none`, `:transparent` and
+  `:opaque`.
 
   """
   @type t ::
@@ -44,18 +62,29 @@ defmodule Image.Pixel do
           | atom()
 
   @typedoc """
-  A transparency value.
+  How opaque something should be, expressed relative to full
+  opacity rather than to any particular image's alpha band.
 
-  * `:none` and `:transparent` are equivalent to `0` (fully transparent).
-  * `:opaque` is equivalent to `255` (fully opaque).
-  * An integer in `0..255` is used as-is.
-  * A float in `0.0..1.0` is scaled to `0..255`.
+  A float in `0.0..1.0` is the canonical form, being a fraction of
+  full opacity. An integer in `0..255` is that same value in 8-bit
+  notation, normalized as `n / 255`. The integer form does not
+  imply that the target's alpha band is 8-bit: `128` means `128/255`
+  on a 16-bit image too, not `128/65535`.
+
+  > #### `1` and `1.0` differ {: .warning}
+  >
+  > `1` is 8-bit notation for `1/255`, which is very nearly
+  > transparent. Fully opaque is `1.0` or `:opaque`.
+
+  `:transparent` is `0.0` and `:opaque` is `1.0`. `:none` is not an
+  opacity, only a color meaning no color at all.
+
+  `alpha_for/2` scales an opacity to the alpha band of a given image,
+  which is the range `0..65535` for a 16-bit image and `0.0..1.0` for
+  an scRGB one.
 
   """
-  @type transparency :: :none | :transparent | :opaque | 0..255 | float()
-
-  @max_opacity 255
-  @min_opacity 0
+  @type opacity :: :transparent | :opaque | 0..255 | float()
 
   # Map Image.Interpretation atoms to the Color module that best
   # represents that space, and the encoder used by encode/3.
@@ -105,17 +134,15 @@ defmodule Image.Pixel do
   * `color` is anything `Color.new/2` accepts: a `Color.*` struct, a
     list of 3/4/5 numbers, a hex string (`"#ff0000"`, `"#f80"`,
     `"#ff000080"`), a CSS named color (`"rebeccapurple"`,
-    `:misty_rose`), or one of Image's transparency aliases (`:none`,
-    `:transparent`, `:opaque`).
+    `:misty_rose`), or `:none`, `:transparent` or `:opaque`.
 
   * `options` is a keyword list — see below.
 
   ### Options
 
-  * `:alpha` — if the target image has an alpha band, force this
-    transparency. Accepts any value `transparency/1` accepts. If
-    unset, the input color's own alpha is used (or full opacity if
-    none).
+  * `:opacity` — if the target image has an alpha band, force this
+    opacity. Accepts any `t:opacity/0`. If unset, the input color's
+    own alpha is used, or full opacity if it has none.
 
   * `:intent` — passed through to `Color.convert/3`. One of
     `:relative_colorimetric` (default), `:absolute_colorimetric`,
@@ -136,8 +163,10 @@ defmodule Image.Pixel do
   * For 16-bit interpretations (`:rgb16`, `:grey16`) the output is
     integers in `0..65535`.
 
-  * For float interpretations (`:scrgb`, `:lab`, `:lch`, etc.) the
-    output is floats in the natural range of that space.
+  * For `:scrgb`, `:lab` and `:lch` the color bands are floats in the
+    natural range of that space, and `:labs` uses 16-bit integers.
+    The alpha component is `0.0..1.0` for `:scrgb` and `0..255` for
+    the other three.
 
   * `:scrgb` is linear light: mid grey `"#808080"` encodes as `0.216`,
     not `0.502`.
@@ -164,7 +193,7 @@ defmodule Image.Pixel do
       {:ok, [255, 0, 0, 255]}
 
       iex> {:ok, image} = Image.new(2, 2, color: [0, 0, 0, 255])
-      iex> Image.Pixel.to_pixel(image, :red, alpha: 0.5)
+      iex> Image.Pixel.to_pixel(image, :red, opacity: 0.5)
       {:ok, [255, 0, 0, 128]}
 
       iex> {:ok, image} = Image.new(2, 2, color: :black)
@@ -176,7 +205,7 @@ defmodule Image.Pixel do
           image :: Vimage.t() | MutableImage.t(),
           color :: t(),
           options :: Keyword.t()
-        ) :: {:ok, [number()]} | {:error, String.t()}
+        ) :: {:ok, [number()]} | {:error, Image.Error.t()}
   def to_pixel(image, color, options \\ [])
 
   # If the input is already a list of numbers whose length matches the
@@ -186,15 +215,18 @@ defmodule Image.Pixel do
   # for callers that already speak the image's interpretation
   # natively (Image.if_then_else, k-means clusters, gradient defaults,
   # etc).
-  def to_pixel(%Vimage{} = image, color, _options)
+  def to_pixel(%Vimage{} = image, color, options)
       when is_list(color) and color != [] do
     bands = Vimage.bands(image)
     interpretation = Image.colorspace(image)
 
     if length(color) == bands and pre_encoded?(color, interpretation) do
-      {:ok, color}
+      case fetch_opacity(options) do
+        nil -> {:ok, color}
+        opacity -> put_alpha(color, image, opacity)
+      end
     else
-      do_to_pixel_vimage(image, color, [])
+      do_to_pixel_vimage(image, color, options)
     end
   end
 
@@ -260,15 +292,19 @@ defmodule Image.Pixel do
 
   defp do_to_pixel(interpretation, bands, has_alpha, color, options) do
     intent = Keyword.get(options, :intent, :relative_colorimetric)
-    explicit_alpha = Keyword.get(options, :alpha)
+    explicit_opacity = fetch_opacity(options)
     color_bands = if has_alpha, do: bands - 1, else: bands
 
     with {:ok, source_struct} <- resolve(color),
          {:ok, {target_module, encoder}} <- target_for(interpretation, color_bands),
          {:ok, converted} <- convert(source_struct, target_module, intent),
          {:ok, base_pixel} <- encode(encoder, converted),
-         {:ok, alpha_value} <- alpha_for(encoder, explicit_alpha, source_struct, has_alpha) do
+         {:ok, alpha_value} <- resolve_alpha(encoder, explicit_opacity, source_struct, has_alpha) do
       {:ok, fit_bands(base_pixel, alpha_value, bands, has_alpha)}
+    else
+      # `Color.convert/3` reports failures with its own exceptions too.
+      {:error, %Image.Error{} = error} -> {:error, error}
+      {:error, reason} -> {:error, invalid_color(color, reason)}
     end
   end
 
@@ -282,7 +318,7 @@ defmodule Image.Pixel do
       [255, 0, 0]
 
       iex> image = Image.new!(2, 2, color: [0, 0, 0, 255])
-      iex> Image.Pixel.to_pixel!(image, :red, alpha: 0.5)
+      iex> Image.Pixel.to_pixel!(image, :red, opacity: 0.5)
       [255, 0, 0, 128]
 
   """
@@ -342,6 +378,73 @@ defmodule Image.Pixel do
   end
 
   @doc """
+  Returns `pixel` with its alpha component set to `opacity`, scaled
+  to the alpha band of `image`.
+
+  The inverse of `strip_alpha/2`, and like it a no-op on an image
+  with no alpha band, since there is no component to set. `opacity`
+  is validated either way.
+
+  ### Arguments
+
+  * `pixel` is a list of numbers already in `image`'s interpretation.
+
+  * `image` is any `t:Vix.Vips.Image.t/0`. Its interpretation
+    determines the alpha the opacity scales to.
+
+  * `opacity` is any `t:opacity/0`.
+
+  ### Returns
+
+  * `{:ok, pixel}` with its last component replaced, or with `pixel`
+    unchanged if `image` has no alpha band, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> {:ok, image} = Image.new(2, 2, color: [0, 0, 0, 255])
+      iex> Image.Pixel.put_alpha([255, 0, 0, 255], image, 0.5)
+      {:ok, [255, 0, 0, 128]}
+
+      iex> {:ok, image} = Image.new(2, 2, color: :black)
+      iex> Image.Pixel.put_alpha([255, 0, 0], image, 0.5)
+      {:ok, [255, 0, 0]}
+
+  """
+  @spec put_alpha(pixel :: [number()], image :: Vimage.t(), opacity :: opacity()) ::
+          {:ok, [number()]} | {:error, Image.Error.t()}
+
+  def put_alpha(pixel, %Vimage{} = image, opacity) when is_list(pixel) do
+    if Vimage.has_alpha?(image) do
+      with {:ok, alpha} <- alpha_for(image, opacity) do
+        {:ok, Enum.take(pixel, Vimage.bands(image) - 1) ++ [alpha]}
+      end
+    else
+      # Checked even when there is no band to write it to.
+      with {:ok, _unit} <- opacity_fraction(opacity), do: {:ok, pixel}
+    end
+  end
+
+  @doc """
+  Same as `put_alpha/3`, but raises on error.
+
+  ### Examples
+
+      iex> image = Image.new!(2, 2, color: [0, 0, 0, 255])
+      iex> Image.Pixel.put_alpha!([255, 0, 0, 255], image, 0.5)
+      [255, 0, 0, 128]
+
+  """
+  @spec put_alpha!(pixel :: [number()], image :: Vimage.t(), opacity :: opacity()) :: [number()]
+  def put_alpha!(pixel, %Vimage{} = image, opacity) do
+    case put_alpha(pixel, image, opacity) do
+      {:ok, pixel} -> pixel
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Resolves a color input to an sRGB pixel `[r, g, b]` (or
   `[r, g, b, a]`) with channels in `0..255`, regardless of any
   image context.
@@ -352,8 +455,8 @@ defmodule Image.Pixel do
 
   ### Arguments
 
-  * `color` is anything `Color.new/2` accepts, plus the
-    transparency aliases.
+  * `color` is anything `Color.new/2` accepts, plus `:none`,
+    `:transparent` and `:opaque`.
 
   ### Returns
 
@@ -375,7 +478,7 @@ defmodule Image.Pixel do
       {:ok, [255, 0, 0]}
 
   """
-  @spec to_srgb(color :: t()) :: {:ok, [0..255]} | {:error, Image.Error.t() | term()}
+  @spec to_srgb(color :: t()) :: {:ok, [0..255]} | {:error, Image.Error.t()}
   def to_srgb(color) do
     with {:ok, source_struct} <- resolve(color),
          {:ok, %Color.SRGB{r: r, g: g, b: b, alpha: alpha}} <-
@@ -387,6 +490,9 @@ defmodule Image.Pixel do
       else
         {:ok, base ++ [scale(alpha, 255)]}
       end
+    else
+      {:error, %Image.Error{} = error} -> {:error, error}
+      {:error, reason} -> {:error, invalid_color(color, reason)}
     end
   end
 
@@ -411,81 +517,133 @@ defmodule Image.Pixel do
   end
 
   @doc """
-  Returns a transparency value in `0..255` where `0` is transparent
-  and `255` is opaque.
+  Returns an alpha value scaled to the alpha band of `image`.
+
+  The result is in the range `image` actually uses: `0..65535` for
+  16-bit images, `0.0..1.0` for scRGB, and `0..255` for everything
+  else, including Lab and LCH despite their float color bands.
+
+  The result is a band value, to be written into a pixel. It is
+  not an opacity and must not be passed back where one is expected,
+  such as `Image.add_alpha/2` or the `:opacity` option of
+  `to_pixel/3`, which would scale it a second time.
 
   ### Arguments
 
-  * `transparency` is one of:
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-    * The atoms `:none`, `:transparent`, or `:opaque`.
-
-    * An integer in `0..255`.
-
-    * A float in `0.0..1.0`.
+  * `opacity` is any `t:opacity/0`.
 
   ### Returns
 
-  * `{:ok, 0..255}` or
+  * `{:ok, number}` or
 
   * `{:error, reason}`.
 
   ### Examples
 
-      iex> Image.Pixel.transparency(:opaque)
+      iex> image = Image.new!(2, 2, color: :black)
+      iex> Image.Pixel.alpha_for(image, :opaque)
       {:ok, 255}
 
-      iex> Image.Pixel.transparency(:transparent)
-      {:ok, 0}
+      iex> image = Image.new!(2, 2, color: :black)
+      iex> Image.Pixel.alpha_for(Image.to_colorspace!(image, :rgb16), 0.5)
+      {:ok, 32768}
 
-      iex> Image.Pixel.transparency(0.5)
-      {:ok, 128}
-
-      iex> Image.Pixel.transparency(200)
-      {:ok, 200}
+      iex> image = Image.new!(2, 2, color: :black)
+      iex> Image.Pixel.alpha_for(Image.to_colorspace!(image, :scrgb), :opaque)
+      {:ok, 1.0}
 
   """
-  @spec transparency(value :: transparency()) :: {:ok, 0..255} | {:error, Image.Error.t()}
-  def transparency(:none), do: {:ok, @min_opacity}
-  def transparency(:transparent), do: {:ok, @min_opacity}
-  def transparency(:opaque), do: {:ok, @max_opacity}
-  def transparency(int) when is_integer(int) and int in 0..255, do: {:ok, int}
+  @spec alpha_for(image :: Vimage.t(), opacity :: opacity()) ::
+          {:ok, number()} | {:error, Image.Error.t()}
 
-  def transparency(float) when is_float(float) and float >= 0.0 and float <= 1.0,
-    do: {:ok, round(@max_opacity * float)}
+  def alpha_for(%Vimage{} = image, opacity) do
+    bands = Vimage.bands(image)
+    color_bands = if Vimage.has_alpha?(image), do: bands - 1, else: bands
 
-  def transparency(other) do
-    {:error,
-     %Image.Error{
-       reason: :invalid_transparency,
-       value: other,
-       message: "Invalid transparency value: #{inspect(other)}"
-     }}
+    with {:ok, unit} <- opacity_fraction(opacity),
+         {:ok, {_target_module, encoder}} <- target_for(Image.colorspace(image), color_bands) do
+      {:ok, scale_alpha_to_encoder(unit, encoder)}
+    end
   end
 
   @doc """
-  The maximum opacity value (255).
+  Same as `alpha_for/2`, but raises on error.
 
   ### Examples
 
-      iex> Image.Pixel.max_opacity()
+      iex> image = Image.new!(2, 2, color: :black)
+      iex> Image.Pixel.alpha_for!(image, :opaque)
       255
 
   """
-  @spec max_opacity() :: 255
-  def max_opacity, do: @max_opacity
+  @spec alpha_for!(image :: Vimage.t(), opacity :: opacity()) :: number()
+  def alpha_for!(%Vimage{} = image, opacity) do
+    case alpha_for(image, opacity) do
+      {:ok, alpha} -> alpha
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
 
   @doc """
-  The minimum opacity value (0).
+  Returns an opacity as a fraction of full opacity.
+
+  The `0.0..1.0` float is the canonical form of an opacity, so this
+  is the identity for a float and `n / 255` for an integer. Unlike
+  `alpha_for/2`, the result belongs to no particular image.
+
+  ### Arguments
+
+  * `opacity` is any `t:opacity/0`.
+
+  ### Returns
+
+  * `{:ok, float}` in `0.0..1.0`, or
+
+  * `{:error, t:Image.Error.t/0}`.
 
   ### Examples
 
-      iex> Image.Pixel.min_opacity()
-      0
+      iex> Image.Pixel.opacity_fraction(:opaque)
+      {:ok, 1.0}
+
+      iex> Image.Pixel.opacity_fraction(0.5)
+      {:ok, 0.5}
+
+      iex> Image.Pixel.opacity_fraction(128)
+      {:ok, 0.5019607843137255}
 
   """
-  @spec min_opacity() :: 0
-  def min_opacity, do: @min_opacity
+  @spec opacity_fraction(opacity :: opacity()) :: {:ok, float()} | {:error, Image.Error.t()}
+
+  def opacity_fraction(:transparent), do: {:ok, 0.0}
+  def opacity_fraction(:opaque), do: {:ok, 1.0}
+
+  def opacity_fraction(int) when is_integer(int) and int in 0..255,
+    do: {:ok, int / 255}
+
+  def opacity_fraction(float) when is_float(float) and float >= 0.0 and float <= 1.0,
+    do: {:ok, float}
+
+  def opacity_fraction(other), do: invalid_opacity(other)
+
+  @doc """
+  Same as `opacity_fraction/1`, but raises on error.
+
+  ### Examples
+
+      iex> Image.Pixel.opacity_fraction!(:transparent)
+      0.0
+
+  """
+  @spec opacity_fraction!(opacity :: opacity()) :: float()
+  def opacity_fraction!(opacity) do
+    case opacity_fraction(opacity) do
+      {:ok, fraction} -> fraction
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
 
   ## Internals --------------------------------------------------------------
 
@@ -503,7 +661,20 @@ defmodule Image.Pixel do
   defp resolve(float) when is_float(float) and float >= 0.0 and float <= 1.0,
     do: {:ok, %Color.SRGB{r: float, g: float, b: float, alpha: nil}}
 
-  defp resolve(other), do: Color.new(other)
+  # `Color` reports invalid input with its own exceptions. Translated so no
+  # foreign error shape escapes this module.
+  defp resolve(other) do
+    case Color.new(other) do
+      {:ok, color} -> {:ok, color}
+      {:error, reason} -> {:error, invalid_color(other, reason)}
+    end
+  end
+
+  defp invalid_color(value, reason) do
+    message = if is_exception(reason), do: Exception.message(reason), else: to_string(reason)
+
+    %Image.Error{reason: :invalid_color, value: value, message: message}
+  end
 
   # Color.RGB is the only target that needs a working space
   # libvips scRGB is linear light on the sRGB primaries.
@@ -534,8 +705,13 @@ defmodule Image.Pixel do
 
       :error ->
         {:error,
-         "Image.Pixel does not yet support the #{inspect(interpretation)} interpretation. " <>
-           "Pass a numeric pixel list directly, or open an issue."}
+         %Image.Error{
+           reason: :unsupported_interpretation,
+           value: interpretation,
+           message:
+             "Image.Pixel does not yet support the #{inspect(interpretation)} interpretation. " <>
+               "Pass a numeric pixel list directly, or open an issue."
+         }}
     end
   end
 
@@ -607,13 +783,17 @@ defmodule Image.Pixel do
 
   ## Alpha handling -------------------------------------------------------
 
-  defp alpha_for(_encoder, _explicit, _source, false), do: {:ok, nil}
+  defp fetch_opacity(options) do
+    Keyword.get(options, :opacity)
+  end
 
-  defp alpha_for(encoder, explicit, source, true) do
+  defp resolve_alpha(_encoder, _explicit, _source, false), do: {:ok, nil}
+
+  defp resolve_alpha(encoder, explicit_opacity, source, true) do
     cond do
-      not is_nil(explicit) ->
-        with {:ok, byte} <- transparency(explicit) do
-          {:ok, scale_alpha_to_encoder(byte / 255.0, encoder)}
+      not is_nil(explicit_opacity) ->
+        with {:ok, normalized} <- opacity_fraction(explicit_opacity) do
+          {:ok, scale_alpha_to_encoder(normalized, encoder)}
         end
 
       is_struct(source) and Map.get(source, :alpha) != nil ->
@@ -622,6 +802,17 @@ defmodule Image.Pixel do
       true ->
         {:ok, scale_alpha_to_encoder(1.0, encoder)}
     end
+  end
+
+  defp invalid_opacity(value) do
+    {:error,
+     %Image.Error{
+       reason: :invalid_opacity,
+       value: value,
+       message:
+         "Invalid opacity #{inspect(value)}. Must be a float in 0.0..1.0, " <>
+           "an integer in 0..255, :transparent or :opaque"
+     }}
   end
 
   # Encoders grouped by their alpha band's max value

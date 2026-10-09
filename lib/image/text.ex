@@ -84,9 +84,10 @@ defmodule Image.Text do
     a background. A black background will be forced if a
     `:background_fill_color` is not provided
 
-  * `:background_fill_opacity` is the opacity of the background fill.
-    It is a float between `0.0` and `1.0` where `0.0` means transparent
-    and `1.0` means opaque. The default is `0.7`.
+  * `:background_fill_opacity` is the opacity of the background fill, as
+    any `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an integer in
+    `0..255` as the same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   * `:padding` is the padding in pixels between the
     text and the edge of the background.  It can be expressed
@@ -118,8 +119,9 @@ defmodule Image.Text do
     of the background border. The default is `1`.
 
   * `:background_stroke_opacity` is the opacity of the background
-    string. It is a float between `0.0` and `1.0` where `0.0` means
-    transparent and `1.0` means opaque. The default is `0.7`.
+    string, as any `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an
+    integer in `0..255` as the same value in 8-bit notation, or
+    `:transparent` / `:opaque`. The default is `0.7`.
 
   * `:width` is the maximum width of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
@@ -259,9 +261,10 @@ defmodule Image.Text do
     a background. A black background will be forced if a
     `:background_fill_color` is not provided.
 
-  * `:background_fill_opacity` is the opacity of the background fill.
-    It is a float between `0.0` and `1.0` where `0.0` means transparent
-    and `1.0` means opaque. The default is `0.7`.
+  * `:background_fill_opacity` is the opacity of the background fill, as
+    any `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an integer in
+    `0..255` as the same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   * `:padding` is the padding in pixels between the
     text and the edge of the background.  It can be expressed
@@ -293,8 +296,9 @@ defmodule Image.Text do
     of the background border. The default is `1`.
 
   * `:background_stroke_opacity` is the opacity of the background
-    string. It is a float between `0.0` and `1.0` where `0.0` means
-    transparent and `1.0` means opaque. The default is `0.7`.
+    string, as any `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an
+    integer in `0..255` as the same value in 8-bit notation, or
+    `:transparent` / `:opaque`. The default is `0.7`.
 
   * `:width` is the maximum width of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
@@ -548,9 +552,10 @@ defmodule Image.Text do
     the text. The default is `:none` which indicates no
     background. Note that if
 
-  * `:background_fill_opacity` is the opacity of the background. It is a
-    float between `0.0` and `1.0` where `0.0` means transparent
-    and `1.0` means opaque. The default is `0.7`.
+  * `:background_fill_opacity` is the opacity of the background, as any
+    `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an integer in
+    `0..255` as the same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   ### Returns
 
@@ -619,9 +624,10 @@ defmodule Image.Text do
     the text. The default is `:none` which indicates no
     background.
 
-  * `:background_fill_opacity` is the opacity of the background. It is a
-    float between `0.0` and `1.0` where `0.0` means transparent
-    and `1.0` means opaque. The default is `0.7`.
+  * `:background_fill_opacity` is the opacity of the background, as any
+    `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an integer in
+    `0..255` as the same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   ### Returns
 
@@ -669,9 +675,10 @@ defmodule Image.Text do
     the text. The default is `:none` which indicates no
     background.
 
-  * `:background_fill_opacity` is the opacity of the background. It is a
-    float between `0.0` and `1.0` where `0.0` means transparent
-    and `1.0` means opaque. The default is `0.7`.
+  * `:background_fill_opacity` is the opacity of the background, as any
+    `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an integer in
+    `0..255` as the same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   * `:padding` is the padding in pixels between the
     text and the edge of the background.  It can be expressed
@@ -774,9 +781,10 @@ defmodule Image.Text do
     the text. The default is `:none` which indicates no
     background.
 
-  * `:background_fill_opacity` is the opacity of the background. It is a
-    float between `0.0` and `1.0` where `0.0` means transparent
-    and `1.0` means opaque. The default is `0.7`.
+  * `:background_fill_opacity` is the opacity of the background, as any
+    `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an integer in
+    `0..255` as the same value in 8-bit notation, or `:transparent` /
+    `:opaque`. The default is `0.7`.
 
   * `:padding` is the padding in pixels between the
     text and the edge of the background.  It can be expressed
@@ -848,8 +856,9 @@ defmodule Image.Text do
     of the background border. The default is `1`.
 
   * `:background_stroke_opacity` is the opacity of the background
-    string. It is a float between `0.0` and `1.0` where `0.0` means
-    transparent and `1.0` means opaque. The default is `0.7`.
+    string, as any `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an
+    integer in `0..255` as the same value in 8-bit notation, or
+    `:transparent` / `:opaque`. The default is `0.7`.
 
   ### Returns
 
@@ -916,8 +925,9 @@ defmodule Image.Text do
     of the background border. The default is `1`.
 
   * `:background_stroke_opacity` is the opacity of the background
-    string. It is a float between `0.0` and `1.0` where `0.0` means
-    transparent and `1.0` means opaque. The default is `0.7`.
+    string, as any `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an
+    integer in `0..255` as the same value in 8-bit notation, or
+    `:transparent` / `:opaque`. The default is `0.7`.
 
   ### Returns
 

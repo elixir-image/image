@@ -108,7 +108,7 @@ defmodule Image.Options.Join do
   end
 
   # Resolved via `Image.BackgroundColor.resolve/2` (colors, `:average`, and the
-  # `{color, alpha: a}` form). The alpha band is kept so a gap can be filled with
+  # `{color, opacity: o}` form). The alpha band is kept so a gap can be filled with
   # a transparent or semi-transparent color. `arrayjoin` reproduces it exactly.
   defp validate_option({:background, background}, image, options) do
     case BackgroundColor.resolve(image, background) do

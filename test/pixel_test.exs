@@ -52,7 +52,7 @@ defmodule Image.PixelTest do
       assert {:ok, [255, 0, 0]} = Pixel.to_pixel(image, "#ff000080")
     end
 
-    test "transparency aliases collapse to black", %{image: image} do
+    test "the color atoms collapse to black", %{image: image} do
       assert {:ok, [0, 0, 0]} = Pixel.to_pixel(image, :transparent)
       assert {:ok, [0, 0, 0]} = Pixel.to_pixel(image, :none)
       assert {:ok, [0, 0, 0]} = Pixel.to_pixel(image, :opaque)
@@ -69,11 +69,11 @@ defmodule Image.PixelTest do
       assert {:ok, [255, 0, 0, 255]} = Pixel.to_pixel(image, :red)
     end
 
-    test "explicit :alpha option overrides", %{image: image} do
-      assert {:ok, [255, 0, 0, 128]} = Pixel.to_pixel(image, :red, alpha: 0.5)
-      assert {:ok, [255, 0, 0, 0]} = Pixel.to_pixel(image, :red, alpha: :transparent)
-      assert {:ok, [255, 0, 0, 255]} = Pixel.to_pixel(image, :red, alpha: :opaque)
-      assert {:ok, [255, 0, 0, 100]} = Pixel.to_pixel(image, :red, alpha: 100)
+    test "explicit :opacity option overrides", %{image: image} do
+      assert {:ok, [255, 0, 0, 128]} = Pixel.to_pixel(image, :red, opacity: 0.5)
+      assert {:ok, [255, 0, 0, 0]} = Pixel.to_pixel(image, :red, opacity: :transparent)
+      assert {:ok, [255, 0, 0, 255]} = Pixel.to_pixel(image, :red, opacity: :opaque)
+      assert {:ok, [255, 0, 0, 100]} = Pixel.to_pixel(image, :red, opacity: 100)
     end
 
     test "hex with alpha is preserved", %{image: image} do
@@ -91,6 +91,35 @@ defmodule Image.PixelTest do
 
     test "a list one band short gains the missing alpha", %{image: image} do
       assert {:ok, [255, 0, 0, 255]} = Pixel.to_pixel(image, [255, 0, 0])
+    end
+
+    test ":opacity applies to a pre-encoded list color", %{image: image} do
+      assert {:ok, [255, 0, 0, 128]} = Pixel.to_pixel(image, [255, 0, 0, 255], opacity: 0.5)
+    end
+
+    test ":opacity applies to a list color that needs resolving", %{image: image} do
+      assert {:ok, [255, 0, 0, 128]} = Pixel.to_pixel(image, [1.0, 0.0, 0.0], opacity: 0.5)
+    end
+  end
+
+  describe "put_alpha/3" do
+    test "replaces the alpha component of a pixel" do
+      image = Image.new!(2, 2, color: [0, 0, 0, 255])
+
+      assert Pixel.put_alpha([255, 0, 0, 255], image, 0.5) == {:ok, [255, 0, 0, 128]}
+      assert Pixel.put_alpha([255, 0, 0, 255], image, :transparent) == {:ok, [255, 0, 0, 0]}
+    end
+
+    test "scales the alpha to the image's band" do
+      image = Image.to_colorspace!(Image.new!(2, 2, color: [0, 0, 0, 255]), :rgb16)
+
+      assert Pixel.put_alpha([65_535, 0, 0, 65_535], image, 0.5) == {:ok, [65_535, 0, 0, 32_768]}
+    end
+
+    test "leaves a pixel alone when the image has no alpha band" do
+      image = Image.new!(2, 2, color: [0, 0, 0])
+
+      assert Pixel.put_alpha([255, 0, 0], image, 0.5) == {:ok, [255, 0, 0]}
     end
   end
 
@@ -142,26 +171,35 @@ defmodule Image.PixelTest do
     test "opaque alpha resolves to 255 for every 0..255-scale interpretation" do
       for colorspace <- [:srgb, :cmyk, :hsv, :bw, :lab, :lch, :labs] do
         image = with_alpha(colorspace)
-        {:ok, pixel} = Pixel.to_pixel(image, :red, alpha: :opaque)
+        {:ok, pixel} = Pixel.to_pixel(image, :red, opacity: :opaque)
         assert List.last(pixel) == 255, "#{colorspace} opaque alpha was #{List.last(pixel)}"
       end
     end
 
     test "scRGB opaque alpha stays 1.0" do
       image = with_alpha(:scrgb)
-      assert {:ok, [_r, _g, _b, alpha]} = Pixel.to_pixel(image, :red, alpha: :opaque)
+      assert {:ok, [_r, _g, _b, alpha]} = Pixel.to_pixel(image, :red, opacity: :opaque)
       assert alpha == 1.0
     end
 
-    test "a plain color (no explicit :alpha) also synthesizes opaque 255 on Lab" do
+    test "a plain color (no explicit :opacity) also synthesizes opaque 255 on Lab" do
       image = with_alpha(:lab)
       assert {:ok, [_l, _a, _b, 255]} = Pixel.to_pixel(image, :red)
     end
 
     test "alpha 0.5 resolves to 128 on Lab" do
       image = with_alpha(:lab)
-      assert {:ok, [_l, _a, _b, alpha]} = Pixel.to_pixel(image, :red, alpha: 0.5)
+      assert {:ok, [_l, _a, _b, alpha]} = Pixel.to_pixel(image, :red, opacity: 0.5)
       assert alpha == 128
+    end
+
+    # Rounding a float to a byte first would put 0.5 at 128/255.
+    test "a float alpha scales directly to the encoder's alpha range" do
+      {:ok, scrgb} = Pixel.to_pixel(with_alpha(:scrgb), :red, opacity: 0.5)
+      assert List.last(scrgb) == 0.5
+
+      {:ok, grey16} = Pixel.to_pixel(with_alpha(:grey16), :red, opacity: 0.5)
+      assert List.last(grey16) == 32_768
     end
   end
 
@@ -276,30 +314,55 @@ defmodule Image.PixelTest do
     end
   end
 
-  describe "transparency/1" do
+  describe "alpha_for/2 on an 8-bit image" do
+    defp srgb, do: Image.new!(2, 2, color: [0, 0, 0, 255])
+
     test "atoms" do
-      assert {:ok, 0} = Pixel.transparency(:none)
-      assert {:ok, 0} = Pixel.transparency(:transparent)
-      assert {:ok, 255} = Pixel.transparency(:opaque)
+      assert {:ok, 0} = Pixel.alpha_for(srgb(), :transparent)
+      assert {:ok, 255} = Pixel.alpha_for(srgb(), :opaque)
     end
 
     test "integers" do
-      assert {:ok, 0} = Pixel.transparency(0)
-      assert {:ok, 128} = Pixel.transparency(128)
-      assert {:ok, 255} = Pixel.transparency(255)
+      assert {:ok, 0} = Pixel.alpha_for(srgb(), 0)
+      assert {:ok, 128} = Pixel.alpha_for(srgb(), 128)
+      assert {:ok, 255} = Pixel.alpha_for(srgb(), 255)
     end
 
     test "floats" do
-      assert {:ok, 0} = Pixel.transparency(0.0)
-      assert {:ok, 128} = Pixel.transparency(0.5)
-      assert {:ok, 255} = Pixel.transparency(1.0)
+      assert {:ok, 0} = Pixel.alpha_for(srgb(), 0.0)
+      assert {:ok, 128} = Pixel.alpha_for(srgb(), 0.5)
+      assert {:ok, 255} = Pixel.alpha_for(srgb(), 1.0)
     end
 
     test "out of range" do
-      assert {:error, _} = Pixel.transparency(-1)
-      assert {:error, _} = Pixel.transparency(256)
-      assert {:error, _} = Pixel.transparency(2.0)
-      assert {:error, _} = Pixel.transparency(:blue)
+      assert {:error, _} = Pixel.alpha_for(srgb(), -1)
+      assert {:error, _} = Pixel.alpha_for(srgb(), 256)
+      assert {:error, _} = Pixel.alpha_for(srgb(), 2.0)
+      assert {:error, _} = Pixel.alpha_for(srgb(), :blue)
+    end
+  end
+
+  describe "alpha_for/2 on other interpretations" do
+    test "a 16-bit image scales to 0..65535" do
+      image = with_alpha(:rgb16)
+
+      assert {:ok, 0} = Pixel.alpha_for(image, :transparent)
+      assert {:ok, 65_535} = Pixel.alpha_for(image, :opaque)
+      assert {:ok, 32_768} = Pixel.alpha_for(image, 0.5)
+      assert {:ok, 32_896} = Pixel.alpha_for(image, 128)
+    end
+
+    test "an scRGB image scales to 0.0..1.0" do
+      image = with_alpha(:scrgb)
+
+      assert Pixel.alpha_for(image, :transparent) == {:ok, 0.0}
+      assert Pixel.alpha_for(image, :opaque) == {:ok, 1.0}
+      assert Pixel.alpha_for(image, 0.5) == {:ok, 0.5}
+    end
+
+    test "Lab and LCH keep a 0..255 alpha despite their float color bands" do
+      assert {:ok, 255} = Pixel.alpha_for(with_alpha(:lab), :opaque)
+      assert {:ok, 128} = Pixel.alpha_for(with_alpha(:lch), 0.5)
     end
   end
 end

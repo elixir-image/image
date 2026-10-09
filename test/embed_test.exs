@@ -5,7 +5,7 @@ defmodule Image.Embed.Test do
   test "Image.embed/4 with the default background gives a transparent border on an alpha image" do
     # The default `background: :transparent` fills the border. On an alpha image
     # that is transparent black, the same output as the explicit
-    # `background: {:black, alpha: :transparent}`.
+    # `background: {:black, opacity: :transparent}`.
     image_file = "penguin_with_alpha.png"
     validate_file = "embed/penguin_with_alpha_embed_black_transparent.png"
 
@@ -35,7 +35,7 @@ defmodule Image.Embed.Test do
     assert_images_equal(embedded, validate_path)
   end
 
-  test "Image.embed/4 with background: {:black, alpha: :transparent}" do
+  test "Image.embed/4 with background: {:black, opacity: :transparent}" do
     image_file = "penguin_with_alpha.png"
     validate_file = "embed/penguin_with_alpha_embed_black_transparent.png"
 
@@ -49,7 +49,7 @@ defmodule Image.Embed.Test do
       Image.embed(image, width, height + 50,
         x: 0,
         y: 0,
-        background: {:black, alpha: :transparent}
+        background: {:black, opacity: :transparent}
       )
 
     # {:ok, _image} = Image.write(embedded, validate_path)

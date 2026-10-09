@@ -131,6 +131,13 @@ defmodule Image.GroupB.Test do
                Image.drop_shadow(image, opacity: -0.1)
     end
 
+    test "accepts an 8-bit or atom :opacity" do
+      image = Image.new!(20, 20, color: :red)
+
+      assert {:ok, %Vix.Vips.Image{}} = Image.drop_shadow(image, opacity: 128)
+      assert {:ok, %Vix.Vips.Image{}} = Image.drop_shadow(image, opacity: :opaque)
+    end
+
     test "rejects non-positive :sigma", %{cat: image} do
       assert {:error, %Image.Error{reason: :invalid_option, value: {:sigma, 0}}} =
                Image.drop_shadow(image, sigma: 0)

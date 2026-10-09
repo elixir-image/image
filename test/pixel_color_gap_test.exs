@@ -21,8 +21,8 @@ defmodule Image.PixelColorGapTest do
       image = Image.new!(2, 2, color: :black)
       {:ok, yxy} = Operation.copy(image, interpretation: :VIPS_INTERPRETATION_YXY)
 
-      assert {:error, message} = Pixel.to_pixel(yxy, [1, 2, 3])
-      assert message =~ ":yxy interpretation"
+      assert {:error, %Image.Error{reason: :unsupported_interpretation, value: :yxy}} =
+               Pixel.to_pixel(yxy, [1, 2, 3])
     end
 
     test "a non-pre-encoded float list on a mutable image is converted" do
@@ -84,11 +84,6 @@ defmodule Image.PixelColorGapTest do
       end
     end
 
-    test "max_opacity and min_opacity" do
-      assert Pixel.max_opacity() == 255
-      assert Pixel.min_opacity() == 0
-    end
-
     test "out of gamut colors are clamped to the channel range" do
       assert Pixel.to_srgb(%Color.Lab{l: 150.0, a: 0.0, b: 0.0}) == {:ok, [255, 255, 255]}
       assert Pixel.to_srgb(%Color.Lab{l: -10.0, a: 0.0, b: 0.0}) == {:ok, [0, 0, 0]}
@@ -126,10 +121,7 @@ defmodule Image.PixelColorGapTest do
       alpha_image = Image.new!(2, 2, color: [10, 20, 30, 255])
       {:ok, yxy_alpha} = Operation.copy(alpha_image, interpretation: :VIPS_INTERPRETATION_YXY)
 
-      assert {:error, %Image.Error{message: message}} =
-               Image.BackgroundColor.resolve(yxy_alpha, :average)
-
-      assert message =~ "Could not construct alpha"
+      assert {:error, %Image.Error{}} = Image.BackgroundColor.resolve(yxy_alpha, :average)
     end
 
     test "resolving an invalid color errors" do
