@@ -16,6 +16,8 @@
 
 * Adds `Image.Pixel.alpha_for/2` and `Image.Pixel.alpha_for!/2`, which scale an opacity to the alpha band of a given image, whose range depends on the interpretation. ([#231](https://github.com/elixir-image/image/pull/231))
 
+* Adds `Image.multiply_alpha/2` and `Image.multiply_alpha!/2`, which multiply an image's alpha band by a `0.0..1.0` factor. They replace `Image.opacity/2`, which is deprecated and delegates to them.
+
 ### Changed
 
 * `Image.Pixel.to_pixel/3` now applies the `:opacity` option to a color given as a list of numbers. It was previously ignored for those, so `to_pixel(image, [255, 0, 0, 255], opacity: 0.5)` returned a fully opaque pixel. ([#231](https://github.com/elixir-image/image/pull/231))
@@ -70,7 +72,15 @@
 
 * `Image.affine/3` and `Image.rotate/3` now premultiply alpha explicitly only when the background is non-opaque, since libvips handles the other cases itself. `Image.shear/4` and `Image.translate/4` inherit this. ([#217](https://github.com/elixir-image/image/pull/217))
 
-* `Image.opacity/2` returns `{:error, %Image.Error{reason: :invalid_factor}}` for a factor outside `0.0..1.0` or of the wrong type, where it previously raised `FunctionClauseError`. `Image.opacity!/2` consequently raises `Image.Error`.
+* `Image.multiply_alpha/2` returns `{:error, %Image.Error{reason: :invalid_factor}}` for a factor outside `0.0..1.0` or of the wrong type, where `Image.opacity/2` previously raised `FunctionClauseError`. The `!` variant raises `Image.Error`.
+
+* Deprecates `Image.opacity/2` and `Image.opacity!/2` in favour of `Image.multiply_alpha/2` and `Image.multiply_alpha!/2`. Their argument is a multiplier rather than a `t:Image.Pixel.opacity/0`, so `opacity` was the one name left in the vocabulary meaning something other than a value a caller sets. The old names still work and delegate.
+
+* `Image.brightness/2`, `Image.saturation/2`, `Image.vibrance/3`, `Image.dilate/2`, `Image.erode/2`, `Image.dhash/2`, `Image.pixelate/2`, `Image.rotate/3`, `Image.shear/4`, `Image.translate/4`, `Image.meme/3`, `Image.from_binary/2`, `Image.from_svg/2` and `Image.join_bands/1` return `{:error, %Image.Error{}}` for an invalid argument instead of raising `FunctionClauseError`. Each reason is an `:invalid_<argument>` atom, and ten `!` variants that duplicated their guard now raise `Image.Error` as intended rather than `FunctionClauseError`.
+
+* `Image.posterize/2`, `Image.sepia/2`, `Image.gamma/2` and `Image.set_orientation/2` return `{:error, %Image.Error{}}` for an invalid argument, where they previously raised `FunctionClauseError` despite each declaring `{:error, error()}` in its spec. The reasons are `:invalid_levels`, `:invalid_strength`, `:invalid_exponent` and `:invalid_orientation`, and the `!` variants raise `Image.Error`.
+
+* Widens the specs of `Image.multiply_alpha/2`, `Image.sepia/2` and `Image.gamma/2` from `float()` to `number()` and `Image.set_orientation/2` from `1..8` to `integer()`, matching the values their guards have always accepted and their new error clauses reject.
 
 ### Fixed
 
@@ -90,7 +100,11 @@
 
 * Fix `Image.reduce_colors/2` raising when the image could not be converted to a tensor. ([#229](https://github.com/elixir-image/image/pull/229))
 
-* Fix `Image.opacity/2` and `Image.fade/2` casting the scaled alpha band to `uchar` unconditionally, which saturated a 16-bit alpha to `255` and truncated a float one to `0`. `Image.opacity(image, 0.5)` returned a fully transparent scRGB image and a 0.4%-opacity 16-bit one, and `Image.fade/2` lost its gradient on both.
+* Fix `Image.multiply_alpha/2` (formerly `Image.opacity/2`) and `Image.fade/2` casting the scaled alpha band to `uchar` unconditionally, which saturated a 16-bit alpha to `255` and truncated a float one to `0`. A half-opacity call returned a fully transparent scRGB image and a 0.4%-opacity 16-bit one, and `Image.fade/2` lost its gradient on both.
+
+* Fix `Image.join_bands/1` raising `ArgumentError` for a list holding anything other than an image. Its guard checked only that the argument was a list, so the contents reached `vips_bandjoin` unvalidated.
+
+* Fix `Image.resize/3`'s guard, which tested `scale >= 0` without `is_number/1`. Elixir orders every bitstring, atom and list above every number, so `Image.resize(image, "big")` passed the guard and raised `ArgumentError` from libvips. It now returns `{:error, %Image.Error{reason: :invalid_scale}}`.
 
 * Fix `Image.drop_shadow/2` building its shadow and canvas as 8-bit sRGB whatever the source interpretation, so a 16-bit shadow saturated to fully opaque, an scRGB one returned an alpha of `127` in a `0.0..1.0` band, and a CMYK one lost a band. It now composites in the source's own format and returns the interpretation, band format and band count it was given.
 
