@@ -98,6 +98,31 @@ defmodule Image.GroupB.Test do
     test "rejects mixed valid + invalid edges", %{hk: image} do
       assert {:error, %Image.Error{}} = Image.fade(image, edges: [:top, :diagonal])
     end
+
+    test "the gradient scales to the interpretation, not to 8 bits" do
+      base = Image.new!(20, 20, color: [10, 20, 30])
+
+      # The fade profile as a fraction of full opacity, sampled down the
+      # faded edge. It is a property of the gradient, so it must be the
+      # same for every interpretation.
+      profile = [{5, 1.0}, {12, 0.749}, {15, 0.451}, {19, 0.051}]
+
+      for interpretation <- [:srgb, :rgb16, :scrgb] do
+        image = Image.to_colorspace!(base, interpretation)
+        alpha_max = Image.Pixel.alpha_for!(image, :opaque)
+
+        {:ok, faded} = Image.fade(image, edges: :bottom, length: 10)
+
+        for {y, fraction} <- profile do
+          alpha = faded |> Image.get_pixel!(10, y) |> List.last()
+
+          assert_in_delta alpha / alpha_max,
+                          fraction,
+                          0.01,
+                          "#{interpretation} alpha at y=#{y} was #{alpha} of #{alpha_max}"
+        end
+      end
+    end
   end
 
   describe "Image.drop_shadow/2" do

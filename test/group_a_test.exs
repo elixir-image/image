@@ -139,6 +139,27 @@ defmodule Image.GroupA.Test do
       assert_raise FunctionClauseError, fn -> Image.opacity(image, 1.5) end
       assert_raise FunctionClauseError, fn -> Image.opacity(image, -0.5) end
     end
+
+    test "scales the alpha band to the interpretation, not to 8 bits" do
+      base = Image.new!(20, 20, color: [10, 20, 30])
+
+      for interpretation <- [:srgb, :rgb16, :scrgb, :lab] do
+        image = Image.to_colorspace!(base, interpretation)
+        alpha_max = Image.Pixel.alpha_for!(image, :opaque)
+
+        {:ok, half} = Image.opacity(image, 0.5)
+        [_, _, _, alpha] = Image.get_pixel!(half, 10, 10)
+
+        # Half opacity is half of the alpha band's own range, whether
+        # that range is 0..255, 0..65_535 or 0.0..1.0.
+        assert_in_delta alpha / alpha_max,
+                        0.5,
+                        0.01,
+                        "#{interpretation} alpha was #{alpha} of #{alpha_max}"
+
+        assert Image.band_format(half) == Image.band_format(image)
+      end
+    end
   end
 
   describe "Image.set_orientation/2" do

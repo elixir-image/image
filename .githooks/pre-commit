@@ -1,0 +1,15 @@
+#!/bin/sh
+# Format staged Elixir sources before the commit is created, so that
+# CI's `mix format --check-formatted` has nothing left to flag.
+set -e
+
+staged=$(git diff --cached --name-only --diff-filter=ACM -- '*.ex' '*.exs' '*.heex')
+
+if [ -z "$staged" ]; then
+  exit 0
+fi
+
+printf '%s\n' "$staged" | tr '\n' '\0' | xargs -0 mix format --
+printf '%s\n' "$staged" | tr '\n' '\0' | xargs -0 git add --
+
+exit 0

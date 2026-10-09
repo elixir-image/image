@@ -88,6 +88,8 @@
 
 * Fix `Image.reduce_colors/2` raising when the image could not be converted to a tensor. ([#229](https://github.com/elixir-image/image/pull/229))
 
+* Fix `Image.opacity/2` and `Image.fade/2` casting the scaled alpha band to `uchar` unconditionally, which saturated a 16-bit alpha to `255` and truncated a float one to `0`. `Image.opacity(image, 0.5)` returned a fully transparent scRGB image and a 0.4%-opacity 16-bit one, and `Image.fade/2` lost its gradient on both.
+
 ### Removed
 
 * **Breaking:** Removes `Image.Pixel.transparency/1`, `Image.Pixel.max_opacity/0` and `Image.Pixel.min_opacity/0`. Use `Image.Pixel.alpha_for/2` for a value to write into an image's alpha band, or `Image.Pixel.opacity_fraction/1` for the opacity itself. ([#231](https://github.com/elixir-image/image/pull/231))

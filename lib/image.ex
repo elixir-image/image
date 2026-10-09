@@ -3371,7 +3371,8 @@ defmodule Image do
 
   @spec add_alpha!(image :: Vimage.t(), alpha_image :: Vimage.t()) :: Vimage.t() | no_return()
 
-  @spec add_alpha!(image :: Vimage.t(), opacity :: Image.Pixel.opacity()) :: Vimage.t() | no_return()
+  @spec add_alpha!(image :: Vimage.t(), opacity :: Image.Pixel.opacity()) ::
+          Vimage.t() | no_return()
 
   def add_alpha!(%Vimage{} = image, alpha_image) do
     case add_alpha(image, alpha_image) do
@@ -11589,7 +11590,13 @@ defmodule Image do
     use Image.Math
     scaled_alpha = alpha * mask_u8 / 255.0
 
-    with {:ok, scaled_alpha} <- Operation.cast(scaled_alpha, :VIPS_FORMAT_UCHAR) do
+    # `mask_u8 / 255.0` is a 0.0..1.0 multiplier, so the product stays
+    # within the alpha band's range. Cast back to the band's own format
+    # rather than to uchar, which would saturate a 16-bit alpha and
+    # collapse a float one into a hard step.
+    alpha_format = Vix.Vips.Image.format(alpha)
+
+    with {:ok, scaled_alpha} <- Operation.cast(scaled_alpha, alpha_format) do
       add_alpha(colour_bands, scaled_alpha)
     end
   end
@@ -11740,8 +11747,15 @@ defmodule Image do
 
     {colour_bands, alpha} = split_alpha(image)
 
+    # `Operation.linear/3` promotes the band to float. Cast back to the
+    # alpha band's own format so the result keeps the range the image's
+    # interpretation defines: 0..255, 0..65_535 or 0.0..1.0. Casting to
+    # uchar unconditionally saturates a 16-bit alpha and truncates a
+    # float one to zero.
+    alpha_format = Vix.Vips.Image.format(alpha)
+
     with {:ok, scaled_alpha} <- Operation.linear(alpha, [factor], [0.0]),
-         {:ok, scaled_alpha} <- Operation.cast(scaled_alpha, :VIPS_FORMAT_UCHAR) do
+         {:ok, scaled_alpha} <- Operation.cast(scaled_alpha, alpha_format) do
       add_alpha(colour_bands, scaled_alpha)
     end
   end
