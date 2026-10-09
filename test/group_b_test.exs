@@ -163,6 +163,60 @@ defmodule Image.GroupB.Test do
       assert {:ok, %Vix.Vips.Image{}} = Image.drop_shadow(image, opacity: :opaque)
     end
 
+    test "returns the interpretation, band format and band count it was given" do
+      base = Image.new!(40, 40, color: [10, 20, 30])
+
+      for interpretation <- [:srgb, :rgb16, :scrgb, :lab, :lch, :cmyk, :grey16] do
+        image =
+          base
+          |> Image.to_colorspace!(interpretation)
+          |> Image.add_alpha!(0.5)
+
+        {:ok, shadowed} = Image.drop_shadow(image, opacity: 1.0, sigma: 3)
+
+        assert Image.colorspace(shadowed) == Image.colorspace(image),
+               "#{interpretation} became #{Image.colorspace(shadowed)}"
+
+        assert Image.band_format(shadowed) == Image.band_format(image),
+               "#{interpretation} band format became #{inspect(Image.band_format(shadowed))}"
+
+        assert Image.bands(shadowed) == Image.bands(image),
+               "#{interpretation} band count became #{Image.bands(shadowed)}"
+      end
+    end
+
+    test "the shadow strengthens the alpha band in proportion to its own range" do
+      base = Image.new!(40, 40, color: [10, 20, 30])
+
+      for interpretation <- [:srgb, :rgb16, :scrgb, :lab, :lch, :cmyk, :grey16] do
+        image =
+          base
+          |> Image.to_colorspace!(interpretation)
+          |> Image.add_alpha!(0.5)
+
+        alpha_max = Image.Pixel.alpha_for!(image, :opaque)
+
+        {:ok, shadowed} = Image.drop_shadow(image, opacity: 1.0, sigma: 3)
+        {_colour, alpha} = Image.split_alpha(shadowed)
+
+        {minimum, _} = Vix.Vips.Operation.min!(alpha)
+        {maximum, _} = Vix.Vips.Operation.max!(alpha)
+
+        # The half-transparent source stays half transparent where no
+        # shadow falls, and the shadow lifts it to three quarters. Both
+        # are fractions of the alpha band's own range, never of 0..255.
+        assert_in_delta minimum / alpha_max,
+                        0.5,
+                        0.01,
+                        "#{interpretation} minimum alpha was #{minimum} of #{alpha_max}"
+
+        assert_in_delta maximum / alpha_max,
+                        0.75,
+                        0.01,
+                        "#{interpretation} maximum alpha was #{maximum} of #{alpha_max}"
+      end
+    end
+
     test "rejects non-positive :sigma", %{cat: image} do
       assert {:error, %Image.Error{reason: :invalid_option, value: {:sigma, 0}}} =
                Image.drop_shadow(image, sigma: 0)

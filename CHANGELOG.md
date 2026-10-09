@@ -70,6 +70,8 @@
 
 * `Image.affine/3` and `Image.rotate/3` now premultiply alpha explicitly only when the background is non-opaque, since libvips handles the other cases itself. `Image.shear/4` and `Image.translate/4` inherit this. ([#217](https://github.com/elixir-image/image/pull/217))
 
+* `Image.opacity/2` returns `{:error, %Image.Error{reason: :invalid_factor}}` for a factor outside `0.0..1.0` or of the wrong type, where it previously raised `FunctionClauseError`. `Image.opacity!/2` consequently raises `Image.Error`.
+
 ### Fixed
 
 * Fix `Image.warp_perspective/4`, `Image.straighten_perspective/3` and `Image.map/3` reproducing non-opaque backgrounds incorrectly. ([#216](https://github.com/elixir-image/image/pull/216))
@@ -89,6 +91,8 @@
 * Fix `Image.reduce_colors/2` raising when the image could not be converted to a tensor. ([#229](https://github.com/elixir-image/image/pull/229))
 
 * Fix `Image.opacity/2` and `Image.fade/2` casting the scaled alpha band to `uchar` unconditionally, which saturated a 16-bit alpha to `255` and truncated a float one to `0`. `Image.opacity(image, 0.5)` returned a fully transparent scRGB image and a 0.4%-opacity 16-bit one, and `Image.fade/2` lost its gradient on both.
+
+* Fix `Image.drop_shadow/2` building its shadow and canvas as 8-bit sRGB whatever the source interpretation, so a 16-bit shadow saturated to fully opaque, an scRGB one returned an alpha of `127` in a `0.0..1.0` band, and a CMYK one lost a band. It now composites in the source's own format and returns the interpretation, band format and band count it was given.
 
 ### Removed
 

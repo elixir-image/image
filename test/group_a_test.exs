@@ -135,9 +135,25 @@ defmodule Image.GroupA.Test do
       assert_in_delta a, 127, 1
     end
 
-    test "rejects factors outside [0, 1]", %{cat: image} do
-      assert_raise FunctionClauseError, fn -> Image.opacity(image, 1.5) end
-      assert_raise FunctionClauseError, fn -> Image.opacity(image, -0.5) end
+    test "returns an error for factors outside [0, 1]", %{cat: image} do
+      assert {:error, %Image.Error{reason: :invalid_factor, value: 1.5}} =
+               Image.opacity(image, 1.5)
+
+      assert {:error, %Image.Error{reason: :invalid_factor, value: -0.5}} =
+               Image.opacity(image, -0.5)
+    end
+
+    test "returns an error for any non-numeric factor", %{cat: image} do
+      for factor <- [nil, "", :"", :opaque, "0.5", [0.5], %{}, {0.5}] do
+        assert {:error, %Image.Error{reason: :invalid_factor, value: ^factor}} =
+                 Image.opacity(image, factor),
+               "#{inspect(factor)} was not rejected"
+      end
+    end
+
+    test "opacity!/2 raises Image.Error, not FunctionClauseError", %{cat: image} do
+      assert_raise Image.Error, fn -> Image.opacity!(image, 1.5) end
+      assert_raise Image.Error, fn -> Image.opacity!(image, -0.5) end
     end
 
     test "scales the alpha band to the interpretation, not to 8 bits" do

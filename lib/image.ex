@@ -11484,20 +11484,40 @@ defmodule Image do
       height = height(image)
       {_colour_bands, alpha} = split_alpha(image)
 
+      # The shadow and the transparent canvas it sits on must share the
+      # source's interpretation and band format. Built as 8-bit sRGB they
+      # composite in 8-bit value space, which scales a 16-bit or float
+      # alpha wrongly and reduces a non-8-bit shadow colour to near-black.
+      shadow_format = band_format(image)
+      shadow_interpretation = colorspace(image)
+      transparent = List.duplicate(0, bands(image))
+
       # Shadow alpha = source alpha × opacity, blurred to
       # soften the silhouette's edges.
       use Image.Math
       shadow_alpha_f = alpha * opacity
 
-      with {:ok, shadow_alpha} <- Operation.cast(shadow_alpha_f, :VIPS_FORMAT_UCHAR),
+      with {:ok, shadow_alpha} <- Operation.cast(shadow_alpha_f, Vix.Vips.Image.format(alpha)),
            {:ok, blurred} <- Operation.gaussblur(shadow_alpha, sigma),
-           {:ok, [r, g, b | _]} <- Image.Pixel.to_pixel(image, color),
-           {:ok, shadow_rgb} <- Image.new(width, height, color: [r, g, b]),
-           {:ok, shadow} <- add_alpha(shadow_rgb, blurred),
-           {:ok, base} <- Image.new(width, height, color: [0, 0, 0, 0]),
+           {:ok, pixel} <- Image.Pixel.to_pixel(image, color),
+           {:ok, shadow_color} <-
+             Image.new(width, height,
+               color: Image.Pixel.strip_alpha(pixel, image),
+               format: shadow_format,
+               interpretation: shadow_interpretation
+             ),
+           {:ok, shadow} <- add_alpha(shadow_color, blurred),
+           {:ok, base} <-
+             Image.new(width, height,
+               color: transparent,
+               format: shadow_format,
+               interpretation: shadow_interpretation
+             ),
            {:ok, base_with_shadow} <-
-             Operation.composite2(base, shadow, :VIPS_BLEND_MODE_OVER, x: dx, y: dy) do
-        Operation.composite2(base_with_shadow, image, :VIPS_BLEND_MODE_OVER, x: 0, y: 0)
+             Operation.composite2(base, shadow, :VIPS_BLEND_MODE_OVER, x: dx, y: dy),
+           {:ok, composed} <-
+             Operation.composite2(base_with_shadow, image, :VIPS_BLEND_MODE_OVER, x: 0, y: 0) do
+        restore_colorspace(composed, shadow_interpretation, shadow_format)
       end
     end
   end
@@ -11523,6 +11543,21 @@ defmodule Image do
     case drop_shadow(image, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  # `Operation.composite2/4` composites in 8-bit sRGB and returns its
+  # result there for every interpretation outside the sRGB family, so
+  # `:scrgb`, `:lab`, `:lch` and `:cmyk` images come back converted and
+  # `:cmyk` loses a band. Put the result back into the interpretation
+  # and band format it arrived in, so adding a shadow never silently
+  # changes the image's type. `:srgb`, `:rgb16` and `:grey16` survive
+  # the composite unchanged and skip the conversion.
+  defp restore_colorspace(image, interpretation, format) do
+    if colorspace(image) == interpretation and band_format(image) == format do
+      {:ok, image}
+    else
+      to_colorspace(image, interpretation)
     end
   end
 
@@ -11716,12 +11751,17 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `factor` is a float in `[0.0, 1.0]`. `1.0` is a no-op (the
+  * `factor` is a number in `[0.0, 1.0]`. `1.0` is a no-op (the
     image is returned unchanged when it already has alpha);
     `0.0` makes the entire image fully transparent;
     intermediate values produce proportional translucency.
     Cloudinary's `o_<n>` and ImageKit's `e-opacity` both use
     this `0..1` (or `0..100` percentage) convention.
+
+    Note that `factor` is a multiplier, not a `t:Image.Pixel.opacity/0`.
+    It scales whatever alpha each pixel already has, so the integer `1`
+    means unchanged here rather than the `1/255` it means wherever an
+    opacity is set.
 
   ### Returns
 
@@ -11729,16 +11769,19 @@ defmodule Image do
 
   * `{:error, reason}`.
 
-  ### Example
+  ### Examples
 
       iex> image = Image.open!("./test/support/images/cat.png")
       iex> {:ok, _half} = Image.opacity(image, 0.5)
+
+      iex> image = Image.open!("./test/support/images/cat.png")
+      iex> {:error, %Image.Error{reason: :invalid_factor}} = Image.opacity(image, 1.5)
 
   """
   @doc since: "0.67.0"
   @doc subject: "Operation"
 
-  @spec opacity(image :: Vimage.t(), factor :: float()) ::
+  @spec opacity(image :: Vimage.t(), factor :: number()) ::
           {:ok, Vimage.t()} | {:error, error()}
   def opacity(%Vimage{} = image, factor)
       when is_multiplier(factor) and factor <= 1.0 do
@@ -11760,6 +11803,15 @@ defmodule Image do
     end
   end
 
+  def opacity(%Vimage{} = _image, factor) do
+    {:error,
+     %Image.Error{
+       reason: :invalid_factor,
+       value: factor,
+       message: "Invalid factor #{inspect(factor)}. Must be a number in 0.0..1.0"
+     }}
+  end
+
   @doc """
   Multiplies an image's alpha channel by `factor`, or raises on
   error.
@@ -11777,7 +11829,7 @@ defmodule Image do
   @doc since: "0.67.0"
   @doc subject: "Operation"
 
-  @spec opacity!(image :: Vimage.t(), factor :: float()) :: Vimage.t() | no_return()
+  @spec opacity!(image :: Vimage.t(), factor :: number()) :: Vimage.t() | no_return()
   def opacity!(%Vimage{} = image, factor) do
     case opacity(image, factor) do
       {:ok, image} -> image
