@@ -39,34 +39,34 @@ jobs:
           # "26" specifier resolves to a current patch that satisfies this.
 
           # Elixir 1.17 — supports OTP 25–27
-          - elixir: "1.17-otp-26"
-            otp: "26"
-          - elixir: "1.17-otp-27"
-            otp: "27"
+          - elixir: "1.17.3-otp-26"
+            otp: "26.2.5.21"
+          - elixir: "1.17.3-otp-27"
+            otp: "27.3.4.18"
 
           # Elixir 1.18 — supports OTP 25–27
-          - elixir: "1.18-otp-26"
-            otp: "26"
-          - elixir: "1.18-otp-27"
-            otp: "27"
+          - elixir: "1.18.5-otp-26"
+            otp: "26.2.5.21"
+          - elixir: "1.18.5-otp-27"
+            otp: "27.3.4.18"
 
           # Elixir 1.19 — supports OTP 26–28
-          - elixir: "1.19-otp-26"
-            otp: "26"
-          - elixir: "1.19-otp-27"
-            otp: "27"
-          - elixir: "1.19-otp-28"
-            otp: "28"
+          - elixir: "1.19.6-otp-26"
+            otp: "26.2.5.21"
+          - elixir: "1.19.6-otp-27"
+            otp: "27.3.4.18"
+          - elixir: "1.19.6-otp-28"
+            otp: "28.5.0.7"
 
-          # Elixir 1.20 — supports OTP 27–29. The 1.20.2-otp-29 entry is the
-          # canonical toolchain and the lint entry (warnings-as-errors,
-          # dialyzer, credo).
-          - elixir: "1.20.2-otp-27"
-            otp: "27"
-          - elixir: "1.20.2-otp-28"
-            otp: "28"
-          - elixir: "1.20.2-otp-29"
-            otp: "29"
+          # Elixir 1.20 — supports OTP 27–29. The 1.20.4-otp-29 entry is the
+          # canonical toolchain and the lint entry (format, credo,
+          # warnings-as-errors, dialyzer, docs).
+          - elixir: "1.20.4-otp-27"
+            otp: "27.3.4.18"
+          - elixir: "1.20.4-otp-28"
+            otp: "28.5.0.7"
+          - elixir: "1.20.4-otp-29"
+            otp: "29.1.1"
             lint: true
     steps:
     # Step: Setup Elixir + Erlang image as the base.
@@ -78,33 +78,20 @@ jobs:
 
     # Step: Check out the code.
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
-    # Step: Define how to cache deps. Restores existing cache if present.
-    - name: Cache deps
-      id: cache-deps
-      uses: actions/cache@v5
-      env:
-        cache-name: cache-elixir-deps
+    # Step: Cache deps and the compiled build. The key carries both the
+    # Elixir and the OTP patch, because BEAM files are version-tagged and
+    # a key without the OTP version hands one row another row's artifacts.
+    - name: Restore dependency cache
+      uses: actions/cache@v6
       with:
-        path: deps
-        key: ${{ runner.os }}-otp${{ matrix.otp }}-elixir${{ matrix.elixir }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
+        path: |
+          deps
+          _build
+        key: mix-${{ matrix.elixir }}-${{ matrix.otp }}-${{ hashFiles('mix.lock') }}
         restore-keys: |
-          ${{ runner.os }}-otp${{ matrix.otp }}-elixir${{ matrix.elixir }}-mix-${{ env.cache-name }}-
-
-    # Step: Define how to cache the `_build` directory. After the first run,
-    # this speeds up tests runs a lot. This includes not re-compiling our
-    # project's downloaded deps every run.
-    - name: Cache compiled build
-      id: cache-build
-      uses: actions/cache@v5
-      env:
-        cache-name: cache-compiled-build
-      with:
-        path: _build
-        key: ${{ runner.os }}-otp${{ matrix.otp }}-elixir${{ matrix.elixir }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-otp${{ matrix.otp }}-elixir${{ matrix.elixir }}-mix-${{ env.cache-name }}-
+          mix-${{ matrix.elixir }}-${{ matrix.otp }}-
 
     # Step: Update dependencies
     - name: Update Ubuntu dependencies
@@ -121,7 +108,7 @@ jobs:
         echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
 
     - name: Cache libvips artifacts
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       id: vips-cache
       with:
         path: vips
@@ -157,18 +144,32 @@ jobs:
 
     # Step: Check that the checked in code has already been formatted.
     # This step fails if something was found unformatted.
-    # Customize this step as desired.
-    # - name: Check Formatting
-    #   run: mix format --check-formatted
+    - name: Check formatting
+      run: mix format --check-formatted
+      if: ${{ matrix.lint }}
 
     # Step: Execute the tests.
     - name: Run tests
       run: mix test --exclude text --exclude text_avatar --exclude video --exclude heic_compression --exclude circular_gradient
 
-    # Step: Execute dialyzer.
+    # Step: Cache the dialyzer PLT. Keyed on both versions for the same
+    # reason as the build cache.
+    - name: Restore PLT cache
+      uses: actions/cache@v6
+      if: ${{ matrix.lint }}
+      with:
+        path: _build/dev/dialyxir_*
+        key: plt-${{ matrix.elixir }}-${{ matrix.otp }}-${{ hashFiles('mix.lock') }}
+        restore-keys: |
+          plt-${{ matrix.elixir }}-${{ matrix.otp }}-
+
+    # Step: Execute dialyzer. Runs in the dev env, which is where the
+    # PLT above is built and cached.
     - name: Run dialyzer
       run: mix dialyzer
       if: ${{ matrix.lint }}
+      env:
+        MIX_ENV: dev
 
     # Step: Enforce the Credo policy (see .credo.exs).
     - name: Run Credo
