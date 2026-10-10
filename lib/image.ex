@@ -13950,7 +13950,12 @@ defmodule Image do
 
   defp compare_by_metric(image_1, image_2, difference, :ae) do
     with {:ok, non_zero} <- Image.Math.not_equal(difference, 0),
-         {:ok, binary} <- Vimage.write_to_binary(non_zero[0]),
+         # A pixel differs when any of its bands do. Counting band 0
+         # alone reported no difference whatever for two images that
+         # differ only in, say, the blue band, which made the default
+         # metric report a match for images that plainly do not match.
+         {:ok, any_band} <- Operation.bandbool(non_zero, :VIPS_OPERATION_BOOLEAN_OR),
+         {:ok, binary} <- Vimage.write_to_binary(any_band),
          {:ok, non_zero_pixel_count} <- non_zero_pixel_count(binary) do
       image_1_size = Image.width(image_1) * Image.height(image_1)
       image_2_size = Image.width(image_2) * Image.height(image_2)
@@ -14032,43 +14037,47 @@ defmodule Image do
   defp difference_mask(difference, image) do
     use Image.Math
 
-    mask =
-      difference
-      |> split_bands()
-      |> Enum.reduce(fn band, acc -> if_then_else!(acc > band, acc, band) end)
-
-    scale_mask_to_alpha(mask, image)
-  end
-
-  # A difference is expressed in the colour bands' range, but the mask it
-  # becomes is read as an alpha band, whose range follows the
-  # interpretation. The two agree for every interpretation whose colour
-  # bands and alpha band share a range, and disagree for Lab and LCH,
-  # whose bands are float but run 0..100 against an alpha of 0..255. The
-  # highlight's opacity should mean the same thing either way.
-  defp scale_mask_to_alpha(mask, image) do
     with {:ok, alpha_maximum} <- Image.Pixel.alpha_for(image, :opaque) do
-      scale = alpha_maximum / band_maximum(image)
+      # Each band's difference becomes a fraction of the largest
+      # difference that band can hold, then the largest of those
+      # fractions becomes the mask. Normalising per band rather than once
+      # at the end matters wherever the bands have different ranges, which
+      # is Lab and LCH: a change of 60 in `a` is a smaller share of its
+      # range than a change of 60 in `L`.
+      scales = Enum.map(band_maxima(image), &(alpha_maximum / &1))
 
-      if scale == 1.0 do
-        {:ok, mask}
-      else
-        with {:ok, scaled} <- Operation.linear(mask, [scale], [0.0]) do
-          Operation.cast(scaled, Vix.Vips.Image.format(image))
-        end
-      end
+      mask =
+        difference
+        |> split_bands()
+        |> Enum.zip(scales)
+        |> Enum.map(fn
+          {band, 1.0} -> band
+          {band, scale} -> Operation.linear!(band, [scale], [0.0])
+        end)
+        |> Enum.reduce(fn band, acc -> if_then_else!(acc > band, acc, band) end)
+
+      Operation.cast(mask, Vix.Vips.Image.format(image))
     end
   end
 
-  # The largest value a colour band can hold, and therefore the largest
-  # difference two pixels can have in it. Lab and LCH are the interesting
-  # case: their bands are float, but `L` runs 0..100 rather than 0..1.
-  defp band_maximum(image) do
+  # The largest value each colour band can hold, and so the largest
+  # difference two pixels can have in it, one entry per band.
+  #
+  # Integer and float RGB bands all share one range, but Lab and LCH do
+  # not: `L` runs 0..100 while `a` and `b` run about ±128, and LCH's `h`
+  # is an angle in degrees. A hue difference is circular, so an `h` either
+  # side of the 360 degree wrap reads as a large difference rather than
+  # the small one it is. That errs towards showing a difference, which is
+  # the safer direction for a comparison.
+  defp band_maxima(image) do
+    bands = bands(image)
+
     case {colorspace(image), band_format(image)} do
-      {interpretation, _format} when interpretation in [:lab, :lch] -> 100.0
-      {_interpretation, {:u, bits}} -> :math.pow(2, bits) - 1
-      {_interpretation, {:s, bits}} -> :math.pow(2, bits - 1) - 1
-      {_interpretation, {:f, _bits}} -> 1.0
+      {:lab, _format} -> [100.0, 128.0, 128.0]
+      {:lch, _format} -> [100.0, 128.0, 360.0]
+      {_interpretation, {:u, bits}} -> List.duplicate(:math.pow(2, bits) - 1, bands)
+      {_interpretation, {:s, bits}} -> List.duplicate(:math.pow(2, bits - 1) - 1, bands)
+      {_interpretation, {:f, _bits}} -> List.duplicate(1.0, bands)
     end
   end
 

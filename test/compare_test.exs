@@ -145,6 +145,28 @@ defmodule Image.CompareTest do
     end
   end
 
+  describe "Image.compare/3 metrics" do
+    test ":ae counts a pixel that differs in any band, not only the first",
+         %{base: base} do
+      {:ok, blue_only} = Image.Draw.rect(base, 5, 5, 10, 10, color: [100, 100, 200])
+
+      # The absolute error counted band 0 alone, so a difference confined
+      # to the blue band reported an exact match.
+      assert {:ok, metric, _composed} = Image.compare(base, blue_only, metric: :ae)
+      assert_in_delta metric, @patch_pixels / @image_pixels, 0.0001
+    end
+
+    test "detects a difference that is purely chromatic" do
+      # Identical lightness, opposite chroma, so the difference lives
+      # entirely in Lab's `a` and `b` bands.
+      a = Image.new!(20, 20, color: [50.0, 60.0, 40.0], interpretation: :lab, format: {:f, 32})
+      b = Image.new!(20, 20, color: [50.0, -60.0, -40.0], interpretation: :lab, format: {:f, 32})
+
+      assert {:ok, metric, _composed} = Image.compare(a, b, metric: :ae)
+      assert_in_delta metric, 1.0, 0.0001
+    end
+  end
+
   describe "Image.compare/3 on the image from issue 232" do
     # A single-band bitonal JPEG, contributed by the issue's reporter and
     # derived from a public domain scan of Jacob van Ruisdael's
