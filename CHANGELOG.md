@@ -1,5 +1,13 @@
 # Changelog
 
+## Image 0.74.0
+
+This is the changelog for Image version 0.74.0 released on October 31st, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+### Added
+
+* Adds an `Image: transform` Livebook smart cell for building an image transformation visually; it is registered automatically when `kino` is loaded. ([#31](https://github.com/elixir-image/image/issues/31))
+
 ## Image 0.73.0
 
 This is the changelog for Image version 0.73.0 released on October 28th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

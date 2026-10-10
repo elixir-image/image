@@ -1,6 +1,6 @@
 # Livebook smart cell
 
-**Status:** in progress, 2026-10-28
+**Status:** implemented (v0.74.0), 2026-10-31
 
 The implementation is complete and tested on the Elixir side, and lives on the `livebook_smart_cell` branch. It is deliberately not on `main` and not part of 0.73.0, because `lib/assets/main.js` has never been run in a notebook and a smart cell whose client is unexercised is not something to ship.
 
