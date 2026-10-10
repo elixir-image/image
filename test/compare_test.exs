@@ -156,6 +156,35 @@ defmodule Image.CompareTest do
       assert_in_delta metric, @patch_pixels / @image_pixels, 0.0001
     end
 
+    test ":rmse returns an error for a float band format", %{base: base, changed: changed} do
+      for interpretation <- [:scrgb, :lab] do
+        a = Image.to_colorspace!(base, interpretation)
+        b = Image.to_colorspace!(changed, interpretation)
+
+        # `:rmse` divides by the number of values a band can hold. A float
+        # band has no fixed range, so dividing by `2 ** 32` returned about
+        # 1.0e-9 and read as a perfect match.
+        assert {:error, %Image.Error{reason: :unsupported_metric, value: {:rmse, :f}}} =
+                 Image.compare(a, b, metric: :rmse)
+
+        # The metrics that need no such scaling still work.
+        assert {:ok, _ae, _} = Image.compare(a, b, metric: :ae)
+        assert {:ok, _mse, _} = Image.compare(a, b, metric: :mse)
+      end
+    end
+
+    test ":rmse works for a signed integer band format", %{base: base, changed: changed} do
+      a = Image.to_colorspace!(base, :labs)
+      b = Image.to_colorspace!(changed, :labs)
+
+      assert {:s, _bits} = Image.band_format(a)
+
+      # `format_size/1` matched only `:u` and `:f`, so a signed format
+      # raised CaseClauseError.
+      assert {:ok, rmse, _composed} = Image.compare(a, b, metric: :rmse)
+      assert rmse > 0.0 and rmse <= 1.0
+    end
+
     test "detects a difference that is purely chromatic" do
       # Identical lightness, opposite chroma, so the difference lives
       # entirely in Lab's `a` and `b` bands.

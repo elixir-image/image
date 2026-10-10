@@ -14081,10 +14081,31 @@ defmodule Image do
     end
   end
 
+  # `:rmse` scales the error into `0.0..1.0` by dividing by the number of
+  # values a band can hold, which only exists for an integer format. A
+  # float band has no fixed range, so dividing by `2 ** 32` returned an
+  # answer around `1.0e-9` that read as a perfect match for images that
+  # plainly differed, and a signed format matched no clause at all and
+  # raised `CaseClauseError`.
   defp format_size(image) do
     case Image.BandFormat.nx_format(image) do
-      {:ok, {:u, size}} -> {:ok, round(:math.pow(2, size))}
-      {:ok, {:f, size}} -> {:ok, round(:math.pow(2, trunc(size)))}
+      {:ok, {integer, size}} when integer in [:u, :s] ->
+        {:ok, round(:math.pow(2, size))}
+
+      {:ok, {format, _size}} ->
+        {:error,
+         %Image.Error{
+           reason: :unsupported_metric,
+           value: {:rmse, format},
+           message:
+             "The :rmse metric scales the error by the range of the band format, " <>
+               "which a #{inspect(format)} format does not have. " <>
+               "#{inspect(colorspace(image))} images use #{inspect(format)} bands. " <>
+               "Use the :mse or :ae metric instead."
+         }}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
