@@ -13975,18 +13975,32 @@ defmodule Image do
   end
 
   defp compose_difference(image, difference, options) do
-    with {:ok, color_difference} <-
-           if_then_else(difference, options.difference_color, :transparent),
+    with {:ok, mask} <- difference_mask(difference, image),
+         # A flat image of the difference colour in the base image's own
+         # interpretation. The mask becomes the overlay's alpha band, so
+         # the colour shows only where the images differ and no
+         # conditional is needed.
+         #
+         # Using the difference as a per-band condition, as this did
+         # before, applied each band of the colour only where that band
+         # differed. Two neutral greys in Lab differ almost entirely in
+         # `L`, so the `a` and `b` bands of the highlight colour were
+         # dropped and the highlight came out grey rather than red.
+         {:ok, color_image} <-
+           new(image,
+             color: options.difference_color,
+             format: band_format(image),
+             interpretation: colorspace(image)
+           ),
          {:ok, color_difference} <-
-           Image.Math.multiply(color_difference, options.difference_boost),
+           Image.Math.multiply(color_image, options.difference_boost),
          # Band arithmetic drops the interpretation, so a four-band CMYK
-         # difference comes back tagged sRGB and libvips then reads it as
-         # RGBA and refuses the alpha band below. Restore it first.
+         # result comes back tagged sRGB and libvips then reads it as RGBA
+         # and refuses the alpha band below. Restore it first.
          {:ok, color_difference} <-
            Operation.copy(color_difference,
              interpretation: Vix.Vips.Image.interpretation(image)
            ),
-         {:ok, mask} <- difference_mask(difference),
          {:ok, alpha_difference} <- add_alpha(color_difference, mask),
          {:ok, saturated} <- saturation(image, options.saturation),
          {:ok, brightened} <- brightness(saturated, options.brightness),
@@ -14015,7 +14029,7 @@ defmodule Image do
   # a pixel is unchanged, whatever the interpretation, and it stays in the
   # image's own numeric range, so a 16-bit comparison gets a 16-bit alpha
   # rather than an 8-bit one that would be 0.4% opaque.
-  defp difference_mask(difference) do
+  defp difference_mask(difference, image) do
     use Image.Math
 
     mask =
@@ -14023,7 +14037,39 @@ defmodule Image do
       |> split_bands()
       |> Enum.reduce(fn band, acc -> if_then_else!(acc > band, acc, band) end)
 
-    {:ok, mask}
+    scale_mask_to_alpha(mask, image)
+  end
+
+  # A difference is expressed in the colour bands' range, but the mask it
+  # becomes is read as an alpha band, whose range follows the
+  # interpretation. The two agree for every interpretation whose colour
+  # bands and alpha band share a range, and disagree for Lab and LCH,
+  # whose bands are float but run 0..100 against an alpha of 0..255. The
+  # highlight's opacity should mean the same thing either way.
+  defp scale_mask_to_alpha(mask, image) do
+    with {:ok, alpha_maximum} <- Image.Pixel.alpha_for(image, :opaque) do
+      scale = alpha_maximum / band_maximum(image)
+
+      if scale == 1.0 do
+        {:ok, mask}
+      else
+        with {:ok, scaled} <- Operation.linear(mask, [scale], [0.0]) do
+          Operation.cast(scaled, Vix.Vips.Image.format(image))
+        end
+      end
+    end
+  end
+
+  # The largest value a colour band can hold, and therefore the largest
+  # difference two pixels can have in it. Lab and LCH are the interesting
+  # case: their bands are float, but `L` runs 0..100 rather than 0..1.
+  defp band_maximum(image) do
+    case {colorspace(image), band_format(image)} do
+      {interpretation, _format} when interpretation in [:lab, :lch] -> 100.0
+      {_interpretation, {:u, bits}} -> :math.pow(2, bits) - 1
+      {_interpretation, {:s, bits}} -> :math.pow(2, bits - 1) - 1
+      {_interpretation, {:f, _bits}} -> 1.0
+    end
   end
 
   defp format_size(image) do

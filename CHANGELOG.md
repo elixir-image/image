@@ -106,6 +106,10 @@
 
 * Fix `Image.compare/3` resolving `:difference_color` against the image before flattening it, so a two-band greyscale image resolved `:red` to a two-element pixel that no longer matched the one-band difference. ([#232](https://github.com/elixir-image/image/issues/232))
 
+* Fix `Image.compare/3` highlighting a difference in the wrong colour whenever it was confined to some bands. The difference was used as a per-band condition, so each band of `:difference_color` was applied only where that band itself differed: a blue-only change was highlighted in dark grey rather than red, and a Lab comparison of two neutral greys lost the `a` and `b` bands entirely. The colour is now applied wherever the pixel differs, with the mask as the overlay's alpha. ([#232](https://github.com/elixir-image/image/issues/232))
+
+* Fix `Image.compare/3` under-weighting the difference mask for `:lab` and `:lch` images, whose bands are float but whose `L` runs `0..100` against an alpha band of `0..255`. The mask is now scaled from the colour bands' range to the alpha range, so the highlight's opacity means the same thing in every interpretation. ([#232](https://github.com/elixir-image/image/issues/232))
+
 * Fix `Image.compare/3` inverting its difference mask for a CMYK image, so the unchanged background came back blank white and the base image was lost. The mask was derived by converting the difference to greyscale, but a zero CMYK difference means "no ink", which converts to white and therefore to full opacity. It is now the largest absolute difference across the bands, which is zero for an unchanged pixel in every interpretation. ([#232](https://github.com/elixir-image/image/issues/232))
 
 * Fix `Image.compare/3` writing an 8-bit difference mask into the alpha band of a 16-bit image, which left the highlight at 0.4% opacity and invisible. ([#232](https://github.com/elixir-image/image/issues/232))

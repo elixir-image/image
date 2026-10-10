@@ -72,9 +72,32 @@ defmodule Image.CompareTest do
       # inverted it for CMYK, because a zero CMYK difference is "no ink"
       # and converts to white. The background came back blank white.
       refute Enum.all?(background, &(&1 >= 250)),
-             "the unchanged background came back blank: #{inspect(background)}"
+             "the unchanged background came back blank: #{inspect(background, charlists: :as_lists)}"
 
       assert highlighted != background
+    end
+
+    test "highlights the difference in the difference colour, not in grey",
+         %{base: base, changed: changed} do
+      # The colour must survive whatever the interpretation. Using the
+      # difference as a per-band condition dropped the `a` and `b` bands
+      # of a Lab highlight, because two neutral greys differ almost
+      # entirely in `L`, and the highlight came out grey.
+      for interpretation <- [:srgb, :lab, :lch, :cmyk] do
+        a = Image.to_colorspace!(base, interpretation)
+        b = Image.to_colorspace!(changed, interpretation)
+
+        assert {:ok, _metric, composed} = Image.compare(a, b)
+
+        # Read the highlight in sRGB so the assertion is about colour
+        # rather than about any one interpretation's encoding.
+        {:ok, as_srgb} = Image.to_colorspace(composed, :srgb)
+        [red, green, blue | _] = Image.get_pixel!(as_srgb, 10, 10)
+
+        assert red > green + 20 and red > blue + 20,
+               "#{interpretation} highlighted in #{inspect([red, green, blue], charlists: :as_lists)}, " <>
+                 "which is not recognisably red"
+      end
     end
 
     test "returns the composed difference in the interpretation it was given",
@@ -115,9 +138,9 @@ defmodule Image.CompareTest do
         # An 8-bit difference mask written into a 16-bit alpha band gives
         # a contrast near zero, which is the defect this guards.
         assert contrast > 0.05,
-               "#{interpretation} highlight #{inspect(highlighted)} is only " <>
+               "#{interpretation} highlight #{inspect(highlighted, charlists: :as_lists)} is only " <>
                  "#{Float.round(contrast * 100, 2)}% different from " <>
-                 "#{inspect(background)}"
+                 "#{inspect(background, charlists: :as_lists)}"
       end
     end
   end
