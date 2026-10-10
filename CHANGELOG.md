@@ -16,6 +16,8 @@ A large release on the way to 1.0, with 30 breaking changes in five areas:
 
 * **`Image.reduce_colors/2` keeps its input's type** — it returns `{:u, 8}` rather than `{:f, 32}`, and the colorspace it was given rather than always sRGB.
 
+It also adds a Livebook smart cell for composing pipelines interactively, and `Image.copy_memory/1` for the pipelines that need to be consumed more than once.
+
 Many many thanks to @hlindset who took on the monumental task of significantly improving the way in which standard vocabulary is used and validated and applied. Thank you very much Håvard.
 
 ### Added
@@ -33,6 +35,8 @@ Many many thanks to @hlindset who took on the monumental task of significantly i
 * Adds `Image.Pixel.alpha_for/2` and `Image.Pixel.alpha_for!/2`, which scale an opacity to the alpha band of a given image, whose range depends on the interpretation. ([#231](https://github.com/elixir-image/image/pull/231))
 
 * Adds `Image.multiply_alpha/2` and `Image.multiply_alpha!/2`, which multiply an image's alpha band by a `0.0..1.0` factor. They replace `Image.opacity/2`, which is deprecated and delegates to them.
+
+* Adds a Livebook smart cell, `Image: transform`, that composes an `Image` pipeline from a form, previews the result and writes the equivalent source into the notebook. The sixteen operations it offers are described in Elixir, so extending it needs no change to its JavaScript. ([#31](https://github.com/elixir-image/image/issues/31))
 
 * Adds `Image.copy_memory/1` and `Image.copy_memory!/1`, which return an image guaranteed to be resident in memory. A thumbnail taken from a pathname streams from the file and can only be consumed once, so a pipeline that runs over one more than once needs this. ([#175](https://github.com/elixir-image/image/issues/175))
 

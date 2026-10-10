@@ -150,7 +150,7 @@ jobs:
 
     # Step: Execute the tests.
     - name: Run tests
-      run: mix test --exclude text --exclude text_avatar --exclude video --exclude heic_compression --exclude circular_gradient
+      run: mix test --exclude text --exclude text_avatar --exclude video --exclude circular_gradient
 
     # Step: Cache the dialyzer PLT. Keyed on both versions for the same
     # reason as the build cache.
