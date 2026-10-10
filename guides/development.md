@@ -63,16 +63,46 @@ Run that form if a font or codec you do not have is failing tests unrelated to y
 
 ### The streaming tests need minio
 
-`test/stream_image_test.exs` reads and writes through an S3-compatible endpoint, which is expected to be [minio](https://min.io) running locally. The configuration lives in `config/test.exs`: host `127.0.0.1`, port `9000`, bucket `images`, with credentials read from the environment.
+`test/stream_image_test.exs` reads and writes through an S3-compatible endpoint, which is expected to be [minio](https://min.io) running locally. The Elixir side is `ex_aws_s3` and `hackney`, both declared `only: [:dev, :test]` in `mix.exs`, so nothing extra needs adding. The endpoint is configured in `config/test.exs`: host `127.0.0.1`, port `9000`, bucket `images`, region `local`, with credentials read from the environment.
+
+minio ships as a single binary; see [min.io's download page](https://min.io/download) for your platform. Run it against any empty directory, and set the two credential variables first — minio uses them for its root credentials and `config/test.exs` reads the same two names, so exporting them once serves both:
 
 ```bash
-export MINIO_ROOT_USER=<your minio access key>
-export MINIO_ROOT_PASSWORD=<your minio secret key>
+export MINIO_ROOT_USER=minioadmin
+export MINIO_ROOT_PASSWORD=minioadmin
+minio server ~/.minio-image-dev --console-address :9001
 ```
 
-Without a running minio and those two variables set, six tests in `StreamImage.Test` fail with `Required key: :secret_access_key is nil in config!` or a connection error. Nothing else in the suite depends on them, so it is reasonable to leave them failing while you work on something unrelated — just do not read them as a regression you introduced.
+Then create the bucket and seed the one object the tests read. The tests download `Hong-Kong-2015-07-1998.jpg` from the bucket, so that file has to be in it, and the copy in the repository is the one to upload. This uses the project's own `ex_aws_s3` dependency, so it needs no additional tooling:
 
-Create the bucket once, named `images`, before the tests will pass.
+```bash
+MIX_ENV=test iex -S mix
+```
+
+```elixir
+ExAws.S3.put_bucket("images", "local") |> ExAws.request()
+
+"test/support/images/Hong-Kong-2015-07-1998.jpg"
+|> ExAws.S3.Upload.stream_file()
+|> ExAws.S3.upload("images", "Hong-Kong-2015-07-1998.jpg")
+|> ExAws.request()
+```
+
+Doing it from `iex` avoids a trap: minio's own command line client is called `mc`, which is also the name of Midnight Commander. If you have the file manager installed, `mc` commands from minio's documentation will fail in confusing ways.
+
+Without a running minio, the credentials exported and that object uploaded, six tests in `StreamImage.Test` fail with `Required key: :secret_access_key is nil in config!` or a connection error. Nothing else in the suite depends on them, so it is reasonable to leave them failing while you work on something unrelated — just do not read them as a regression you introduced.
+
+## Test images
+
+Every image the tests need is committed, so a clone is all you need and there is nothing to download.
+
+* **`test/support/images`** — the source images tests read, around 24MB across 39 files.
+
+* **`test/support/validate`** — the reference images that output is compared against, 88 files.
+
+A test that compares output against a reference calls `assert_images_equal/3`, which scores the difference rather than demanding an exact match. When the score is outside tolerance it writes the image it actually produced, plus a comparison image, into `test/support/did_not_match`. That directory is gitignored, so expect files to appear there when a visual test fails and do not commit them — open them to see what changed.
+
+Adding a fixture is fine when an existing image cannot show the behaviour. Keep it as small as the test allows, since these files live in the repository forever, and make sure its licence permits redistribution. `test/support/images/bitonal.jpg` is an example: a single band JPEG contributed by the reporter of a greyscale bug, derived from a public domain painting.
 
 ## Before opening a pull request
 
