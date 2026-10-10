@@ -1,0 +1,176 @@
+/* Styling for the `Image: transform` smart cell. Follows Livebook's own
+   smart cell conventions: a tinted header strip carrying the identity and
+   the inputs that apply to the whole cell, then a plain body. */
+
+.app {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 0.875rem;
+  color: #445668;
+  border: 1px solid #e1e8f0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.75rem;
+  background-color: #f0f5f9;
+  border-bottom: 1px solid #e1e8f0;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: #61758a;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.body {
+  padding: 0.75rem;
+  background-color: #ffffff;
+}
+
+.add {
+  margin-top: 0.5rem;
+}
+
+label.inline {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+label.inline.grow {
+  flex: 1;
+  min-width: 12rem;
+}
+
+label.inline > span {
+  white-space: nowrap;
+  color: #61758a;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  min-width: 0;
+  padding: 0.25rem 0.5rem;
+  font: inherit;
+  color: #445668;
+  background-color: #ffffff;
+  border: 1px solid #e1e8f0;
+  border-radius: 0.375rem;
+}
+
+label.inline.grow input[type="text"],
+label.inline.grow select {
+  flex: 1;
+}
+
+input[type="range"] {
+  width: 8rem;
+}
+
+input[type="color"] {
+  width: 2.5rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid #e1e8f0;
+  border-radius: 0.375rem;
+  background-color: #ffffff;
+}
+
+.operations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.operation {
+  border: 1px solid #e1e8f0;
+  border-radius: 0.375rem;
+}
+
+.operation-header {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.5rem;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e1e8f0;
+}
+
+.operation-label {
+  font-weight: 600;
+  color: #304254;
+  cursor: help;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.params {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.5rem;
+}
+
+label.param {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+label.param > span {
+  white-space: nowrap;
+  color: #61758a;
+}
+
+output {
+  min-width: 2.5rem;
+  font-variant-numeric: tabular-nums;
+  color: #445668;
+}
+
+button.icon {
+  padding: 0.125rem 0.375rem;
+  font: inherit;
+  line-height: 1;
+  color: #61758a;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+button.icon:hover:not(:disabled) {
+  background-color: #e1e8f0;
+}
+
+button.icon:disabled {
+  color: #c2cedb;
+  cursor: default;
+}
+
+button.icon.remove:hover {
+  color: #d94c4c;
+}
+
+.empty {
+  padding: 0.5rem;
+  color: #91a4b7;
+}

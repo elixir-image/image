@@ -11,12 +11,24 @@ defmodule Image.Application do
   @doc false
   def start(_type, _args) do
     set_safe_loader()
+    register_smart_cells()
 
     Supervisor.start_link(
       [],
       strategy: :one_for_one,
       name: Image.Supervisor
     )
+  end
+
+  # Registers the Livebook smart cells when kino is available. `kino` is an
+  # optional dependency because it serves only Livebook, so the modules are
+  # empty without it and must not be registered.
+  defp register_smart_cells do
+    if Code.ensure_loaded?(Kino.SmartCell) do
+      Kino.SmartCell.register(Image.SmartCell.Transform)
+    end
+
+    :ok
   end
 
   # Sets `VIPS_BLOCK_UNTRUSTED=TRUE` in the environment unless the user
