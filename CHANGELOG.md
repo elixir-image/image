@@ -106,6 +106,8 @@
 
 * Fix `Image.compare/3` resolving `:difference_color` against the image before flattening it, so a two-band greyscale image resolved `:red` to a two-element pixel that no longer matched the one-band difference. ([#232](https://github.com/elixir-image/image/issues/232))
 
+* Fix `Image.compare/3` inverting its difference mask for a CMYK image, so the unchanged background came back blank white and the base image was lost. The mask was derived by converting the difference to greyscale, but a zero CMYK difference means "no ink", which converts to white and therefore to full opacity. It is now the largest absolute difference across the bands, which is zero for an unchanged pixel in every interpretation. ([#232](https://github.com/elixir-image/image/issues/232))
+
 * Fix `Image.compare/3` writing an 8-bit difference mask into the alpha band of a 16-bit image, which left the highlight at 0.4% opacity and invisible. ([#232](https://github.com/elixir-image/image/issues/232))
 
 * Fix `Image.join_bands/1` raising `ArgumentError` for a list holding anything other than an image. Its guard checked only that the argument was a list, so the contents reached `vips_bandjoin` unvalidated.

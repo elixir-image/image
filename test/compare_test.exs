@@ -7,6 +7,7 @@ defmodule Image.CompareTest do
 
   """
   use ExUnit.Case, async: true
+  import Image.TestSupport
 
   @patch_pixels 100
   @image_pixels 40 * 40
@@ -57,6 +58,25 @@ defmodule Image.CompareTest do
       end
     end
 
+    test "a CMYK comparison keeps the base image rather than blanking it",
+         %{base: base, changed: changed} do
+      a = Image.to_colorspace!(base, :cmyk)
+      b = Image.to_colorspace!(changed, :cmyk)
+
+      assert {:ok, _metric, composed} = Image.compare(a, b)
+
+      background = Image.get_pixel!(composed, 30, 30)
+      highlighted = Image.get_pixel!(composed, 10, 10)
+
+      # Deriving the mask by converting the difference to greyscale
+      # inverted it for CMYK, because a zero CMYK difference is "no ink"
+      # and converts to white. The background came back blank white.
+      refute Enum.all?(background, &(&1 >= 250)),
+             "the unchanged background came back blank: #{inspect(background)}"
+
+      assert highlighted != background
+    end
+
     test "returns the composed difference in the interpretation it was given",
          %{base: base, changed: changed} do
       for interpretation <- [:bw, :grey16, :srgb] do
@@ -99,6 +119,41 @@ defmodule Image.CompareTest do
                  "#{Float.round(contrast * 100, 2)}% different from " <>
                  "#{inspect(background)}"
       end
+    end
+  end
+
+  describe "Image.compare/3 on the image from issue 232" do
+    # A single-band bitonal JPEG, contributed by the issue's reporter and
+    # derived from a public domain scan of Jacob van Ruisdael's
+    # "Il castello di Bentheim".
+    setup do
+      %{bitonal: Image.open!(image_path("bitonal.jpg"))}
+    end
+
+    test "is a one-band greyscale image, as reported", %{bitonal: image} do
+      assert Image.bands(image) == 1
+      assert Image.colorspace(image) == :bw
+      refute Image.has_alpha?(image)
+    end
+
+    test "compares with itself", %{bitonal: image} do
+      assert {:ok, +0.0, composed} = Image.compare(image, image)
+
+      assert Image.colorspace(composed) == :bw
+      assert Image.bands(composed) == 2
+    end
+
+    test "reports and highlights a real difference", %{bitonal: image} do
+      {:ok, changed} = Image.Draw.rect(image, 10, 10, 50, 50, color: :white)
+
+      assert {:ok, metric, composed} = Image.compare(image, changed)
+
+      # The patch is 2_500 of 150_000 pixels. Some of it already matched
+      # white, so the metric is at most that and definitely not zero.
+      assert metric > 0.0
+      assert metric <= 2_500 / (500 * 300)
+
+      assert Image.get_pixel!(composed, 30, 30) != Image.get_pixel!(composed, 400, 250)
     end
   end
 end

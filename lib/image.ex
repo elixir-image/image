@@ -13986,9 +13986,8 @@ defmodule Image do
            Operation.copy(color_difference,
              interpretation: Vix.Vips.Image.interpretation(image)
            ),
-         {:ok, bw_difference} <- to_colorspace(difference, :bw),
-         {:ok, bw_difference} <- scale_difference_alpha(bw_difference, image),
-         {:ok, alpha_difference} <- add_alpha(color_difference, bw_difference),
+         {:ok, mask} <- difference_mask(difference),
+         {:ok, alpha_difference} <- add_alpha(color_difference, mask),
          {:ok, saturated} <- saturation(image, options.saturation),
          {:ok, brightened} <- brightness(saturated, options.brightness),
          # `composite2/3` works out that a base needs an alpha band only
@@ -14006,20 +14005,25 @@ defmodule Image do
     if has_alpha?(image), do: {:ok, image}, else: add_alpha(image, :opaque)
   end
 
-  # The difference mask is an 8-bit greyscale image, but it becomes the
-  # overlay's alpha band, whose range follows the base image's
-  # interpretation. Unscaled, a 16-bit comparison gets an alpha of at most
-  # 255 out of 65_535 and the highlight is invisible.
-  defp scale_difference_alpha(bw_difference, image) do
-    with {:ok, max_alpha} <- Image.Pixel.alpha_for(image, :opaque) do
-      if max_alpha == 255 do
-        {:ok, bw_difference}
-      else
-        with {:ok, scaled} <- Operation.linear(bw_difference, [max_alpha / 255], [0.0]) do
-          Operation.cast(scaled, Vix.Vips.Image.format(image))
-        end
-      end
-    end
+  # The mask becomes the highlight's alpha band, so it must be zero
+  # wherever the two images are identical. Colour-converting the
+  # difference to greyscale does not guarantee that: a CMYK difference of
+  # zero means "no ink", which converts to white and inverts the mask so
+  # that unchanged pixels are the opaque ones.
+  #
+  # The largest absolute difference across the bands is zero exactly when
+  # a pixel is unchanged, whatever the interpretation, and it stays in the
+  # image's own numeric range, so a 16-bit comparison gets a 16-bit alpha
+  # rather than an 8-bit one that would be 0.4% opaque.
+  defp difference_mask(difference) do
+    use Image.Math
+
+    mask =
+      difference
+      |> split_bands()
+      |> Enum.reduce(fn band, acc -> if_then_else!(acc > band, acc, band) end)
+
+    {:ok, mask}
   end
 
   defp format_size(image) do
