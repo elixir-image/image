@@ -13911,9 +13911,9 @@ defmodule Image do
         ) ::
           {:ok, number, Vimage.t()} | {:error, error()}
   def compare(%Vimage{} = image_1, %Vimage{} = image_2, options \\ []) when is_list(options) do
-    with {:ok, options} <- Options.Compare.validate_options(image_1, options),
-         {:ok, image_1} <- Image.flatten(image_1),
+    with {:ok, image_1} <- Image.flatten(image_1),
          {:ok, image_2} <- Image.flatten(image_2),
+         {:ok, options} <- Options.Compare.validate_options(image_1, options),
          {:ok, difference} <- image_difference(image_1, image_2),
          {:ok, metric} <- compare_by_metric(image_1, image_2, difference, options.metric),
          {:ok, composed_difference} <- compose_difference(image_1, difference, options) do
@@ -13979,12 +13979,46 @@ defmodule Image do
            if_then_else(difference, options.difference_color, :transparent),
          {:ok, color_difference} <-
            Image.Math.multiply(color_difference, options.difference_boost),
+         # Band arithmetic drops the interpretation, so a four-band CMYK
+         # difference comes back tagged sRGB and libvips then reads it as
+         # RGBA and refuses the alpha band below. Restore it first.
+         {:ok, color_difference} <-
+           Operation.copy(color_difference,
+             interpretation: Vix.Vips.Image.interpretation(image)
+           ),
          {:ok, bw_difference} <- to_colorspace(difference, :bw),
+         {:ok, bw_difference} <- scale_difference_alpha(bw_difference, image),
          {:ok, alpha_difference} <- add_alpha(color_difference, bw_difference),
          {:ok, saturated} <- saturation(image, options.saturation),
          {:ok, brightened} <- brightness(saturated, options.brightness),
-         {:ok, composed} <- compose(brightened, alpha_difference) do
+         # `composite2/3` works out that a base needs an alpha band only
+         # for the sRGB band counts: it pairs a three-band base with a
+         # four-band overlay, but refuses a one-band base with a two-band
+         # overlay. Adding the band here makes the counts match for every
+         # interpretation.
+         {:ok, base} <- ensure_alpha(brightened),
+         {:ok, composed} <- compose(base, alpha_difference) do
       Operation.cast(composed, Vix.Vips.Image.format(image))
+    end
+  end
+
+  defp ensure_alpha(image) do
+    if has_alpha?(image), do: {:ok, image}, else: add_alpha(image, :opaque)
+  end
+
+  # The difference mask is an 8-bit greyscale image, but it becomes the
+  # overlay's alpha band, whose range follows the base image's
+  # interpretation. Unscaled, a 16-bit comparison gets an alpha of at most
+  # 255 out of 65_535 and the highlight is invisible.
+  defp scale_difference_alpha(bw_difference, image) do
+    with {:ok, max_alpha} <- Image.Pixel.alpha_for(image, :opaque) do
+      if max_alpha == 255 do
+        {:ok, bw_difference}
+      else
+        with {:ok, scaled} <- Operation.linear(bw_difference, [max_alpha / 255], [0.0]) do
+          Operation.cast(scaled, Vix.Vips.Image.format(image))
+        end
+      end
     end
   end
 

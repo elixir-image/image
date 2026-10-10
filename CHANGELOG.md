@@ -102,6 +102,12 @@
 
 * Fix `Image.multiply_alpha/2` (formerly `Image.opacity/2`) and `Image.fade/2` casting the scaled alpha band to `uchar` unconditionally, which saturated a 16-bit alpha to `255` and truncated a float one to `0`. A half-opacity call returned a fully transparent scRGB image and a 0.4%-opacity 16-bit one, and `Image.fade/2` lost its gradient on both.
 
+* Fix `Image.compare/3` failing with `composite2: images do not have same numbers of bands` for any image that is not three-band sRGB. The composed difference is one band wider than the base, and libvips only infers the extra alpha band for sRGB band counts, so a greyscale comparison never composited. ([#232](https://github.com/elixir-image/image/issues/232))
+
+* Fix `Image.compare/3` resolving `:difference_color` against the image before flattening it, so a two-band greyscale image resolved `:red` to a two-element pixel that no longer matched the one-band difference. ([#232](https://github.com/elixir-image/image/issues/232))
+
+* Fix `Image.compare/3` writing an 8-bit difference mask into the alpha band of a 16-bit image, which left the highlight at 0.4% opacity and invisible. ([#232](https://github.com/elixir-image/image/issues/232))
+
 * Fix `Image.join_bands/1` raising `ArgumentError` for a list holding anything other than an image. Its guard checked only that the argument was a list, so the contents reached `vips_bandjoin` unvalidated.
 
 * Fix `Image.resize/3`'s guard, which tested `scale >= 0` without `is_number/1`. Elixir orders every bitstring, atom and list above every number, so `Image.resize(image, "big")` passed the guard and raised `ArgumentError` from libvips. It now returns `{:error, %Image.Error{reason: :invalid_scale}}`.
