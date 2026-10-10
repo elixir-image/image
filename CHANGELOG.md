@@ -2,6 +2,22 @@
 
 ## Image 0.73.0
 
+This is the changelog for Image version 0.73.0 released on October 11th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+
+A large release on the way to 1.0, with 30 breaking changes in five areas:
+
+* **One opacity vocabulary** — `opacity` is now the value a caller sets and `alpha` the band it is written to, so `transparency` is gone and `Image.opacity/2` is deprecated in favour of `Image.multiply_alpha/2`.
+
+* **Alpha and colour scale to the interpretation** — 16-bit and scRGB images were given 8-bit values, leaving them 0.4% opaque or out of range, which corrects `Image.add_alpha/2`, `Image.Pixel.to_pixel/3`, `Image.fade/2` and `Image.drop_shadow/2`.
+
+* **Errors instead of exceptions** — around twenty functions return `{:error, %Image.Error{}}` where they raised `FunctionClauseError`, `ArithmeticError` or a `NimbleOptions` error, and `Image.Pixel` returns an `Image.Error` on every path.
+
+* **`Image.compare/3` works beyond three-band sRGB** — it failed outright on a greyscale image, and its default `:ae` metric counted only the first band, so images differing in any other compared as identical.
+
+* **`Image.reduce_colors/2` keeps its input's type** — it returns `{:u, 8}` rather than `{:f, 32}`, and the colorspace it was given rather than always sRGB.
+
+Many many thanks to @hlindset who took on the monumental task of significantly improving the way in which standard vocabulary is used and validated and applied. Thank you very much Håvard.
+
 ### Added
 
 * Adds `:background` and `:interpolate` options to the `mapim`-based transformations — `Image.ripple/2`, `Image.to_polar_coordinates/2` and `Image.distort/4` gain both, `Image.to_rectangular_coordinates/2`, `Image.warp_perspective/4`, `Image.straighten_perspective/3` and `Image.map/3` gain `:interpolate`, and `Image.distort/4` also gains `:extend_mode` (`:background` or `:copy`). `:interpolate` defaults to `:bilinear` except for `Image.distort/4`, which keeps its `:bicubic` default. ([#216](https://github.com/elixir-image/image/pull/216))
