@@ -45,7 +45,9 @@ defmodule Image.Shape do
   @default_star_rotation 0
 
   @doc """
-  Creates a image of a rectangle.
+  Creates an image of a rectangle.
+
+  ### Arguments
 
   * `width` is the number of pixels wide.
 
@@ -112,8 +114,10 @@ defmodule Image.Shape do
   end
 
   @doc """
-  Creates a image of a rectangle or raises
-  and exception.
+  Creates an image of a rectangle or raises
+  an exception.
+
+  ### Arguments
 
   * `width` is the number of pixels wide.
 
@@ -513,6 +517,8 @@ defmodule Image.Shape do
   @doc """
   Creates an image of a circle.
 
+  ### Arguments
+
   * `radius` is the radius of the circle in pixels.
 
   * `options` is a `t:Keyword.t/0` list of options.
@@ -578,6 +584,8 @@ defmodule Image.Shape do
   @doc """
   Creates an image of a circle or raises an exception.
 
+  ### Arguments
+
   * `radius` is the radius of the circle in pixels.
 
   * `options` is a `t:Keyword.t/0` list of options.
@@ -622,9 +630,11 @@ defmodule Image.Shape do
   end
 
   @doc """
-  Creates an image of a ellipse.
+  Creates an image of an ellipse.
 
-  * `x_radius` is the radius of the x-aixs of the
+  ### Arguments
+
+  * `x_radius` is the radius of the x-axis of the
     ellipse in pixels.
 
   * `y_radius` is the radius of the y-aixs of the
@@ -692,9 +702,11 @@ defmodule Image.Shape do
   end
 
   @doc """
-  Creates an image of a ellipse or raises an exception.
+  Creates an image of an ellipse or raises an exception.
 
-  * `x_radius` is the radius of the x-aixs of the
+  ### Arguments
+
+  * `x_radius` is the radius of the x-axis of the
     ellipse in pixels.
 
   * `y_radius` is the radius of the y-aixs of the
@@ -743,6 +755,8 @@ defmodule Image.Shape do
 
   @doc """
   Creates an image of a line.
+
+  ### Arguments
 
   * `x1` Defines the x-axis coordinate of the line
     starting point in pixels.
@@ -824,7 +838,9 @@ defmodule Image.Shape do
   end
 
   @doc """
-  Creates a image of a line or raises an exception.
+  Creates an image of a line or raises an exception.
+
+  ### Arguments
 
   * `x1` Defines the x-axis coordinate of the line
     starting point in pixels.

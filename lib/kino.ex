@@ -17,7 +17,7 @@ if match?({:module, _module}, Code.ensure_compiled(Kino)) do
     @default_max_height 200
 
     @doc """
-    Renders an image in [Kino](https://hex.pm/packages/kino),
+    Renders an image in [Kino](https://hex.pm/packages/kino).
 
     ### Arguments
 
@@ -34,6 +34,17 @@ if match?({:module, _module}, Code.ensure_compiled(Kino)) do
     ### Returns
 
     * `maybe_resized_image` of type `t:Kino.Image.t/0`.
+
+    ### Examples
+
+    The return value is a Kino widget rendered by the Livebook
+    runtime, so these are shown as code rather than as doctests.
+
+        # Render at the default maximum height
+        Image.Kino.show(image)
+
+        # Render no taller than 200 pixels, keeping the aspect ratio
+        Image.Kino.show(image, max_height: 200)
 
     """
     @doc since: "0.18.0"

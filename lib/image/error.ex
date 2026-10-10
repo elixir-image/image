@@ -143,6 +143,11 @@ defmodule Image.Error do
     accepted keys are `:operation`, `:path`, `:value`, and
     `:reason` (to override the auto-derived reason).
 
+  ### Returns
+
+  * a `t:Image.Error.t/0`. This function always returns a struct and
+    never an error tuple, since its purpose is to build the error.
+
   ### Examples
 
       iex> Image.Error.wrap("operation build: bad seek", operation: :open, path: "/tmp/x.jpg")

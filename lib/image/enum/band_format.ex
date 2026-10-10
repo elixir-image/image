@@ -131,13 +131,21 @@ defmodule Image.BandFormat do
 
   ### Arguments
 
-  * Any `Nx` type like `{:u, 8}`.
+  * `nx_type` is any `Nx` type, such as `{:u, 8}`.
 
   ### Returns
 
   * `{:ok, band_format}` or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> Image.BandFormat.image_format_from_nx({:u, 8})
+      {:ok, :VIPS_FORMAT_UCHAR}
+
+      iex> Image.BandFormat.image_format_from_nx({:u, 16})
+      {:ok, :VIPS_FORMAT_USHORT}
 
   """
   def image_format_from_nx(nx_type) do
@@ -154,14 +162,24 @@ defmodule Image.BandFormat do
 
   ### Arguments
 
-  * Any `t:Vix.Vips.Image.t/0` of format in the list
-    returned by `Image.BandFormat.known_band_formats/0`.
+  * `image_or_format` is any `t:Vix.Vips.Image.t/0`, or any
+    format in the list returned by
+    `Image.BandFormat.known_band_formats/0`.
 
   ### Returns
 
   * `{:ok, band_format}` or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> Image.BandFormat.nx_format(:VIPS_FORMAT_UCHAR)
+      {:ok, {:u, 8}}
+
+      iex> image = Image.new!(2, 2, color: :red)
+      iex> Image.BandFormat.nx_format(image)
+      {:ok, {:u, 8}}
 
   """
   def nx_format(%Vimage{} = image) do
@@ -193,14 +211,24 @@ defmodule Image.BandFormat do
 
   ### Arguments
 
-  * Any `t:Vix.Vips.Image.t/0` of format in the list
-    returned by `Image.BandFormat.known_band_formats/0`.
+  * `image_or_format` is any `t:Vix.Vips.Image.t/0`, or any
+    format in the list returned by
+    `Image.BandFormat.known_band_formats/0`.
 
   ### Returns
 
   * `band_format` or
 
   * raises an exception.
+
+  ### Examples
+
+      iex> Image.BandFormat.nx_format!(:VIPS_FORMAT_USHORT)
+      {:u, 16}
+
+      iex> image = Image.new!(2, 2, color: :red)
+      iex> Image.BandFormat.nx_format!(image)
+      {:u, 8}
 
   """
   def nx_format!(image_or_format) do

@@ -33,6 +33,13 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
 
     * `{:error, reason}`.
 
+    ### Examples
+
+        iex> image = Image.new!(8, 8, color: [10, 20, 30])
+        iex> {:ok, {counts, colors}} = Image.Scholar.unique_colors(image)
+        iex> {Nx.shape(counts), Nx.shape(colors)}
+        {{1}, {1, 3}}
+
     """
     def unique_colors(%Vimage{} = image) do
       bands = Image.bands(image)
@@ -266,6 +273,13 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
       `Scholar.Cluster.KMeans` or
 
     * `{:error, reason}`.
+
+    ### Examples
+
+        iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+        iex> {:ok, model} = Image.Scholar.k_means(image, num_clusters: 3, key: Nx.Random.key(42))
+        iex> Nx.shape(model.clusters)
+        {3, 3}
 
     """
     def k_means(%Vimage{} = image, options \\ []) do

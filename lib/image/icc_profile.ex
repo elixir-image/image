@@ -70,6 +70,17 @@ defmodule Image.ICCProfile do
   true. File paths are validated by trying to load them with
   `Vix.Vips.Operation.profile_load/1`.
 
+  ### Arguments
+
+  * `profile` is one of the inbuilt profile atoms (`:none`,
+    `:srgb`, `:cmyk` or `:p3`), or a path to an ICC profile file.
+
+  ### Returns
+
+  * `true` if the profile is known and usable, or
+
+  * `false`.
+
   ### Examples
 
       iex> Image.ICCProfile.known?(:srgb)

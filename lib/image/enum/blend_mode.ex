@@ -117,7 +117,7 @@ defmodule Image.BlendMode do
   @doc """
   Normalizes and validates a blend mode.
 
-  ### Argument
+  ### Arguments
 
   * `blend_mode` is one of `Image.BlendMode.known_blend_modes/0`
     as either a `t:String.t/0` or an `atom`.

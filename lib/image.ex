@@ -2235,7 +2235,7 @@ defmodule Image do
   that can then be used by `Image.chroma_mask/2`,
   `Image.chroma_key/2` and `Image.trim/2`.
 
-  ### Argument
+  ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
@@ -2277,7 +2277,7 @@ defmodule Image do
   that can then be used by `Image.chroma_mask/2`,
   `Image.chroma_key/2` and `Image.trim/2`.
 
-  ### Argument
+  ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
@@ -2368,6 +2368,12 @@ defmodule Image do
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
      representing a CSS color name.
+
+  ### Returns
+
+  * `{:ok, mask_image}` or
+
+  * `{:error, reason}`.
 
   ### Example
 
@@ -2486,6 +2492,12 @@ defmodule Image do
      integers representing an RGB color or an atom
      representing a CSS color name.
 
+  ### Returns
+
+  * `mask_image` or
+
+  * raises an exception.
+
   ### Example
 
       iex> image = Image.new!(20, 20, color: [0, 255, 0])
@@ -2564,6 +2576,12 @@ defmodule Image do
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
      representing a CSS color name.
+
+  ### Returns
+
+  * `{:ok, masked_image}` or
+
+  * `{:error, reason}`.
 
   ### Example
 
@@ -2647,6 +2665,12 @@ defmodule Image do
      integer between `0..255`, a three-element list of
      integers representing an RGB color or an atom
      representing a CSS color name.
+
+  ### Returns
+
+  * `masked_image` or
+
+  * raises an exception.
 
   ### Example
 
@@ -8702,7 +8726,7 @@ defmodule Image do
   that is a 255 by 1 pixel image with the same numbers of
   bands as the source image.
 
-  ### Argument
+  ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
 
@@ -13444,6 +13468,12 @@ defmodule Image do
     color cannot be recovered from under zero alpha, so it is rendered as
     transparent black rather than the declared color.
 
+    ### Returns
+
+    * `{:ok, distorted_image}` or
+
+    * `{:error, reason}`.
+
     ### Example
 
     In this example the points around `{30,11}` are distorted to `{20,11}` and
@@ -14355,7 +14385,7 @@ defmodule Image do
     end
 
     @doc """
-    Attempts top determine the distance
+    Attempts to determine the distance
     from the perpendicular for a given image.
 
     The principle is that rotating the image
@@ -15377,6 +15407,12 @@ defmodule Image do
 
       # .iex.exs
       import_if_available(Image, only: [p: 1])
+
+  ### Returns
+
+  * `image`, so that the call can sit in a pipeline, or
+
+  * `{:error, reason}`.
 
   ### Example
 

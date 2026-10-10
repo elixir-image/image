@@ -55,6 +55,17 @@ defmodule Image.Exif do
   Returns the libvips header field name for a known EXIF field
   alias.
 
+  ### Arguments
+
+  * `field` is `:artist` or `:copyright`, the two aliases this
+    library defines, or any other atom or string.
+
+  ### Returns
+
+  * the libvips header field name as a `t:String.t/0`. Anything
+    other than a known alias is returned as a string unchanged,
+    so a raw libvips field name passes straight through.
+
   ### Examples
 
       iex> Image.Exif.field(:artist)
@@ -91,6 +102,19 @@ defmodule Image.Exif do
 
   @doc """
   Extract EXIF data from a binary blob.
+
+  ### Arguments
+
+  * `exif` is a binary EXIF payload, such as the one returned by
+    reading the `"exif-data"` header of an image.
+
+  ### Returns
+
+  * a map of EXIF fields, or
+
+  * `{:error, :invalid_exif}` if the payload is truncated or
+    malformed. EXIF payloads come from untrusted files, so a
+    corrupt blob returns an error rather than raising.
 
   ### Examples
 

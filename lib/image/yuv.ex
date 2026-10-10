@@ -432,6 +432,12 @@ defmodule Image.YUV do
   * `range` is one of `:limited` (the default) or `:full`.
     See `t:Image.YUV.yuv_range/0`.
 
+  ### Returns
+
+  * `{:ok, rgb_image}` or
+
+  * `{:error, reason}`.
+
   ### Examples
 
       iex> yuv_image = Image.new!(8, 8, color: [128, 128, 128])

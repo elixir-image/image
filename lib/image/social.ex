@@ -108,13 +108,20 @@ defmodule Image.Social do
 
   The returned map of maps is of a standard form:
 
-  * The first key is the platform name (ie `:twitter`)
-  * The second key is the image type for the platform (ie `:profile`)
-  * The third level is optional. But if it exists it must
-    have three keys: `:landscape`, `:portrait` and `:square`
+  * The first key is the platform name, such as `:twitter`.
 
-  The values are all of the form "WxH" where `W` is the
-  width in pixels and `H` is the height in pixels.
+  * The second key is the image type for that platform, such as
+    `:profile`.
+
+  * The third level is optional, but when it exists it has three
+    keys: `:landscape`, `:portrait` and `:square`.
+
+  The values are all of the form `"WxH"` where `W` is the width
+  in pixels and `H` is the height in pixels.
+
+  ### Returns
+
+  * a map of maps in the form described above.
 
   ### Examples
 
@@ -133,6 +140,10 @@ defmodule Image.Social do
 
   @doc """
   Returns a list of known social platforms.
+
+  ### Returns
+
+  * a list of platform names as atoms.
 
   ### Examples
 

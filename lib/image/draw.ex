@@ -1125,10 +1125,35 @@ defmodule Image.Draw do
   end
 
   @doc """
-  Smudge a section of image .
+  Smudge a section of an image.
 
-  Each pixel in the area left , top , width , height is
-  replaced by the average of the surrounding 3x3 pixels.
+  Each pixel in the area given by `left`, `top`, `width` and
+  `height` is replaced by the average of the surrounding 3x3
+  pixels.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` or
+    `t:Vix.Vips.MutableImage.t/0`.
+
+  * `left` is the zero-based offset from the left of the image
+    of the area to smudge.
+
+  * `top` is the zero-based offset from the top of the image of
+    the area to smudge.
+
+  * `width` is the width in pixels of the area to smudge.
+
+  * `height` is the height in pixels of the area to smudge.
+
+  * `options` is a keyword list of options. There are currently
+    no options.
+
+  ### Returns
+
+  * `{:ok, smudged_image}` or
+
+  * `{:error, reason}`.
 
   ### Examples
 
