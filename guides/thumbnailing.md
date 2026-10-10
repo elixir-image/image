@@ -63,19 +63,19 @@ Examples:
 <div class="row">
 <div class="column">
   <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/guides/images/puppy_crop_none.jpg" alt="Image.thumbnail/3">
+      <img src="https://raw.githubusercontent.com/elixir-image/image/main/guides/images/puppy_crop_none.jpg" alt="Image.thumbnail/3">
   </figure>
   <figcaption>Image.thumbnail(image, 200, crop: :none)</figcaption>
 </div>
 <div class="column">
   <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/guides/images/puppy_crop_attention.jpg" alt="Image.thumbnail/3">
+      <img src="https://raw.githubusercontent.com/elixir-image/image/main/guides/images/puppy_crop_attention.jpg" alt="Image.thumbnail/3">
   </figure>
   <figcaption>Image.thumbnail(image, 200, crop: :attention)</figcaption>
 </div>
 <div class="column">
   <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/guides/images/puppy_crop_550_320_200_200.jpg" alt="Image.crop/5">
+      <img src="https://raw.githubusercontent.com/elixir-image/image/main/guides/images/puppy_crop_550_320_200_200.jpg" alt="Image.crop/5">
   </figure>
   <figcaption>Image.crop!(image, 550, 320, 200, 200)</figcaption>
 </div>
@@ -84,7 +84,7 @@ Examples:
 <div class="row">
 <div class="column">
   <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/guides/images/puppy_rounded.png" alt="Image.rounded/2">
+      <img src="https://raw.githubusercontent.com/elixir-image/image/main/guides/images/puppy_rounded.png" alt="Image.rounded/2">
   </figure>
   <figcaption>image |> Image.thumbnail!(200, crop: :attention) |> Image.rounded!()</figcaption>
 </div>
@@ -96,9 +96,9 @@ Examples:
 </div>
 <div class="column">
   <figure>
-      <img src="https://raw.githubusercontent.com/kipcole9/image/main/guides/images/puppy_avatar.png"
-      alt="Image.avatar/3">
+      <img src="https://raw.githubusercontent.com/elixir-image/image/main/guides/images/puppy_avatar.png"
+      alt="Image.avatar/2">
   </figure>
-  <figcaption>Image.avatar(image, 200)</figcaption>
+  <figcaption>Image.avatar(image, size: 200)</figcaption>
 </div>
 </div>

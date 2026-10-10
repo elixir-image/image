@@ -67,26 +67,28 @@ Documentation can be found at <https://hexdocs.pm/image>.
 | 1.19 | 26, 27, 28 |
 | 1.20 | 27, 28, 29 |
 
-## Quick start
+## Installation
 
 Add `:image` to your dependencies:
 
 ```elixir
 def deps do
   [
-    {:image, "~> 0.71"}
+    {:image, "~> 0.73"}
   ]
 end
 ```
 
 `libvips` is bundled by default via `:vix`, so you don't need to install it system-wide. See the "Installing Libvips" section below if you want to bring your own libvips for additional format support.
 
+## Quick start
+
 ### Open, transform, write
 
 ```elixir
 {:ok, image} = Image.open("photo.jpg")
 {:ok, thumb} = Image.thumbnail(image, 256)
-:ok = Image.write(thumb, "thumb.jpg", quality: 85)
+{:ok, _written} = Image.write(thumb, "thumb.jpg", quality: 85)
 ```
 
 ### Resize, crop, rotate
@@ -164,7 +166,7 @@ QR encoding and decoding live in the sibling [`image_qrcode`](https://hex.pm/pac
 case Image.open(path) do
   {:ok, image} -> use_image(image)
   {:error, %Image.Error{reason: :enoent}} -> not_found(path)
-  {:error, %Image.Error{reason: :unsupported_format}} -> wrong_format(path)
+  {:error, %Image.Error{reason: :invalid_option, value: value}} -> bad_option(value)
   {:error, %Image.Error{} = error} -> raise error
 end
 ```
@@ -268,6 +270,18 @@ If the noise is disruptive during tests or automation, you can redirect stderr f
 * When displaying user-supplied images on a web page, sanitise EXIF / XMP metadata before passing it to a browser — embedded HTML in metadata fields is a known vector.
 
 * Image processing is CPU-intensive and the default libvips concurrency equals the host core count. For multi-tenant workloads, lower `VIPS_CONCURRENCY` to avoid CPU starvation.
+
+## Documentation
+
+* **[Thumbnailing](https://hexdocs.pm/image/thumbnailing.html)** — cropping strategies, rounded and squircle masks, and avatars.
+
+* **[Performance](https://hexdocs.pm/image/performance.html)** — getting the most throughput from a pipeline.
+
+* **[Low quality image placeholders](https://hexdocs.pm/image/lqip_css.html)** — CSS-only placeholders generated from an image.
+
+* **[Edge masking](https://hexdocs.pm/image/image_edge_masking.html)** and **[colour clustering](https://hexdocs.pm/image/color_clustering.html)** — livebooks to run locally.
+
+The full API reference is at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 ## License
 

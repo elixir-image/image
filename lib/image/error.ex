@@ -12,9 +12,10 @@ defmodule Image.Error do
   * `:message` — a human-readable description. Always present.
 
   * `:reason` — a structured discriminator: an atom (`:enoent`,
-    `:invalid_option`, `:unsupported_format`, …), a `{:atom, value}`
-    tuple for parameterised errors, or a binary for free-form
-    libvips errors that don't yet have a structured form.
+    `:invalid_option`, `:invalid_color`, …), or a binary for free-form
+    libvips errors that don't yet have a structured form. A
+    parameterised error keeps its parameter in `:value` rather than in
+    `:reason`, so the reason stays a single atom to match on.
 
   * `:operation` — the high-level `Image` function that failed
     (e.g. `:open`, `:write`, `:resize`, `:draw_rect`), or `nil` if
@@ -37,9 +38,13 @@ defmodule Image.Error do
       case Image.open(path) do
         {:ok, image} -> ...
         {:error, %Image.Error{reason: :enoent}} -> not_found_handler()
-        {:error, %Image.Error{reason: {:invalid_option, opt}}} -> ...
+        {:error, %Image.Error{reason: :invalid_option, value: value}} -> ...
         {:error, %Image.Error{} = err} -> raise err
       end
+
+  A reason that is a binary is a libvips message with no structured
+  form yet. Those are not stable enough to match on, so let them fall
+  through to a catch-all clause.
 
   ## Constructing
 

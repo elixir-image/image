@@ -74,7 +74,7 @@
 
 * `Image.multiply_alpha/2` returns `{:error, %Image.Error{reason: :invalid_factor}}` for a factor outside `0.0..1.0` or of the wrong type, where `Image.opacity/2` previously raised `FunctionClauseError`. The `!` variant raises `Image.Error`.
 
-* Deprecates `Image.opacity/2` and `Image.opacity!/2` in favour of `Image.multiply_alpha/2` and `Image.multiply_alpha!/2`. Their argument is a multiplier rather than a `t:Image.Pixel.opacity/0`, so `opacity` was the one name left in the vocabulary meaning something other than a value a caller sets. The old names still work and delegate.
+* Deprecates `Image.opacity/2` and `Image.opacity!/2` in favour of `Image.multiply_alpha/2` and `Image.multiply_alpha!/2`, whose argument is a multiplier rather than a `t:Image.Pixel.opacity/0`. The old names still work and delegate.
 
 * `Image.brightness/2`, `Image.saturation/2`, `Image.vibrance/3`, `Image.dilate/2`, `Image.erode/2`, `Image.dhash/2`, `Image.pixelate/2`, `Image.rotate/3`, `Image.shear/4`, `Image.translate/4`, `Image.meme/3`, `Image.from_binary/2`, `Image.from_svg/2` and `Image.join_bands/1` return `{:error, %Image.Error{}}` for an invalid argument instead of raising `FunctionClauseError`. Each reason is an `:invalid_<argument>` atom, and ten `!` variants that duplicated their guard now raise `Image.Error` as intended rather than `FunctionClauseError`.
 
@@ -106,21 +106,21 @@
 
 * Fix `Image.compare/3` resolving `:difference_color` against the image before flattening it, so a two-band greyscale image resolved `:red` to a two-element pixel that no longer matched the one-band difference. ([#232](https://github.com/elixir-image/image/issues/232))
 
-* **Breaking:** Fix the `:rmse` metric of `Image.compare/3` returning a meaningless number for a float band format and raising `CaseClauseError` for a signed one. It scales the error by the number of values a band can hold, which a float band does not have, so an scRGB or Lab comparison returned about `1.0e-9` and read as a perfect match. Float formats now return `{:error, %Image.Error{reason: :unsupported_metric}}` and signed formats are scaled like unsigned ones. ([#232](https://github.com/elixir-image/image/issues/232))
+* **Breaking:** Fix the `:rmse` metric of `Image.compare/3`, which scales the error by the range of the band format and so returned about `1.0e-9` for a float image and raised `CaseClauseError` for a signed one. Float formats now return `{:error, %Image.Error{reason: :unsupported_metric}}` and signed formats are scaled like unsigned ones. ([#232](https://github.com/elixir-image/image/issues/232))
 
-* **Breaking:** Fix the `:ae` metric of `Image.compare/3`, the default, counting a pixel as different only when its *first* band differed. Two images differing solely in, say, the blue band compared as an exact match, so a test asserting a metric of `0.0` could pass for images that plainly differ. Any band differing now counts. ([#232](https://github.com/elixir-image/image/issues/232))
+* **Breaking:** Fix the `:ae` metric of `Image.compare/3`, the default, counting a pixel as different only when its *first* band differed, so two images differing solely in the blue band compared as an exact match. Any band differing now counts. ([#232](https://github.com/elixir-image/image/issues/232))
 
-* Fix `Image.compare/3` highlighting a difference in the wrong colour whenever it was confined to some bands. The difference was used as a per-band condition, so each band of `:difference_color` was applied only where that band itself differed: a blue-only change was highlighted in dark grey rather than red, and a Lab comparison of two neutral greys lost the `a` and `b` bands entirely. The colour is now applied wherever the pixel differs, with the mask as the overlay's alpha. ([#232](https://github.com/elixir-image/image/issues/232))
+* Fix `Image.compare/3` highlighting a difference in the wrong colour when it was confined to some bands: the difference was a per-band condition, so a blue-only change came out dark grey and a Lab one lost its `a` and `b` bands. The colour is now applied wherever the pixel differs, with the mask as the overlay's alpha. ([#232](https://github.com/elixir-image/image/issues/232))
 
 * Fix `Image.compare/3` under-weighting the difference mask for `:lab` and `:lch` images. Each band's difference is now a fraction of that band's own range before the largest is taken, so `L` is measured against `0..100`, `a` and `b` against `±128` and LCH's `h` against `0..360`, rather than every band against one range. ([#232](https://github.com/elixir-image/image/issues/232))
 
-* Fix `Image.compare/3` inverting its difference mask for a CMYK image, so the unchanged background came back blank white and the base image was lost. The mask was derived by converting the difference to greyscale, but a zero CMYK difference means "no ink", which converts to white and therefore to full opacity. It is now the largest absolute difference across the bands, which is zero for an unchanged pixel in every interpretation. ([#232](https://github.com/elixir-image/image/issues/232))
+* Fix `Image.compare/3` inverting its difference mask for a CMYK image, where a zero difference is no ink and so converted to white and to full opacity, blanking the background. The mask is now the largest absolute difference across the bands, which is zero for an unchanged pixel in every interpretation. ([#232](https://github.com/elixir-image/image/issues/232))
 
 * Fix `Image.compare/3` writing an 8-bit difference mask into the alpha band of a 16-bit image, which left the highlight at 0.4% opacity and invisible. ([#232](https://github.com/elixir-image/image/issues/232))
 
 * Fix `Image.join_bands/1` raising `ArgumentError` for a list holding anything other than an image. Its guard checked only that the argument was a list, so the contents reached `vips_bandjoin` unvalidated.
 
-* Fix `Image.resize/3`'s guard, which tested `scale >= 0` without `is_number/1`. Elixir orders every bitstring, atom and list above every number, so `Image.resize(image, "big")` passed the guard and raised `ArgumentError` from libvips. It now returns `{:error, %Image.Error{reason: :invalid_scale}}`.
+* Fix `Image.resize/3`'s guard, which tested `scale >= 0` without `is_number/1`, so a string, atom or list sorted above every number, passed the guard and raised `ArgumentError` from libvips. It now returns `{:error, %Image.Error{reason: :invalid_scale}}`.
 
 * Fix `Image.drop_shadow/2` building its shadow and canvas as 8-bit sRGB whatever the source interpretation, so a 16-bit shadow saturated to fully opaque, an scRGB one returned an alpha of `127` in a `0.0..1.0` band, and a CMYK one lost a band. It now composites in the source's own format and returns the interpretation, band format and band count it was given.
 

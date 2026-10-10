@@ -81,6 +81,7 @@ defmodule Image.Exif.Gps do
   @spec inspect(data :: t()) :: String.t()
   @doc """
   Returns the human-readable representation of GPS data, e. g. "41°23´16˝N,2°11´50˝E".
+
   """
   def inspect(%__MODULE__{gps_latitude: nil} = _data), do: ""
   def inspect(%__MODULE__{gps_longitude: nil} = _data), do: ""

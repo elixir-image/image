@@ -77,6 +77,7 @@ defmodule Image.Options.Mapim do
   Validates the allowed options for a mapim-based transformation.
 
   All mapim options are allowed by default.
+
   """
   @spec validate_options(Vimage.t(), Keyword.t(), [option_name()]) ::
           {:ok, Keyword.t()} | {:error, Image.error()}

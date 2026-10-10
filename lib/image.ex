@@ -277,6 +277,7 @@ defmodule Image do
   @doc """
   Guards whether the given struct is an image type
   either `Vix.Vips.Image` or `Vix.Vips.MutableImage`.
+
   """
   defguard is_image(image_type) when image_type in [Vimage, MutableImage]
 
@@ -349,6 +350,7 @@ defmodule Image do
   @doc """
   Guards whether a value is a percentage as representeed
   by a float between `-1.0` and `1.0`.
+
   """
   @doc subject: "Guard"
   defguard is_percent(value) when is_float(value) and value >= -1.0 and value <= 1.0
@@ -360,6 +362,7 @@ defmodule Image do
   The float requirement is significant: floats are interpreted
   as percentages and integers as pixel dimensions wherever both
   are accepted.
+
   """
   @doc subject: "Guard"
   defguard is_positive_percent(value) when is_float(value) and value >= 0.0 and value <= 1.0
@@ -367,6 +370,7 @@ defmodule Image do
   @doc """
   Guards whether a value is a multiplier as represented
   by a number greater than or equal to `0`.
+
   """
   @doc subject: "Guard"
   defguard is_multiplier(value) when is_number(value) and value >= 0
@@ -4063,6 +4067,12 @@ defmodule Image do
     default is calculated proportional to the size of the
     image.
 
+  ### Returns
+
+  * `{:ok, meme_image}` or
+
+  * `{:error, reason}`.
+
   ### Example
 
       iex> image = Image.new!(200, 100, color: :blue)
@@ -4163,6 +4173,12 @@ defmodule Image do
     applied to both the left and right sides of the image. The
     default is calculated proportional to the size of the
     image.
+
+  ### Returns
+
+  * `meme_image` or
+
+  * raises an exception.
 
   ### Example
 
