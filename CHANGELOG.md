@@ -34,6 +34,10 @@ Many many thanks to @hlindset who took on the monumental task of significantly i
 
 * Adds `Image.multiply_alpha/2` and `Image.multiply_alpha!/2`, which multiply an image's alpha band by a `0.0..1.0` factor. They replace `Image.opacity/2`, which is deprecated and delegates to them.
 
+* Adds `Image.copy_memory/1` and `Image.copy_memory!/1`, which return an image guaranteed to be resident in memory. A thumbnail taken from a pathname streams from the file and can only be consumed once, so a pipeline that runs over one more than once needs this. ([#175](https://github.com/elixir-image/image/issues/175))
+
+* Documents the pipeline depth limit in the Performance guide. A loop that accumulates more than roughly 150 pending operations exhausts the stack of the thread libvips is evaluated on and takes the VM down; flattening every 25 to 50 operations with `Image.copy_memory/1` avoids it. ([#192](https://github.com/elixir-image/image/issues/192))
+
 ### Changed
 
 * `Image.Pixel.to_pixel/3` now applies the `:opacity` option to a color given as a list of numbers. It was previously ignored for those, so `to_pixel(image, [255, 0, 0, 255], opacity: 0.5)` returned a fully opaque pixel. ([#231](https://github.com/elixir-image/image/pull/231))

@@ -77,3 +77,74 @@ imagequant: [{224, 213, 207}, {187, 154, 121}, {136, 151, 178}, {106, 98, 93}, {
 * Output quality differs in character. `:histogram` quantises to the centres of a fixed 3D grid (visible as the `[8, 24, 40]`, `[24, 104, 168]`, ... clustering), which is good enough for "what is the overall dominant color" questions. `:imagequant` returns perceptually representative colors suitable for building palettes, swatches, or UI accents from photographic input.
 
 * Rule of thumb: keep `:histogram` as the default for hot paths or bulk processing. Reach for `:imagequant` when palette quality matters more than latency, and consider `effort: 3` if you want most of the quality benefit at a fraction of the CPU cost.
+
+## Pipeline depth
+
+`Image` functions build a libvips pipeline that is evaluated lazily, when pixels are finally needed. Evaluation walks that pipeline recursively, one stack frame or more per node, on a thread whose stack is fixed when the VM starts. A long enough chain of pending operations exhausts that stack and the whole VM dies — not an Elixir exception, a `SIGBUS` or `SIGSEGV` with no stack trace.
+
+This is a limitation of evaluating a deep pipeline inside the BEAM rather than a defect in `Image`, `vix` or libvips. The same chain in `pyvips` survives, because a Python main thread has a far larger stack than the threads libvips is evaluated on here.
+
+Almost no pipeline gets near it. It shows up in code that accumulates operations in a loop — compositing hundreds of tiles onto a canvas is the usual example:
+
+```elixir
+# Chains one pending composite per tile, and never evaluates until the end
+Enum.reduce(tiles, canvas, fn {tile, x, y}, canvas ->
+  Image.compose!(canvas, tile, x: x, y: y)
+end)
+```
+
+`Image.copy_memory/1` ends the chain. It evaluates what is pending and returns a memory-resident image, so the next operation starts from a leaf rather than extending the pipeline:
+
+```elixir
+tiles
+|> Enum.chunk_every(32)
+|> Enum.reduce(canvas, fn chunk, canvas ->
+  chunk
+  |> Enum.reduce(canvas, fn {tile, x, y}, acc -> Image.compose!(acc, tile, x: x, y: y) end)
+  |> Image.copy_memory!()
+end)
+```
+
+### What the limit measures as
+
+Chaining `composite2` operations over a 256x256 canvas, five runs per data point, on an M-series Mac with the bundled libvips:
+
+| Pending operations | Runs that crashed |
+|---|---|
+| 100 | 0 of 5 |
+| 150 | 0 of 5 |
+| 200 | 4 of 5 |
+| 400 and above | 5 of 5 |
+
+Flattening a 1600-operation chain at intervals, again five runs each:
+
+| Flattened every | Runs that crashed |
+|---|---|
+| 32 | 0 of 5 |
+| 40 | 0 of 5 |
+| 48 | 0 of 5 |
+| 64 | 5 of 5 |
+
+Two things to take from the second table. Flattening works, and the interval matters more than the depth numbers in the first table suggest — a chain of 64 is well inside the depth that survives on its own, yet flattening every 64 across 1600 operations failed every time. Repeated evaluation is harder on the stack than a single evaluation of the same depth, and the reason is not fully characterised.
+
+The limit is also probabilistic rather than a clean cliff: 200 operations crashed four times in five, not five. Expect the exact numbers to differ with the platform, the libvips build, the operations in the chain and the image size.
+
+### Recommendation
+
+* **Flatten every 25 to 50 pending operations** with `Image.copy_memory/1` in any loop that accumulates them. That is comfortably inside what measured safe and leaves room for platform variation.
+
+* **Do not flatten a pipeline that is consumed once.** Materialising an image is the one thing that defeats libvips' streaming, and it costs the full memory of the image. This is for accumulating loops, not for ordinary pipelines.
+
+* **Treat a crash with no stack trace in image-heavy code as this first.** A `SIGBUS` or `SIGSEGV` that moves around between runs, in code that composites or chains many operations, is this rather than a corrupted image.
+
+### Tuning the BEAM
+
+Of the Erlang stack options, only `+sssdcpu`, the dirty CPU scheduler stack size in kilowords, makes a measurable difference — `vix` runs libvips operations on dirty CPU schedulers:
+
+```bash
+ERL_FLAGS="+sssdcpu 4096" mix run my_script.exs
+```
+
+At 200 pending operations that took the failure rate from four runs in five to zero in five. `+sssdio` and `+sss` made no difference, and neither did `VIPS_CONCURRENCY`.
+
+It is not a substitute for flattening. Raising it further did not rescue a chain of 400 or more even at `+sssdcpu 16384`, which suggests that past some depth the recursion is happening on libvips' own worker threads, whose stacks the BEAM does not control. Use it to widen the margin, not to avoid flattening.

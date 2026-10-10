@@ -5072,6 +5072,18 @@ defmodule Image do
     may be one of `:up`, `:down`, `:both` or `:force`. The default
     is `:both`.
 
+  ### Notes
+
+  * When `image_or_path` is a pathname, libvips uses any
+    shrink-on-load support the file's loader offers. That makes
+    thumbnailing from a path considerably faster than opening the
+    image first, and it is the recommended form, but the result
+    streams from the file rather than living in memory. It can be
+    consumed once: a second write of the same thumbnail fails with
+    `"Failed to write extracted region to memory"`. Pass it through
+    `copy_memory/1` to get an image a pipeline can run over
+    repeatedly.
+
   ### Returns
 
   * `{:ok, thumbnailed_image}` or
@@ -5197,6 +5209,84 @@ defmodule Image do
   def thumbnail!(image_or_path, dimensions, options) when is_binary(dimensions) do
     case Thumbnail.validate_dimensions(dimensions, options) do
       {:ok, length, options} -> thumbnail!(image_or_path, length, options)
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
+  Returns an image that is guaranteed to be resident in memory.
+
+  Most `Image` functions build a pipeline that libvips evaluates
+  lazily, streaming pixels from the source as they are needed. That
+  is what keeps memory use low, and for a pipeline consumed once it
+  is exactly what is wanted.
+
+  Some sources can only be streamed once. The most common is
+  `thumbnail/3` given a pathname, which uses the loader's
+  shrink-on-load support: writing such an image a second time fails
+  with `"Failed to write extracted region to memory"`. Copying it to
+  memory first makes it reusable.
+
+  The other reason to reach for it is pipeline depth. A loop that
+  accumulates operations without evaluating them builds a pipeline
+  that is walked recursively when it finally is, and a long enough
+  chain exhausts the stack and takes the VM down. See the
+  [Performance](performance.md) guide for the measured limits and for
+  how often to flatten.
+
+  Use this when an image is consumed more than once or a chain is
+  growing long, not by default. A memory copy is the one thing that
+  defeats libvips' streaming, and for a large image it can be costly
+  — thumbnailing can enlarge as well as shrink.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, memory_image}` or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> thumbnail = Image.thumbnail!("./test/support/images/Kip_small.png", 90)
+      iex> {:ok, reusable} = Image.copy_memory(thumbnail)
+      iex> {:ok, first} = Vix.Vips.Image.write_to_binary(reusable)
+      iex> {:ok, second} = Vix.Vips.Image.write_to_binary(reusable)
+      iex> first == second
+      true
+
+  """
+  @doc subject: "Operation", since: "0.73.0"
+
+  @spec copy_memory(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
+  def copy_memory(%Vimage{} = image) do
+    Vimage.copy_memory(image)
+  end
+
+  @doc """
+  Returns an image that is guaranteed to be resident in memory, or
+  raises on error.
+
+  See `copy_memory/1` for argument documentation and for when to
+  reach for it.
+
+  ### Examples
+
+      iex> thumbnail = Image.thumbnail!("./test/support/images/Kip_small.png", 90)
+      iex> reusable = Image.copy_memory!(thumbnail)
+      iex> Vix.Vips.Image.write_to_binary(reusable) == Vix.Vips.Image.write_to_binary(reusable)
+      true
+
+  """
+  @doc subject: "Operation", since: "0.73.0"
+
+  @spec copy_memory!(image :: Vimage.t()) :: Vimage.t() | no_return()
+  def copy_memory!(%Vimage{} = image) do
+    case copy_memory(image) do
+      {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
   end
