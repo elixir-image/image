@@ -281,6 +281,8 @@ If the noise is disruptive during tests or automation, you can redirect stderr f
 
 * **[Edge masking](https://hexdocs.pm/image/image_edge_masking.html)** and **[colour clustering](https://hexdocs.pm/image/color_clustering.html)** — livebooks to run locally.
 
+* **[Developing Image](https://hexdocs.pm/image/development.html)** — setting up a local checkout to contribute, and what to run before opening a pull request.
+
 The full API reference is at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 ## License

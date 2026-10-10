@@ -174,6 +174,7 @@ defmodule Image.MixProject do
         "guides/thumbnailing.md",
         "guides/performance.md",
         "guides/lqip_css.md",
+        "guides/development.md",
         "livebook/image_edge_masking.livemd",
         "livebook/color_clustering.livemd",
         "LICENSE.md",
