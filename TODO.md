@@ -4,7 +4,7 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
-* [ ] **Livebook smart cell** — a cell that composes an `Image` pipeline from a form, previews it and writes the equivalent source into the notebook. Design in [plans/livebook-smart-cell.md](plans/livebook-smart-cell.md), issue [#31](https://github.com/elixir-image/image/issues/31).
+* [ ] **Livebook smart cell** — implemented on the `livebook_smart_cell` branch and held out of 0.73.0 until its JavaScript has been run in a notebook. Design in [plans/livebook-smart-cell.md](plans/livebook-smart-cell.md), issue [#31](https://github.com/elixir-image/image/issues/31).
 
 * [ ] **Finish the Rule 2 sweep** — `Image.compare/3` guards its options with `is_list/1` and three functions guard a callback with `is_function(fun, 1)`, so all four raise `FunctionClauseError` rather than returning an error. Both were left deliberately: #220 made non-keyword options raise on purpose, and a wrong-arity callback is a programmer error where a loud failure beats a hidden one. Decide whether that still stands.
 

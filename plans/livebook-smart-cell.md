@@ -1,6 +1,8 @@
 # Livebook smart cell
 
-**Status:** in progress, 2026-10-10
+**Status:** in progress, 2026-10-12
+
+The implementation lives on the `livebook_smart_cell` branch, not on `main`. It was held out of 0.73.0 because its JavaScript had never been run, and shipping an unexercised interface as the headline addition of a release was not worth the risk. Everything on the Elixir side is tested; the branch needs a notebook run, then rebasing onto `main`.
 
 Addresses [#31](https://github.com/elixir-image/image/issues/31), which asks for an imaging playground in Livebook for experimenting with transformations, citing eVision's smart cells as the precedent.
 
