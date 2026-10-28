@@ -11,7 +11,7 @@ defmodule Image.Options.Text do
           {:font, String.t()}
           | {:font_size, non_neg_integer()}
           | {:dpi, non_neg_integer()}
-          | {:text_fill_color, Pixel.t()}
+          | {:text_fill_color, Pixel.t() | :markup}
           | {:text_stroke_width, pos_integer()}
           | {:font_weight, atom()}
           | {:background_fill_color, Pixel.t()}
@@ -158,6 +158,12 @@ defmodule Image.Options.Text do
 
   defp validate_option({:background_stroke_color = option, color}, options) do
     validate_color(option, color, options)
+  end
+
+  # `:markup` defers the text color to the Pango markup, so there is no
+  # color here for `validate_color/3` to validate.
+  defp validate_option({:text_fill_color, :markup}, options) do
+    {:cont, options}
   end
 
   defp validate_option({:text_fill_color = option, color}, options) do

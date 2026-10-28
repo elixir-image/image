@@ -40,6 +40,8 @@ Many many thanks to @hlindset who took on the monumental task of significantly i
 
 * Documents the pipeline depth limit in the Performance guide. A loop that accumulates more than roughly 150 pending operations exhausts the stack of the thread libvips is evaluated on and takes the VM down; flattening every 25 to 50 operations with `Image.copy_memory/1` avoids it. ([#192](https://github.com/elixir-image/image/issues/192))
 
+* Adds `text_fill_color: :markup` to `Image.Text.text/2` and `Image.Text.simple_text/2`, which takes the color of each part of the text from the Pango markup so one string can render in more than one color. Text with no color set in the markup renders black. ([#233](https://github.com/elixir-image/image/issues/233))
+
 ### Changed
 
 * `Image.Pixel.to_pixel/3` now applies the `:opacity` option to a color given as a list of numbers. It was previously ignored for those, so `to_pixel(image, [255, 0, 0, 255], opacity: 0.5)` returned a fully opaque pixel. ([#231](https://github.com/elixir-image/image/pull/231))

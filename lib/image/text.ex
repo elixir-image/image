@@ -82,7 +82,11 @@ defmodule Image.Text do
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
     a background. A black background will be forced if a
-    `:background_fill_color` is not provided
+    `:background_fill_color` is not provided. If set to
+    `:markup` then the color of each part of the text is
+    taken from the Pango markup, allowing text of more than
+    one color. Text with no color set in the markup is
+    rendered black.
 
   * `:background_fill_opacity` is the opacity of the background fill, as
     any `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an integer in
@@ -259,7 +263,11 @@ defmodule Image.Text do
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
     a background. A black background will be forced if a
-    `:background_fill_color` is not provided.
+    `:background_fill_color` is not provided. If set to
+    `:markup` then the color of each part of the text is
+    taken from the Pango markup, allowing text of more than
+    one color. Text with no color set in the markup is
+    rendered black.
 
   * `:background_fill_opacity` is the opacity of the background fill, as
     any `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an integer in
@@ -345,7 +353,7 @@ defmodule Image.Text do
       4
 
   """
-  @spec text!(String.t(), Keyword.t()) :: Vimage.t() | no_return()
+  @spec text!(Phoenix.HTML.safe() | String.t(), Keyword.t()) :: Vimage.t() | no_return()
   def text!(string, options \\ []) do
     case text(string, options) do
       {:ok, image} -> image
@@ -374,7 +382,10 @@ defmodule Image.Text do
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
-    a background.
+    a background. If set to `:markup` then the color of
+    each part of the text is taken from the Pango markup,
+    allowing text of more than one color. Text with no
+    color set in the markup is rendered black.
 
   * `:width` is the maximum width of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
@@ -426,8 +437,14 @@ defmodule Image.Text do
       iex> Image.bands(image)
       4
 
+      iex> markup = ~s(<span color="red">Red</span> <span color="blue">Blue</span>)
+      iex> {:ok, image} = Image.Text.simple_text({:safe, markup}, text_fill_color: :markup)
+      iex> Image.bands(image)
+      4
+
   """
-  @spec simple_text(String.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
+  @spec simple_text(Phoenix.HTML.safe() | String.t(), Keyword.t()) ::
+          {:ok, Vimage.t()} | {:error, Image.error()}
   def simple_text(string, options \\ [])
 
   def simple_text(string, options) when is_list(options) do
@@ -469,7 +486,10 @@ defmodule Image.Text do
   * `:text_fill_color` is the fill color of the text.
     The default is "white". If set to `:transparent` then
     the text will be rendered transparently against
-    a background.
+    a background. If set to `:markup` then the color of
+    each part of the text is taken from the Pango markup,
+    allowing text of more than one color. Text with no
+    color set in the markup is rendered black.
 
   * `:width` is the maximum width of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
@@ -527,7 +547,8 @@ defmodule Image.Text do
       4
 
   """
-  @spec simple_text!(String.t(), Keyword.t()) :: Vimage.t() | no_return()
+  @spec simple_text!(Phoenix.HTML.safe() | String.t(), Keyword.t()) ::
+          Vimage.t() | no_return()
   def simple_text!(string, options \\ []) do
     case simple_text(string, options) do
       {:ok, image} -> image
@@ -979,17 +1000,18 @@ defmodule Image.Text do
       |> maybe_add_height(height)
       |> maybe_add_width(width)
       |> maybe_add_dpi(options[:dpi])
+      |> maybe_add_rgba(options.text_fill_color)
       |> Image.maybe_add_fontfile(options[:fontfile])
 
     with {:ok, text} <- maybe_add_pango_span(text, options),
-         {:ok, {text_mask, _}} <- Operation.text(text, text_options),
-         {:ok, color_layer} <- Image.new(text_mask, color: options.text_fill_color),
-         {:ok, joined} <- Operation.bandjoin([color_layer, text_mask]),
-         {:ok, {x, y}} <- location_from_options(joined, options.x, options.y, width, height) do
+         {:ok, {rendered, _}} <- Operation.text(text, text_options),
+         {:ok, text_layer} <- colorize_text(rendered, options.text_fill_color),
+         {:ok, {x, y}} <-
+           location_from_options(text_layer, options.x, options.y, width, height) do
       if width && height do
-        Operation.embed(joined, x, y, width, height)
+        Operation.embed(text_layer, x, y, width, height)
       else
-        {:ok, joined}
+        {:ok, text_layer}
       end
     end
   end
@@ -1006,6 +1028,29 @@ defmodule Image.Text do
 
   defp maybe_add_dpi(options, nil), do: options
   defp maybe_add_dpi(options, dpi), do: Keyword.put(options, :dpi, dpi)
+
+  # `:markup` has libvips render RGBA directly so that the colors set in the
+  # Pango markup survive. Any other fill color renders as a single band
+  # coverage mask which is colorized afterwards.
+  defp maybe_add_rgba(options, :markup) do
+    Keyword.put(options, :rgba, true)
+  end
+
+  defp maybe_add_rgba(options, _text_fill_color) do
+    options
+  end
+
+  # An RGBA render is already a complete four band image. A coverage mask
+  # becomes the alpha band of a layer filled with the text color.
+  defp colorize_text(rendered, :markup) do
+    {:ok, rendered}
+  end
+
+  defp colorize_text(text_mask, text_fill_color) do
+    with {:ok, color_layer} <- Image.new(text_mask, color: text_fill_color) do
+      Operation.bandjoin([color_layer, text_mask])
+    end
+  end
 
   @span_params [:letter_spacing, :font_weight]
 

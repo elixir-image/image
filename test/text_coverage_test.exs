@@ -3,6 +3,12 @@ defmodule Image.TextCoverageTest do
 
   alias Vix.Vips.Image, as: Vimage
 
+  @markup ~s(<span color="red">Red</span> <span color="blue">Blue</span>)
+  @red [255, 0, 0]
+  @blue [0, 0, 255]
+  @black [0, 0, 0]
+  @white [255, 255, 255]
+
   describe "Image.Text.text/2" do
     test "renders text with default options as an image with alpha" do
       assert {:ok, %Vimage{} = image} = Image.Text.text("hello", font_size: 20)
@@ -128,6 +134,76 @@ defmodule Image.TextCoverageTest do
     end
   end
 
+  describe "Image.Text markup colors" do
+    test "text_fill_color: :markup takes each color from the Pango markup" do
+      assert {:ok, image} =
+               Image.Text.simple_text({:safe, @markup},
+                 font_size: 20,
+                 text_fill_color: :markup
+               )
+
+      colors = opaque_colors(image)
+
+      assert MapSet.member?(colors, @red)
+      assert MapSet.member?(colors, @blue)
+    end
+
+    test "the rendered image keeps the shape the other fill colors produce" do
+      assert {:ok, image} =
+               Image.Text.simple_text({:safe, @markup},
+                 font_size: 20,
+                 text_fill_color: :markup
+               )
+
+      assert Image.bands(image) == 4
+      assert Image.has_alpha?(image)
+      assert Image.colorspace(image) == :srgb
+    end
+
+    test "markup colors are ignored without the option, so the default is unchanged" do
+      assert {:ok, image} = Image.Text.simple_text({:safe, @markup}, font_size: 20)
+
+      assert opaque_colors(image) == MapSet.new([@white])
+    end
+
+    test "text with no color in the markup renders black" do
+      assert {:ok, image} =
+               Image.Text.simple_text("plain", font_size: 20, text_fill_color: :markup)
+
+      assert opaque_colors(image) == MapSet.new([@black])
+    end
+
+    test "text/2 keeps the markup colors through background, padding and border" do
+      assert {:ok, image} =
+               Image.Text.text({:safe, @markup},
+                 font_size: 20,
+                 text_fill_color: :markup,
+                 background_fill_color: :white,
+                 padding: 10,
+                 background_stroke_color: :black
+               )
+
+      colors = opaque_colors(image)
+
+      assert MapSet.member?(colors, @red)
+      assert MapSet.member?(colors, @blue)
+    end
+
+    test ":markup validates, and an unknown fill color still does not" do
+      assert {:ok, _options} = Image.Options.Text.validate_options(text_fill_color: :markup)
+
+      assert {:error, _reason} =
+               Image.Options.Text.validate_options(text_fill_color: :not_a_color)
+    end
+
+    test ":transparent still renders a single band mask" do
+      assert {:ok, image} =
+               Image.Text.simple_text("hey", font_size: 20, text_fill_color: :transparent)
+
+      assert Image.bands(image) == 1
+    end
+  end
+
   describe "Image.Text.add_background/2" do
     setup do
       {:ok, text} = Image.Text.simple_text("hey", font_size: 20)
@@ -202,6 +278,16 @@ defmodule Image.TextCoverageTest do
                  background_stroke_color: "red",
                  padding: 5
                )
+    end
+  end
+
+  # The distinct fully opaque colors in a four band image, read straight from
+  # the pixel data. This is what the Pango markup determines.
+  defp opaque_colors(image) do
+    {:ok, binary} = Vimage.write_to_binary(image)
+
+    for <<red::8, green::8, blue::8, alpha::8 <- binary>>, alpha == 255, into: MapSet.new() do
+      [red, green, blue]
     end
   end
 end
