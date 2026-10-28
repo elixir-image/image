@@ -490,8 +490,13 @@ defmodule Image.GeometryCoverageTest do
     end
 
     test "join_bands!/1 raises for an empty list" do
-      assert_raise Image.Error, fn ->
-        Image.join_bands!([])
+      # The empty list reaches the call through a comprehension. A literal
+      # `[]` is outside the narrowed spec, so the type checker rejects it
+      # even though exercising that path is the point of the test.
+      for empty_list <- [[]] do
+        assert_raise Image.Error, fn ->
+          Image.join_bands!(empty_list)
+        end
       end
     end
   end

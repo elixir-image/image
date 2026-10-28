@@ -1,6 +1,8 @@
 # Livebook smart cell
 
-**Status:** in progress, 2026-10-10
+**Status:** in progress, 2026-10-28
+
+The implementation is complete and tested on the Elixir side, and lives on the `livebook_smart_cell` branch. It is deliberately not on `main` and not part of 0.73.0, because `lib/assets/main.js` has never been run in a notebook and a smart cell whose client is unexercised is not something to ship.
 
 Addresses [#31](https://github.com/elixir-image/image/issues/31), which asks for an imaging playground in Livebook for experimenting with transformations, citing eVision's smart cells as the precedent.
 
@@ -115,7 +117,7 @@ An operation returning `{:error, reason}` renders the reason in place of the ima
 
 ### In progress
 
-* [ ] **Try it in a Livebook** — the client has not been run. Everything on the Elixir side is tested, but `lib/assets/main.js` needs a notebook to exercise, and that is the one thing a test here cannot do.
+* [ ] **Try it in a Livebook** — the client has not been run. Everything on the Elixir side is tested, but `lib/assets/main.js` needs a notebook to exercise, and that is the one thing a test here cannot do. This is what gates merging `livebook_smart_cell` back into `main`.
 
 * [ ] **Preview caching** — thumbnail the source once and preview against it, with a note in the UI where the approximation matters.
 

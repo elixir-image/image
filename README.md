@@ -6,7 +6,7 @@ Machine-learning features (object detection, image classification, image segment
 
 In a simple resize benchmark, `Image` is approximately 2 to 3 times faster than [Mogrify](https://hex.pm/packages/mogrify) and uses about 5 times less memory.
 
-Documentation can be found at <https://hexdocs.pm/image>.
+Documentation can be found at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 ## Features
 
@@ -287,4 +287,4 @@ The full API reference is at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 ## License
 
-Apache 2.0. See [LICENSE.md](https://github.com/elixir-image/image/blob/main/LICENSE.md) for the full text.
+Apache 2.0. See [LICENSE.md](https://github.com/elixir-image/image/blob/v0.73.0/LICENSE.md) for the full text.
