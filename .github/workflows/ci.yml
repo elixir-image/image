@@ -101,14 +101,28 @@ jobs:
     - name: Install libvips build dependencies
       run: sudo apt-get install build-essential meson libwebp-dev libheif-dev libavif-dev libcgif0 libcgif-dev libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgirepository1.0-dev libgsf-1-dev libglib2.0-dev liborc-0.4-dev libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 curl xz-utils libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavdevice-dev
 
-    # Install libvips. 8.18.1 is the floor: 8.18.0's VIPS_FREEF expands to
-    # `(void) F((S))`, which the gcc 15.2 on Ubuntu 26.04 rejects with
-    # "void value not ignored as it ought to be". Upstream parenthesised the
-    # call in libvips/libvips#4836, released in 8.18.1.
-    - name: Set the libvips version to build
+    # Build whatever libvips release is current, resolved from the release
+    # assets rather than pinned, so a libvips regression or a new compiler
+    # incompatibility shows up here straight away. A pinned URL left 8.18.0
+    # in place for seven patch releases, and the gcc 15.2 on Ubuntu 26.04
+    # cannot compile it at all: its VIPS_FREEF expands to `(void) F((S))`,
+    # which fails with "void value not ignored as it ought to be". Upstream
+    # parenthesised the call in libvips/libvips#4836, released in 8.18.1.
+    - name: Resolve the latest libvips release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        VIPS_VERSION="8.18.7"
-        echo "VIPS_LATEST_RELEASE=https://github.com/libvips/libvips/releases/download/v${VIPS_VERSION}/vips-${VIPS_VERSION}.tar.xz" >> $GITHUB_ENV
+        VIPS_LATEST_RELEASE=$(gh api repos/libvips/libvips/releases/latest \
+          --jq '.assets[] | select(.name | test("^vips-[0-9.]+\\.tar\\.xz$")) | .browser_download_url' | head -1)
+
+        if [ -z "${VIPS_LATEST_RELEASE}" ]; then
+          echo "Could not resolve a libvips source tarball from the latest release." >&2
+          exit 1
+        fi
+
+        echo "Building libvips from ${VIPS_LATEST_RELEASE}"
+        echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
+
         . /etc/os-release
         echo "VIPS_CACHE_OS=${ID}${VERSION_ID}" >> $GITHUB_ENV
 
