@@ -118,7 +118,7 @@ The "no boost" background for `embed/4` is the encoded value whose decoded gain 
 
 * [x] **Write path** — `strip_metadata` and `minimize_file_size` keep the gain map with `VIPS_FOREIGN_KEEP_GAINMAP`; on libvips 8.18 the UltraHDR saver ignores the size-reducing JPEG options, which is documented.
 
-* [ ] **Streams and buffers** — confirm `Image.open/2` from a binary or stream selects `uhdrload_buffer`/`uhdrload_source`, and that writing to a stream or `Plug.Conn` routes through `uhdrsave`.
+* [x] **Streams and buffers** — opening from a binary or stream, `Image.stream!/2`, and writing to a stream or `Plug.Conn` all keep the gain map with no change to `Image`; regression tests cover each route.
 
 * [ ] **Documentation** — a guide on HDR and gain maps, plus a note in each affected function's docs.
 

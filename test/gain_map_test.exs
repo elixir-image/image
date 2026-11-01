@@ -221,6 +221,68 @@ defmodule Image.GainMap.Test do
 
   # The Pixel camera file carries EXIF including GPS, so these check that the
   # personal metadata is stripped while the gain map is kept.
+  # libvips selects the UltraHDR loader and saver by content, so each of these
+  # routes is expected to carry the gain map without any help from Image.
+  describe "binaries and streams" do
+    setup do
+      %{path: image_path("gain_map.jpg")}
+    end
+
+    test "Image.open/2 from a binary keeps the gain map", %{path: path} do
+      assert {:ok, image} = Image.open(File.read!(path))
+      assert Image.GainMap.gain_map?(image)
+    end
+
+    test "Image.open/2 from a stream keeps the gain map", %{path: path} do
+      assert {:ok, image} = Image.open(File.stream!(path, 2048))
+      assert Image.GainMap.gain_map?(image)
+    end
+
+    test "the :gain_map open option applies to a stream", %{path: path} do
+      assert {:ok, dropped} = Image.open(File.stream!(path, 2048), gain_map: :drop)
+      refute Image.GainMap.gain_map?(dropped)
+
+      assert {:ok, applied} = Image.open(File.stream!(path, 2048), gain_map: :apply)
+      assert Image.colorspace(applied) == :scrgb
+    end
+
+    @tag :tmp_dir
+    test "Image.write/3 to a stream keeps the gain map", %{path: path, tmp_dir: tmp_dir} do
+      out = Path.join(tmp_dir, "streamed.jpg")
+
+      assert {:ok, _image} = Image.write(Image.open!(path), File.stream!(out), suffix: ".jpg")
+      assert_gain_map_binary(File.read!(out))
+    end
+
+    test "Image.stream!/2 keeps the gain map", %{path: path} do
+      jpeg =
+        path
+        |> Image.open!()
+        |> Image.stream!(suffix: ".jpg")
+        |> Enum.to_list()
+        |> IO.iodata_to_binary()
+
+      assert_gain_map_binary(jpeg)
+    end
+
+    test "Image.write/3 to a Plug.Conn keeps the gain map", %{path: path} do
+      conn =
+        :get
+        |> Plug.Test.conn("/")
+        |> Plug.Conn.send_chunked(200)
+
+      assert {:ok, conn} = Image.write(Image.open!(path), conn, suffix: ".jpg")
+
+      {_adapter, state} = conn.adapter
+      assert_gain_map_binary(IO.iodata_to_binary(state.chunks))
+    end
+  end
+
+  defp assert_gain_map_binary(jpeg) do
+    assert {:ok, reloaded} = Image.from_binary(jpeg)
+    assert Image.GainMap.gain_map?(reloaded)
+  end
+
   describe "Image.write/3 metadata options" do
     setup do
       %{image: Image.open!(image_path("gain_map_pixel_10_pro.jpg"))}
