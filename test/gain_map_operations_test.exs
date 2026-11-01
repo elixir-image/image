@@ -122,13 +122,56 @@ defmodule Image.GainMap.Operations.Test do
       assert_marker_moved(saved, {40, 312, 80, 120}, {40, 48, 80, 120})
     end
 
-    test "by another angle removes the gain map", %{image: image} do
-      {:ok, rotated} = Image.rotate(image, 30)
-      refute Image.GainMap.gain_map?(rotated)
+    test "by other angles", %{image: image} do
+      for angle <- [30, -45, 200] do
+        assert_aligned(image, &Image.rotate(&1, angle))
+      end
+    end
 
-      {:ok, jpeg} = Image.write(rotated, :memory, suffix: ".jpg")
-      {:ok, reloaded} = Image.from_binary(jpeg)
-      refute Image.GainMap.gain_map?(reloaded)
+    test "with output displacements", %{image: image} do
+      assert_aligned(image, &Image.rotate(&1, 30, odx: 25, ody: 13))
+    end
+
+    test "an image with an alpha band", %{image: image} do
+      assert_aligned(image, &Image.rotate(Image.add_alpha!(&1, 255), 30))
+    end
+
+    test "fills the exposed corners with the gain for no boost", %{image: image} do
+      # With these parameters the encoded value for a gain of 1.0 is 255 / 3.
+      image = with_parameters(image, [0.5, 0.5, 0.5], [4.0, 4.0, 4.0], [1.0, 1.0, 1.0])
+      {:ok, rotated} = Image.rotate(image, 30)
+      {:ok, gain_map} = Image.GainMap.gain_map(rotated)
+
+      assert {:ok, [corner]} = Image.get_pixel(gain_map, 0, 0)
+      assert_in_delta corner, 85, 1
+    end
+  end
+
+  describe "the affine family" do
+    test "affine/3", %{image: image} do
+      assert_aligned(image, &Image.affine(&1, [1.3, 0.2, -0.1, 0.7]))
+      assert_aligned(image, &Image.affine(&1, [0.8, 0, 0, 0.8], idx: 30, idy: -10, odx: 12, ody: 3))
+    end
+
+    test "affine/3 with an output area", %{image: image} do
+      assert_aligned(image, &Image.affine(&1, [1, 0, 0, 1], output_area: [33, 17, 300, 200]))
+    end
+
+    test "translate/4", %{image: image} do
+      assert_aligned(image, &Image.translate(&1, 37, 21))
+    end
+
+    test "shear/4", %{image: image} do
+      assert_aligned(image, &Image.shear(&1, 0.3, 0.2))
+    end
+
+    test "an RGB gain map with unequal axis scales" do
+      image = Image.open!(image_path("gain_map_pixel_10_pro.jpg"))
+      {:ok, rotated} = Image.rotate(image, 17)
+      {:ok, gain_map} = Image.GainMap.gain_map(rotated)
+
+      assert {2637, 2866, 3} = Image.shape(rotated)
+      assert {1320, 1433, 3} = Image.shape(gain_map)
     end
   end
 
@@ -226,12 +269,6 @@ defmodule Image.GainMap.Operations.Test do
   # Operations that cannot yet transform the gain map remove it, so the result
   # saves as valid SDR rather than with a stale gain map.
   describe "operations that remove the gain map" do
-    test "the affine family", %{image: image} do
-      assert_gain_map_removed(Image.affine(image, [1.0, 0.0, 0.0, 1.0]))
-      assert_gain_map_removed(Image.translate(image, 10, 5))
-      assert_gain_map_removed(Image.shear(image, 0.1, 0.0))
-    end
-
     test "the coordinate remapping family", %{image: image} do
       corners = [{0, 0}, {479, 0}, {479, 259}, {0, 259}]
       {:ok, index} = Operation.xyz(480, 260)
@@ -318,6 +355,82 @@ defmodule Image.GainMap.Operations.Test do
     assert_in_delta Image.height(gain_map), Image.height(reloaded) / 2, 1
 
     {reloaded, gain_map}
+  end
+
+  # Applies `transform` to the fixture and to a mask with the marker drawn on
+  # it, then checks that the saved gain map's bright region is centred where
+  # the transform put the mask's, to within a gain map pixel. The mask is the
+  # oracle for where the transform moves the marker, independent of the gain
+  # map code.
+  defp assert_aligned(image, transform) do
+    {:ok, transformed} = transform.(image)
+    {:ok, transformed_mask} = transform.(marker_mask())
+    {reloaded, gain_map} = round_trip(transformed)
+
+    {mask_x, mask_y} = centroid(transformed_mask)
+    {gain_x, gain_y} = centroid(gain_map)
+    x_scale = Image.width(reloaded) / Image.width(gain_map)
+    y_scale = Image.height(reloaded) / Image.height(gain_map)
+
+    # JPEG has no alpha band, so only the dimensions are compared.
+    assert {Image.width(reloaded), Image.height(reloaded)} ==
+             {Image.width(transformed), Image.height(transformed)}
+
+    assert_in_delta gain_x * x_scale, mask_x, 2
+    assert_in_delta gain_y * y_scale, mask_y, 2
+  end
+
+  defp marker_mask do
+    {left, top, width, height} = @marker
+    {:ok, marker} = Operation.black(width, height)
+    {:ok, marker} = Operation.linear(marker, [1.0], [255.0])
+    {:ok, mask} = Operation.black(480, 260)
+    {:ok, mask} = Operation.insert(mask, marker, left, top)
+    {:ok, mask} = Operation.cast(mask, :VIPS_FORMAT_UCHAR)
+    mask
+  end
+
+  # The centroid, in pixels, of the first band's pixels above half its maximum.
+  defp centroid(image) do
+    {:ok, band} = Operation.extract_band(image, 0)
+    {:ok, {maximum, _position}} = Operation.max(band)
+    {:ok, bright} = Operation.relational_const(band, :VIPS_OPERATION_RELATIONAL_MORE, [maximum / 2])
+    {:ok, weight} = Operation.linear(bright, [1 / 255], [0.0])
+    {:ok, coordinates} = Operation.xyz(Image.width(band), Image.height(band))
+    {:ok, total} = Operation.avg(weight)
+
+    for index <- [0, 1] do
+      {:ok, coordinate} = Operation.extract_band(coordinates, index)
+      {:ok, weighted} = Operation.multiply(coordinate, weight)
+      {:ok, mean} = Operation.avg(weighted)
+      mean / total + 0.5
+    end
+    |> List.to_tuple()
+  end
+
+  defp with_parameters(image, min_boost, max_boost, gamma) do
+    {:ok, image} =
+      Vix.Vips.Image.mutate(image, fn mutable ->
+        :ok =
+          Vix.Vips.MutableImage.set(
+            mutable,
+            "gainmap-min-content-boost",
+            :VipsArrayDouble,
+            min_boost
+          )
+
+        :ok =
+          Vix.Vips.MutableImage.set(
+            mutable,
+            "gainmap-max-content-boost",
+            :VipsArrayDouble,
+            max_boost
+          )
+
+        Vix.Vips.MutableImage.set(mutable, "gainmap-gamma", :VipsArrayDouble, gamma)
+      end)
+
+    image
   end
 
   defp assert_marker_moved(saved, marker, old_marker) do

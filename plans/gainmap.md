@@ -122,7 +122,7 @@ The "no boost" background for `embed/4` is the encoded value whose decoded gain 
 
 * [x] **Documentation** — the `guides/hdr_and_gain_maps.md` guide, and a note in the docs of each function that transforms or removes the gain map.
 
-* [ ] **Phase 3 operations** — arbitrary-angle rotation and the affine family.
+* [x] **Phase 3 operations** — `rotate/3` by any angle, `affine/3`, `translate/4` and `shear/4` apply the conjugated matrix S·M·S⁻¹ to the gain map, placed from the output's `xoffset`; tests check alignment against an independently transformed mask.
 
 ### Deferred
 

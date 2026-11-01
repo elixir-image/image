@@ -70,18 +70,17 @@ iex> Image.shape(gain_map)
 {130, 240, 1}
 ```
 
-An operation that cannot yet transform the gain map removes it, so the result is a valid SDR image rather than a broken HDR one.
+Any area a transform exposes, such as the corners of a rotation or the border of an embed, gets the gain that adds no boost. An operation that cannot yet transform the gain map removes it, so the result is a valid SDR image rather than a broken HDR one.
 
 | Operation | Gain map |
 |---|---|
 | `Image.thumbnail/3`, `Image.resize/3` | Resized with the image |
 | `Image.crop/5`, `Image.center_crop/3`, `Image.trim/2` | Cropped with the image |
 | `Image.flip/2`, `Image.autorotate/1` | Flipped or reoriented with the image |
-| `Image.rotate/3` by a multiple of 90° | Rotated with the image |
+| `Image.rotate/3` | Rotated with the image |
+| `Image.affine/3`, `Image.translate/4`, `Image.shear/4` | Transformed with the image |
 | `Image.embed/4` | Embedded with a background that adds no boost |
 | `Image.feather/2`, blurs, colour and tone adjustments | Kept unchanged |
-| `Image.rotate/3` by any other angle | Removed |
-| `Image.affine/3`, `Image.translate/4`, `Image.shear/4` | Removed |
 | `Image.warp_perspective/4`, `Image.distort/4`, `Image.map/3`, `Image.ripple/2` | Removed |
 | `Image.to_polar_coordinates/2`, `Image.to_rectangular_coordinates/2` | Removed |
 | `Image.compose/3`, `Image.join/2` | Removed |
@@ -134,7 +133,7 @@ false
 
 * **Formats** — only UltraHDR JPEG is supported. AVIF and JPEG XL gain maps are planned for libvips 8.20, and Apple and Adobe gain maps are not recognised by libultrahdr.
 
-* **Arbitrary transforms** — rotation by an angle that is not a multiple of 90°, the affine family and the coordinate-remapping functions remove the gain map rather than transform it.
+* **Coordinate remapping** — the perspective, distortion, ripple and polar coordinate functions and `Image.map/3` remove the gain map rather than transform it.
 
 * **File size** — with libvips 8.18, `minimize_file_size: true` cannot apply its JPEG encoder options to an UltraHDR image.
 

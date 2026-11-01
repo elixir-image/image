@@ -7134,9 +7134,9 @@ defmodule Image do
 
   ### Notes
 
-  * The gain map of an UltraHDR image is rotated with the image when
-    `angle` is a multiple of 90°. Any other angle removes it, so the
-    result is written as an SDR image. See the
+  * The gain map of an UltraHDR image is rotated with the image, and
+    the corners an angle that is not a multiple of 90° exposes get the
+    gain that adds no HDR boost. See the
     [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
@@ -7175,9 +7175,8 @@ defmodule Image do
     with {:ok, options} <- Options.Rotate.validate_options(image, options) do
       rot_angle = rot_angle(angle, options)
 
-      # Rotation by a multiple of 90 degrees carries the gain map. Any other
-      # angle removes it, so the result saves as valid SDR rather than with a
-      # stale gain map, until arbitrary angles are supported.
+      # Every branch carries the gain map: `vips_rotate` is the affine
+      # transform by the rotation matrix, so the gain map is rotated with it.
       cond do
         rot_angle ->
           image
@@ -7195,7 +7194,7 @@ defmodule Image do
         true ->
           image
           |> Operation.rotate(angle, options)
-          |> GainMap.drop()
+          |> carry_affine_gain_map(image, rotation_matrix(angle), options)
       end
     end
   end
@@ -12818,9 +12817,9 @@ defmodule Image do
   transformed image and is *not* affected by the displacement
   options. Content displaced beyond the canvas is clipped.
 
-  The gain map of an UltraHDR image is removed, so the result is
-  written as an SDR image. See the
-  [HDR and gain maps](hdr_and_gain_maps.md) guide.
+  The gain map of an UltraHDR image is transformed with the image, and
+  any area the transform exposes gets the gain that adds no HDR boost.
+  See the [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 
@@ -12885,12 +12884,22 @@ defmodule Image do
      }}
   end
 
-  # The affine family cannot yet transform a gain map, so it removes it rather
-  # than leave it stale.
   defp affine_transform(%Vimage{} = image, matrix, options) do
     image
     |> affine_bands(matrix, options)
-    |> GainMap.drop()
+    |> carry_affine_gain_map(image, matrix, options)
+  end
+
+  # Applies the same affine transform to the gain map, placed by where libvips
+  # put the transformed image, so the gain map stays aligned with it.
+  defp carry_affine_gain_map({:ok, output} = result, image, matrix, options) do
+    GainMap.carry(result, image, fn gain_map, scale ->
+      GainMap.affine(gain_map, scale, image, output, matrix, options)
+    end)
+  end
+
+  defp carry_affine_gain_map(result, _image, _matrix, _options) do
+    result
   end
 
   defp affine_bands(image, matrix, options) do
@@ -13043,9 +13052,9 @@ defmodule Image do
 
   ### Notes
 
-  * The gain map of an UltraHDR image is removed, so the result is
-    written as an SDR image. See the
-    [HDR and gain maps](hdr_and_gain_maps.md) guide.
+  * The gain map of an UltraHDR image is transformed with the image,
+    and any area the transform exposes gets the gain that adds no HDR
+    boost. See the [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 
@@ -13161,9 +13170,9 @@ defmodule Image do
 
   ### Notes
 
-  * The gain map of an UltraHDR image is removed, so the result is
-    written as an SDR image. See the
-    [HDR and gain maps](hdr_and_gain_maps.md) guide.
+  * The gain map of an UltraHDR image is transformed with the image,
+    and any area the transform exposes gets the gain that adds no HDR
+    boost. See the [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 

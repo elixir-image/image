@@ -14,9 +14,9 @@ This is the changelog for Image version 0.74.0 released on October 31st, 2026.  
 
 ### Fixed
 
-* Fix `Image.resize/3`, `Image.crop/5`, `Image.flip/2`, `Image.rotate/3`, `Image.autorotate/1` and `Image.embed/4`, and the functions built on them, writing a stale gain map that misaligned an UltraHDR image's HDR rendition. The gain map is now transformed with the image; `Image.rotate/3` by an angle that is not a multiple of 90° removes it.
+* Fix `Image.resize/3`, `Image.crop/5`, `Image.flip/2`, `Image.rotate/3`, `Image.autorotate/1`, `Image.embed/4`, `Image.affine/3`, `Image.translate/4` and `Image.shear/4`, and the functions built on them, writing a stale gain map that misaligned an UltraHDR image's HDR rendition. The gain map is now transformed with the image.
 
-* Fix the affine and coordinate-remapping functions, `Image.compose/3`, `Image.join/2` and `Image.to_colorspace/2,3` writing a stale gain map. They now remove it so the image saves as valid SDR; converting to the image's own colorspace keeps it.
+* Fix the coordinate-remapping functions, `Image.compose/3`, `Image.join/2` and `Image.to_colorspace/2,3` writing a stale gain map. They now remove it so the image saves as valid SDR; converting to the image's own colorspace keeps it.
 
 * Fix `strip_metadata: true` and `minimize_file_size: true` in `Image.write/3` removing an UltraHDR image's gain map along with its metadata. The gain map is now kept; with libvips 8.18 the UltraHDR saver skips the size-reducing JPEG options.
 

@@ -501,6 +501,55 @@ defmodule Image.GainMap do
     {gain_left, gain_top, gain_width, gain_height}
   end
 
+  @doc false
+  # Applies to the gain map the affine transform that made `output` from
+  # `source`, at the gain map's own scale. With S the per-axis scale, the
+  # matrix becomes S·M·S⁻¹ and the displacements are multiplied by S. The
+  # output area is derived from where libvips placed `output`, which it
+  # records as `odx - xoffset`, with any fraction of a gain map pixel moved
+  # into the displacement so the two frames line up. Areas the transform
+  # exposes get the gain that adds no boost.
+  @spec affine(
+          gain_map :: Vimage.t(),
+          scale :: {float(), float()},
+          source :: Vimage.t(),
+          output :: Vimage.t(),
+          matrix :: [number()],
+          options :: Keyword.t()
+        ) :: {:ok, Vimage.t()} | {:error, term()}
+  def affine(gain_map, {x_scale, y_scale}, source, output, [a, b, c, d], options) do
+    left = (displacement(options, :odx) - Vimage.xoffset(output)) * x_scale
+    top = (displacement(options, :ody) - Vimage.yoffset(output)) * y_scale
+
+    gain_map_options = [
+      idx: displacement(options, :idx) * x_scale,
+      idy: displacement(options, :idy) * y_scale,
+      odx: displacement(options, :odx) * x_scale - (left - floor(left)),
+      ody: displacement(options, :ody) * y_scale - (top - floor(top)),
+      oarea: [
+        floor(left),
+        floor(top),
+        ceil(Vimage.width(output) * x_scale),
+        ceil(Vimage.height(output) * y_scale)
+      ],
+      background: unit_gain(source, gain_map),
+      extend: Keyword.get(options, :extend, :VIPS_EXTEND_BACKGROUND)
+    ]
+
+    gain_map_options =
+      case Keyword.fetch(options, :interpolate) do
+        {:ok, interpolate} -> Keyword.put(gain_map_options, :interpolate, interpolate)
+        :error -> gain_map_options
+      end
+
+    matrix = [a, b * x_scale / y_scale, c * y_scale / x_scale, d]
+    Operation.affine(gain_map, matrix, gain_map_options)
+  end
+
+  defp displacement(options, key) do
+    Keyword.get(options, key) || 0
+  end
+
   defp scale_span(start, length, scale, limit) do
     first = min(max(floor(start * scale), 0), limit - 1)
     last = min(ceil((start + length) * scale), limit)
