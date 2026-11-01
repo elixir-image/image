@@ -9,6 +9,7 @@ defmodule Image.GainMap.Test do
   @moduletag :gain_map
 
   doctest Image.GainMap
+  doctest_file("guides/hdr_and_gain_maps.md")
 
   # The generated fixture's HDR marker in base image pixels.
   @marker {48, 40, 120, 80}
