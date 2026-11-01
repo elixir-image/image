@@ -157,5 +157,40 @@ defmodule Image.Resize.Test do
         Image.thumbnail!("does/not/exist.jpg", 50)
       end
     end
+
+    test "raises Image.Error for a stream" do
+      assert_raise Image.Error, ~r/Invalid image/, fn ->
+        Image.thumbnail!(File.stream!(image_path("Kip_small.jpg"), 2048), 50)
+      end
+    end
+  end
+
+  # Regression: a stream, any other non-image term, or a length that is not a
+  # positive integer raised FunctionClauseError.
+  describe "thumbnail/3 invalid arguments" do
+    test "returns an error for a stream, with a length or dimensions" do
+      stream = File.stream!(image_path("Kip_small.jpg"), 2048)
+
+      assert {:error, %Image.Error{reason: :invalid_image, value: ^stream}} =
+               Image.thumbnail(stream, 50)
+
+      assert {:error, %Image.Error{reason: :invalid_image}} = Image.thumbnail(stream, "50x50")
+    end
+
+    test "returns an error for a term that is not an image or a path" do
+      for term <- [nil, 3, %{}, :""] do
+        assert {:error, %Image.Error{reason: :invalid_image, value: ^term}} =
+                 Image.thumbnail(term, 50)
+      end
+    end
+
+    test "returns an error for a length that is not a positive integer", %{image: image} do
+      path = image_path("Kip_small.jpg")
+
+      for image_or_path <- [image, path], length <- [0, -1, 1.5, nil, :""] do
+        assert {:error, %Image.Error{reason: :invalid_length, value: ^length}} =
+                 Image.thumbnail(image_or_path, length)
+      end
+    end
   end
 end

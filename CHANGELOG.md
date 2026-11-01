@@ -18,6 +18,8 @@ This is the changelog for Image version 0.74.0 released on October 31st, 2026.  
 
 * Fix `strip_metadata: true` and `minimize_file_size: true` in `Image.write/3` removing an UltraHDR image's gain map along with its metadata. The gain map is now kept; with libvips 8.18 the UltraHDR saver skips the size-reducing JPEG options.
 
+* Fix `Image.thumbnail/3` raising `FunctionClauseError` when given a stream or another term that is not an image or a path, or a length that is not a positive integer. It now returns an `Image.Error` with reason `:invalid_image` or `:invalid_length`.
+
 ## Image 0.73.0
 
 This is the changelog for Image version 0.73.0 released on October 28th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

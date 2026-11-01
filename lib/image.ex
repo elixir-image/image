@@ -5229,8 +5229,6 @@ defmodule Image do
     with {:ok, options} <- Thumbnail.validate_options(options),
          {:ok, _path} <- file_exists?(image_path) do
       Operation.thumbnail(image_path, length, options)
-    else
-      {:error, _reason} = error -> error
     end
   end
 
@@ -5245,6 +5243,32 @@ defmodule Image do
     with {:ok, length, options} <- Thumbnail.validate_dimensions(dimensions, options) do
       thumbnail(image_or_path, length, options)
     end
+  end
+
+  def thumbnail(%Vimage{} = _image, length, _options) do
+    invalid_thumbnail_length(length)
+  end
+
+  def thumbnail(image_path, length, _options) when is_binary(image_path) do
+    invalid_thumbnail_length(length)
+  end
+
+  def thumbnail(image_or_path, _length, _options) do
+    invalid_argument(
+      :invalid_image,
+      "image",
+      image_or_path,
+      "an image or the path to an image file"
+    )
+  end
+
+  defp invalid_thumbnail_length(length) do
+    invalid_argument(
+      :invalid_length,
+      "length",
+      length,
+      "a positive integer or a \"<width>x<height>\" string"
+    )
   end
 
   @doc """
@@ -5281,40 +5305,16 @@ defmodule Image do
   """
   @doc subject: "Resize"
 
-  @spec thumbnail!(Vimage.t(), length :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
-          Vimage.t() | no_return()
-
-  def thumbnail!(image_or_path, length, options \\ [])
-
-  def thumbnail!(%Vimage{} = image, length_or_dimensions, options) do
-    case thumbnail(image, length_or_dimensions, options) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  @spec thumbnail!(Path.t(), length :: pos_integer(), options :: Thumbnail.thumbnail_options()) ::
-          Vimage.t() | no_return()
-
-  def thumbnail!(image_path, length, options) when is_binary(image_path) and is_size(length) do
-    with {:ok, options} <- Thumbnail.validate_options(options),
-         {:ok, _path} <- file_exists?(image_path) do
-      Operation.thumbnail!(image_path, length, options)
-    else
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
   @spec thumbnail!(
           Vimage.t() | Path.t(),
-          dimensions :: binary(),
+          length_or_dimensions :: pos_integer() | binary(),
           options :: Thumbnail.thumbnail_options()
         ) ::
           Vimage.t() | no_return()
 
-  def thumbnail!(image_or_path, dimensions, options) when is_binary(dimensions) do
-    case Thumbnail.validate_dimensions(dimensions, options) do
-      {:ok, length, options} -> thumbnail!(image_or_path, length, options)
+  def thumbnail!(image_or_path, length_or_dimensions, options \\ []) do
+    case thumbnail(image_or_path, length_or_dimensions, options) do
+      {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
   end
