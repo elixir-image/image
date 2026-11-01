@@ -1,6 +1,6 @@
 defmodule Image.GainMap do
   @moduledoc """
-  Functions to inspect and remove the gain map of an UltraHDR image.
+  Functions to inspect, remove and apply the gain map of an UltraHDR image.
 
   An UltraHDR JPEG pairs a standard dynamic range (SDR) base image with a
   gain map: a second, usually lower-resolution image recording how much
@@ -12,7 +12,9 @@ defmodule Image.GainMap do
   `Image` keeps the gain map aligned with the base image through its
   geometric operations, so most callers never need this module. Use it to
   check whether an image has a gain map, read the gain map or its
-  parameters, or remove it so the image saves as plain SDR.
+  parameters, remove it so the image saves as plain SDR, or apply it to
+  render the HDR image. The [HDR and gain maps](hdr_and_gain_maps.md)
+  guide describes how each `Image` function treats the gain map.
 
   ### How the gain map is stored
 

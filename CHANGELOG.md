@@ -10,6 +10,8 @@ This is the changelog for Image version 0.74.0 released on October 31st, 2026.  
 
 * Adds `Image.GainMap` to detect, read, inspect, remove and apply the gain map of an UltraHDR image, and a `:gain_map` option to `Image.open/2` that keeps, drops or applies it on load.
 
+* Adds the [HDR and gain maps](https://hexdocs.pm/image/hdr_and_gain_maps.html) guide, covering how each function treats an UltraHDR image's gain map.
+
 ### Fixed
 
 * Fix `Image.resize/3`, `Image.crop/5`, `Image.flip/2`, `Image.rotate/3`, `Image.autorotate/1` and `Image.embed/4`, and the functions built on them, writing a stale gain map that misaligned an UltraHDR image's HDR rendition. The gain map is now transformed with the image; `Image.rotate/3` by an angle that is not a multiple of 90° removes it.

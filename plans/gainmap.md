@@ -120,7 +120,7 @@ The "no boost" background for `embed/4` is the encoded value whose decoded gain 
 
 * [x] **Streams and buffers** — opening from a binary or stream, `Image.stream!/2`, and writing to a stream or `Plug.Conn` all keep the gain map with no change to `Image`; regression tests cover each route.
 
-* [ ] **Documentation** — a guide on HDR and gain maps, plus a note in each affected function's docs.
+* [x] **Documentation** — the `guides/hdr_and_gain_maps.md` guide, and a note in the docs of each function that transforms or removes the gain map.
 
 * [ ] **Phase 3 operations** — arbitrary-angle rotation and the affine family.
 

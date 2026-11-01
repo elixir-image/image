@@ -20,6 +20,8 @@ Documentation can be found at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 * **Colour spaces** — `Image.colorspace/1`, `Image.to_colorspace/2`, and full conversion between sRGB / scRGB / Lab / LCh / CMYK / HSV / XYZ / B&W / 16-bit RGB.
 
+* **UltraHDR** — the gain map of an UltraHDR JPEG stays aligned through resize, crop, rotate, flip and embed and is written back on save; `Image.GainMap` inspects, removes or applies it. See [the HDR and gain maps guide](https://hexdocs.pm/image/hdr_and_gain_maps.html).
+
 * **Dominant colour and palette extraction** — `Image.dominant_color/2` with two methods: a fast 3D-histogram (default) and an imagequant-backed perceptual quantiser. See [the performance guide](https://hexdocs.pm/image/performance.html) for benchmarks.
 
 * **K-means clustering** — `Image.k_means/2` (when `:scholar` is available) returns the dominant colour palette extracted by unsupervised clustering.
@@ -274,6 +276,8 @@ If the noise is disruptive during tests or automation, you can redirect stderr f
 ## Documentation
 
 * **[Thumbnailing](https://hexdocs.pm/image/thumbnailing.html)** — cropping strategies, rounded and squircle masks, and avatars.
+
+* **[HDR and gain maps](https://hexdocs.pm/image/hdr_and_gain_maps.html)** — opening, transforming and writing UltraHDR images.
 
 * **[Performance](https://hexdocs.pm/image/performance.html)** — getting the most throughput from a pipeline.
 

@@ -3622,6 +3622,12 @@ defmodule Image do
     previously composed image from which `:dy` is
     calculated. The default is `:bottom`.
 
+  ### Notes
+
+  * The gain map of an UltraHDR image is removed, so the result is
+    written as an SDR image. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
+
   ### Returns
 
   * `{:ok, composed_image}` or
@@ -3982,6 +3988,10 @@ defmodule Image do
   `:vertical_spacing` box at `:vertical_align` of `:bottom`,
   `:middle` or `:top` and by `:horizontal_align` of `:left`,
   `:center` or `:right`. The defaults are `:bottom`, `:left`.
+
+  The gain map of an UltraHDR image is removed, so the result is
+  written as an SDR image. See the
+  [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Example
 
@@ -4781,6 +4791,12 @@ defmodule Image do
   * `direction` is either `:horizontal` or
     `:vertical`.
 
+  ### Notes
+
+  * The gain map of an UltraHDR image is transformed with the image,
+    so its HDR rendition stays aligned. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
+
   ### Returns
 
   * `{:ok, flipped_image}` or
@@ -4883,6 +4899,12 @@ defmodule Image do
   * `:vertical_scale` is a float indicating the scaling
     factor of the vertical axis. In specified, then `scale`
     is applied only to the horizontal axis.
+
+  ### Notes
+
+  * The gain map of an UltraHDR image is transformed with the image,
+    so its HDR rendition stays aligned. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 
@@ -5189,6 +5211,10 @@ defmodule Image do
     `"Failed to write extracted region to memory"`. Pass it through
     `copy_memory/1` to get an image a pipeline can run over
     repeatedly.
+
+  * The gain map of an UltraHDR image is transformed with the image,
+    so its HDR rendition stays aligned. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 
@@ -5641,6 +5667,10 @@ defmodule Image do
     `.gif` or `.webp` then each page is extracted,
     cropped and then the image reassembled.
 
+  * The gain map of an UltraHDR image is transformed with the image,
+    so its HDR rendition stays aligned. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
+
   ### Returns
 
   * `{:ok, cropped_image}` or
@@ -5900,6 +5930,10 @@ defmodule Image do
   * This function is a convenience function equivalent to
     calling `Image.crop(image, :center, :middle, width, height)`.
 
+  * The gain map of an UltraHDR image is transformed with the image,
+    so its HDR rendition stays aligned. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
+
   ### Returns
 
   * `{:ok, cropped_image}` or
@@ -6046,6 +6080,12 @@ defmodule Image do
     * `:background` explicitly selects the background color fill,
       which is also the default behavior when no `:extend_mode` is
       given. The color comes from the `:background` option.
+
+  ### Notes
+
+  * The gain map of an UltraHDR image is embedded with the image,
+    and the added border gets a gain that adds no HDR boost. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 
@@ -6385,6 +6425,12 @@ defmodule Image do
     `10`. The default value means only a small color
     background color range is considered.  Increasing
     the threshold value maybe required.
+
+  ### Notes
+
+  * The gain map of an UltraHDR image is transformed with the image,
+    so its HDR rendition stays aligned. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 
@@ -7086,6 +7132,13 @@ defmodule Image do
   * `:odx` and `:ody` are the horizontal and vertical *output*-space
     displacements (default `0.0`). Applied after the rotation.
 
+  ### Notes
+
+  * The gain map of an UltraHDR image is rotated with the image when
+    `angle` is a multiple of 90°. Any other angle removes it, so the
+    result is written as an SDR image. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
+
   ### Returns
 
   * `{:ok, rotated_image}` or
@@ -7237,6 +7290,12 @@ defmodule Image do
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Notes
+
+  * The gain map of an UltraHDR image is transformed with the image,
+    so its HDR rendition stays aligned. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 
@@ -7471,6 +7530,12 @@ defmodule Image do
   is a *fully* transparent fill (`opacity: 0`) with non-zero color bands:
   color cannot be recovered from under zero alpha, so it is rendered as
   transparent black rather than the declared color.
+
+  ### Notes
+
+  * The gain map of an UltraHDR image is removed, so the result is
+    written as an SDR image. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 
@@ -9779,6 +9844,14 @@ defmodule Image do
     `Image.Interpretation.known_interpretations/0`
     for a list of the known colorspaces.
 
+  ### Notes
+
+  * The gain map of an UltraHDR image is removed when converting to
+    a different colorspace, because its gains are defined in the
+    image's original colorspace. Converting to the image's own
+    colorspace keeps it. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
+
   ### Returns
 
   * `{;ok, image_in_new_colorspace}` or
@@ -9857,6 +9930,12 @@ defmodule Image do
     `:absolute`.
 
   * `:depth` is the output bit depth. `8` (default) or `16`.
+
+  ### Notes
+
+  * The gain map of an UltraHDR image is removed, so the result is
+    written as an SDR image. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 
@@ -10013,6 +10092,12 @@ defmodule Image do
   color cannot be recovered from under zero alpha, so it is rendered as
   transparent black rather than the declared color.
 
+  ### Notes
+
+  * The gain map of an UltraHDR image is removed, so the result is
+    written as an SDR image. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
+
   ### Returns
 
   * `{:ok, image_in_polar_coordinates}` or
@@ -10109,6 +10194,12 @@ defmodule Image do
 
   Interpolation samples immediately outside the source are clamped
   to the nearest source pixel.
+
+  ### Notes
+
+  * The gain map of an UltraHDR image is removed, so the result is
+    written as an SDR image. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 
@@ -12727,6 +12818,10 @@ defmodule Image do
   transformed image and is *not* affected by the displacement
   options. Content displaced beyond the canvas is clipped.
 
+  The gain map of an UltraHDR image is removed, so the result is
+  written as an SDR image. See the
+  [HDR and gain maps](hdr_and_gain_maps.md) guide.
+
   ### Returns
 
   * `{:ok, transformed_image}` or
@@ -12946,6 +13041,12 @@ defmodule Image do
   vacated by the shift. `:extend_mode` only affects the antialiased
   edge fringe on fractional (sub-pixel) shifts.
 
+  ### Notes
+
+  * The gain map of an UltraHDR image is removed, so the result is
+    written as an SDR image. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
+
   ### Returns
 
   * `{:ok, translated_image}` or
@@ -13057,6 +13158,12 @@ defmodule Image do
 
   * Any option accepted by `Image.affine/3` (such as
     `:interpolate`, `:background` or `:extend_mode`) is supported.
+
+  ### Notes
+
+  * The gain map of an UltraHDR image is removed, so the result is
+    written as an SDR image. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 
@@ -13483,6 +13590,12 @@ defmodule Image do
     color cannot be recovered from under zero alpha, so it is
     rendered as transparent black rather than the declared color.
 
+    ### Notes
+
+    * The gain map of an UltraHDR image is removed, so the result is
+      written as an SDR image. See the
+      [HDR and gain maps](hdr_and_gain_maps.md) guide.
+
     ### Returns
 
     * `{:ok, warped_image}` or
@@ -13623,6 +13736,10 @@ defmodule Image do
       points were transformed. `destination` can be passed as
       a parameter to `Image.crop/2` to crop the transformed image
       to the subject-of-interest that was warped.
+
+    * The gain map of an UltraHDR image is removed, so the result is
+      written as an SDR image. See the
+      [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
     ### Examples
 
@@ -13777,6 +13894,12 @@ defmodule Image do
     is a *fully* transparent fill (`opacity: 0`) with non-zero color bands:
     color cannot be recovered from under zero alpha, so it is rendered as
     transparent black rather than the declared color.
+
+    ### Notes
+
+    * The gain map of an UltraHDR image is removed, so the result is
+      written as an SDR image. See the
+      [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
     ### Returns
 
@@ -14139,6 +14262,12 @@ defmodule Image do
   is a *fully* transparent fill (`opacity: 0`) with non-zero color bands:
   color cannot be recovered from under zero alpha, so it is rendered as
   transparent black rather than the declared color.
+
+  ### Notes
+
+  * The gain map of an UltraHDR image is removed, so the result is
+    written as an SDR image. See the
+    [HDR and gain maps](hdr_and_gain_maps.md) guide.
 
   ### Returns
 
