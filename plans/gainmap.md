@@ -18,7 +18,7 @@ UltraHDR support arrived in libvips 8.18.0 through the optional `libuhdr` depend
 
 * **Rendering** — `uhdr2scrgb` applies the gain map at full boost and returns a float scRGB HDR image. It has no headroom or weight parameter.
 
-* **Formats** — only UltraHDR JPEG today. HEIF and AVIF gain maps are planned for libvips 8.20; Apple and Adobe Camera Raw 16.1 gain maps are not recognised by libultrahdr.
+* **Formats** — only UltraHDR JPEG today. AVIF gain maps, and possibly JXL, are planned for libvips 8.20 through libultrahdr 2; 8.20 has no announced date, and 8.19 entered feature freeze on 2026-10-27 without them. Apple and Adobe Camera Raw 16.1 gain maps are not recognised by libultrahdr.
 
 ## What sharp does
 
@@ -127,7 +127,7 @@ The "no boost" background for `embed/4` is the encoded value whose decoded gain 
 
 ### Deferred
 
-* [ ] **HEIF and AVIF gain maps** — wait for libvips 8.20. The metadata-based design should carry over unchanged.
+* [ ] **AVIF and JXL gain maps** — wait for libvips 8.20 (no date announced) and a `vix` release that ships it. The metadata-based design should carry over unchanged.
 
 * [ ] **`image_plug`** — once `Image` is gain-map-aware its JPEG output becomes correct with no change, but format negotiation to WebP or AVIF drops the gain map. Decide whether to prefer JPEG for gainmapped sources.
 
