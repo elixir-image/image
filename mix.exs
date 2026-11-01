@@ -203,6 +203,7 @@ defmodule Image.MixProject do
       Drawing: [Image.Draw, Image.Shape],
       Text: [Image.Text],
       Color: [Image.Color, Image.BackgroundColor, Image.Palette],
+      HDR: [Image.GainMap],
       Histogram: [Image.Histogram],
       Math: [Image.Math],
       Video: [Image.Video, Image.YUV],
