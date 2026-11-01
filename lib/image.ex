@@ -704,6 +704,13 @@ defmodule Image do
     Each error state implies all the states before it such
     that `:error` implies also `:truncated`.
 
+  * `:gain_map` sets what happens to the gain map of an UltraHDR
+    image. `:keep` (the default) keeps it so that `Image` carries it
+    through later operations and `Image.write/3` saves an UltraHDR JPEG.
+    `:drop` removes it, so the image is plain SDR. `:apply` renders the
+    image to HDR with `Image.GainMap.apply/1`, returning an scRGB image.
+    An image without a gain map is unaffected by `:keep` and `:drop`.
+
   #### JPEG image options
 
   * `:shrink` is an integer factor in the range `1..16` by
@@ -784,8 +791,49 @@ defmodule Image do
 
   def open(path_or_stream_or_binary, options \\ [])
 
+  # A `:gain_map` option is handled here, once, after the image has loaded,
+  # rather than passed to libvips as a loader option.
+  def open(path_or_stream_or_binary, options) when is_list(options) do
+    {gain_map, options} = Keyword.pop(options, :gain_map, :keep)
+
+    with {:ok, gain_map} <- validate_gain_map_option(gain_map),
+         {:ok, image} <- open_source(path_or_stream_or_binary, options) do
+      open_gain_map(image, gain_map)
+    end
+  end
+
+  def open(path_or_stream_or_binary, options) do
+    open_source(path_or_stream_or_binary, options)
+  end
+
+  defp validate_gain_map_option(gain_map) when gain_map in [:keep, :drop, :apply] do
+    {:ok, gain_map}
+  end
+
+  defp validate_gain_map_option(gain_map) do
+    {:error,
+     %Image.Error{
+       reason: :invalid_option,
+       operation: :open,
+       value: {:gain_map, gain_map},
+       message: "Invalid :gain_map option #{inspect(gain_map)}; expected :keep, :drop or :apply"
+     }}
+  end
+
+  defp open_gain_map(image, :keep) do
+    {:ok, image}
+  end
+
+  defp open_gain_map(image, :drop) do
+    GainMap.remove(image)
+  end
+
+  defp open_gain_map(image, :apply) do
+    GainMap.apply(image)
+  end
+
   # JPEG signature
-  def open(<<0xFF, 0xD8, 0xFF, _::binary>> = image, options) do
+  defp open_source(<<0xFF, 0xD8, 0xFF, _::binary>> = image, options) do
     open_binary(image, options)
   end
 
@@ -795,32 +843,32 @@ defmodule Image do
       <<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _::size(32), "IHDR", _::binary>>
     end
 
-  def open(unquote(png) = image, options) do
+  defp open_source(unquote(png) = image, options) do
     open_binary(image, options)
   end
 
   # WEBP signature
-  def open(<<"RIFF", _::size(32), "WEBP", _::binary>> = image, options) do
+  defp open_source(<<"RIFF", _::size(32), "WEBP", _::binary>> = image, options) do
     open_binary(image, options)
   end
 
   # GIF87a signature
-  def open(<<0x47, 0x49, 0x46, 0x38, 0x37, 0x61, _::binary>> = image, options) do
+  defp open_source(<<0x47, 0x49, 0x46, 0x38, 0x37, 0x61, _::binary>> = image, options) do
     open_binary(image, options)
   end
 
   # GIF89a signature
-  def open(<<0x47, 0x49, 0x46, 0x38, 0x39, 0x61, _::binary>> = image, options) do
+  defp open_source(<<0x47, 0x49, 0x46, 0x38, 0x39, 0x61, _::binary>> = image, options) do
     open_binary(image, options)
   end
 
   # TIF little endian
-  def open(<<0x49, 0x49, 0x2A, 0x00, _::binary>> = image, options) do
+  defp open_source(<<0x49, 0x49, 0x2A, 0x00, _::binary>> = image, options) do
     open_binary(image, options)
   end
 
   # TIF big endian
-  def open(<<0x4D, 0x4D, 0x00, 0x2A, _::binary>> = image, options) do
+  defp open_source(<<0x4D, 0x4D, 0x00, 0x2A, _::binary>> = image, options) do
     open_binary(image, options)
   end
 
@@ -834,22 +882,22 @@ defmodule Image do
 
   @heic_types ["heic", "heix", "hevc", "hevx", "heim", "heis", "hevm", "hevs", "mif1", "avif"]
 
-  def open(<<_::bytes-4, "ftyp", type::bytes-4, _rest::binary>> = image, options)
-      when type in @heic_types do
+  defp open_source(<<_::bytes-4, "ftyp", type::bytes-4, _rest::binary>> = image, options)
+       when type in @heic_types do
     open_binary(image, options)
   end
 
   # SVG starting with either svg or xml tag
-  def open(<<"<svg ", _::binary>> = image, options) do
+  defp open_source(<<"<svg ", _::binary>> = image, options) do
     open_binary(image, options)
   end
 
-  def open(<<"<?xml ", _::binary>> = image, options) do
+  defp open_source(<<"<?xml ", _::binary>> = image, options) do
     open_binary(image, options)
   end
 
   # A file path
-  def open(image_path, options) when is_binary(image_path) do
+  defp open_source(image_path, options) when is_binary(image_path) do
     with {:ok, options} <- Options.Open.validate_options(options) do
       image_path
       |> String.split("[", parts: 2)
@@ -858,14 +906,15 @@ defmodule Image do
   end
 
   # A File stream
-  def open(%File.Stream{line_or_bytes: bytes} = image_stream, options) when is_integer(bytes) do
+  defp open_source(%File.Stream{line_or_bytes: bytes} = image_stream, options)
+       when is_integer(bytes) do
     with {:ok, options} <- Options.Open.validate_options(options) do
       options = loader_options(options)
       open_enum(image_stream, options)
     end
   end
 
-  def open(%File.Stream{}, _options) do
+  defp open_source(%File.Stream{}, _options) do
     message =
       "File stream must specify the number of bytes to read. " <>
         "It should be opened as File.stream!(path, options, bytes) where bytes " <>
@@ -875,7 +924,7 @@ defmodule Image do
   end
 
   # Any other stream
-  def open(image_stream, options) do
+  defp open_source(image_stream, options) do
     with {:ok, options} <- Options.Open.validate_options(options) do
       options = loader_options(options)
       open_enum(image_stream, options)
@@ -973,6 +1022,13 @@ defmodule Image do
     loading and decoding will stop. The default is `:none`.
     Each error state implies all the states before it such
     that `:error` implies also `:truncated`.
+
+  * `:gain_map` sets what happens to the gain map of an UltraHDR
+    image. `:keep` (the default) keeps it so that `Image` carries it
+    through later operations and `Image.write/3` saves an UltraHDR JPEG.
+    `:drop` removes it, so the image is plain SDR. `:apply` renders the
+    image to HDR with `Image.GainMap.apply/1`, returning an scRGB image.
+    An image without a gain map is unaffected by `:keep` and `:drop`.
 
   #### JPEG image options
 

@@ -8,7 +8,7 @@ This is the changelog for Image version 0.74.0 released on October 31st, 2026.  
 
 * Adds an `Image: transform` Livebook smart cell for building an image transformation visually; it is registered automatically when `kino` is loaded. ([#31](https://github.com/elixir-image/image/issues/31))
 
-* Adds `Image.GainMap` to detect, read, inspect and remove the gain map of an UltraHDR image.
+* Adds `Image.GainMap` to detect, read, inspect, remove and apply the gain map of an UltraHDR image, and a `:gain_map` option to `Image.open/2` that keeps, drops or applies it on load.
 
 ### Fixed
 

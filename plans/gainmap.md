@@ -114,7 +114,7 @@ The "no boost" background for `embed/4` is the encoded value whose decoded gain 
 
 * [x] **Phase 2 safety net** — every other geometric function removes the gain map; colour space conversion out of the gain map's gamut removes it. After this, no `Image` function can write a stale gain map.
 
-* [ ] **`apply/1` and the `:gain_map` open option**, guarded for libvips without `uhdr2scrgb`.
+* [x] **`apply/1` and the `:gain_map` open option**, guarded for libvips without `uhdr2scrgb`.
 
 * [ ] **Write path** — decide the `strip_metadata` and `minimize_file_size` behaviour (see below) and implement it with `VIPS_FOREIGN_KEEP_GAINMAP`.
 

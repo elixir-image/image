@@ -143,6 +143,88 @@ defmodule Image.GainMap.Test do
     end
   end
 
+  describe "apply/1" do
+    # The generated fixture lifts its marker to an HDR value of 4.0 and leaves
+    # the rest at or below SDR white.
+    test "renders the marker at its HDR value and the rest at SDR" do
+      image = Image.open!(image_path("gain_map.jpg"))
+
+      assert {:ok, hdr} = Image.GainMap.apply(image)
+      assert {480, 260, 3} = Image.shape(hdr)
+      assert :scrgb = Image.colorspace(hdr)
+      refute Image.GainMap.gain_map?(hdr)
+
+      assert_in_delta region_mean(hdr, 60, 50, 40, 30), 4.0, 0.1
+      assert region_mean(hdr, 330, 160, 100, 60) <= 1.0
+    end
+
+    test "uses a gain map that an operation has transformed" do
+      image = Image.open!(image_path("gain_map.jpg"))
+      {:ok, cropped} = Image.crop(image, 30, 20, 300, 200)
+
+      assert {:ok, hdr} = Image.GainMap.apply(cropped)
+      assert {300, 200, 3} = Image.shape(hdr)
+      assert_in_delta region_mean(hdr, 30, 30, 40, 30), 4.0, 0.1
+    end
+
+    test "converts an image without a gain map to scRGB with no boost" do
+      image = Image.open!(image_path("Kip_small.jpg"))
+
+      assert {:ok, sdr} = Image.GainMap.apply(image)
+      assert :scrgb = Image.colorspace(sdr)
+      assert {:ok, {max, _position}} = Operation.max(sdr)
+      assert max <= 1.0
+    end
+
+    test "saving the result as a JPEG writes a new gain map" do
+      image = Image.open!(image_path("gain_map.jpg"))
+      {:ok, hdr} = Image.GainMap.apply(image)
+
+      assert {:ok, jpeg} = Image.write(hdr, :memory, suffix: ".jpg")
+      assert {:ok, reloaded} = Image.from_binary(jpeg)
+      assert Image.GainMap.gain_map?(reloaded)
+    end
+  end
+
+  describe "Image.open/2 :gain_map option" do
+    test "keeps the gain map by default" do
+      assert {:ok, image} = Image.open(image_path("gain_map.jpg"))
+      assert Image.GainMap.gain_map?(image)
+    end
+
+    test ":drop removes it" do
+      assert {:ok, image} = Image.open(image_path("gain_map.jpg"), gain_map: :drop)
+      refute Image.GainMap.gain_map?(image)
+    end
+
+    test ":apply renders the image to HDR" do
+      assert {:ok, image} = Image.open(image_path("gain_map.jpg"), gain_map: :apply)
+      assert :scrgb = Image.colorspace(image)
+      refute Image.GainMap.gain_map?(image)
+    end
+
+    test "works for an image given as a binary" do
+      binary = File.read!(image_path("gain_map.jpg"))
+
+      assert {:ok, kept} = Image.open(binary)
+      assert Image.GainMap.gain_map?(kept)
+
+      assert {:ok, dropped} = Image.open(binary, gain_map: :drop)
+      refute Image.GainMap.gain_map?(dropped)
+    end
+
+    test "rejects an invalid value" do
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:gain_map, :bogus}}} =
+               Image.open(image_path("gain_map.jpg"), gain_map: :bogus)
+    end
+  end
+
+  defp region_mean(image, left, top, width, height) do
+    {:ok, region} = Operation.extract_area(image, left, top, width, height)
+    {:ok, mean} = Operation.avg(region)
+    mean
+  end
+
   describe "unit_gain/2" do
     test "is 0 when the minimum boost is 1.0" do
       image = Image.open!(image_path("gain_map.jpg"))

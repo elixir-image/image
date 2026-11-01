@@ -276,6 +276,75 @@ defmodule Image.GainMap do
     end
   end
 
+  @doc """
+  Renders an image to HDR by applying its gain map.
+
+  The result is a floating point scRGB image in which `1.0` is SDR white
+  and values above it are the highlights the gain map records. The gain
+  map is applied at full strength and then discarded. Saving the result as
+  a JPEG still writes an UltraHDR file: libvips hands an scRGB image to
+  libultrahdr, which computes a new gain map from it.
+
+  An image without a gain map is converted to scRGB with no boost, so
+  `apply/1` always returns the same kind of image.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, hdr_image}` where `hdr_image` is an scRGB image without a gain
+    map, or
+
+  * `{:error, reason}`, including when libvips was built without libuhdr.
+
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/gain_map.jpg")
+      iex> {:ok, hdr} = Image.GainMap.apply(image)
+      iex> Image.colorspace(hdr)
+      :scrgb
+      iex> Image.GainMap.gain_map?(hdr)
+      false
+
+  """
+  @doc since: "0.74.0"
+  @spec apply(image :: Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.Error.t()}
+  def apply(%Vimage{} = image) do
+    if gain_map?(image) do
+      render_hdr(image)
+    else
+      Image.to_colorspace(image, :scrgb)
+    end
+  end
+
+  defp render_hdr(image) do
+    with {:ok, hdr} <- uhdr_to_scrgb(image) do
+      remove(hdr)
+    end
+  end
+
+  # `uhdr2scrgb` exists only when libvips is built with libuhdr, so it is
+  # looked up at runtime: a direct call would not compile cleanly against a
+  # libvips without it.
+  defp uhdr_to_scrgb(image) do
+    if Code.ensure_loaded?(Operation) and function_exported?(Operation, :uhdr2scrgb, 1) do
+      # credo:disable-for-next-line Credo.Check.Refactor.Apply
+      case Kernel.apply(Operation, :uhdr2scrgb, [image]) do
+        {:ok, hdr} -> {:ok, hdr}
+        {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :apply_gain_map)}
+      end
+    else
+      {:error,
+       Image.Error.exception(
+         reason: :unsupported,
+         operation: :apply_gain_map,
+         message: "Applying a gain map needs libvips 8.18 or later built with libuhdr"
+       )}
+    end
+  end
+
   defp remove_each(mutable, fields) do
     Enum.reduce_while(fields, :ok, fn field, :ok ->
       case MutableImage.remove(mutable, field) do
