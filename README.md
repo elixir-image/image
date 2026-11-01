@@ -50,7 +50,7 @@ Documentation can be found at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 * **YUV interop** — `Image.YUV` for raw YUV file/binary I/O in C420/C422/C444 chroma subsampling and BT.601/BT.709 colour spaces.
 
-* **Kino integration** — `Image.Kino` renders images in [Livebook](https://livebook.dev) without manual conversion.
+* **Kino integration** — `Image.Kino` renders images in [Livebook](https://livebook.dev) without manual conversion, and the `Image: transform` smart cell builds an image pipeline from a form and writes the equivalent code into the notebook.
 
 * **Social media presets** — `Image.Social` with the standard image sizes for Twitter, Facebook, Instagram, LinkedIn, Pinterest, YouTube, Snapchat, and TikTok.
 
@@ -76,7 +76,7 @@ Add `:image` to your dependencies:
 ```elixir
 def deps do
   [
-    {:image, "~> 0.73"}
+    {:image, "~> 0.74"}
   ]
 end
 ```
@@ -233,7 +233,7 @@ Windows is not currently supported by Xav. See the [Xav installation guide](http
 | `:image_ocr` | Run OCR over image content |
 | `:plug` | streaming via `Plug.Conn` |
 | `:req` | streaming over HTTP |
-| `:kino` | `Image.Kino` (Livebook integration) |
+| `:kino` | `Image.Kino` and the `Image: transform` smart cell (Livebook integration) |
 
 Each is detected at compile time; the corresponding `Image` module is conditionally compiled. Add only the deps you actually use.
 
@@ -291,4 +291,4 @@ The full API reference is at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 ## License
 
-Apache 2.0. See [LICENSE.md](https://github.com/elixir-image/image/blob/v0.73.0/LICENSE.md) for the full text.
+Apache 2.0. See [LICENSE.md](https://github.com/elixir-image/image/blob/v0.74.0/LICENSE.md) for the full text.

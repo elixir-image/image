@@ -1,6 +1,6 @@
 # Gain map support
 
-**Status:** in progress, 2026-11-01
+**Status:** implemented (v0.74.0), 2026-11-01
 
 UltraHDR JPEGs carry a gain map: a second, usually half-resolution image that records how much brighter each region should be on an HDR display. An image opened with `Image.open/2` already keeps its gain map and `Image.write/3` already writes it back, but almost every geometric operation leaves the gain map describing the *original* frame. The file that comes out is a valid JPEG whose HDR rendition is misaligned, stretched or mirrored. This plan makes the gain map follow the image through every `Image` operation, with as little change to the public API as possible.
 

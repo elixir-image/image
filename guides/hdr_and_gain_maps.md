@@ -6,7 +6,7 @@ The short version: open, transform and write UltraHDR images as you would any ot
 
 ## Requirements
 
-Gain map support needs libvips 8.18 or later built with libuhdr. The precompiled libvips that `vix` ships qualifies, so nothing needs installing on the default setup. On a libvips without it, an UltraHDR JPEG opens as a plain JPEG with no gain map and every function in this guide behaves as it does for an SDR image.
+Gain map support needs libvips 8.18 or later built with libuhdr. The precompiled libvips that `vix` 0.42.0 and later ship qualifies, so nothing needs installing on the default setup beyond a current `vix`. On a libvips without it, an UltraHDR JPEG opens as a plain JPEG with no gain map and every function in this guide behaves as it does for an SDR image.
 
 ## Opening an UltraHDR image
 
