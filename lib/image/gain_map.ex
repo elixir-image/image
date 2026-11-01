@@ -189,21 +189,22 @@ defmodule Image.GainMap do
   @doc since: "0.74.0"
   @spec info(image :: Vimage.t()) :: {:ok, t() | nil}
   def info(%Vimage{} = image) do
+    {:ok, parameters(image)}
+  end
+
+  defp parameters(image) do
     if gain_map?(image) do
-      {:ok,
-       %__MODULE__{
-         scale_factor: field(image, "gainmap-scale-factor"),
-         min_content_boost: field(image, "gainmap-min-content-boost"),
-         max_content_boost: field(image, "gainmap-max-content-boost"),
-         gamma: field(image, "gainmap-gamma"),
-         offset_sdr: field(image, "gainmap-offset-sdr"),
-         offset_hdr: field(image, "gainmap-offset-hdr"),
-         hdr_capacity_min: field(image, "gainmap-hdr-capacity-min"),
-         hdr_capacity_max: field(image, "gainmap-hdr-capacity-max"),
-         use_base_color_gamut: use_base_color_gamut(image)
-       }}
-    else
-      {:ok, nil}
+      %__MODULE__{
+        scale_factor: field(image, "gainmap-scale-factor"),
+        min_content_boost: field(image, "gainmap-min-content-boost"),
+        max_content_boost: field(image, "gainmap-max-content-boost"),
+        gamma: field(image, "gainmap-gamma"),
+        offset_sdr: field(image, "gainmap-offset-sdr"),
+        offset_hdr: field(image, "gainmap-offset-hdr"),
+        hdr_capacity_min: field(image, "gainmap-hdr-capacity-min"),
+        hdr_capacity_max: field(image, "gainmap-hdr-capacity-max"),
+        use_base_color_gamut: use_base_color_gamut(image)
+      }
     end
   end
 
@@ -325,6 +326,80 @@ defmodule Image.GainMap do
 
   defp attach(output, _failure) do
     remove(output)
+  end
+
+  @doc false
+  # The encoded gain map value meaning "no boost", one per gain map band, for
+  # filling the new area an operation such as `Image.embed/4` creates. The
+  # gain map encodes a gain g as
+  # ((log2(g) - log2(min)) / (log2(max) - log2(min))) ^ gamma, scaled to the
+  # band format's range, so the value for g = 1 is 0 only when the minimum
+  # content boost is 1.0.
+  @spec unit_gain(image :: Vimage.t(), gain_map :: Vimage.t()) :: [number()]
+  def unit_gain(%Vimage{} = image, %Vimage{} = gain_map) do
+    info = parameters(image)
+    full_scale = full_scale(Vimage.format(gain_map))
+
+    for band <- 0..(Vimage.bands(gain_map) - 1) do
+      band_unit_gain(info, band) * full_scale
+    end
+  end
+
+  defp band_unit_gain(
+         %__MODULE__{min_content_boost: [_ | _] = min_boost, max_content_boost: [_ | _] = max_boost} =
+           info,
+         band
+       ) do
+    log_min = :math.log2(Enum.at(min_boost, band))
+    log_max = :math.log2(Enum.at(max_boost, band))
+    gamma = gamma_for(info, band)
+
+    if log_max == log_min do
+      0.0
+    else
+      ((0.0 - log_min) / (log_max - log_min))
+      |> max(0.0)
+      |> min(1.0)
+      |> :math.pow(gamma)
+    end
+  end
+
+  defp band_unit_gain(_info, _band) do
+    0.0
+  end
+
+  defp gamma_for(%__MODULE__{gamma: [_ | _] = gamma}, band) do
+    Enum.at(gamma, band)
+  end
+
+  defp gamma_for(_info, _band) do
+    1.0
+  end
+
+  defp full_scale(:VIPS_FORMAT_UCHAR) do
+    255
+  end
+
+  defp full_scale(:VIPS_FORMAT_USHORT) do
+    65_535
+  end
+
+  defp full_scale(_format) do
+    1.0
+  end
+
+  @doc false
+  # Removes the gain map from the result of an operation that cannot yet
+  # transform it, so the output saves as valid SDR rather than with a stale
+  # gain map. An error result passes through untouched.
+  @spec drop(result :: {:ok, Vimage.t()} | {:error, term()}) ::
+          {:ok, Vimage.t()} | {:error, term()}
+  def drop({:ok, %Vimage{} = image}) do
+    remove(image)
+  end
+
+  def drop(result) do
+    result
   end
 
   @doc false

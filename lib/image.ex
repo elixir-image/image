@@ -27,7 +27,8 @@ defmodule Image do
     Pixel,
     Interpretation,
     BlendMode,
-    BandFormat
+    BandFormat,
+    GainMap
   }
 
   alias Image.Options.{Resize, Thumbnail, Compose, Open, ChromaKey}
@@ -4720,11 +4721,11 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error()}
 
   def flip(%Vimage{} = image, :vertical) do
-    Operation.flip(image, :VIPS_DIRECTION_VERTICAL)
+    flip_with_gain_map(image, :VIPS_DIRECTION_VERTICAL)
   end
 
   def flip(%Vimage{} = image, :horizontal) do
-    Operation.flip(image, :VIPS_DIRECTION_HORIZONTAL)
+    flip_with_gain_map(image, :VIPS_DIRECTION_HORIZONTAL)
   end
 
   def flip(%Vimage{} = _image, direction) do
@@ -4732,6 +4733,12 @@ defmodule Image do
       "Invalid flip direction. Must be :vertical or :horizontal. Found #{inspect(direction)}"
 
     {:error, %Image.Error{message: message, reason: message}}
+  end
+
+  defp flip_with_gain_map(image, direction) do
+    image
+    |> Operation.flip(direction)
+    |> GainMap.carry(image, fn gain_map, _scale -> Operation.flip(gain_map, direction) end)
   end
 
   @doc """
@@ -4820,21 +4827,9 @@ defmodule Image do
 
   def resize(%Vimage{} = image, scale, options) when is_number(scale) and scale >= 0 do
     with {:ok, options} <- Resize.validate_options(options) do
-      if has_alpha?(image) do
-        # Pre-multiply the alpha so the resize doesn't bleed
-        # transparent edges into the colour bands; un-premultiply
-        # and recast back to the source's band format afterwards.
-        band_format = Vix.Vips.Image.format(image)
-        premultiplied = Operation.premultiply!(image)
-
-        with {:ok, resized} <- Operation.resize(premultiplied, scale, options) do
-          resized
-          |> Operation.unpremultiply!()
-          |> Operation.cast(band_format)
-        end
-      else
-        Operation.resize(image, scale, options)
-      end
+      image
+      |> resize_bands(scale, options)
+      |> GainMap.carry(image, &resize_gain_map(&1, &2, scale, options))
     end
   end
 
@@ -4845,6 +4840,36 @@ defmodule Image do
       scale,
       "a number greater than or equal to 0"
     )
+  end
+
+  defp resize_bands(image, scale, options) do
+    if has_alpha?(image) do
+      # Pre-multiply the alpha so the resize doesn't bleed
+      # transparent edges into the colour bands; un-premultiply
+      # and recast back to the source's band format afterwards.
+      band_format = Vix.Vips.Image.format(image)
+      premultiplied = Operation.premultiply!(image)
+
+      with {:ok, resized} <- Operation.resize(premultiplied, scale, options) do
+        resized
+        |> Operation.unpremultiply!()
+        |> Operation.cast(band_format)
+      end
+    else
+      Operation.resize(image, scale, options)
+    end
+  end
+
+  # The gain map is resized by the same factors as the image so it keeps its
+  # resolution relative to the image. A linear kernel matches what libvips'
+  # own thumbnail uses for gain maps.
+  defp resize_gain_map(gain_map, _scale, scale, options) do
+    gain_map_options =
+      options
+      |> Keyword.take([:vscale])
+      |> Keyword.put(:kernel, :VIPS_KERNEL_LINEAR)
+
+    Operation.resize(gain_map, scale, gain_map_options)
   end
 
   @doc """
@@ -5570,19 +5595,32 @@ defmodule Image do
     dims = {width(image), total_height}
 
     with {left, top, width, height} <- Options.Crop.normalize_box(dims, left, top, width, height) do
-      case page_height(image) do
-        {:ok, page_height} ->
-          if total_height == page_height do
-            Operation.extract_area(image, left, top, width, height)
-          else
-            pages = pages(image)
-            map_join_pages(image, &Operation.extract_area(&1, left, top, width, height), pages)
-          end
-
-        {:error, _} ->
-          Operation.extract_area(image, left, top, width, height)
-      end
+      image
+      |> crop_pages(left, top, width, height, total_height)
+      |> GainMap.carry(image, &crop_gain_map(&1, &2, {left, top, width, height}))
     end
+  end
+
+  defp crop_pages(image, left, top, width, height, total_height) do
+    case page_height(image) do
+      {:ok, page_height} ->
+        if total_height == page_height do
+          Operation.extract_area(image, left, top, width, height)
+        else
+          pages = pages(image)
+          map_join_pages(image, &Operation.extract_area(&1, left, top, width, height), pages)
+        end
+
+      {:error, _} ->
+        Operation.extract_area(image, left, top, width, height)
+    end
+  end
+
+  defp crop_gain_map(gain_map, scale, {left, top, width, height}) do
+    {gain_left, gain_top, gain_width, gain_height} =
+      GainMap.scale_area(scale, gain_map, left, top, width, height)
+
+    Operation.extract_area(gain_map, gain_left, gain_top, gain_width, gain_height)
   end
 
   @doc """
@@ -5957,8 +5995,35 @@ defmodule Image do
   def embed(image, width, height, options \\ []) do
     with {:ok, options} <- Options.Embed.validate_options(image, width, height, options) do
       embed_options = embed_options(options)
-      Operation.embed(image, options.x, options.y, width, height, embed_options)
+      area = {options.x, options.y, width, height}
+
+      image
+      |> Operation.embed(options.x, options.y, width, height, embed_options)
+      |> GainMap.carry(image, &embed_gain_map(&1, &2, image, area, options.extend_mode))
     end
+  end
+
+  # The gain map is embedded at the same position and canvas size scaled to
+  # its own resolution. A background fill is the gain map value for no boost,
+  # so the new area shows the same on HDR and SDR displays; a content extend
+  # mode extends the gain map the same way as the image.
+  defp embed_gain_map(gain_map, {x_scale, y_scale}, image, {x, y, width, height}, extend_mode) do
+    Operation.embed(
+      gain_map,
+      round(x * x_scale),
+      round(y * y_scale),
+      max(round(width * x_scale), 1),
+      max(round(height * y_scale), 1),
+      embed_gain_map_options(extend_mode, image, gain_map)
+    )
+  end
+
+  defp embed_gain_map_options(:VIPS_EXTEND_BACKGROUND, image, gain_map) do
+    [extend: :VIPS_EXTEND_BACKGROUND, background: GainMap.unit_gain(image, gain_map)]
+  end
+
+  defp embed_gain_map_options(extend_mode, _image, _gain_map) do
+    [extend: extend_mode]
   end
 
   # With no :background, none is passed and libvips uses its native fill.
@@ -6976,9 +7041,14 @@ defmodule Image do
     with {:ok, options} <- Options.Rotate.validate_options(image, options) do
       rot_angle = rot_angle(angle, options)
 
+      # Rotation by a multiple of 90 degrees carries the gain map. Any other
+      # angle removes it, so the result saves as valid SDR rather than with a
+      # stale gain map, until arbitrary angles are supported.
       cond do
         rot_angle ->
-          Operation.rot(image, rot_angle)
+          image
+          |> Operation.rot(rot_angle)
+          |> GainMap.carry(image, fn gain_map, _scale -> Operation.rot(gain_map, rot_angle) end)
 
         has_alpha?(image) ->
           # `vips_rotate` doesn't expose the `:premultiplied` option, so alpha
@@ -6986,10 +7056,15 @@ defmodule Image do
           # when the `:background` requires it.
           # Rotate has no `:extend_mode`, so set the fringe extend explicitly.
           options = Keyword.put(options, :extend, :VIPS_EXTEND_BACKGROUND)
-          affine_transform(image, rotation_matrix(angle), options)
+
+          image
+          |> affine_transform(rotation_matrix(angle), options)
+          |> GainMap.drop()
 
         true ->
-          Operation.rotate(image, angle, options)
+          image
+          |> Operation.rotate(angle, options)
+          |> GainMap.drop()
       end
     end
   end
@@ -7118,11 +7193,36 @@ defmodule Image do
 
   def autorotate(%Vimage{} = image) do
     case Operation.autorot(image) do
-      {:ok, {image, flags}} ->
-        {:ok, {image, decode_rotation_flags(flags)}}
+      {:ok, {rotated, flags}} ->
+        autorotate_result(rotated, image, flags)
 
       other ->
         other
+    end
+  end
+
+  defp autorotate_result(rotated, image, flags) do
+    case GainMap.carry({:ok, rotated}, image, &autorotate_gain_map(&1, &2, image)) do
+      {:ok, rotated} -> {:ok, {rotated, decode_rotation_flags(flags)}}
+      error -> error
+    end
+  end
+
+  # The gain map is given the source image's orientation and rotated by
+  # `autorot` as well, so it gets exactly the same rotation and flip.
+  defp autorotate_gain_map(gain_map, _scale, image) do
+    case Vimage.header_value(image, "orientation") do
+      {:ok, orientation} -> orient_gain_map(gain_map, orientation)
+      {:error, _reason} -> {:ok, gain_map}
+    end
+  end
+
+  defp orient_gain_map(gain_map, orientation) do
+    set_orientation = &MutableImage.set(&1, "orientation", :gint, orientation)
+
+    with {:ok, oriented} <- Vimage.mutate(gain_map, set_orientation),
+         {:ok, {rotated, _flags}} <- Operation.autorot(oriented) do
+      {:ok, rotated}
     end
   end
 

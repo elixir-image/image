@@ -1,6 +1,6 @@
 # Gain map support
 
-**Status:** planning, 2026-11-01
+**Status:** in progress, 2026-11-01
 
 UltraHDR JPEGs carry a gain map: a second, usually half-resolution image that records how much brighter each region should be on an HDR display. An image opened with `Image.open/2` already keeps its gain map and `Image.write/3` already writes it back, but almost every geometric operation leaves the gain map describing the *original* frame. The file that comes out is a valid JPEG whose HDR rendition is misaligned, stretched or mirrored. This plan makes the gain map follow the image through every `Image` operation, with as little change to the public API as possible.
 
@@ -87,16 +87,15 @@ Each geometric function gets the same treatment: if the input has a gain map, ap
 |---|---|---|
 | `thumbnail/3` | Handled by libvips; add tests only | 1 |
 | `resize/3` | Same horizontal and vertical scale, linear kernel as libvips uses | 1 |
-| `crop/5`, `center_crop/3` | `extract_area` at scaled coordinates | 1 |
+| `crop/5`, `center_crop/3`, `crop/2` | `extract_area` at scaled coordinates; `crop/2` only accepts rectangles and delegates to `crop/5` | 1 |
 | `trim/2` | Free once `crop/5` is aware, since it crops a found box | 1 |
 | `rotate/3` by multiples of 90 | Same `rot` | 1 |
 | `flip/2` | Same flip | 1 |
 | `autorotate/1` | Same orientation correction | 1 |
 | `embed/4` | Embed at scaled offsets with the "no boost" encoded value as background | 1 |
-| `rotate/3` by other angles | Same angle at the gain map's scale | 3 |
+| `rotate/3` by other angles | Removed now; same angle at the gain map's scale in phase 3 | 3 |
 | `affine/3`, `translate/4`, `shear/4` | Same linear part, translation scaled | 3 |
 | `warp_perspective/4`, `straighten_perspective/3`, `distort/4`, `map/3`, `ripple/2`, polar transforms | Remove the gain map | 2 |
-| `crop/2` (quadrilateral) | Remove the gain map until perspective is supported | 2 |
 | `join/2`, `compose/3`, `extract_pages/1` | Remove the gain map | 2 |
 | Colour and tone operations | Keep unchanged, since HDR is SDR × gain | 2 |
 | Colour space conversion away from the gain map's gamut | Remove, per sharp #4612 | 2 |
@@ -107,11 +106,11 @@ The "no boost" background for `embed/4` is the encoded value whose decoded gain 
 
 ## Tasks
 
-* [ ] **Fixture** — commit a small UltraHDR JPEG generated from an existing test image with `uhdrsave` (scRGB with highlights above 1.0), so it is licence-clean. Tag gain map tests so they skip when `uhdrload` is unavailable.
+* [x] **Fixture** — commit a small UltraHDR JPEG generated from an existing test image with `uhdrsave` (scRGB with highlights above 1.0), so it is licence-clean. Tag gain map tests so they skip when `uhdrload` is unavailable.
 
-* [ ] **`Image.GainMap` core** — `gain_map?/1`, `gain_map/1`, `info/1`, `remove/1` and the internal transform helper, with the derived per-axis scale and the rounding rule above.
+* [x] **`Image.GainMap` core** — `gain_map?/1`, `gain_map/1`, `info/1`, `remove/1` and the internal transform helper, with the derived per-axis scale and the rounding rule above.
 
-* [ ] **Phase 1 operations** — the eight rows marked 1. Each test asserts both dimensions and spatial alignment, using a gain map with a known marked region, because a dimension check alone misses the `flip/2` case.
+* [x] **Phase 1 operations** — the eight rows marked 1. Each test asserts both dimensions and spatial alignment, using a gain map with a known marked region, because a dimension check alone misses the `flip/2` case.
 
 * [ ] **Phase 2 safety net** — every other geometric function removes the gain map; colour space conversion out of the gain map's gamut removes it. After this, no `Image` function can write a stale gain map.
 

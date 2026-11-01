@@ -8,6 +8,12 @@ This is the changelog for Image version 0.74.0 released on October 31st, 2026.  
 
 * Adds an `Image: transform` Livebook smart cell for building an image transformation visually; it is registered automatically when `kino` is loaded. ([#31](https://github.com/elixir-image/image/issues/31))
 
+* Adds `Image.GainMap` to detect, read, inspect and remove the gain map of an UltraHDR image.
+
+### Fixed
+
+* Fix `Image.resize/3`, `Image.crop/5`, `Image.flip/2`, `Image.rotate/3`, `Image.autorotate/1` and `Image.embed/4`, and the functions built on them, writing a stale gain map that misaligned an UltraHDR image's HDR rendition. The gain map is now transformed with the image; `Image.rotate/3` by an angle that is not a multiple of 90° removes it.
+
 ## Image 0.73.0
 
 This is the changelog for Image version 0.73.0 released on October 28th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

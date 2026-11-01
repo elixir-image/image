@@ -143,6 +143,44 @@ defmodule Image.GainMap.Test do
     end
   end
 
+  describe "unit_gain/2" do
+    test "is 0 when the minimum boost is 1.0" do
+      image = Image.open!(image_path("gain_map.jpg"))
+      {:ok, gain_map} = Image.GainMap.gain_map(image)
+
+      assert Image.GainMap.unit_gain(image, gain_map) == [0.0]
+    end
+
+    test "places no boost between a minimum below 1.0 and the maximum" do
+      # log2(0.5) = -1 and log2(4) = 2, so no boost (log2 1 = 0) is a third of
+      # the way up the range, and gamma 2 squares that.
+      image =
+        with_parameters(Image.open!(image_path("gain_map.jpg")), [0.5, 0.5, 0.5], [4.0, 4.0, 4.0], [
+          1.0,
+          1.0,
+          2.0
+        ])
+
+      rgb_gain_map = Image.new!(4, 4, bands: 3)
+
+      assert [first, second, third] = Image.GainMap.unit_gain(image, rgb_gain_map)
+      assert_in_delta first, 255 / 3, 0.001
+      assert_in_delta second, 255 / 3, 0.001
+      assert_in_delta third, 255 / 9, 0.001
+    end
+  end
+
+  defp with_parameters(image, min_boost, max_boost, gamma) do
+    {:ok, image} =
+      Vimage.mutate(image, fn mutable ->
+        :ok = MutableImage.set(mutable, "gainmap-min-content-boost", :VipsArrayDouble, min_boost)
+        :ok = MutableImage.set(mutable, "gainmap-max-content-boost", :VipsArrayDouble, max_boost)
+        MutableImage.set(mutable, "gainmap-gamma", :VipsArrayDouble, gamma)
+      end)
+
+    image
+  end
+
   describe "scale_area/6" do
     # The odd-dimension fixture's geometry: a 129x97 base with a 65x49 gain map.
     setup do
