@@ -45,6 +45,33 @@ defmodule Image.GainMapFixture.Test do
     end
   end
 
+  describe "third-party fixtures" do
+    test "odd dimensions round the gain map up, to ceil(base / 2)" do
+      {image, gain_map} = open_with_gain_map("gain_map_odd_dimensions.jpg")
+
+      assert {129, 97, 3} = Image.shape(image)
+      assert {65, 49, 1} = Image.shape(gain_map)
+      assert {:ok, 2} = Vimage.header_value(image, "gainmap-scale-factor")
+    end
+
+    test "a Pixel camera file carries an RGB gain map with its own boost" do
+      {image, gain_map} = open_with_gain_map("gain_map_pixel_10_pro.jpg")
+
+      assert {2031, 2376, 3} = Image.shape(image)
+      assert {1016, 1188, 3} = Image.shape(gain_map)
+
+      {:ok, [max_boost | _]} = Vimage.header_value(image, "gainmap-max-content-boost")
+      assert_in_delta max_boost, 1.79, 0.01
+    end
+  end
+
+  defp open_with_gain_map(name) do
+    {:ok, image} = Image.open(image_path(name))
+    {:ok, gain_map_data} = Vimage.header_value(image, "gainmap-data")
+    {:ok, gain_map} = Vimage.new_from_buffer(gain_map_data)
+    {image, gain_map}
+  end
+
   defp mean(image, left, top, width, height) do
     {:ok, region} = Operation.extract_area(image, left, top, width, height)
     {:ok, average} = Operation.avg(region)
