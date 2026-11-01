@@ -19,8 +19,11 @@ defmodule Image.GainMapFixture.Test do
     %{image: image, gain_map_image: gain_map}
   end
 
-  test "loads through uhdrload with its gain map", %{image: image} do
-    assert {:ok, "uhdrload"} = Vimage.header_value_as_string(image, "vips-loader")
+  # The `vips-loader` field is not asserted: after the same image has been
+  # saved, libvips' operation cache makes a later load report the inner
+  # `jpegload_buffer`, even though the gain map loads correctly.
+  test "loads with its gain map", %{image: image} do
+    assert Image.GainMap.gain_map?(image)
     assert {:ok, 2} = Vimage.header_value(image, "gainmap-scale-factor")
     assert {480, 260, 3} = Image.shape(image)
   end

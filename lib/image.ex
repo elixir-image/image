@@ -3068,8 +3068,13 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error()}
 
   def feather(%Vimage{} = image, options \\ []) do
+    # Feathering keeps the image's frame, but the single-band path crops and
+    # re-embeds it, which would leave a cropped gain map, so the source's gain
+    # map is reattached.
     with {:ok, options} <- Options.Blur.validate_options(options) do
-      do_feather(image, options)
+      image
+      |> do_feather(options)
+      |> GainMap.keep(image)
     end
   end
 
@@ -3604,7 +3609,12 @@ defmodule Image do
 
     with {:ok, blend_mode} <- Image.BlendMode.validate_blend_mode(blend_mode) do
       {x, y} = xy_offset(base_image, overlay_image, x, y)
-      Operation.composite2(base_image, overlay_image, blend_mode, x: x, y: y)
+
+      # The overlay would take on the base image's HDR boost, so a gain map
+      # is removed from the result.
+      base_image
+      |> Operation.composite2(overlay_image, blend_mode, x: x, y: y)
+      |> GainMap.drop()
     end
   end
 
@@ -3645,7 +3655,10 @@ defmodule Image do
 
       {_x, _y, _height, _width, list} ->
         {overlay_images, x_list, y_list, blend_modes} = unzip_composition(list)
-        Operation.composite([base_image | overlay_images], blend_modes, x: x_list, y: y_list)
+
+        [base_image | overlay_images]
+        |> Operation.composite(blend_modes, x: x_list, y: y_list)
+        |> GainMap.drop()
     end
   end
 
@@ -3925,8 +3938,12 @@ defmodule Image do
   def join(image_list, options \\ [])
 
   def join([%Vimage{} = first | _rest] = image_list, options) do
+    # A joined image takes the first image's gain map, which no longer fits
+    # the joined frame, so it is removed.
     with {:ok, options} <- Options.Join.validate_options(first, options) do
-      Operation.arrayjoin(image_list, options)
+      image_list
+      |> Operation.arrayjoin(options)
+      |> GainMap.drop()
     end
   end
 
@@ -7056,10 +7073,7 @@ defmodule Image do
           # when the `:background` requires it.
           # Rotate has no `:extend_mode`, so set the fringe extend explicitly.
           options = Keyword.put(options, :extend, :VIPS_EXTEND_BACKGROUND)
-
-          image
-          |> affine_transform(rotation_matrix(angle), options)
-          |> GainMap.drop()
+          affine_transform(image, rotation_matrix(angle), options)
 
         true ->
           image
@@ -9718,8 +9732,29 @@ defmodule Image do
           {:ok, Vimage.t()} | {:error, error()}
 
   def to_colorspace(%Vimage{} = image, colorspace) do
-    with {:ok, colorspace} <- Interpretation.validate_interpretation(colorspace) do
-      Operation.colourspace(image, colorspace)
+    with {:ok, interpretation} <- Interpretation.validate_interpretation(colorspace) do
+      image
+      |> Operation.colourspace(interpretation)
+      |> gain_map_after_conversion(image, interpretation)
+    end
+  end
+
+  # Converts without the gain map rule, for round trips that return the image
+  # to its own colorspace and so keep its gain map valid.
+  defp convert_colorspace(%Vimage{} = image, colorspace) do
+    with {:ok, interpretation} <- Interpretation.validate_interpretation(colorspace) do
+      Operation.colourspace(image, interpretation)
+    end
+  end
+
+  # A gain map is relative to the colours of the image it was made for, so a
+  # conversion to another colorspace removes it. A conversion to the image's
+  # own colorspace changes nothing and keeps it.
+  defp gain_map_after_conversion(result, image, interpretation) do
+    if Vimage.interpretation(image) == interpretation do
+      result
+    else
+      GainMap.drop(result)
     end
   end
 
@@ -9820,7 +9855,11 @@ defmodule Image do
           ]
           |> maybe_put_input_profile(input_profile)
 
-        Operation.icc_transform(image, to_string(output_profile), opts)
+        # An ICC transform changes the gamut the gain map's per-channel gains
+        # were made for, so the gain map is removed.
+        image
+        |> Operation.icc_transform(to_string(output_profile), opts)
+        |> GainMap.drop()
     end
   end
 
@@ -12687,7 +12726,15 @@ defmodule Image do
      }}
   end
 
+  # The affine family cannot yet transform a gain map, so it removes it rather
+  # than leave it stale.
   defp affine_transform(%Vimage{} = image, matrix, options) do
+    image
+    |> affine_bands(matrix, options)
+    |> GainMap.drop()
+  end
+
+  defp affine_bands(image, matrix, options) do
     # libvips normally handles alpha premultiplication for affine. With an
     # explicit non-opaque background, however, it injects the background
     # without premultiplying its color bands, so handle that path explicitly.
@@ -12724,7 +12771,16 @@ defmodule Image do
     end
   end
 
+  # The `mapim` transforms (perspective warps, distortion, ripple, polar
+  # coordinates and `map/3`) cannot yet transform a gain map, so they remove
+  # it rather than leave it stale.
   defp mapim(%Vimage{} = image, coordinate_map, options) do
+    image
+    |> mapim_bands(coordinate_map, options)
+    |> GainMap.drop()
+  end
+
+  defp mapim_bands(image, coordinate_map, options) do
     # libvips normally handles alpha premultiplication for mapim. With an
     # explicit non-opaque background, however, it injects the background
     # without premultiplying its color bands, so handle that path explicitly.
@@ -15250,9 +15306,10 @@ defmodule Image do
   def with_colorspace(image, colorspace, fun) do
     original_colorspace = colorspace(image)
 
-    with {:ok, converted} <- to_colorspace(image, colorspace) do
+    # A round trip back to the original colorspace keeps the gain map valid.
+    with {:ok, converted} <- convert_colorspace(image, colorspace) do
       case fun.(converted) do
-        {:ok, image} -> to_colorspace(image, original_colorspace)
+        {:ok, image} -> convert_colorspace(image, original_colorspace)
         other -> other
       end
     end

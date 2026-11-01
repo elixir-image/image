@@ -389,6 +389,16 @@ defmodule Image.GainMap do
   end
 
   @doc false
+  # Reattaches the source's gain map to the result of an operation that keeps
+  # the image's frame but is built from steps that move the gain map, such as
+  # a crop followed by an embed back to the original size.
+  @spec keep(result :: {:ok, Vimage.t()} | {:error, term()}, source :: Vimage.t()) ::
+          {:ok, Vimage.t()} | {:error, term()}
+  def keep(result, %Vimage{} = source) do
+    carry(result, source, fn gain_map, _scale -> {:ok, gain_map} end)
+  end
+
+  @doc false
   # Removes the gain map from the result of an operation that cannot yet
   # transform it, so the output saves as valid SDR rather than with a stale
   # gain map. An error result passes through untouched.

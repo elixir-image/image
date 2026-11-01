@@ -112,7 +112,7 @@ The "no boost" background for `embed/4` is the encoded value whose decoded gain 
 
 * [x] **Phase 1 operations** — the eight rows marked 1. Each test asserts both dimensions and spatial alignment, using a gain map with a known marked region, because a dimension check alone misses the `flip/2` case.
 
-* [ ] **Phase 2 safety net** — every other geometric function removes the gain map; colour space conversion out of the gain map's gamut removes it. After this, no `Image` function can write a stale gain map.
+* [x] **Phase 2 safety net** — every other geometric function removes the gain map; colour space conversion out of the gain map's gamut removes it. After this, no `Image` function can write a stale gain map.
 
 * [ ] **`apply/1` and the `:gain_map` open option**, guarded for libvips without `uhdr2scrgb`.
 

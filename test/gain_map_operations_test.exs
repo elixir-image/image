@@ -223,6 +223,79 @@ defmodule Image.GainMap.Operations.Test do
     end
   end
 
+  # Operations that cannot yet transform the gain map remove it, so the result
+  # saves as valid SDR rather than with a stale gain map.
+  describe "operations that remove the gain map" do
+    test "the affine family", %{image: image} do
+      assert_gain_map_removed(Image.affine(image, [1.0, 0.0, 0.0, 1.0]))
+      assert_gain_map_removed(Image.translate(image, 10, 5))
+      assert_gain_map_removed(Image.shear(image, 0.1, 0.0))
+    end
+
+    test "the coordinate remapping family", %{image: image} do
+      corners = [{0, 0}, {479, 0}, {479, 259}, {0, 259}]
+      {:ok, index} = Operation.xyz(480, 260)
+
+      assert_gain_map_removed(Image.ripple(image))
+      assert_gain_map_removed(Image.to_polar_coordinates(image))
+      assert_gain_map_removed(Image.to_rectangular_coordinates(image))
+      assert_gain_map_removed(Image.warp_perspective(image, corners, corners))
+      {:ok, _destination, straightened} = Image.straighten_perspective(image, corners)
+      assert_gain_map_removed({:ok, straightened})
+      assert_gain_map_removed(Image.map(image, index))
+    end
+
+    test "compose/3 with one overlay and with a list", %{image: image} do
+      overlay = Image.new!(40, 40, color: :white)
+
+      assert_gain_map_removed(Image.compose(image, overlay))
+      assert_gain_map_removed(Image.compose(image, [overlay, overlay]))
+    end
+
+    test "join/2", %{image: image} do
+      assert_gain_map_removed(Image.join([image, image]))
+    end
+  end
+
+  describe "colorspace conversion" do
+    test "to the image's own colorspace keeps the gain map", %{image: image} do
+      {:ok, converted} = Image.to_colorspace(image, :srgb)
+      assert_marker_moved(round_trip(converted), @marker, {312, 140, 120, 80})
+    end
+
+    test "to another colorspace removes the gain map", %{image: image} do
+      assert_gain_map_removed(Image.to_colorspace(image, :bw))
+      assert_gain_map_removed(Image.to_colorspace(image, :lab))
+    end
+
+    test "with an ICC profile removes the gain map", %{image: image} do
+      assert_gain_map_removed(Image.to_colorspace(image, :p3, []))
+    end
+
+    test "with_colorspace/3 round trips keep the gain map", %{image: image} do
+      {:ok, adjusted} = Image.with_colorspace(image, :lab, fn lab -> {:ok, lab} end)
+      assert_marker_moved(round_trip(adjusted), @marker, {312, 140, 120, 80})
+    end
+  end
+
+  describe "feather/2" do
+    # The single-band path crops and re-embeds the image; the gain map must
+    # come through whole, not cropped.
+    test "keeps the full gain map of a single-band image", %{image: image} do
+      {:ok, single_band} = Operation.extract_band(image, 0)
+      {:ok, feathered} = Image.feather(single_band)
+      {:ok, gain_map} = Image.GainMap.gain_map(feathered)
+
+      assert {480, 260, 1} = Image.shape(feathered)
+      assert {240, 130, 1} = Image.shape(gain_map)
+    end
+  end
+
+  defp assert_gain_map_removed(result) do
+    assert {:ok, output} = result
+    refute Image.GainMap.gain_map?(output)
+  end
+
   defp with_orientation(image, orientation) do
     {:ok, image} =
       Vix.Vips.Image.mutate(
