@@ -116,7 +116,7 @@ The "no boost" background for `embed/4` is the encoded value whose decoded gain 
 
 * [x] **`apply/1` and the `:gain_map` open option**, guarded for libvips without `uhdr2scrgb`.
 
-* [ ] **Write path** — decide the `strip_metadata` and `minimize_file_size` behaviour (see below) and implement it with `VIPS_FOREIGN_KEEP_GAINMAP`.
+* [x] **Write path** — `strip_metadata` and `minimize_file_size` keep the gain map with `VIPS_FOREIGN_KEEP_GAINMAP`; on libvips 8.18 the UltraHDR saver ignores the size-reducing JPEG options, which is documented.
 
 * [ ] **Streams and buffers** — confirm `Image.open/2` from a binary or stream selects `uhdrload_buffer`/`uhdrload_source`, and that writing to a stream or `Plug.Conn` routes through `uhdrsave`.
 

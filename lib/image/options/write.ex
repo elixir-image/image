@@ -7,7 +7,7 @@ defmodule Image.Options.Write do
   # Map the keyword option to the
   # Vix option.
 
-  alias Image.{BackgroundColor, ICCProfile, Pixel}
+  alias Image.{BackgroundColor, GainMap, ICCProfile, Pixel}
   alias Vix.Vips.Image, as: Vimage
   import ICCProfile, only: [is_inbuilt: 1]
 
@@ -177,12 +177,12 @@ defmodule Image.Options.Write do
     {:cont, options}
   end
 
-  defp validate_option({:strip_metadata, strip?}, options, _image, _image_type)
+  defp validate_option({:strip_metadata, strip?}, options, image, _image_type)
        when is_boolean(strip?) do
     options =
       options
       |> Keyword.delete(:strip_metadata)
-      |> put_strip_metadata(strip?)
+      |> put_strip_metadata(strip?, image)
 
     {:cont, options}
   end
@@ -222,12 +222,12 @@ defmodule Image.Options.Write do
   # Applies only to jpeg save
   # For maximum compression with mozjpeg, a useful set of options is
   # strip, optimize-coding, interlace, optimize-scans, trellis-quant, quant_table=3.
-  defp validate_option({:minimize_file_size, true}, options, _image, image_type)
+  defp validate_option({:minimize_file_size, true}, options, image, image_type)
        when is_jpg(image_type) do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
-      |> put_strip_metadata(true)
+      |> put_strip_metadata(true, image)
       |> Keyword.put(:"optimize-coding", true)
       |> Keyword.put(:interlace, true)
       |> Keyword.put(:"optimize-scans", true)
@@ -238,37 +238,37 @@ defmodule Image.Options.Write do
   end
 
   # Quantize a png image
-  defp validate_option({:minimize_file_size, true}, options, _image, image_type)
+  defp validate_option({:minimize_file_size, true}, options, image, image_type)
        when is_png(image_type) do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
-      |> put_strip_metadata(true)
+      |> put_strip_metadata(true, image)
       |> Keyword.put(:palette, true)
 
     {:cont, options}
   end
 
   # For webp, apply min-size, strip, and mixed (allow mixed encoding which might reduce file size)
-  defp validate_option({:minimize_file_size, true}, options, _image, image_type)
+  defp validate_option({:minimize_file_size, true}, options, image, image_type)
        when is_webp(image_type) do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
       |> Keyword.put(:"min-size", true)
-      |> put_strip_metadata(true)
+      |> put_strip_metadata(true, image)
       |> Keyword.put(:mixed, true)
 
     {:cont, options}
   end
 
   # For webp, apply min-size, strip, and mixed (allow mixed encoding which might reduce file size)
-  defp validate_option({:minimize_file_size, true}, options, _image, image_type)
+  defp validate_option({:minimize_file_size, true}, options, image, image_type)
        when is_heif(image_type) or is_avif(image_type) do
     options =
       options
       |> Keyword.delete(:minimize_file_size)
-      |> put_strip_metadata(true)
+      |> put_strip_metadata(true, image)
 
     {:cont, options}
   end
@@ -467,13 +467,27 @@ defmodule Image.Options.Write do
   # Emit the modern `keep` flag where it exists, so `strip: true` is converted to
   # `keep: [:VIPS_FOREIGN_KEEP_NONE]`, and fall back to `strip` on libvips < 8.15
   # where `keep` does not exist.
-  defp put_strip_metadata(options, false), do: options
+  defp put_strip_metadata(options, false, _image) do
+    options
+  end
 
-  defp put_strip_metadata(options, true) do
+  defp put_strip_metadata(options, true, image) do
     if keep_option_supported?() do
-      Keyword.put(options, :keep, [:VIPS_FOREIGN_KEEP_NONE])
+      Keyword.put(options, :keep, strip_keep(image))
     else
       Keyword.put(options, :strip, true)
+    end
+  end
+
+  # A gain map is image data rather than metadata, so stripping keeps it and
+  # the HDR rendition survives while EXIF (including GPS), XMP and IPTC are
+  # removed. A gain map only exists on libvips 8.18 and later, where the flag
+  # is known.
+  defp strip_keep(image) do
+    if GainMap.gain_map?(image) do
+      [:VIPS_FOREIGN_KEEP_GAINMAP]
+    else
+      [:VIPS_FOREIGN_KEEP_NONE]
     end
   end
 

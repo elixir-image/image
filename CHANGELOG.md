@@ -16,6 +16,8 @@ This is the changelog for Image version 0.74.0 released on October 31st, 2026.  
 
 * Fix the affine and coordinate-remapping functions, `Image.compose/3`, `Image.join/2` and `Image.to_colorspace/2,3` writing a stale gain map. They now remove it so the image saves as valid SDR; converting to the image's own colorspace keeps it.
 
+* Fix `strip_metadata: true` and `minimize_file_size: true` in `Image.write/3` removing an UltraHDR image's gain map along with its metadata. The gain map is now kept; with libvips 8.18 the UltraHDR saver skips the size-reducing JPEG options.
+
 ## Image 0.73.0
 
 This is the changelog for Image version 0.73.0 released on October 28th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

@@ -1515,6 +1515,9 @@ defmodule Image do
 
   * `:strip_metadata` is a boolean indicating if all metadata
     is to be stripped from the image. The default is `false`.
+    The gain map of an UltraHDR image is image data rather than
+    metadata, so it is kept and the HDR rendition survives. Use
+    `Image.GainMap.remove/1` to save without it.
 
   * `:background` is the background color used to fill
     any transparent areas of the image when saving to a
@@ -1572,7 +1575,12 @@ defmodule Image do
   * `:minimize_file_size` is a boolean indicating whether
     to apply a number of techniques to minimise the file
     size of the jpeg file at the cost of additional time to
-    save the image. All metadata will also be removed.
+    save the image. All metadata will also be removed except
+    the gain map of an UltraHDR image, as with `:strip_metadata`.
+    With libvips 8.18 an UltraHDR image is written without the
+    size-reducing encoder options, which that version's UltraHDR
+    saver does not support; remove the gain map first with
+    `Image.GainMap.remove/1` for the smallest SDR file.
 
   * `:icc_profile` indicates the icc profile to be attached
     to the output image. The value may be an inbuilt profile

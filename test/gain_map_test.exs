@@ -219,6 +219,47 @@ defmodule Image.GainMap.Test do
     end
   end
 
+  # The Pixel camera file carries EXIF including GPS, so these check that the
+  # personal metadata is stripped while the gain map is kept.
+  describe "Image.write/3 metadata options" do
+    setup do
+      %{image: Image.open!(image_path("gain_map_pixel_10_pro.jpg"))}
+    end
+
+    test "strip_metadata keeps the gain map and strips the EXIF", %{image: image} do
+      assert {:ok, jpeg} = Image.write(image, :memory, suffix: ".jpg", strip_metadata: true)
+      assert_stripped_with_gain_map(jpeg)
+    end
+
+    @tag :tmp_dir
+    test "strip_metadata does the same when writing to a file", %{image: image, tmp_dir: tmp_dir} do
+      path = Path.join(tmp_dir, "stripped.jpg")
+
+      assert {:ok, _image} = Image.write(image, path, strip_metadata: true)
+      assert_stripped_with_gain_map(File.read!(path))
+    end
+
+    test "minimize_file_size keeps the gain map and strips the EXIF", %{image: image} do
+      assert {:ok, jpeg} = Image.write(image, :memory, suffix: ".jpg", minimize_file_size: true)
+      assert_stripped_with_gain_map(jpeg)
+    end
+
+    test "a format without gain maps still strips cleanly", %{image: image} do
+      assert {:ok, png} = Image.write(image, :memory, suffix: ".png", strip_metadata: true)
+      assert {:ok, reloaded} = Image.from_binary(png)
+      refute Image.GainMap.gain_map?(reloaded)
+    end
+  end
+
+  defp assert_stripped_with_gain_map(jpeg) do
+    {:ok, reloaded} = Image.from_binary(jpeg)
+    {:ok, names} = Vimage.header_field_names(reloaded)
+
+    assert Image.GainMap.gain_map?(reloaded)
+    refute Enum.any?(names, &String.starts_with?(&1, "exif-ifd3-")), "GPS EXIF was not stripped"
+    refute "exif-ifd0-Make" in names, "camera EXIF was not stripped"
+  end
+
   defp region_mean(image, left, top, width, height) do
     {:ok, region} = Operation.extract_area(image, left, top, width, height)
     {:ok, mean} = Operation.avg(region)
