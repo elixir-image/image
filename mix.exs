@@ -68,7 +68,7 @@ defmodule Image.MixProject do
   defp deps do
     [
       # libvips bindings
-      {:vix, "~> 0.33"},
+      {:vix, "~> 0.42"},
       # {:vix, github: "akash-akya/vix", branch: "dev"},
       # {:vix, github: "akash-akya/vix"},
       # {:vix, path: "../vix"},
