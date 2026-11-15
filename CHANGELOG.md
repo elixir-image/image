@@ -18,9 +18,13 @@ This is the changelog for Image version 0.74.0 released on November 4th, 2026. F
 
 * `Image.exif/1` and `Image.xmp/1` return the reason `:no_exif` or `:no_xmp` for an image without that metadata, rather than the string `"No such field"`, matching `:no_iptc` from `Image.iptc/1`.
 
+* `Image.Xmp.extract_xmp/1` accepts the XMP packet only as a binary, no longer a parsed SweetXml document, and `sweet_xml` is no longer a dependency.
+
 * Requires `vix` 0.42.0 or later, the first release whose precompiled libvips (8.18.7) supports gain maps.
 
 ### Fixed
+
+* Fix `Image.xmp/1` creating an atom for every XML name in an image's XMP, which untrusted images could use to exhaust the atom table. XMP is now parsed with `:xmerl_sax_parser`, and a malformed packet returns `:invalid_xmp` rather than exiting or raising.
 
 * Fix `Image.resize/3`, `Image.crop/5`, `Image.flip/2`, `Image.rotate/3`, `Image.autorotate/1`, `Image.embed/4`, `Image.affine/3`, `Image.translate/4` and `Image.shear/4`, and the functions built on them, writing a stale gain map that misaligned an UltraHDR image's HDR rendition. The gain map is now transformed with the image.
 

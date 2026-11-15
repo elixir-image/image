@@ -4555,15 +4555,20 @@ defmodule Image do
 
   defp xmp_from_blob(xmp_blob) do
     case Base.decode64(xmp_blob) do
-      {:ok, xmp_binary} ->
-        xmp_binary
-        |> SweetXml.parse(dtd: :none)
-        |> Xmp.extract_xmp()
-        |> wrap(:ok)
-
-      :error ->
-        {:error, %Image.Error{reason: :invalid_xmp, message: "XMP payload is not base64-encoded"}}
+      {:ok, xmp_binary} -> xmp_from_packet(xmp_binary)
+      :error -> invalid_xmp("XMP payload is not base64-encoded")
     end
+  end
+
+  defp xmp_from_packet(xmp_binary) do
+    case Xmp.extract_xmp(xmp_binary) do
+      {:error, :invalid_xmp} -> invalid_xmp("Invalid XMP data")
+      xmp_map -> {:ok, xmp_map}
+    end
+  end
+
+  defp invalid_xmp(message) do
+    {:error, %Image.Error{reason: :invalid_xmp, message: message, operation: :xmp}}
   end
 
   @doc """

@@ -61,7 +61,7 @@ defmodule Image.MixProject do
   def application do
     [
       mod: {Image.Application, []},
-      extra_applications: [:logger, :inets, :crypto]
+      extra_applications: [:logger, :inets, :crypto, :xmerl]
     ]
   end
 
@@ -86,9 +86,6 @@ defmodule Image.MixProject do
       # Image.to_evision/1 / Image.from_evision/1 interop helpers.
       {:evision, "~> 0.1.33 or ~> 0.2", optional: true},
       # {:evision, github: "cocoa-xu/evision"},
-
-      # For XMP metadata parsing
-      {:sweet_xml, "~> 0.7"},
 
       # For SVG text generation (HTML safety)
       {:phoenix_html, "~> 4.0 or ~> 3.2 or ~> 2.1"},
@@ -123,7 +120,10 @@ defmodule Image.MixProject do
 
       # For testing HTTP streaming
       {:ex_aws_s3, "~> 2.3", optional: true, only: [:dev, :test]},
-      {:hackney, "~> 1.18", optional: true, only: [:dev, :test]}
+      {:hackney, "~> 1.18", optional: true, only: [:dev, :test]},
+      # ExAws.S3 parses multipart-upload responses with SweetXml. Image
+      # itself does not use it.
+      {:sweet_xml, "~> 0.7", optional: true, only: [:dev, :test]}
     ] ++ maybe_json_polyfill()
   end
 

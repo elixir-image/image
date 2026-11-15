@@ -88,7 +88,7 @@ defmodule Image.Exif do
     case Vix.Vips.Image.header_value(image, field(header)) do
       {:ok, value} -> {:ok, value}
       {:error, "No such field"} -> {:ok, nil}
-      {:error, %Image.Error{reason: "No such field"}} -> {:ok, nil}
+      {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :get_metadata)}
     end
   end
 
