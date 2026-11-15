@@ -150,11 +150,56 @@ defmodule Image.Exif do
   defp read_ifd({exif, offset, ru} = context) do
     case exif do
       <<_::binary-size(^offset), tag_count::binary-size(2), tags::binary>> ->
-        read_tags(ru.(tag_count), tags, context, :tiff, [])
+        count = ru.(tag_count)
+
+        count
+        |> read_tags(tags, context, :tiff, [])
+        |> put_thumbnail(next_ifd(offset, count, context), context)
 
       _ ->
         %{}
     end
+  end
+
+  # An IFD is a 16-bit entry count, 12-byte entries and a 32-bit offset
+  # to the next IFD, which is 0 when there is none. IFD1, after IFD0,
+  # describes the thumbnail.
+  defp next_ifd(offset, count, {exif, _offset, ru}) do
+    position = offset + 2 + count * 12
+
+    case exif do
+      <<_::binary-size(^position), next::binary-size(4), _rest::binary>> -> ru.(next)
+      _truncated -> 0
+    end
+  end
+
+  # The thumbnail's offset counts from the start of the EXIF TIFF data,
+  # like every other EXIF offset. IFD1 may come before IFD0, as it does
+  # in files Photoshop writes; an offset into the 8-byte TIFF header or
+  # back at IFD0 itself is malformed and ignored.
+  defp put_thumbnail(result, ifd1_offset, {exif, ifd0_offset, ru} = context)
+       when ifd1_offset >= 8 and ifd1_offset != ifd0_offset and ifd1_offset < byte_size(exif) do
+    case exif do
+      <<_::binary-size(^ifd1_offset), count::binary-size(2), tags::binary>> ->
+        ifd1 = read_tags(ru.(count), tags, context, :exif, [])
+        thumbnail(result, ifd1)
+
+      _truncated ->
+        result
+    end
+  end
+
+  defp put_thumbnail(result, _ifd1_offset, _context) do
+    result
+  end
+
+  defp thumbnail(result, %{thumbnail_offset: offset, thumbnail_size: size})
+       when is_integer(offset) and is_integer(size) do
+    Map.put(result, :thumbnail, %Thumbnail{thumbnail_offset: offset, thumbnail_size: size})
+  end
+
+  defp thumbnail(result, _ifd1) do
+    result
   end
 
   @spec read_tags(non_neg_integer(), binary(), context(), any(), any()) :: map()

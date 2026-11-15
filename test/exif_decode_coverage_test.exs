@@ -371,31 +371,6 @@ defmodule Image.ExifDecodeCoverageTest do
     end
   end
 
-  describe "Thumbnail extraction to a file" do
-    test "returns an error when the thumbnail fields are missing" do
-      assert Thumbnail.to_image("any.jpg", %Thumbnail{}) == {:error, :bad_thumbnail_data}
-
-      assert Thumbnail.to_image("any.jpg", %Thumbnail{thumbnail_offset: 10}) ==
-               {:error, :bad_thumbnail_data}
-
-      assert Thumbnail.to_image("any.jpg", %Thumbnail{thumbnail_size: 10}) ==
-               {:error, :bad_thumbnail_data}
-    end
-
-    test "writes the thumbnail bytes to a -thumb suffixed file" do
-      Temp.track!()
-      dir = Temp.mkdir!()
-      source_path = Path.join(dir, "source.jpg")
-      File.write!(source_path, "0123456789ABCDEF")
-
-      thumbnail = %Thumbnail{thumbnail_offset: 4, thumbnail_size: 6}
-      assert Thumbnail.to_image(source_path, thumbnail) == :ok
-
-      thumb_path = Path.join(dir, "source-thumb.jpg")
-      assert File.read!(thumb_path) == "456789"
-    end
-  end
-
   describe "EXIF from real images" do
     test "decodes camera metadata from Kip_small.jpg" do
       {:ok, image} = Image.open(image_path("Kip_small.jpg"))

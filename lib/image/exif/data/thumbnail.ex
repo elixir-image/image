@@ -1,6 +1,7 @@
 defmodule Image.Exif.Thumbnail do
   @moduledoc false
-  # Internal representation of Thumbnail tag in the EXIF.
+  # The thumbnail IFD1 describes: the offset of its JPEG data, counted
+  # from the start of the EXIF TIFF data, and its size in bytes.
 
   @type t :: %__MODULE__{
           thumbnail_offset: non_neg_integer(),
@@ -17,25 +18,6 @@ defmodule Image.Exif.Thumbnail do
   def fields, do: @fields
 
   defstruct @fields
-
-  @spec to_image(binary(), t()) :: :ok | {:error, :bad_thumbnail_data | :file.posix()}
-  @doc "Converts the thumbnail to image and writes it to the file"
-  def to_image(_, %__MODULE__{thumbnail_offset: offset, thumbnail_size: size})
-      when is_nil(offset) or is_nil(size),
-      do: {:error, :bad_thumbnail_data}
-
-  def to_image(file, %__MODULE__{thumbnail_offset: offset, thumbnail_size: size})
-      when is_binary(file) do
-    [name, dot, ext] = String.split(file, ~r/(?=.{3,4}\z)/)
-
-    with {:ok, src} <-
-           File.open(file, [:read], fn f ->
-             IO.binread(f, offset)
-             IO.binread(f, size)
-           end),
-         {:ok, _dst} <- File.open("#{name}-thumb#{dot}#{ext}", [:write], &IO.binwrite(&1, src)),
-         do: :ok
-  end
 
   defimpl String.Chars, for: Image.Exif.Thumbnail do
     @spec to_string(data :: Image.Exif.Thumbnail.t()) :: <<_::64, _::_*8>>
