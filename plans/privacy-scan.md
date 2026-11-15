@@ -1,6 +1,6 @@
 # Privacy scan
 
-**Status:** implemented (v0.74.0), 2026-11-15
+**Status:** in progress, 2026-11-15
 
 A function that checks an image for known tracking and identifying data, reports each finding, and pairs with the existing metadata removal so a caller can scan and then strip. Prompted by the `FBMD` identifier Facebook writes into IPTC 2:40 Special Instructions of the photos it processes.
 
@@ -56,7 +56,7 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 * **Private PNG chunks** — ancillary chunks a viewer ignores can carry any data (`prVt`, `vpAg`, Apple's `iDOT`). The scan walks past them without reporting. Reporting them would need a list of the common harmless ones to stay quiet on macOS screenshots.
 
-* **Targeted removal** — whether to add a way to remove only the identifying fields (FBMD, Original Transmission Reference, serial numbers, GPS, document IDs) while keeping copyright and captions. libvips sets metadata as whole blobs, so this means rewriting the IPTC, EXIF and XMP blobs, which is a larger piece of work than the scan.
+* **Targeted removal** — decided 2026-11-15: `Image.Privacy.remove(image, findings)`. EXIF works through libvips' per-tag fields; IPTC needs the block rewritten and XMP needs the packet edited in place.
 
 * **PNG text chunks** — confirmed 2026-11-15: libvips exposes them as `png-comment-<index>-<keyword>` header fields.
 
@@ -66,7 +66,13 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 ## Tasks
 
+* [ ] **Targeted removal: IPTC** — rewrite the IPTC block without the chosen datasets, keeping the other datasets and Photoshop resources.
+
+* [ ] **Targeted removal: XMP** — remove chosen properties from the XMP packet in place, by tracking each property's position while parsing, so properties the parser does not read are kept.
+
 ### Done
+
+* [x] **Targeted removal: EXIF** — `Image.Privacy.remove/2` removes the libvips field of each EXIF finding (`:gps` the whole GPS block), PNG text chunks by keyword, and unreadable blocks whole. libexif drops the host computer, DNG camera serial number, photographer and image editor from every save. 2026-11-15, v0.74.0.
 
 * [x] **People in XMP** — `Image.xmp/1` reads people shown (`PersonInImage`, `PersonInImageWDetails`), MWG and Microsoft face region names, `CreatorContactInfo`, and `LocationShown` / `LocationCreated` as separate structures; all reported. Apple Photos face names, digiKam and Lightroom people keywords and IPTC `ImageRegion` names are not read. 2026-11-15, v0.74.0.
 
@@ -94,4 +100,3 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 * [ ] **Encoder fingerprints** — needs maintained reference tables; revisit once stages 1 and 2 are in.
 
-* [ ] **Targeted removal** — see the open question above.

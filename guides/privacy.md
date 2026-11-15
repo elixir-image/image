@@ -102,6 +102,23 @@ iex> Enum.map(findings, &{&1.source, &1.field})
 [exif: :artist]
 ```
 
+### Removing only some findings
+
+`Image.Privacy.remove/2` removes the data that chosen findings describe and keeps the rest. For example, to publish a photo without its location and serial numbers but with the photographer's name:
+
+```elixir
+iex> image = Image.open!("test/support/images/gain_map.jpg")
+iex> {:ok, findings} = Image.Privacy.scan(image)
+iex> remove = Enum.filter(findings, &(&1.kind in [:location, :device_id]))
+iex> {:ok, image} = Image.Privacy.remove(image, remove)
+iex> {:ok, jpeg} = Image.write(image, :memory, suffix: ".jpg")
+iex> {:ok, findings} = Image.Privacy.scan(jpeg)
+iex> Enum.map(findings, & &1.field)
+[:artist, :thumbnail]
+```
+
+EXIF findings and PNG text chunks can be removed one at a time; a `:gps` finding removes the whole GPS block. IPTC and XMP findings cannot be removed on their own yet and return `{:error, %Image.Error{reason: :unsupported_finding}}`; remove the whole block with `Image.remove_metadata/2` instead.
+
 Any image `Image` writes leaves out JPEG comments and data after the end of the image, because libvips never reads them. To check the result of a clean-up, scan the file that was written, as the examples do, rather than the image in memory.
 
 ## What the scan cannot find
@@ -114,4 +131,4 @@ Any image `Image` writes leaves out JPEG comments and data after the end of the 
 
 * **Other formats' hidden data** — comments and trailing data are read only from JPEG and PNG files.
 
-* **Removing single fields** — metadata is removed a whole block at a time, so you cannot, for example, remove the GPS and keep the rest of the EXIF.
+* **Removing single IPTC or XMP fields** — these blocks are removed whole. EXIF and PNG text can be removed field by field with `Image.Privacy.remove/2`.

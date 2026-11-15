@@ -13,8 +13,9 @@ defmodule Image.Privacy do
   reports an EXIF thumbnail, a second copy of the picture that can
   show it before it was cropped or edited.
 
-  Pair it with `Image.remove_metadata/2`, or `strip_metadata: true`
-  in `Image.write/3`, to remove what it finds. The
+  `remove/2` removes the data that chosen findings describe and keeps
+  the rest. `Image.remove_metadata/2`, or `strip_metadata: true` in
+  `Image.write/3`, removes whole blocks. The
   [Privacy and tracking metadata](privacy.md) guide covers both.
 
   ### What the scan cannot find
@@ -111,6 +112,33 @@ defmodule Image.Privacy do
   # libvips names a PNG text chunk's field "png-comment-<index>-<keyword>".
   @png_text_prefix "png-comment-"
 
+  # The libvips header field that holds each EXIF finding. libvips holds
+  # every EXIF tag as its own field and drops a tag from the saved file
+  # when its field is removed. libexif, which libvips uses for EXIF, does
+  # not know the host computer, camera serial number, photographer and
+  # image editor tags and drops them from every save, so they need no
+  # field removed.
+  @exif_removal_fields %{
+    artist: ["exif-ifd0-Artist"],
+    xp_author: ["exif-ifd0-XPAuthor"],
+    xp_comment: ["exif-ifd0-XPComment"],
+    camera_owner_name: ["exif-ifd2-CameraOwnerName"],
+    body_serial_number: ["exif-ifd2-BodySerialNumber"],
+    lens_serial_number: ["exif-ifd2-LensSerialNumber"],
+    image_unique_id: ["exif-ifd2-ImageUniqueID"],
+    user_comment: ["exif-ifd2-UserComment"],
+    thumbnail: ["jpeg-thumbnail-data"],
+    host_computer: [],
+    camera_serial_number: [],
+    photographer: [],
+    image_editor: []
+  }
+
+  # GPS fields are named "exif-ifd3-<tag>"; the destination's tags start
+  # with "GPSDest".
+  @gps_prefix "exif-ifd3-"
+  @gps_destination_prefix "exif-ifd3-GPSDest"
+
   # The prefix Facebook writes to IPTC Special Instructions.
   @facebook_prefix "FBMD"
 
@@ -179,6 +207,154 @@ defmodule Image.Privacy do
        value: other,
        message: "Expected an image, got #{inspect(other)}"
      )}
+  end
+
+  @doc """
+  Removes the data that findings from `scan/1` describe, keeping the
+  rest of the image's metadata.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `findings` is a list of `t:Image.Privacy.Finding.t/0`, usually
+    a selection of what `scan/1` returned for the same image.
+
+  ### Returns
+
+  * `{:ok, image}` with the data removed. The removal takes effect
+    when the image is saved, or
+
+  * `{:error, %Image.Error{reason: :invalid_finding}}` if a list
+    element is not a finding, or
+
+  * `{:error, %Image.Error{reason: :unsupported_finding}}` for an IPTC
+    or XMP finding other than `:unreadable`, which cannot be removed
+    on its own yet.
+
+  ### Notes
+
+  * A `:gps` finding removes the whole EXIF GPS block, including its
+    timestamps and altitude. A `:gps_destination` finding removes only
+    the destination.
+
+  * An `:unreadable` finding removes the whole block it refers to.
+
+  * Findings from a JPEG's or PNG's segments, such as comments and
+    data after the end of the image, need nothing removed: libvips
+    never reads them, so no image `Image` writes contains them. The
+    EXIF host computer, camera serial number, photographer and image
+    editor are likewise dropped by every save.
+
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/gain_map.jpg")
+      iex> {:ok, findings} = Image.Privacy.scan(image)
+      iex> remove = Enum.filter(findings, &(&1.kind in [:location, :device_id]))
+      iex> {:ok, image} = Image.Privacy.remove(image, remove)
+      iex> {:ok, jpeg} = Image.write(image, :memory, suffix: ".jpg")
+      iex> {:ok, findings} = Image.Privacy.scan(jpeg)
+      iex> Enum.map(findings, & &1.field)
+      [:artist, :thumbnail]
+
+  """
+  @doc since: "0.74.0"
+
+  @spec remove(Vimage.t(), [Finding.t()]) :: {:ok, Vimage.t()} | {:error, Image.Error.t()}
+  def remove(%Vimage{} = image, findings) when is_list(findings) do
+    case removal_fields(image, findings) do
+      {:ok, []} -> {:ok, image}
+      {:ok, fields} -> Image.remove_metadata(image, fields)
+      {:error, _reason} = error -> error
+    end
+  end
+
+  def remove(image, findings) do
+    {:error,
+     Image.Error.exception(
+       reason: :invalid_image,
+       operation: :remove,
+       value: {image, findings},
+       message: "Expected an image and a list of findings"
+     )}
+  end
+
+  defp removal_fields(image, findings) do
+    results = Enum.map(findings, &finding_fields(image, &1))
+
+    case Enum.find(results, &match?({:error, _reason}, &1)) do
+      nil -> {:ok, Enum.uniq(Enum.flat_map(results, fn {:ok, fields} -> fields end))}
+      error -> error
+    end
+  end
+
+  # `Image.remove_metadata/2` takes `:exif`, `:iptc` and `:xmp` for a
+  # whole block, and libvips field names otherwise.
+  defp finding_fields(_image, %Finding{kind: :unreadable, source: source})
+       when source in [:exif, :iptc, :xmp] do
+    {:ok, [source]}
+  end
+
+  defp finding_fields(image, %Finding{source: :exif, field: :gps}) do
+    {:ok, fields_with_prefix(image, @gps_prefix)}
+  end
+
+  defp finding_fields(image, %Finding{source: :exif, field: :gps_destination}) do
+    {:ok, fields_with_prefix(image, @gps_destination_prefix)}
+  end
+
+  defp finding_fields(_image, %Finding{source: :exif, field: field} = finding) do
+    case Map.fetch(@exif_removal_fields, field) do
+      {:ok, fields} -> {:ok, fields}
+      :error -> unsupported(finding)
+    end
+  end
+
+  defp finding_fields(image, %Finding{source: :png_text, field: keyword}) do
+    {:ok, Enum.filter(header_fields(image), &png_text_field?(&1, keyword))}
+  end
+
+  defp finding_fields(_image, %Finding{source: source}) when source in [:jpeg, :png] do
+    {:ok, []}
+  end
+
+  defp finding_fields(_image, %Finding{} = finding) do
+    unsupported(finding)
+  end
+
+  defp finding_fields(_image, other) do
+    {:error,
+     Image.Error.exception(
+       reason: :invalid_finding,
+       operation: :remove,
+       value: other,
+       message: "Expected an Image.Privacy.Finding, got #{inspect(other)}"
+     )}
+  end
+
+  defp unsupported(%Finding{source: source, field: field} = finding) do
+    {:error,
+     Image.Error.exception(
+       reason: :unsupported_finding,
+       operation: :remove,
+       value: finding,
+       message: "Removing the #{source} field #{inspect(field)} on its own is not supported"
+     )}
+  end
+
+  defp fields_with_prefix(image, prefix) do
+    Enum.filter(header_fields(image), &String.starts_with?(&1, prefix))
+  end
+
+  defp png_text_field?(name, keyword) do
+    match?(["png", "comment", _index, ^keyword], String.split(name, "-", parts: 4))
+  end
+
+  defp header_fields(image) do
+    case Vimage.header_field_names(image) do
+      {:ok, fields} -> fields
+      {:error, _reason} -> []
+    end
   end
 
   # A binary that starts with an image signature is the image's bytes,
