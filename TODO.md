@@ -4,6 +4,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
+* [ ] **Privacy scan** — a function that reports tracking and identifying data in an image (Facebook's `FBMD` IPTC identifier, device serials, GPS, XMP document IDs, C2PA, hidden trailers), paired with metadata removal. Needs an IPTC parser first. Plan in [plans/privacy-scan.md](plans/privacy-scan.md).
+
 * [ ] **Finish the Rule 2 sweep** — `Image.compare/3` guards its options with `is_list/1` and three functions guard a callback with `is_function(fun, 1)`, so all four raise `FunctionClauseError` rather than returning an error. Both were left deliberately: #220 made non-keyword options raise on purpose, and a wrong-arity callback is a programmer error where a loud failure beats a hidden one. Decide whether that still stands.
 
 * [ ] **`Image.Social.image_usages/1` and `default_image_usage/1` raise for an unknown platform** — they return bare values rather than tuples, so converting them changes their contract shape rather than just their error path.
