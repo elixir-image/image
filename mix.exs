@@ -213,6 +213,7 @@ defmodule Image.MixProject do
       Social: [Image.Social],
       Exif: [Image.Exif],
       Xmp: [Image.Xmp],
+      Iptc: [Image.Iptc],
       Kino: [Image.Kino],
       Options: ~r/Image.Options.*/,
       Enums: @enum_modules

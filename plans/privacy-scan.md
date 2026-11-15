@@ -1,6 +1,6 @@
 # Privacy scan
 
-**Status:** planning, 2026-11-15
+**Status:** in progress, 2026-11-15
 
 A function that checks an image for known tracking and identifying data, reports each finding, and pairs with the existing metadata removal so a caller can scan and then strip. Prompted by the `FBMD` identifier Facebook writes into IPTC 2:40 Special Instructions of the photos it processes.
 
@@ -60,13 +60,15 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 ## Tasks
 
-* [ ] **`Image.Iptc` parser** — unwrap the Photoshop resource blocks, read the IIM datasets, map record 2 dataset numbers to names. Test with a fixture built in the test, as in the probe.
-
 * [ ] **Stage 1: metadata scan** — `Image.Privacy.scan/1` on an image, covering IPTC, EXIF, XMP (adding the `xmpMM` and `photoshop:DocumentAncestors` fields to `Image.Xmp`) and PNG text.
 
 * [ ] **Stage 2: byte-level scan** — for a path or binary, walk the JPEG segments for COM, APP11 JUMBF (report presence and claim generator; no signature verification), trailing data after end-of-image, and an EXIF thumbnail whose aspect ratio differs from the image.
 
 * [ ] **Guide section** — what the scan finds, what it cannot find (invisible watermarks), and how to remove what it reports.
+
+### Done
+
+* [x] **`Image.Iptc` parser** — `Image.iptc/1` and `Image.Iptc.extract_iptc/1` read APP13, resource-block and bare IIM forms; missing EXIF, XMP and IPTC now share atom reasons. 2026-11-15, v0.74.0.
 
 ### Deferred
 

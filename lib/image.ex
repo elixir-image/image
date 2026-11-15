@@ -21,6 +21,7 @@ defmodule Image do
 
   alias Image.{
     Exif,
+    Iptc,
     Xmp,
     Complex,
     Options,
@@ -4454,9 +4455,13 @@ defmodule Image do
   ### Returns
 
   * `{:ok, exif_map}` where `exif_map` is a map
-    of selected EXIF data.
+    of selected EXIF data, or
 
-  * `{:error, reason}`
+  * `{:error, %Image.Error{reason: :no_exif}}` if the image
+    has no EXIF data, or
+
+  * `{:error, %Image.Error{reason: :invalid_exif}}` if its
+    EXIF data cannot be read.
 
   ### Example
 
@@ -4472,28 +4477,46 @@ defmodule Image do
 
   @spec exif(Vimage.t()) :: {:ok, map()} | {:error, error()}
   def exif(%Vimage{} = image) do
-    with {:ok, exif_blob} <- Vimage.header_value(image, "exif-data"),
-         <<"Exif"::binary, 0::16, exif::binary>> <- exif_blob,
-         exif_map when is_map(exif_map) <- Exif.extract_exif(exif) do
-      {:ok, exif_map}
-    else
-      {:error, raw} ->
-        {:error, Image.Error.wrap(raw, operation: :exif)}
-
-      # The binary pattern above failed — the blob is present
-      # but doesn't start with the "Exif\\0\\0" prefix. This
-      # happens for some libvips-readable formats whose EXIF
-      # field carries a bare TIFF header. Surface it as an
-      # `:invalid_exif` error rather than letting the `with`
-      # raise `WithClauseError`.
-      bad_blob when is_binary(bad_blob) ->
-        {:error, %Image.Error{reason: :invalid_exif, message: "Invalid Exif data"}}
+    case Vimage.header_value(image, "exif-data") do
+      {:ok, exif_blob} -> exif_from_blob(exif_blob)
+      {:error, reason} -> metadata_error(reason, :no_exif, :exif, "EXIF")
     end
+  end
+
+  # Some libvips-readable formats carry a bare TIFF header in their
+  # EXIF field rather than the "Exif\\0\\0" prefix.
+  defp exif_from_blob(<<"Exif"::binary, 0::16, exif::binary>>) do
+    case Exif.extract_exif(exif) do
+      exif_map when is_map(exif_map) -> {:ok, exif_map}
+      {:error, :invalid_exif} -> invalid_exif()
+    end
+  end
+
+  defp exif_from_blob(_blob) do
+    invalid_exif()
+  end
+
+  defp invalid_exif do
+    {:error, %Image.Error{reason: :invalid_exif, message: "Invalid Exif data", operation: :exif}}
+  end
+
+  # libvips reports a field the image does not have as "No such field".
+  defp metadata_error("No such field", reason, operation, name) do
+    {:error,
+     Image.Error.exception(
+       reason: reason,
+       operation: operation,
+       message: "The image has no #{name} metadata"
+     )}
+  end
+
+  defp metadata_error(raw, _reason, operation, _name) do
+    {:error, Image.Error.wrap(raw, operation: operation)}
   end
 
   @doc """
   Returns the XMP data for an image as a
-  keyword list.
+  map.
 
   Only a selected set of XMP data is returned.
 
@@ -4504,7 +4527,13 @@ defmodule Image do
   ### Returns
 
   * `{:ok, xmp_map}` where `xmp_map` is a map
-    of selected XMP data.
+    of selected XMP data, or
+
+  * `{:error, %Image.Error{reason: :no_xmp}}` if the image
+    has no XMP data, or
+
+  * `{:error, %Image.Error{reason: :invalid_xmp}}` if its
+    XMP data cannot be read.
 
   ### Examples
 
@@ -4518,18 +4547,69 @@ defmodule Image do
 
   @spec xmp(Vimage.t()) :: {:ok, map()} | {:error, error()}
   def xmp(%Vimage{} = image) do
-    with {:ok, xmp_blob} <- Vimage.header_value_as_string(image, "xmp-data"),
-         {:ok, xmp_binary} <- Base.decode64(xmp_blob) do
-      xmp_binary
-      |> SweetXml.parse(dtd: :none)
-      |> Xmp.extract_xmp()
-      |> wrap(:ok)
-    else
+    case Vimage.header_value_as_string(image, "xmp-data") do
+      {:ok, xmp_blob} -> xmp_from_blob(xmp_blob)
+      {:error, reason} -> metadata_error(reason, :no_xmp, :xmp, "XMP")
+    end
+  end
+
+  defp xmp_from_blob(xmp_blob) do
+    case Base.decode64(xmp_blob) do
+      {:ok, xmp_binary} ->
+        xmp_binary
+        |> SweetXml.parse(dtd: :none)
+        |> Xmp.extract_xmp()
+        |> wrap(:ok)
+
       :error ->
         {:error, %Image.Error{reason: :invalid_xmp, message: "XMP payload is not base64-encoded"}}
+    end
+  end
 
-      {:error, raw} ->
-        {:error, Image.Error.wrap(raw, operation: :xmp)}
+  @doc """
+  Returns the IPTC data for an image as a map.
+
+  IPTC carries captions, keywords, credits and locations, and is
+  also where some platforms write identifiers: Facebook writes an
+  `FBMD…` string to `:special_instructions` and an identifier to
+  `:original_transmission_reference`. See `Image.Iptc.extract_iptc/1`
+  for how the datasets are named and decoded.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  ### Returns
+
+  * `{:ok, iptc_map}` where `iptc_map` maps each IPTC dataset
+    name to its value, or
+
+  * `{:error, %Image.Error{reason: :no_iptc}}` if the image
+    has no IPTC data, or
+
+  * `{:error, %Image.Error{reason: :invalid_iptc}}` if its
+    IPTC data cannot be read.
+
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, iptc} = Image.iptc(image)
+      iex> iptc.by_line
+      ["Kip Cole"]
+      iex> iptc.date_created
+      ~D[2004-08-18]
+
+      iex> {:ok, image} = Image.new(16, 16)
+      iex> {:error, %Image.Error{reason: :no_iptc}} = Image.iptc(image)
+
+  """
+  @doc subject: "Metadata", since: "0.74.0"
+
+  @spec iptc(Vimage.t()) :: {:ok, map()} | {:error, error()}
+  def iptc(%Vimage{} = image) do
+    case Vimage.header_value(image, "iptc-data") do
+      {:ok, iptc_blob} -> Iptc.extract_iptc(iptc_blob)
+      {:error, reason} -> metadata_error(reason, :no_iptc, :iptc, "IPTC")
     end
   end
 

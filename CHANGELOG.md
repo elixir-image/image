@@ -12,7 +12,11 @@ This is the changelog for Image version 0.74.0 released on November 4th, 2026. F
 
 * Adds the [HDR and gain maps](https://hexdocs.pm/image/hdr_and_gain_maps.html) guide, covering how each function treats an UltraHDR image's gain map.
 
+* Adds `Image.iptc/1` and `Image.Iptc.extract_iptc/1` to read an image's IPTC metadata, including the `FBMD` identifier Facebook writes to Special Instructions.
+
 ### Changed
+
+* `Image.exif/1` and `Image.xmp/1` return the reason `:no_exif` or `:no_xmp` for an image without that metadata, rather than the string `"No such field"`, matching `:no_iptc` from `Image.iptc/1`.
 
 * Requires `vix` 0.42.0 or later, the first release whose precompiled libvips (8.18.7) supports gain maps.
 

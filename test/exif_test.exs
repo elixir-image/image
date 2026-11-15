@@ -28,7 +28,7 @@ defmodule Image.ExitTest do
 
   test "No exif data" do
     image = Image.new!(10, 10)
-    assert {:error, %Image.Error{reason: "No such field"}} = Image.exif(image)
+    assert {:error, %Image.Error{reason: :no_exif}} = Image.exif(image)
   end
 
   test "Minimizing metadata on an image with no exif" do
