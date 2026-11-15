@@ -16,17 +16,21 @@ This is the changelog for Image version 0.74.0 released on November 4th, 2026. F
 
 * Adds `Image.Privacy.scan/1`, which reports tracking and identifying data in an image's IPTC, EXIF, XMP and PNG text, such as Facebook's `FBMD` identifier, serial numbers, GPS coordinates, document IDs and AI labels.
 
-* Adds `:camera_owner_name` to `Image.exif/1`, and GPS coordinates, the IPTC digital source type and the document identifiers to `Image.xmp/1`.
+* Adds `:camera_owner_name`, `:photographer`, `:image_editor`, `:host_computer`, `:camera_serial_number` and the Windows `:xp_author`, `:xp_comment`, `:xp_title`, `:xp_subject` and `:xp_keywords` to `Image.exif/1`. Adds GPS coordinates, the IPTC digital source type and the document identifiers to `Image.xmp/1`.
 
 ### Changed
 
 * `Image.exif/1` and `Image.xmp/1` return the reason `:no_exif` or `:no_xmp` for an image without that metadata, rather than the string `"No such field"`, matching `:no_iptc` from `Image.iptc/1`.
+
+* `Image.exif/1` returns `:user_comment` as text, decoded according to its character code, rather than as a list of bytes.
 
 * `Image.Xmp.extract_xmp/1` accepts the XMP packet only as a binary, no longer a parsed SweetXml document, and `sweet_xml` is no longer a dependency.
 
 * Requires `vix` 0.42.0 or later, the first release whose precompiled libvips (8.18.7) supports gain maps.
 
 ### Fixed
+
+* Fix `Image.exif/1` raising `ArgumentError` when a malformed file stores a text tag, such as the artist, with a numeric type.
 
 * Fix `Image.xmp/1` creating an atom for every XML name in an image's XMP, which untrusted images could use to exhaust the atom table. XMP is now parsed with `:xmerl_sax_parser`, and a malformed packet returns `:invalid_xmp` rather than exiting or raising.
 

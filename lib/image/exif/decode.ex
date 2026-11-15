@@ -35,6 +35,7 @@ defmodule Image.Exif.Decode do
   def tag(:exif, 0x0202, value), do: {:thumbnail_size, value}
 
   def tag(_, 0x013B, value), do: {:artist, trim(value)}
+  def tag(_, 0x013C, value), do: {:host_computer, trim(value)}
   def tag(_, 0x8298, value), do: {:copyright, trim(value)}
   def tag(_, 0x829A, value), do: {:exposure_time, value}
   def tag(_, 0x829D, value), do: {:f_number, value}
@@ -66,7 +67,7 @@ defmodule Image.Exif.Decode do
   def tag(_, 0x9211, value), do: {:image_number, value}
   def tag(_, 0x9214, value), do: {:subject_area, value}
   def tag(_, 0x927C, value), do: {:maker_note, value}
-  def tag(_, 0x9286, value), do: {:user_comment, value}
+  def tag(_, 0x9286, value), do: {:user_comment, user_comment(value)}
   def tag(_, 0x9290, value), do: {:subsec_time, value}
   def tag(_, 0x9291, value), do: {:subsec_time_original, value}
   def tag(_, 0x9292, value), do: {:subsec_time_digitized, value}
@@ -110,8 +111,18 @@ defmodule Image.Exif.Decode do
   def tag(_, 0xA434, value), do: {:lens_model, value}
   def tag(_, 0xA435, value), do: {:lens_serial_number, value}
   def tag(_, 0xA436, value), do: {:image_title, value}
+  def tag(_, 0xA437, value), do: {:photographer, trim(value)}
+  def tag(_, 0xA438, value), do: {:image_editor, trim(value)}
 
   def tag(_, 0xFDEA, value), do: {:lens, value}
+  def tag(_, 0xC62F, value), do: {:camera_serial_number, trim(value)}
+
+  # Windows writes these as UTF-16LE text in BYTE tags.
+  def tag(_, 0x9C9B, value), do: {:xp_title, xp_text(value)}
+  def tag(_, 0x9C9C, value), do: {:xp_comment, xp_text(value)}
+  def tag(_, 0x9C9D, value), do: {:xp_author, xp_text(value)}
+  def tag(_, 0x9C9E, value), do: {:xp_keywords, xp_text(value)}
+  def tag(_, 0x9C9F, value), do: {:xp_subject, xp_text(value)}
 
   # http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/GPS.html
   Gps.fields()
@@ -150,16 +161,143 @@ defmodule Image.Exif.Decode do
     end
   end
 
-  # A nil value arrives when the tag's value offset was malformed.
+  # A nil value arrives when the tag's value offset was malformed. A
+  # malformed file can also store a text tag with another type, so a
+  # list of bytes is read as text and any other value is kept as it is.
   def trim(nil) do
     nil
   end
 
-  def trim(value) do
+  def trim(value) when is_binary(value) do
     if <<0::size(byte_size(value) * 8)>> == value do
       nil
     else
       String.trim(value)
+    end
+  end
+
+  def trim(value) when is_list(value) do
+    case bytes_to_binary(value) do
+      {:ok, binary} -> clean_text(binary)
+      :error -> value
+    end
+  end
+
+  def trim(value) do
+    value
+  end
+
+  # UserComment starts with an eight-byte code naming its character set.
+  # A comment with no code, or in JIS, is kept as it is.
+  defp user_comment(value) when is_list(value) do
+    case bytes_to_binary(value) do
+      {:ok, binary} -> user_comment(binary)
+      :error -> value
+    end
+  end
+
+  defp user_comment(<<"ASCII", 0, 0, 0, text::binary>>) do
+    clean_text(text)
+  end
+
+  defp user_comment(<<"UNICODE", 0, text::binary>>) do
+    text
+    |> utf16(utf16_byte_order(text))
+    |> clean_text()
+  end
+
+  defp user_comment(<<0, 0, 0, 0, 0, 0, 0, 0, text::binary>>) do
+    clean_text(text)
+  end
+
+  defp user_comment(value) do
+    value
+  end
+
+  defp xp_text(value) when is_list(value) do
+    case bytes_to_binary(value) do
+      {:ok, binary} -> clean_text(utf16(binary, :little))
+      :error -> value
+    end
+  end
+
+  defp xp_text(value) do
+    value
+  end
+
+  defp bytes_to_binary(bytes) do
+    if Enum.all?(bytes, &(is_integer(&1) and &1 in 0..255)) do
+      {:ok, :erlang.list_to_binary(bytes)}
+    else
+      :error
+    end
+  end
+
+  # UNICODE comment text is in the file's byte order, which the tag
+  # decoder does not have. Latin text has a zero high byte in most
+  # characters, so the order with more zeros in the high byte wins.
+  defp utf16_byte_order(text) do
+    {big, little} =
+      for <<first, second <- text>>, reduce: {0, 0} do
+        {big, little} -> {big + zero(first), little + zero(second)}
+      end
+
+    if big > little do
+      :big
+    else
+      :little
+    end
+  end
+
+  defp zero(0) do
+    1
+  end
+
+  defp zero(_byte) do
+    0
+  end
+
+  # Keeps the text up to an incomplete or invalid code unit.
+  defp utf16(binary, byte_order) do
+    case :unicode.characters_to_binary(binary, {:utf16, byte_order}) do
+      text when is_binary(text) -> text
+      {_error, text, _rest} -> text
+    end
+  end
+
+  # Removes the zero bytes and spaces writers pad text with, in any mix.
+  # Text that is not UTF-8 is read as Latin-1, and empty text is nil.
+  defp clean_text(binary) do
+    text =
+      binary
+      |> binary_part(0, unpadded_size(binary, byte_size(binary)))
+      |> to_utf8()
+      |> String.trim()
+
+    if text == "" do
+      nil
+    else
+      text
+    end
+  end
+
+  defp unpadded_size(_binary, 0) do
+    0
+  end
+
+  defp unpadded_size(binary, size) do
+    if :binary.at(binary, size - 1) in [0, ?\s, ?\t, ?\n, ?\r] do
+      unpadded_size(binary, size - 1)
+    else
+      size
+    end
+  end
+
+  defp to_utf8(text) do
+    if String.valid?(text) do
+      text
+    else
+      :unicode.characters_to_binary(text, :latin1)
     end
   end
 

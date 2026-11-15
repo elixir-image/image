@@ -211,4 +211,69 @@ defmodule Image.ExifDecodeGapTest do
       assert Decode.tag(:exif, 0x9000, [?1, ?2, ?3, ?0]) == {:exif_version, "12.30"}
     end
   end
+
+  describe "tag/3 identifying text tags" do
+    test "UserComment in ASCII drops its code and padding" do
+      value = ~c"ASCII" ++ [0, 0, 0] ++ ~c"call me" ++ [0, 32, 0]
+      assert Decode.tag(:exif, 0x9286, value) == {:user_comment, "call me"}
+    end
+
+    test "UserComment in UNICODE is read in either byte order" do
+      big = ~c"UNICODE" ++ [0, 0, 72, 0, 105]
+      little = ~c"UNICODE" ++ [0, 72, 0, 105, 0]
+
+      assert Decode.tag(:exif, 0x9286, big) == {:user_comment, "Hi"}
+      assert Decode.tag(:exif, 0x9286, little) == {:user_comment, "Hi"}
+    end
+
+    test "UserComment with an undefined code is read as text" do
+      value = List.duplicate(0, 8) ++ ~c"note"
+      assert Decode.tag(:exif, 0x9286, value) == {:user_comment, "note"}
+    end
+
+    test "UserComment that is only padding is nil" do
+      value = List.duplicate(0, 8) ++ [32, 32, 0, 32, 0]
+      assert Decode.tag(:exif, 0x9286, value) == {:user_comment, nil}
+    end
+
+    test "UserComment text that is not UTF-8 is read as Latin-1" do
+      value = ~c"ASCII" ++ [0, 0, 0] ++ ~c"caf" ++ [0xE9]
+      assert Decode.tag(:exif, 0x9286, value) == {:user_comment, "café"}
+    end
+
+    test "UserComment in JIS or with no code is kept as it is" do
+      jis = ~c"JIS" ++ [0, 0, 0, 0, 0, 1, 2]
+
+      assert Decode.tag(:exif, 0x9286, jis) == {:user_comment, <<"JIS", 0, 0, 0, 0, 0, 1, 2>>}
+      assert Decode.tag(:exif, 0x9286, [1, 300]) == {:user_comment, [1, 300]}
+      assert Decode.tag(:exif, 0x9286, nil) == {:user_comment, nil}
+    end
+
+    test "Windows XP tags are read as UTF-16LE" do
+      author = [74, 0, 97, 0, 110, 0, 101, 0, 0, 0]
+
+      assert Decode.tag(:tiff, 0x9C9D, author) == {:xp_author, "Jane"}
+      assert Decode.tag(:tiff, 0x9C9C, [104, 0, 105, 0]) == {:xp_comment, "hi"}
+      assert Decode.tag(:tiff, 0x9C9B, [84, 0]) == {:xp_title, "T"}
+      assert Decode.tag(:tiff, 0x9C9E, [107, 0]) == {:xp_keywords, "k"}
+      assert Decode.tag(:tiff, 0x9C9F, [115, 0]) == {:xp_subject, "s"}
+    end
+
+    test "a Windows XP tag with an incomplete code unit keeps the text before it" do
+      assert Decode.tag(:tiff, 0x9C9D, [74, 0, 97]) == {:xp_author, "J"}
+    end
+
+    test "host computer, photographer, image editor and camera serial number" do
+      assert Decode.tag(:tiff, 0x013C, "Janes-MacBook ") == {:host_computer, "Janes-MacBook"}
+      assert Decode.tag(:exif, 0xA437, "Pat") == {:photographer, "Pat"}
+      assert Decode.tag(:exif, 0xA438, "Sam") == {:image_editor, "Sam"}
+      assert Decode.tag(:tiff, 0xC62F, "DNG123") == {:camera_serial_number, "DNG123"}
+    end
+
+    test "a text tag stored with another type does not raise" do
+      assert Decode.tag(:tiff, 0x013B, 42) == {:artist, 42}
+      assert Decode.tag(:tiff, 0x013B, [65, 110, 110, 0]) == {:artist, "Ann"}
+      assert Decode.tag(:tiff, 0x013B, [1, 300]) == {:artist, [1, 300]}
+    end
+  end
 end

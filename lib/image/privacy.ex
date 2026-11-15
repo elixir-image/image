@@ -46,13 +46,22 @@ defmodule Image.Privacy do
 
   # EXIF fields that identify. IFD0 fields are at the top of the map
   # `Image.exif/1` returns and Exif IFD fields under its `:exif` key.
-  @exif_ifd0_fields [artist: :person]
+  @exif_ifd0_fields [
+    artist: :person,
+    xp_author: :person,
+    xp_comment: :embedded_text,
+    host_computer: :device_id,
+    camera_serial_number: :device_id
+  ]
 
   @exif_fields [
     camera_owner_name: :person,
+    photographer: :person,
+    image_editor: :person,
     body_serial_number: :device_id,
     lens_serial_number: :device_id,
-    image_unique_id: :document_id
+    image_unique_id: :document_id,
+    user_comment: :embedded_text
   ]
 
   # XMP properties that identify. Place names are under the `:location`
@@ -154,7 +163,7 @@ defmodule Image.Privacy do
       {:ok, exif} ->
         field_findings(:exif, exif, @exif_ifd0_fields) ++
           field_findings(:exif, Map.get(exif, :exif, %{}), @exif_fields) ++
-          gps_finding(exif)
+          gps_findings(exif)
 
       {:error, %Image.Error{reason: :no_exif}} ->
         []
@@ -165,22 +174,47 @@ defmodule Image.Privacy do
   end
 
   # A GPS block can hold only a compass direction or a timestamp, which
-  # do not locate the image, so only coordinates are reported.
-  defp gps_finding(%{gps: %Gps{gps_latitude: latitude, gps_longitude: longitude} = gps})
-       when not is_nil(latitude) or not is_nil(longitude) do
-    value = %{
-      latitude: latitude,
-      latitude_ref: gps.gps_latitude_ref,
-      longitude: longitude,
-      longitude_ref: gps.gps_longitude_ref,
-      altitude: gps.gps_altitude
-    }
+  # do not locate the image, so only the coordinates of where it was
+  # taken and of the destination it records are reported.
+  defp gps_findings(%{gps: %Gps{} = gps}) do
+    position =
+      coordinates(
+        :gps,
+        gps.gps_latitude,
+        gps.gps_latitude_ref,
+        gps.gps_longitude,
+        gps.gps_longitude_ref
+      )
 
-    [finding(:exif, :gps, value, :location)]
+    destination =
+      coordinates(
+        :gps_destination,
+        gps.gps_dest_latitude,
+        gps.gps_dest_latitude_ref,
+        gps.gps_dest_longitude,
+        gps.gps_dest_longitude_ref
+      )
+
+    position ++ destination
   end
 
-  defp gps_finding(_exif) do
+  defp gps_findings(_exif) do
     []
+  end
+
+  defp coordinates(_field, nil, _latitude_ref, nil, _longitude_ref) do
+    []
+  end
+
+  defp coordinates(field, latitude, latitude_ref, longitude, longitude_ref) do
+    value = %{
+      latitude: latitude,
+      latitude_ref: latitude_ref,
+      longitude: longitude,
+      longitude_ref: longitude_ref
+    }
+
+    [finding(:exif, field, value, :location)]
   end
 
   defp xmp_findings(image) do

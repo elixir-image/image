@@ -56,19 +56,19 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 * **PNG text chunks** — confirmed 2026-11-15: libvips exposes them as `png-comment-<index>-<keyword>` header fields.
 
-* **Further EXIF fields** — `UserComment` is decoded as raw bytes, the Windows `XPAuthor` and `XPComment` tags are not decoded, and maker notes can hold serial numbers. Stage 1 does not report them.
+* **Maker notes** — camera makers' proprietary EXIF blocks can hold serial numbers and owner names (Canon's `OwnerName` and `InternalSerialNumber`, for example). Each maker has its own format, so reading them is a parser per maker. Not reported.
 
 * **Encoder fingerprints** — needs reference quantisation tables per platform, and those tables change without notice. Likely deferred.
 
 ## Tasks
-
-* [ ] **Further EXIF fields** — decode `UserComment` as text and the Windows `XP*` tags, and report them.
 
 * [ ] **Stage 2: byte-level scan** — for a path or binary, walk the JPEG segments for COM, APP11 JUMBF (report presence and claim generator; no signature verification), trailing data after end-of-image, and an EXIF thumbnail whose aspect ratio differs from the image.
 
 * [ ] **Guide section** — what the scan finds, what it cannot find (invisible watermarks), and how to remove what it reports.
 
 ### Done
+
+* [x] **Further EXIF fields** — `UserComment` decoded as text; `XP*`, `HostComputer`, `Photographer`, `ImageEditor` and DNG `CameraSerialNumber` decoded; all reported, with GPS destination coordinates. 2026-11-15, v0.74.0.
 
 * [x] **Stage 1: metadata scan** — `Image.Privacy.scan/1` reports IPTC, EXIF, XMP and PNG text findings; `Image.exif/1` gained `:camera_owner_name` and `Image.xmp/1` the document IDs, GPS and digital source type. 2026-11-15, v0.74.0.
 

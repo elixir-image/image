@@ -85,6 +85,41 @@ defmodule Image.PrivacyTest do
       refute find(findings, :gps)
     end
 
+    test "reports Windows author and comment tags and the user comment" do
+      image =
+        saved_with_fields(
+          [
+            {"exif-ifd0-XPAuthor", "Jane Doe"},
+            {"exif-ifd0-XPComment", "taken at home"},
+            {"exif-ifd2-UserComment", "call me on 555"}
+          ],
+          ".jpg"
+        )
+
+      assert {:ok, findings} = Image.Privacy.scan(image)
+
+      assert %Finding{source: :exif, kind: :person, value: "Jane Doe"} = find(findings, :xp_author)
+
+      assert %Finding{kind: :embedded_text, value: "taken at home"} =
+               find(findings, :xp_comment)
+
+      assert %Finding{kind: :embedded_text, value: "call me on 555"} =
+               find(findings, :user_comment)
+    end
+
+    test "reports GPS destination coordinates" do
+      image =
+        saved_with_fields(
+          [{"exif-ifd3-GPSDestLatitude", "1/1 2/1 3/1"}, {"exif-ifd3-GPSDestLatitudeRef", "S"}],
+          ".jpg"
+        )
+
+      assert {:ok, [%Finding{field: :gps_destination, kind: :location, value: value}]} =
+               Image.Privacy.scan(image)
+
+      assert %{latitude: [1, 2, 3], latitude_ref: "S", longitude: nil} = value
+    end
+
     test "reports the camera owner" do
       image = saved_with_fields([{"exif-ifd2-CameraOwnerName", "Jane Doe"}], ".jpg")
 
