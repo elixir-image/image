@@ -66,11 +66,11 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 ## Tasks
 
-* [ ] **Targeted removal: IPTC** — rewrite the IPTC block without the chosen datasets, keeping the other datasets and Photoshop resources.
-
 * [ ] **Targeted removal: XMP** — remove chosen properties from the XMP packet in place, by tracking each property's position while parsing, so properties the parser does not read are kept.
 
 ### Done
+
+* [x] **Targeted removal: IPTC** — `Image.Iptc.remove_datasets/2` (internal) drops chosen datasets, keeps the others and every other Photoshop resource byte for byte, recomputes the `0x0425` MD5 digest, and returns `nil` when only structural datasets are left; `remove/2` rewrites or removes the block. 2026-11-15, v0.74.0.
 
 * [x] **Targeted removal: EXIF** — `Image.Privacy.remove/2` removes the libvips field of each EXIF finding (`:gps` the whole GPS block), PNG text chunks by keyword, and unreadable blocks whole. libexif drops the host computer, DNG camera serial number, photographer and image editor from every save. 2026-11-15, v0.74.0.
 

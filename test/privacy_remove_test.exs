@@ -121,12 +121,44 @@ defmodule Image.PrivacyRemoveTest do
       assert {:ok, []} = Image.Privacy.scan(to_jpeg(image))
     end
 
-    test "an IPTC finding is not supported yet" do
+    test "Facebook's two identifiers are removed with the IPTC block they leave empty" do
       image = Image.open!(image_path("facebook_fbmd.jpg"))
+      {:ok, findings} = Image.Privacy.scan(image)
+      {:ok, cleaned} = Image.Privacy.remove(image, findings)
+      saved = save(cleaned)
+
+      assert {:ok, []} = Image.Privacy.scan(saved)
+      assert {:error, %Image.Error{reason: :no_iptc}} = Image.iptc(saved)
+    end
+
+    test "removing one IPTC dataset keeps the others" do
+      image = Image.open!(image_path("facebook_fbmd.jpg"))
+      {:ok, findings} = Image.Privacy.scan(image)
+      saved = removed(image, findings, &(&1.field == :special_instructions))
+
+      assert {:ok, %{original_transmission_reference: "lvYkyRMFdS9GAseo9eoP"} = iptc} =
+               Image.iptc(saved)
+
+      refute Map.has_key?(iptc, :special_instructions)
+    end
+
+    test "removing the IPTC by-line keeps the caption data and copyright" do
+      image = Image.open!(image_path("Kip_small.jpg"))
+      {:ok, findings} = Image.Privacy.scan(image)
+      saved = removed(image, findings, &(&1.source == :iptc and &1.field == :by_line))
+
+      assert {:ok, iptc} = Image.iptc(saved)
+      refute Map.has_key?(iptc, :by_line)
+
+      assert %{copyright_notice: "Copyright (c) Kip Cole 2012", country_name: "Vietnam"} = iptc
+    end
+
+    test "an XMP finding is not supported yet" do
+      image = Image.open!(image_path("Kip_small.jpg"))
       {:ok, findings} = Image.Privacy.scan(image)
 
       assert {:error, %Image.Error{reason: :unsupported_finding}} =
-               Image.Privacy.remove(image, findings)
+               Image.Privacy.remove(image, Enum.filter(findings, &(&1.source == :xmp)))
     end
   end
 

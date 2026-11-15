@@ -14,7 +14,7 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## In progress
 
-* [ ] **Targeted removal in the privacy scan** — `Image.Privacy.remove(image, findings)` removes what chosen findings describe and keeps the rest. EXIF fields and PNG text chunks landed; IPTC (rewrite the block) and XMP (edit the packet in place) remain. Plan in [plans/privacy-scan.md](plans/privacy-scan.md).
+* [ ] **Targeted removal in the privacy scan** — `Image.Privacy.remove(image, findings)` removes what chosen findings describe and keeps the rest. EXIF fields, IPTC datasets and PNG text chunks landed; XMP (edit the packet in place) remains. Plan in [plans/privacy-scan.md](plans/privacy-scan.md).
 
 * [ ] **Livebook smart cell** — a cell that composes an `Image` pipeline from a form, previews it and writes the equivalent source into the notebook. On `main` since `81980d1` for 0.74.0, awaiting live testing in a notebook before release. Design in [plans/livebook-smart-cell.md](plans/livebook-smart-cell.md), issue [#31](https://github.com/elixir-image/image/issues/31).
 

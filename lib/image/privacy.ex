@@ -44,7 +44,9 @@ defmodule Image.Privacy do
   """
 
   alias Image.Exif.Gps
+  alias Image.Iptc
   alias Image.Privacy.{Finding, Jpeg, Png}
+  alias Vix.Vips.MutableImage
   alias Vix.Vips.Image, as: Vimage
 
   # IPTC datasets that identify, with the kind of each.
@@ -228,9 +230,12 @@ defmodule Image.Privacy do
   * `{:error, %Image.Error{reason: :invalid_finding}}` if a list
     element is not a finding, or
 
-  * `{:error, %Image.Error{reason: :unsupported_finding}}` for an IPTC
-    or XMP finding other than `:unreadable`, which cannot be removed
-    on its own yet.
+  * `{:error, %Image.Error{reason: :unsupported_finding}}` for an XMP
+    finding other than `:unreadable`, which cannot be removed on its
+    own yet, or
+
+  * `{:error, %Image.Error{reason: :invalid_iptc}}` if the image's IPTC
+    cannot be read to remove an IPTC finding.
 
   ### Notes
 
@@ -239,6 +244,10 @@ defmodule Image.Privacy do
     the destination.
 
   * An `:unreadable` finding removes the whole block it refers to.
+
+  * IPTC findings are removed by rewriting the IPTC block without them.
+    Its other datasets and Photoshop resources are kept, and the block
+    is removed when no content is left.
 
   * Findings from a JPEG's or PNG's segments, such as comments and
     data after the end of the image, need nothing removed: libvips
@@ -262,10 +271,9 @@ defmodule Image.Privacy do
 
   @spec remove(Vimage.t(), [Finding.t()]) :: {:ok, Vimage.t()} | {:error, Image.Error.t()}
   def remove(%Vimage{} = image, findings) when is_list(findings) do
-    case removal_fields(image, findings) do
-      {:ok, []} -> {:ok, image}
-      {:ok, fields} -> Image.remove_metadata(image, fields)
-      {:error, _reason} = error -> error
+    with {:ok, fields} <- removal_fields(image, findings),
+         {:ok, image} <- remove_fields(image, fields) do
+      remove_iptc_datasets(image, iptc_datasets(findings))
     end
   end
 
@@ -277,6 +285,48 @@ defmodule Image.Privacy do
        value: {image, findings},
        message: "Expected an image and a list of findings"
      )}
+  end
+
+  # `Image.remove_metadata/2` removes every field when given none.
+  defp remove_fields(image, []) do
+    {:ok, image}
+  end
+
+  defp remove_fields(image, fields) do
+    Image.remove_metadata(image, fields)
+  end
+
+  # IPTC is one blob, so its datasets are removed by rewriting it.
+  defp iptc_datasets(findings) do
+    for %Finding{source: :iptc, field: field, kind: kind} <- findings, kind != :unreadable do
+      field
+    end
+  end
+
+  defp remove_iptc_datasets(image, []) do
+    {:ok, image}
+  end
+
+  defp remove_iptc_datasets(image, datasets) do
+    case Vimage.header_value(image, "iptc-data") do
+      {:ok, iptc} -> rewrite_iptc(image, Iptc.remove_datasets(iptc, datasets))
+      {:error, _no_iptc} -> {:ok, image}
+    end
+  end
+
+  defp rewrite_iptc(image, {:ok, nil}) do
+    Image.remove_metadata(image, :iptc)
+  end
+
+  defp rewrite_iptc(image, {:ok, iptc}) do
+    case Vimage.mutate(image, &MutableImage.set(&1, "iptc-data", :VipsBlob, iptc)) do
+      {:ok, image} -> {:ok, image}
+      {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :remove)}
+    end
+  end
+
+  defp rewrite_iptc(_image, {:error, _reason} = error) do
+    error
   end
 
   defp removal_fields(image, findings) do
@@ -308,6 +358,10 @@ defmodule Image.Privacy do
       {:ok, fields} -> {:ok, fields}
       :error -> unsupported(finding)
     end
+  end
+
+  defp finding_fields(_image, %Finding{source: :iptc}) do
+    {:ok, []}
   end
 
   defp finding_fields(image, %Finding{source: :png_text, field: keyword}) do

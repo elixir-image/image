@@ -196,4 +196,103 @@ defmodule Image.IptcTest do
                Image.Iptc.extract_iptc(:not_a_binary)
     end
   end
+
+  describe "remove_datasets/2" do
+    setup do
+      {:ok, blob} =
+        Vix.Vips.Image.header_value(Image.open!(image_path("Kip_small.jpg")), "iptc-data")
+
+      {:ok, blob: blob}
+    end
+
+    test "keeps the other datasets and every other Photoshop resource", %{blob: blob} do
+      assert {:ok, rewritten} = Image.Iptc.remove_datasets(blob, [:by_line])
+
+      {:ok, before} = Image.Iptc.extract_iptc(blob)
+      {:ok, after_removal} = Image.Iptc.extract_iptc(rewritten)
+      assert Map.delete(before, :by_line) == after_removal
+
+      assert other_resources(blob) == other_resources(rewritten)
+    end
+
+    test "recomputes Photoshop's IPTC digest", %{blob: blob} do
+      assert digest(blob) == :crypto.hash(:md5, iim_data(blob))
+
+      {:ok, rewritten} = Image.Iptc.remove_datasets(blob, [:by_line])
+
+      assert digest(rewritten) == :crypto.hash(:md5, iim_data(rewritten))
+      refute digest(rewritten) == digest(blob)
+    end
+
+    test "returns nil when only the record's structure is left" do
+      blob = irb([{0x0404, "", numbered_iim([{1, 90}, {2, 0}, {2, 40}])}])
+
+      assert {:ok, nil} = Image.Iptc.remove_datasets(blob, [:special_instructions])
+    end
+
+    test "keeps the form it was given" do
+      iim = numbered_iim([{2, 5}, {2, 40}])
+
+      assert {:ok, <<0x1C, 2, 5, _rest::binary>> = bare} =
+               Image.Iptc.remove_datasets(iim, [:special_instructions])
+
+      assert {:ok, %{object_name: "2:5"}} = Image.Iptc.extract_iptc(bare)
+
+      assert {:ok, <<"8BIM", _rest::binary>>} =
+               Image.Iptc.remove_datasets(irb([{0x0404, "", iim}]), [:special_instructions])
+    end
+
+    test "removes a dataset with no name by its numbers" do
+      assert {:ok, nil} = Image.Iptc.remove_datasets(numbered_iim([{2, 199}]), [{2, 199}])
+    end
+
+    test "ignores a name that is not a dataset" do
+      iim = numbered_iim([{2, 5}])
+
+      assert {:ok, ^iim} = Image.Iptc.remove_datasets(iim, [:not_a_dataset])
+    end
+
+    test "writes a long value with an extended length" do
+      long = String.duplicate("x", 40_000)
+      blob = <<0x1C, 2, 120, 0x80, 4, byte_size(long)::32>> <> long <> numbered_iim([{2, 40}])
+
+      assert {:ok, rewritten} = Image.Iptc.remove_datasets(blob, [:special_instructions])
+      assert {:ok, %{caption_abstract: ^long}} = Image.Iptc.extract_iptc(rewritten)
+    end
+
+    test "an invalid blob is an error" do
+      assert {:error, %Image.Error{reason: :invalid_iptc}} =
+               Image.Iptc.remove_datasets(<<0x1C, 2, 40, 0, 9, "x">>, [:by_line])
+    end
+  end
+
+  # IIM datasets whose value is their own "record:dataset" numbers.
+  defp numbered_iim(keys) do
+    iim(for {record, number} <- keys, do: {record, number, "#{record}:#{number}"})
+  end
+
+  # The IPTC data of an APP13 payload.
+  defp iim_data(<<"Photoshop 3.0", 0, resources::binary>>) do
+    for {0x0404, data} <- resources(resources), into: <<>>, do: data
+  end
+
+  defp digest(<<"Photoshop 3.0", 0, resources::binary>>) do
+    for {0x0425, data} <- resources(resources), into: <<>>, do: data
+  end
+
+  defp other_resources(<<"Photoshop 3.0", 0, resources::binary>>) do
+    for {id, data} <- resources(resources), id not in [0x0404, 0x0425], do: {id, data}
+  end
+
+  defp resources(<<"8BIM", id::16, name_length, rest::binary>>) do
+    name_size = name_length + rem(name_length + 1, 2)
+    <<_name::binary-size(^name_size), size::32, rest::binary>> = rest
+    padding = rem(size, 2)
+    <<data::binary-size(^size), _padding::binary-size(^padding), rest::binary>> = rest
+    [{id, data} | resources(rest)]
+  end
+
+  defp resources(_rest) do
+    []
+  end
 end

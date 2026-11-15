@@ -23,6 +23,10 @@ defmodule Image.Iptc do
 
   @photoshop_header "Photoshop 3.0" <> <<0>>
   @iptc_resource 0x0404
+
+  # Photoshop keeps an MD5 digest of the IPTC data in this resource, and
+  # treats the IPTC as edited elsewhere when it no longer matches.
+  @iptc_digest_resource 0x0425
   @tag_marker 0x1C
 
   # Photoshop writes "8BIM"; the others appear in files from older
@@ -102,6 +106,13 @@ defmodule Image.Iptc do
     {2, 202} => {:object_preview_data, :binary}
   }
 
+  # Dataset names to their {record, dataset} numbers.
+  @dataset_numbers Map.new(@datasets, fn {key, {name, _kind}} -> {name, key} end)
+
+  # The envelope and application record versions and the coded character
+  # set describe the record rather than hold content.
+  @structural_datasets [{1, 0}, {1, 90}, {2, 0}]
+
   @doc """
   Extracts an IPTC metadata blob into an Elixir map.
 
@@ -157,47 +168,160 @@ defmodule Image.Iptc do
     invalid("IPTC data must be a binary", other)
   end
 
+  @doc false
+  # Removes the datasets named in `names` (dataset names, or
+  # `{record, dataset}` numbers for datasets with no name) and returns the
+  # IPTC blob in the form it was given, or `nil` when no content is left.
+  # Other datasets and Photoshop resources are kept byte for byte, and
+  # Photoshop's IPTC digest is recomputed.
+  @spec remove_datasets(binary(), [atom() | {byte(), byte()}]) ::
+          {:ok, binary() | nil} | {:error, Image.Error.t()}
+  def remove_datasets(<<@photoshop_header, resources::binary>>, names) do
+    with {:ok, rewritten} <- remove_from_resources(resources, names) do
+      {:ok, rewritten && @photoshop_header <> rewritten}
+    end
+  end
+
+  def remove_datasets(<<signature::binary-size(4), _rest::binary>> = resources, names)
+      when signature in @resource_signatures do
+    remove_from_resources(resources, names)
+  end
+
+  def remove_datasets(iim, names) when is_binary(iim) do
+    with {:ok, datasets} <- datasets(iim, []) do
+      {:ok, encode_iim(drop_datasets(datasets, dataset_keys(names)))}
+    end
+  end
+
+  defp remove_from_resources(resources, names) do
+    with {:ok, blocks} <- resource_blocks(resources, []),
+         {:ok, blocks} <- rewrite_iptc_blocks(blocks, dataset_keys(names)) do
+      {:ok, encode_blocks(blocks)}
+    end
+  end
+
+  defp rewrite_iptc_blocks(blocks, keys) do
+    results = Enum.map(blocks, &rewrite_block(&1, keys))
+
+    case Enum.find(results, &match?({:error, _reason}, &1)) do
+      nil -> {:ok, update_digest(Enum.flat_map(results, fn {:ok, block} -> block end))}
+      error -> error
+    end
+  end
+
+  defp rewrite_block({signature, @iptc_resource, name, data}, keys) do
+    with {:ok, datasets} <- datasets(data, []) do
+      case encode_iim(drop_datasets(datasets, keys)) do
+        nil -> {:ok, []}
+        iim -> {:ok, [{signature, @iptc_resource, name, iim}]}
+      end
+    end
+  end
+
+  defp rewrite_block(block, _keys) do
+    {:ok, [block]}
+  end
+
+  defp update_digest(blocks) do
+    iim = iptc_data(blocks)
+
+    Enum.flat_map(blocks, fn
+      {_signature, @iptc_digest_resource, _name, _data} when iim == <<>> ->
+        []
+
+      {signature, @iptc_digest_resource, name, _data} ->
+        [{signature, @iptc_digest_resource, name, :crypto.hash(:md5, iim)}]
+
+      block ->
+        [block]
+    end)
+  end
+
+  defp dataset_keys(names) do
+    Enum.flat_map(names, fn
+      {_record, _number} = key -> [key]
+      name -> List.wrap(Map.get(@dataset_numbers, name))
+    end)
+  end
+
+  defp drop_datasets(datasets, keys) do
+    Enum.reject(datasets, fn {record, number, _value} -> {record, number} in keys end)
+  end
+
+  # Datasets that only describe the record carry no content of their own.
+  defp encode_iim(datasets) do
+    if Enum.all?(datasets, fn {record, number, _value} ->
+         {record, number} in @structural_datasets
+       end) do
+      nil
+    else
+      for {record, number, value} <- datasets, into: <<>> do
+        <<@tag_marker, record, number>> <> encode_length(byte_size(value)) <> value
+      end
+    end
+  end
+
+  defp encode_length(length) when length < 0x8000 do
+    <<length::16>>
+  end
+
+  defp encode_length(length) do
+    <<1::1, 4::15, length::32>>
+  end
+
+  defp encode_blocks([]) do
+    nil
+  end
+
+  defp encode_blocks(blocks) do
+    for {signature, id, name, data} <- blocks, into: <<>> do
+      name_padding = :binary.copy(<<0>>, rem(byte_size(name) + 1, 2))
+      data_padding = :binary.copy(<<0>>, rem(byte_size(data), 2))
+
+      signature <>
+        <<id::16, byte_size(name)>> <>
+        name <> name_padding <> <<byte_size(data)::32>> <> data <> data_padding
+    end
+  end
+
   defp extract_resources(resources) do
-    with {:ok, iim} <- iptc_resources(resources, []),
-         {:ok, datasets} <- datasets(iim, []) do
+    with {:ok, blocks} <- resource_blocks(resources, []),
+         {:ok, datasets} <- datasets(iptc_data(blocks), []) do
       {:ok, decode(datasets)}
     end
   end
 
-  # Walks the Photoshop image resource blocks, keeping the data of each
-  # IPTC block. A block is a signature, a 16-bit id, a Pascal string
-  # name padded to an even length, a 32-bit size and the data, padded
-  # to an even length.
-  defp iptc_resources(<<signature::binary-size(4), id::16, name_length, rest::binary>>, acc)
-       when signature in @resource_signatures do
-    name_size = name_length + rem(name_length + 1, 2)
-    resource(rest, name_size, id, acc)
+  defp iptc_data(blocks) do
+    for {_signature, @iptc_resource, _name, data} <- blocks, into: <<>> do
+      data
+    end
   end
 
-  defp iptc_resources(rest, acc) do
+  # Walks the Photoshop image resource blocks, returning each as
+  # `{signature, id, name, data}`. A block is a signature, a 16-bit id,
+  # a Pascal string name padded to an even length, a 32-bit size and the
+  # data, padded to an even length.
+  defp resource_blocks(<<signature::binary-size(4), id::16, name_length, rest::binary>>, acc)
+       when signature in @resource_signatures do
+    name_size = name_length + rem(name_length + 1, 2)
+
+    with {:ok, name_and_padding, rest} <- take(rest, name_size),
+         {:ok, <<size::32>>, rest} <- take(rest, 4),
+         {:ok, data, rest} <- take(rest, size) do
+      name = binary_part(name_and_padding, 0, name_length)
+
+      rest
+      |> drop_padding(size)
+      |> resource_blocks([{signature, id, name, data} | acc])
+    end
+  end
+
+  defp resource_blocks(rest, acc) do
     if padding?(rest) do
-      {:ok, IO.iodata_to_binary(Enum.reverse(acc))}
+      {:ok, Enum.reverse(acc)}
     else
       invalid("Invalid Photoshop image resource block in IPTC data", rest)
     end
-  end
-
-  defp resource(binary, name_size, id, acc) do
-    with {:ok, _name, rest} <- take(binary, name_size),
-         {:ok, <<size::32>>, rest} <- take(rest, 4),
-         {:ok, data, rest} <- take(rest, size) do
-      rest
-      |> drop_padding(size)
-      |> iptc_resources(keep_iptc(id, data, acc))
-    end
-  end
-
-  defp keep_iptc(@iptc_resource, data, acc) do
-    [data | acc]
-  end
-
-  defp keep_iptc(_id, _data, acc) do
-    acc
   end
 
   defp drop_padding(<<_padding, rest::binary>>, size) when rem(size, 2) == 1 do
