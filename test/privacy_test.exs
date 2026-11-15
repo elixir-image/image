@@ -69,10 +69,11 @@ defmodule Image.PrivacyTest do
     test "reports the image unique ID" do
       image = Image.open!(image_path("gain_map_pixel_10_pro.jpg"))
 
-      assert {:ok, [%Finding{source: :exif, kind: :document_id} = finding]} =
-               Image.Privacy.scan(image)
+      assert {:ok, findings} = Image.Privacy.scan(image)
 
-      assert finding.field == :image_unique_id
+      assert %Finding{source: :exif, kind: :document_id} =
+               finding = find(findings, :image_unique_id)
+
       assert finding.value == "4b505d41a9f4729e0000000000000000"
     end
 
@@ -124,6 +125,36 @@ defmodule Image.PrivacyTest do
       image = saved_with_fields([{"exif-ifd2-CameraOwnerName", "Jane Doe"}], ".jpg")
 
       assert {:ok, [%Finding{source: :exif, field: :camera_owner_name, kind: :person}]} =
+               Image.Privacy.scan(image)
+    end
+  end
+
+  describe "EXIF thumbnail" do
+    test "is reported with its size" do
+      image = Image.open!(image_path("gain_map_pixel_10_pro.jpg"))
+
+      assert {:ok, findings} = Image.Privacy.scan(image)
+
+      assert %Finding{source: :exif, kind: :hidden_data, value: value} = find(findings, :thumbnail)
+      assert value == %{format: :jpeg, bytes: 6578, width: 144, height: 160}
+    end
+
+    test "is reported for a WebP" do
+      assert {:ok, findings} = Image.Privacy.scan(image_path("puppy.webp"))
+      assert %Finding{value: %{width: 256, height: 171}} = find(findings, :thumbnail)
+    end
+
+    test "that is not a JPEG is reported without its dimensions" do
+      image = with_blob("jpeg-thumbnail-data", "not a jpeg")
+
+      assert {:ok, [%Finding{field: :thumbnail, value: value}]} = Image.Privacy.scan(image)
+      assert value == %{format: :unknown, bytes: 10, width: nil, height: nil}
+    end
+
+    test "that cannot be decoded is reported without its dimensions" do
+      image = with_blob("jpeg-thumbnail-data", <<0xFF, 0xD8, 0xFF, "broken">>)
+
+      assert {:ok, [%Finding{value: %{format: :jpeg, width: nil, height: nil}}]} =
                Image.Privacy.scan(image)
     end
   end

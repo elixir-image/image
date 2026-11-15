@@ -107,9 +107,14 @@ defmodule Image.TestSupport.Metadata do
 
   @doc "Returns an image whose XMP is `xml`."
   def with_xmp(xml) do
+    with_blob("xmp-data", xml)
+  end
+
+  @doc "Returns an image with the blob header field `name` set to `data`."
+  def with_blob(name, data) do
     {:ok, image} =
       Vimage.mutate(Image.new!(16, 16), fn mutable ->
-        MutableImage.set(mutable, "xmp-data", :VipsBlob, xml)
+        MutableImage.set(mutable, name, :VipsBlob, data)
       end)
 
     image

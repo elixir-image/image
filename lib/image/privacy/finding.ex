@@ -41,9 +41,11 @@ defmodule Image.Privacy.Finding do
       label.
 
     * `:hidden_data` — data a viewer does not show, such as bytes after
-      the end of a JPEG or PNG. The value is a map with the `:format` of
-      the data (`:jpeg`, `:png`, `:zip`, `:mp4`, `:samsung` or
-      `:unknown`) and its size in `:bytes`.
+      the end of a JPEG or PNG, or an EXIF thumbnail, which can show the
+      picture before it was cropped or edited. The value is a map with
+      the `:format` of the data (`:jpeg`, `:png`, `:zip`, `:mp4`,
+      `:samsung` or `:unknown`) and its size in `:bytes`. A thumbnail's
+      map also has its `:width` and `:height`.
 
     * `:unreadable` — a metadata block is present but cannot be read,
       so it may hold data the scan could not check. The value is the

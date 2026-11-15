@@ -66,11 +66,11 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 ## Tasks
 
-* [ ] **Stage 2: EXIF thumbnail** — report an embedded thumbnail, which can show the picture before it was cropped or edited.
-
 * [ ] **Guide section** — what the scan finds, what it cannot find (invisible watermarks), and how to remove what it reports.
 
 ### Done
+
+* [x] **Stage 2: EXIF thumbnail** — any JPEG thumbnail libvips exposes is reported with its size; content comparison deferred, since cameras letterbox thumbnails. 2026-11-15, v0.74.0.
 
 * [x] **Stage 2: PNG chunks** — data after `IEND` reported; trailer formats (JPEG, PNG, ZIP, MP4, Samsung) shared with the JPEG walk. libvips already exposes `tEXt`, `zTXt` and `iTXt`. Found and fixed `Image.exif/1` rejecting PNG EXIF. 2026-11-15, v0.74.0.
 
@@ -83,6 +83,8 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 * [x] **`Image.Iptc` parser** — `Image.iptc/1` and `Image.Iptc.extract_iptc/1` read APP13, resource-block and bare IIM forms; missing EXIF, XMP and IPTC now share atom reasons. 2026-11-15, v0.74.0.
 
 ### Deferred
+
+* [ ] **Stale thumbnail detection** — compare a thumbnail's content with the image to flag one that shows an earlier crop or edit. Shape alone misleads, because cameras letterbox thumbnails.
 
 * [ ] **C2PA** — not scanned; see the open question.
 

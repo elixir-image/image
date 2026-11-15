@@ -9,7 +9,9 @@ defmodule Image.Privacy do
   identify a person, a device, a place or the image itself, or that
   a platform added to follow the image: Facebook's `FBMD` identifier,
   camera serial numbers, GPS coordinates, the document identifiers
-  editing software writes, AI labels and generator prompts.
+  editing software writes, AI labels and generator prompts. It also
+  reports an EXIF thumbnail, a second copy of the picture that can
+  show it before it was cropped or edited.
 
   Pair it with `Image.remove_metadata/2`, or `strip_metadata: true`
   in `Image.write/3`, to remove what it finds.
@@ -145,7 +147,8 @@ defmodule Image.Privacy do
   def scan(%Vimage{} = image) do
     findings =
       iptc_findings(image) ++
-        exif_findings(image) ++ xmp_findings(image) ++ png_text_findings(image)
+        exif_findings(image) ++
+        thumbnail_findings(image) ++ xmp_findings(image) ++ png_text_findings(image)
 
     {:ok, findings}
   end
@@ -261,6 +264,40 @@ defmodule Image.Privacy do
     }
 
     [finding(:exif, field, value, :location)]
+  end
+
+  # An EXIF thumbnail is a second copy of the picture that not every
+  # editor updates, so it can show the image before it was cropped or
+  # retouched. libvips exposes a JPEG thumbnail's bytes.
+  defp thumbnail_findings(image) do
+    case Vimage.header_value(image, "jpeg-thumbnail-data") do
+      {:ok, data} when is_binary(data) and byte_size(data) > 0 ->
+        [finding(:exif, :thumbnail, thumbnail_value(data), :hidden_data)]
+
+      _other ->
+        []
+    end
+  end
+
+  # Only data with a JPEG signature is opened, so the bytes can never be
+  # taken for a path.
+  defp thumbnail_value(<<0xFF, 0xD8, 0xFF, _rest::binary>> = data) do
+    case Image.open(data) do
+      {:ok, thumbnail} ->
+        %{
+          format: :jpeg,
+          bytes: byte_size(data),
+          width: Image.width(thumbnail),
+          height: Image.height(thumbnail)
+        }
+
+      {:error, _reason} ->
+        %{format: :jpeg, bytes: byte_size(data), width: nil, height: nil}
+    end
+  end
+
+  defp thumbnail_value(data) do
+    %{format: :unknown, bytes: byte_size(data), width: nil, height: nil}
   end
 
   defp xmp_findings(image) do
