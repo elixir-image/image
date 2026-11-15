@@ -173,6 +173,7 @@ defmodule Image.MixProject do
         "README.md",
         "guides/thumbnailing.md",
         "guides/hdr_and_gain_maps.md",
+        "guides/privacy.md",
         "guides/performance.md",
         "guides/lqip_css.md",
         "guides/development.md",

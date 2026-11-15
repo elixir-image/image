@@ -14,7 +14,8 @@ defmodule Image.Privacy do
   show it before it was cropped or edited.
 
   Pair it with `Image.remove_metadata/2`, or `strip_metadata: true`
-  in `Image.write/3`, to remove what it finds.
+  in `Image.write/3`, to remove what it finds. The
+  [Privacy and tracking metadata](privacy.md) guide covers both.
 
   ### What the scan cannot find
 

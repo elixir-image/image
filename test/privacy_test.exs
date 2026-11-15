@@ -6,6 +6,7 @@ defmodule Image.PrivacyTest do
   alias Image.Privacy.Finding
 
   doctest Image.Privacy
+  doctest_file("guides/privacy.md")
 
   @rdf ~s(xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#")
 

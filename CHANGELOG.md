@@ -12,6 +12,8 @@ This is the changelog for Image version 0.74.0 released on November 4th, 2026. F
 
 * Adds the [HDR and gain maps](https://hexdocs.pm/image/hdr_and_gain_maps.html) guide, covering how each function treats an UltraHDR image's gain map.
 
+* Adds the [Privacy and tracking metadata](https://hexdocs.pm/image/privacy.html) guide, covering what `Image.Privacy.scan/1` finds, what it cannot find, and how to remove it.
+
 * Adds `Image.iptc/1` and `Image.Iptc.extract_iptc/1` to read an image's IPTC metadata, including the `FBMD` identifier Facebook writes to Special Instructions.
 
 * Adds `Image.Privacy.scan/1`, which reports tracking and identifying data in an image's IPTC, EXIF, XMP and PNG text, such as Facebook's `FBMD` identifier, serial numbers, GPS coordinates, document IDs and AI labels. It also reports EXIF thumbnails and, given a JPEG or PNG file's path or bytes, comment segments and data hidden after the end of the image.

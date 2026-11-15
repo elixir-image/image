@@ -66,9 +66,13 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 ## Tasks
 
-* [ ] **Guide section** — what the scan finds, what it cannot find (invisible watermarks), and how to remove what it reports.
+* [ ] **People in XMP** — report `Iptc4xmpExt:PersonInImage`, face region names (`mwg-rs:Regions`, `MP:RegionInfo`), `Iptc4xmpCore:CreatorContactInfo` (email, phone, address) and `Iptc4xmpExt:LocationShown` / `LocationCreated`. The largest cheap gap found when comparing with ExifTool and mat2 (2026-11-15).
+
+* [ ] **Maker notes** — decode the serial number, owner name and image ID tags of Canon, Nikon, Sony and Apple maker notes, which ExifTool reads and a serial number in them links photos from one camera. See the open question.
 
 ### Done
+
+* [x] **Guide** — `guides/privacy.md`, doctested from `test/privacy_test.exs`: scanning, the finding kinds, scanning files, removal (each route checked in the saved file) and what the scan cannot find. 2026-11-15, v0.74.0.
 
 * [x] **Stage 2: EXIF thumbnail** — any JPEG thumbnail libvips exposes is reported with its size; content comparison deferred, since cameras letterbox thumbnails. 2026-11-15, v0.74.0.
 

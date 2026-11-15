@@ -28,7 +28,9 @@ Documentation can be found at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 * **Histogram operations** — `Image.histogram/1`, `Image.equalize/2`, per-band statistics, percentile, mean, median.
 
-* **Metadata** — `Image.exif/1` for EXIF, `Image.Xmp.extract_xmp/1` for XMP, plus `Image.minimize_metadata/1` to strip metadata while retaining the artist and copyright fields.
+* **Metadata** — `Image.exif/1`, `Image.iptc/1` and `Image.xmp/1` read EXIF, IPTC and XMP, and `Image.remove_metadata/2` and `Image.minimize_metadata/1` remove it.
+
+* **Privacy scan** — `Image.Privacy.scan/1` finds identifying and tracking data in an image, such as Facebook's `FBMD` identifier, camera serial numbers, GPS coordinates and hidden thumbnails.
 
 * **ICC colour profiles** — `Image.ICCProfile` for libvips' built-in profiles (`:srgb`, `:cmyk`, `:p3`) and arbitrary `.icc` files.
 
@@ -146,6 +148,14 @@ Colour arguments work in any colour space:
 {:ok, exif} = Image.exif(image)
 exif[:make]
 # => "FUJIFILM"
+```
+
+### Privacy scan
+
+```elixir
+{:ok, findings} = Image.Privacy.scan("photo.jpg")
+Enum.map(findings, &{&1.kind, &1.field})
+# => [person: :artist, device_id: :body_serial_number, location: :gps, hidden_data: :thumbnail]
 ```
 
 ### Streaming
@@ -278,6 +288,8 @@ If the noise is disruptive during tests or automation, you can redirect stderr f
 * **[Thumbnailing](https://hexdocs.pm/image/thumbnailing.html)** — cropping strategies, rounded and squircle masks, and avatars.
 
 * **[HDR and gain maps](https://hexdocs.pm/image/hdr_and_gain_maps.html)** — opening, transforming and writing UltraHDR images.
+
+* **[Privacy and tracking metadata](https://hexdocs.pm/image/privacy.html)** — finding identifying and tracking data in an image, and removing it.
 
 * **[Performance](https://hexdocs.pm/image/performance.html)** — getting the most throughput from a pipeline.
 
