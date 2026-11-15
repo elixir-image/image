@@ -85,7 +85,11 @@ defmodule Image.Privacy do
     document_id: :document_id,
     instance_id: :document_id,
     original_document_id: :document_id,
-    document_ancestors: :document_id
+    document_ancestors: :document_id,
+    people_in_image: :person,
+    region_names: :person,
+    location_created: :location,
+    locations_shown: :location
   ]
 
   @xmp_location_fields [
@@ -306,6 +310,7 @@ defmodule Image.Privacy do
       {:ok, xmp} ->
         field_findings(:xmp, xmp, @xmp_fields) ++
           field_findings(:xmp, xmp.location, @xmp_location_fields) ++
+          contact_finding(xmp) ++
           source_type_finding(xmp)
 
       {:error, %Image.Error{reason: :no_xmp}} ->
@@ -314,6 +319,22 @@ defmodule Image.Privacy do
       {:error, %Image.Error{reason: reason}} ->
         [unreadable(:xmp, reason)]
     end
+  end
+
+  # The creator's contact details are reported as one finding holding the
+  # details the XMP has.
+  defp contact_finding(%{creator_contact: contact}) do
+    details = Map.reject(contact, fn {_key, value} -> is_nil(value) end)
+
+    if map_size(details) == 0 do
+      []
+    else
+      [finding(:xmp, :creator_contact, details, :person)]
+    end
+  end
+
+  defp contact_finding(_xmp) do
+    []
   end
 
   defp source_type_finding(%{digital_source_type: source_type}) when is_binary(source_type) do

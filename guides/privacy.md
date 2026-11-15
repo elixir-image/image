@@ -33,8 +33,8 @@ Each finding has one of these kinds:
 | `:tracking_id` | Facebook's `FBMD` identifier, IPTC Original Transmission Reference |
 | `:device_id` | camera body, lens and DNG serial numbers, the host computer |
 | `:document_id` | EXIF `ImageUniqueID`, XMP document, instance and ancestor IDs |
-| `:person` | artist, camera owner, photographer, IPTC by-line and contact, Windows author |
-| `:location` | GPS coordinates in EXIF or XMP, place names in IPTC or XMP |
+| `:person` | artist, camera owner, photographer, IPTC by-line and contact, Windows author, people shown, face region names, creator contact details |
+| `:location` | GPS coordinates in EXIF or XMP, place names in IPTC or XMP, IPTC locations shown and created |
 | `:embedded_text` | EXIF user comment, Windows comment, JPEG comments, PNG text chunks |
 | `:ai_label` | an IPTC digital source type that marks the image as made with generative AI |
 | `:provenance` | any other IPTC digital source type |
@@ -42,6 +42,8 @@ Each finding has one of these kinds:
 | `:unreadable` | a metadata block that is present but cannot be read |
 
 The scan reads IPTC, EXIF, XMP and PNG text from any format libvips opens, including HEIC, WebP and TIFF. AI image generators commonly record their prompt in a PNG text chunk, which is reported as `:embedded_text` under the chunk's keyword.
+
+Photo managers such as Lightroom, Picasa and Windows Photo Gallery write the names of the people whose faces they recognise into the XMP, and the IPTC fields can list the people shown and the creator's email, phone and address. These are reported as `:person`.
 
 An EXIF thumbnail is a second, small copy of the picture that not every editor updates, so it can show the image as it was before it was cropped or retouched. The finding gives its size so you can compare it with the image.
 
@@ -107,8 +109,6 @@ Any image `Image` writes leaves out JPEG comments and data after the end of the 
 * **Invisible watermarks** — marks hidden in the pixels, such as Google SynthID, Meta's Video Seal and Digimarc, can only be read with the vendor's own decoder. A scan with no findings is not evidence that an image carries no watermark.
 
 * **Maker notes** — camera makers store their own block in EXIF, and it can hold a body serial number or the owner's name. Each maker uses its own format and the scan does not read them. `Image.remove_metadata(image, :exif)` removes them with the rest of the EXIF.
-
-* **People named in XMP** — the names of people shown in the photo, face regions tagged by photo managers and the creator's contact details are not reported yet.
 
 * **C2PA Content Credentials** — they record an image's authenticity rather than track it, and libvips has no API to read them, so they are not reported. libvips does not carry a JPEG's credentials through a save either, so a JPEG `Image` writes has none.
 

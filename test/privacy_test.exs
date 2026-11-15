@@ -231,6 +231,38 @@ defmodule Image.PrivacyTest do
                Image.Privacy.scan(image)
     end
 
+    test "reports the creator's contact details" do
+      assert {:ok, findings} = Image.Privacy.scan(Image.open!(image_path("Kip_small.jpg")))
+
+      assert %Finding{source: :xmp, kind: :person, value: value} = find(findings, :creator_contact)
+      assert value == %{email: "kip@noexpectations.com.au", url: "http://www.noexpectations.com.au"}
+    end
+
+    test "reports people in the image, face region names and IPTC locations" do
+      image =
+        with_xmp("""
+        <rdf:RDF #{@rdf}>
+          <rdf:Description
+            xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/"
+            xmlns:mwg-rs="http://www.metadataworkinggroup.com/schemas/regions/">
+            <Iptc4xmpExt:PersonInImage><rdf:Bag><rdf:li>Ann</rdf:li></rdf:Bag></Iptc4xmpExt:PersonInImage>
+            <mwg-rs:Regions rdf:parseType="Resource"><mwg-rs:RegionList><rdf:Bag>
+              <rdf:li><rdf:Description mwg-rs:Name="Carol"/></rdf:li>
+            </rdf:Bag></mwg-rs:RegionList></mwg-rs:Regions>
+            <Iptc4xmpExt:LocationShown><rdf:Bag>
+              <rdf:li Iptc4xmpExt:City="Hue"/>
+            </rdf:Bag></Iptc4xmpExt:LocationShown>
+          </rdf:Description>
+        </rdf:RDF>
+        """)
+
+      assert {:ok, findings} = Image.Privacy.scan(image)
+
+      assert %Finding{kind: :person, value: ["Ann"]} = find(findings, :people_in_image)
+      assert %Finding{kind: :person, value: ["Carol"]} = find(findings, :region_names)
+      assert %Finding{kind: :location, value: [%{city: "Hue"}]} = find(findings, :locations_shown)
+    end
+
     test "reports an XMP packet it cannot read" do
       assert {:ok, [%Finding{source: :xmp, kind: :unreadable, value: :invalid_xmp}]} =
                Image.Privacy.scan(with_xmp("<not xml"))

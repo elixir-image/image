@@ -7,6 +7,17 @@ defmodule Image.XmpCoverageTest do
 
   doctest Image.Xmp
 
+  @namespaces """
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/"
+  xmlns:Iptc4xmpCore="http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/"
+  xmlns:mwg-rs="http://www.metadataworkinggroup.com/schemas/regions/"
+  xmlns:MP="http://ns.microsoft.com/photo/1.2/"
+  xmlns:MPRI="http://ns.microsoft.com/photo/1.2/t/RegionInfo#"
+  xmlns:MPReg="http://ns.microsoft.com/photo/1.2/t/Region#"
+  xmlns:exif="http://ns.adobe.com/exif/1.0/"
+  """
+
   @full_xmp """
   <?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
   <x:xmpmeta xmlns:x="adobe:ns:meta/">
@@ -307,6 +318,99 @@ defmodule Image.XmpCoverageTest do
 
       assert %{location: %{city: "Zürich"}} = Xmp.extract_xmp(xml)
     end
+  end
+
+  describe "Image.Xmp.extract_xmp/1 people, contact and locations" do
+    test "people in the image, from both IPTC forms, without repeats" do
+      xmp =
+        packet("""
+        <Iptc4xmpExt:PersonInImage><rdf:Bag><rdf:li>Ann</rdf:li><rdf:li>Bob</rdf:li></rdf:Bag></Iptc4xmpExt:PersonInImage>
+        <Iptc4xmpExt:PersonInImageWDetails><rdf:Bag><rdf:li rdf:parseType="Resource">
+          <Iptc4xmpExt:PersonName><rdf:Alt><rdf:li xml:lang="x-default">Ann</rdf:li></rdf:Alt></Iptc4xmpExt:PersonName>
+        </rdf:li></rdf:Bag></Iptc4xmpExt:PersonInImageWDetails>
+        """)
+
+      assert Xmp.extract_xmp(xmp).people_in_image == ["Ann", "Bob"]
+    end
+
+    test "face region names from MWG and Microsoft regions" do
+      xmp =
+        packet("""
+        <mwg-rs:Regions rdf:parseType="Resource"><mwg-rs:RegionList><rdf:Bag>
+          <rdf:li><rdf:Description mwg-rs:Name="Carol" mwg-rs:Type="Face"/></rdf:li>
+          <rdf:li rdf:parseType="Resource"><mwg-rs:Name>Dan</mwg-rs:Name></rdf:li>
+          <rdf:li rdf:parseType="Resource"><mwg-rs:Type>Focus</mwg-rs:Type></rdf:li>
+        </rdf:Bag></mwg-rs:RegionList></mwg-rs:Regions>
+        <MP:RegionInfo rdf:parseType="Resource"><MPRI:Regions><rdf:Bag>
+          <rdf:li MPReg:PersonDisplayName="Erin"/>
+        </rdf:Bag></MPRI:Regions></MP:RegionInfo>
+        """)
+
+      assert Xmp.extract_xmp(xmp).region_names == ["Carol", "Dan", "Erin"]
+    end
+
+    test "creator contact details as elements" do
+      xmp =
+        packet("""
+        <Iptc4xmpCore:CreatorContactInfo rdf:parseType="Resource">
+          <Iptc4xmpCore:CiTelWork>+84 123</Iptc4xmpCore:CiTelWork>
+          <Iptc4xmpCore:CiAdrExtadr>1 Main St</Iptc4xmpCore:CiAdrExtadr>
+          <Iptc4xmpCore:CiAdrPcode>10000</Iptc4xmpCore:CiAdrPcode>
+        </Iptc4xmpCore:CreatorContactInfo>
+        """)
+
+      assert %{phone: "+84 123", address: "1 Main St", postal_code: "10000", email: nil} =
+               Xmp.extract_xmp(xmp).creator_contact
+    end
+
+    test "creator contact details from a real file" do
+      {:ok, image} = Image.open(image_path("Kip_small.jpg"))
+      assert {:ok, xmp} = Image.xmp(image)
+
+      assert %{email: "kip@noexpectations.com.au", url: "http://www.noexpectations.com.au"} =
+               xmp.creator_contact
+    end
+
+    test "each location shown and the location created are kept apart from the image's own" do
+      xmp =
+        packet("""
+        <Iptc4xmpExt:LocationShown><rdf:Bag>
+          <rdf:li rdf:parseType="Resource">
+            <Iptc4xmpExt:LocationName><rdf:Alt><rdf:li xml:lang="x-default">Old Quarter</rdf:li></rdf:Alt></Iptc4xmpExt:LocationName>
+            <Iptc4xmpExt:City>Hanoi</Iptc4xmpExt:City>
+            <exif:GPSLatitude>21,1.5N</exif:GPSLatitude>
+          </rdf:li>
+          <rdf:li Iptc4xmpExt:City="Hue" Iptc4xmpExt:CountryCode="VN"/>
+        </rdf:Bag></Iptc4xmpExt:LocationShown>
+        <Iptc4xmpExt:LocationCreated rdf:parseType="Resource">
+          <Iptc4xmpExt:City>Da Nang</Iptc4xmpExt:City>
+        </Iptc4xmpExt:LocationCreated>
+        """)
+
+      result = Xmp.extract_xmp(xmp)
+
+      assert result.locations_shown == [
+               %{city: "Hanoi", gps_latitude: "21,1.5N"},
+               %{city: "Hue", country_code: "VN"}
+             ]
+
+      assert result.location_created == [%{city: "Da Nang"}]
+      assert result.gps_latitude == nil
+    end
+
+    test "a packet without them has empty lists and an empty contact" do
+      result = Xmp.extract_xmp(packet(""))
+
+      assert result.people_in_image == []
+      assert result.region_names == []
+      assert result.locations_shown == []
+      assert result.location_created == []
+      assert Enum.all?(result.creator_contact, fn {_key, value} -> is_nil(value) end)
+    end
+  end
+
+  defp packet(body) do
+    "<rdf:RDF #{@namespaces}><rdf:Description>" <> body <> "</rdf:Description></rdf:RDF>"
   end
 end
 

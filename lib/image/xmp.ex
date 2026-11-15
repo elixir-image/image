@@ -6,8 +6,10 @@ defmodule Image.Xmp do
   XML. This module reads a selected set of its properties: the
   artist, keywords, creation date, rating, copyright, title,
   description, location and GPS coordinates, the IPTC digital source
-  type that labels AI-generated images, and the document identifiers
-  editing software writes. Properties are matched by their
+  type that labels AI-generated images, the document identifiers
+  editing software writes, the people shown and the names given to
+  face regions, the creator's contact details, and the IPTC locations
+  shown and created. Properties are matched by their
   namespace URI rather than their prefix, and are read whether they
   are written as attributes of `rdf:Description` or as child
   elements.
@@ -34,11 +36,15 @@ defmodule Image.Xmp do
   @iptc_extension "http://iptc.org/std/Iptc4xmpExt/2008-02-29/"
   @xmp_media_management "http://ns.adobe.com/xap/1.0/mm/"
   @exif "http://ns.adobe.com/exif/1.0/"
+  @mwg_regions "http://www.metadataworkinggroup.com/schemas/regions/"
+  @microsoft_region "http://ns.microsoft.com/photo/1.2/t/Region#"
 
   # The properties read, keyed by {namespace URI, local name}. The kind
   # says how the value is decoded: `:first` takes the first item of an
   # array, `:list` all of them, `:alternatives` a map of language to
   # text, and `:text`, `:date_time` and `:integer` a single value.
+  # `:collect` gathers the values of every occurrence, for properties
+  # that repeat inside structures, such as the name of each face region.
   @properties %{
     {@dc, "creator"} => {:artist, :first},
     {@dc, "subject"} => {:keywords, :list},
@@ -57,10 +63,54 @@ defmodule Image.Xmp do
     {@xmp_media_management, "OriginalDocumentID"} => {:original_document_id, :text},
     {@photoshop, "DocumentAncestors"} => {:document_ancestors, :list},
     {@exif, "GPSLatitude"} => {:gps_latitude, :text},
-    {@exif, "GPSLongitude"} => {:gps_longitude, :text}
+    {@exif, "GPSLongitude"} => {:gps_longitude, :text},
+    {@iptc_extension, "PersonInImage"} => {:people_in_image, :collect},
+    {@iptc_extension, "PersonName"} => {:people_in_image, :collect},
+    {@mwg_regions, "Name"} => {:region_names, :collect},
+    {@microsoft_region, "PersonDisplayName"} => {:region_names, :collect},
+    {@iptc_core, "CiEmailWork"} => {:creator_email, :text},
+    {@iptc_core, "CiTelWork"} => {:creator_phone, :text},
+    {@iptc_core, "CiUrlWork"} => {:creator_url, :text},
+    {@iptc_core, "CiAdrExtadr"} => {:creator_address, :text},
+    {@iptc_core, "CiAdrCity"} => {:creator_city, :text},
+    {@iptc_core, "CiAdrRegion"} => {:creator_region, :text},
+    {@iptc_core, "CiAdrPcode"} => {:creator_postal_code, :text},
+    {@iptc_core, "CiAdrCtry"} => {:creator_country, :text}
   }
 
   @location_keys [:city, :state, :territory, :territory_code]
+
+  # IPTC location structures. Inside one, a location field describes that
+  # location rather than the image, so it is kept with the structure.
+  @location_scopes %{
+    {@iptc_extension, "LocationShown"} => :locations_shown,
+    {@iptc_extension, "LocationCreated"} => :location_created
+  }
+
+  @location_fields %{
+    {@iptc_extension, "Sublocation"} => :sublocation,
+    {@iptc_extension, "City"} => :city,
+    {@iptc_extension, "ProvinceState"} => :province_state,
+    {@iptc_extension, "CountryName"} => :country_name,
+    {@iptc_extension, "CountryCode"} => :country_code,
+    {@iptc_extension, "WorldRegion"} => :world_region,
+    {@exif, "GPSLatitude"} => :gps_latitude,
+    {@exif, "GPSLongitude"} => :gps_longitude
+  }
+
+  @containers [{@rdf, "Bag"}, {@rdf, "Seq"}, {@rdf, "Alt"}]
+
+  # The keys of the `:creator_contact` map, and the values they come from.
+  @contact_keys [
+    email: :creator_email,
+    phone: :creator_phone,
+    url: :creator_url,
+    address: :creator_address,
+    city: :creator_city,
+    region: :creator_region,
+    postal_code: :creator_postal_code,
+    country: :creator_country
+  ]
 
   # The language given to an array item that has no xml:lang.
   @default_language "x-default"
@@ -78,11 +128,15 @@ defmodule Image.Xmp do
   * A map with the keys `:artist`, `:keywords`, `:created_at`,
     `:rating`, `:copyright`, `:title`, `:description`, `:location`,
     `:gps_latitude`, `:gps_longitude`, `:digital_source_type`,
-    `:document_id`, `:instance_id`, `:original_document_id` and
-    `:document_ancestors`. A property the packet does not have is
-    `nil`, except `:keywords` and `:document_ancestors`, which are
-    empty lists, and the fields of `:location`, which are each `nil`,
-    or
+    `:document_id`, `:instance_id`, `:original_document_id`,
+    `:document_ancestors`, `:people_in_image`, `:region_names`,
+    `:creator_contact`, `:location_created` and `:locations_shown`.
+    `:people_in_image` lists the people the IPTC says are shown, and
+    `:region_names` the names photo managers give to face regions.
+    `:location_created` and `:locations_shown` are lists of maps, one
+    per IPTC location structure. A property the packet does not have
+    is `nil`, except the lists, which are empty, and the fields of
+    `:location` and `:creator_contact`, which are each `nil`, or
 
   * `{:error, :invalid_xmp}` if the packet is not well-formed XML,
     declares a DTD, or has no `rdf:RDF` element.
@@ -133,8 +187,8 @@ defmodule Image.Xmp do
 
     state
     |> note_rdf(element)
-    |> put_attributes(attributes)
     |> push(element, attributes)
+    |> put_attributes(attributes)
   end
 
   defp event({:characters, characters}, _location, state) do
@@ -158,31 +212,67 @@ defmodule Image.Xmp do
   end
 
   # A simple property can be written as an attribute of the element
-  # that describes the resource.
+  # that describes the resource. Inside a location structure, a
+  # location field belongs to that location.
   defp put_attributes(state, attributes) do
     Enum.reduce(attributes, state, fn {uri, _prefix, name, value}, state ->
       element = {List.to_string(uri), List.to_string(name)}
-      put_attribute(state, Map.get(@properties, element), List.to_string(value))
+      put_attribute(state, element, List.to_string(value))
     end)
   end
 
-  defp put_attribute(state, nil, _value) do
+  defp put_attribute(state, element, value) do
+    location_field = Map.get(@location_fields, element)
+
+    if location_field && in_scope?(state.stack) do
+      %{state | stack: put_in_scope(state.stack, location_field, value)}
+    else
+      put_property_attribute(state, Map.get(@properties, element), value)
+    end
+  end
+
+  defp put_property_attribute(state, nil, _value) do
     state
   end
 
-  defp put_attribute(state, property, value) do
+  defp put_property_attribute(state, property, value) do
     %{state | values: put_value(state.values, property, [{nil, value}])}
   end
 
   defp push(state, {@rdf, "li"}, attributes) do
-    %{state | stack: [{:item, language(attributes)} | state.stack], text: []}
+    if scope_item?(state.stack) do
+      push_frame(state, :scope_item)
+    else
+      %{state | stack: [{:item, language(attributes)} | state.stack], text: []}
+    end
   end
 
   defp push(state, element, attributes) do
+    cond do
+      Map.has_key?(@location_scopes, element) ->
+        push_frame(state, {:scope, Map.fetch!(@location_scopes, element), %{}, []})
+
+      Map.has_key?(@location_fields, element) and in_scope?(state.stack) ->
+        %{
+          state
+          | stack: [{:scope_field, Map.fetch!(@location_fields, element)} | state.stack],
+            text: []
+        }
+
+      true ->
+        push_property_or_other(state, element, attributes)
+    end
+  end
+
+  defp push_property_or_other(state, element, attributes) do
     case Map.fetch(@properties, element) do
       {:ok, property} -> push_property(state, property, resource(attributes))
-      :error -> %{state | stack: [:other | state.stack]}
+      :error -> push_frame(state, {:other, element})
     end
+  end
+
+  defp push_frame(state, frame) do
+    %{state | stack: [frame | state.stack]}
   end
 
   # A property whose value is a URI can be written as an empty element
@@ -193,7 +283,7 @@ defmodule Image.Xmp do
 
   defp push_property(state, property, resource) do
     state = %{state | values: put_value(state.values, property, [{nil, resource}])}
-    %{state | stack: [:other | state.stack]}
+    push_frame(state, {:other, :resource})
   end
 
   defp resource(attributes) do
@@ -224,12 +314,80 @@ defmodule Image.Xmp do
     %{state | stack: stack, values: put_value(state.values, property, Enum.reverse(items))}
   end
 
+  defp pop(%{stack: [:scope_item | stack]} = state) do
+    %{state | stack: finish_location(stack)}
+  end
+
+  defp pop(%{stack: [{:scope_field, field} | stack]} = state) do
+    %{state | stack: put_in_scope(stack, field, text(state))}
+  end
+
+  defp pop(%{stack: [{:scope, key, current, done} | stack]} = state) do
+    locations = Enum.reverse(add_location(done, current))
+    %{state | stack: stack, values: Map.update(state.values, key, locations, &(&1 ++ locations))}
+  end
+
   defp pop(%{stack: [_frame | stack]} = state) do
     %{state | stack: stack}
   end
 
   defp pop(state) do
     state
+  end
+
+  # An rdf:li directly inside a location scope, past any array
+  # container, is one location.
+  defp scope_item?([{:other, element} | stack]) when element in @containers do
+    scope_item?(stack)
+  end
+
+  defp scope_item?([{:scope, _key, _current, _done} | _stack]) do
+    true
+  end
+
+  defp scope_item?(_stack) do
+    false
+  end
+
+  defp in_scope?(stack) do
+    Enum.any?(stack, &match?({:scope, _key, _current, _done}, &1))
+  end
+
+  defp put_in_scope(stack, _field, "") do
+    stack
+  end
+
+  defp put_in_scope(stack, field, value) do
+    update_scope(stack, fn {:scope, key, current, done} ->
+      {:scope, key, Map.put_new(current, field, value), done}
+    end)
+  end
+
+  defp finish_location(stack) do
+    update_scope(stack, fn {:scope, key, current, done} ->
+      {:scope, key, %{}, add_location(done, current)}
+    end)
+  end
+
+  defp add_location(done, current) when map_size(current) == 0 do
+    done
+  end
+
+  defp add_location(done, current) do
+    [current | done]
+  end
+
+  # Applies `fun` to the innermost location scope on the stack.
+  defp update_scope([{:scope, _key, _current, _done} = scope | stack], fun) do
+    [fun.(scope) | stack]
+  end
+
+  defp update_scope([frame | stack], fun) do
+    [frame | update_scope(stack, fun)]
+  end
+
+  defp update_scope([], _fun) do
+    []
   end
 
   # Adds an array item to the innermost open property.
@@ -256,8 +414,20 @@ defmodule Image.Xmp do
   defp put_value(values, {key, kind}, items) do
     case Enum.reject(items, &match?({_language, ""}, &1)) do
       [] -> values
-      [_ | _] = items -> Map.put_new(values, key, decode(kind, items))
+      [_ | _] = items -> store(values, key, kind, decode(kind, items))
     end
+  end
+
+  defp store(values, key, :collect, texts) do
+    Map.update(values, key, texts, &(&1 ++ texts))
+  end
+
+  defp store(values, key, _kind, value) do
+    Map.put_new(values, key, value)
+  end
+
+  defp decode(:collect, items) do
+    Enum.map(items, fn {_language, text} -> text end)
   end
 
   defp decode(:first, [{_language, text} | _items]) do
@@ -306,7 +476,12 @@ defmodule Image.Xmp do
       document_id: Map.get(values, :document_id),
       instance_id: Map.get(values, :instance_id),
       original_document_id: Map.get(values, :original_document_id),
-      document_ancestors: Map.get(values, :document_ancestors, [])
+      document_ancestors: Map.get(values, :document_ancestors, []),
+      people_in_image: Enum.uniq(Map.get(values, :people_in_image, [])),
+      region_names: Enum.uniq(Map.get(values, :region_names, [])),
+      creator_contact: Map.new(@contact_keys, fn {key, value} -> {key, Map.get(values, value)} end),
+      location_created: Map.get(values, :location_created, []),
+      locations_shown: Map.get(values, :locations_shown, [])
     }
   end
 end
