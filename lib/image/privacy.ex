@@ -2,8 +2,9 @@ defmodule Image.Privacy do
   @moduledoc """
   Finds tracking and identifying data in an image's metadata.
 
-  `scan/1` reads an image's IPTC, EXIF, XMP and PNG text, and a JPEG
-  file's comment segments and trailing data, and returns
+  `scan/1` reads an image's IPTC, EXIF, XMP and PNG text, a JPEG
+  file's comment segments, and data hidden after the end of a JPEG or
+  PNG file, and returns
   an `Image.Privacy.Finding` for each piece of data that could
   identify a person, a device, a place or the image itself, or that
   a platform added to follow the image: Facebook's `FBMD` identifier,
@@ -21,10 +22,10 @@ defmodule Image.Privacy do
     an image carries no watermark.
 
   * **Data outside the decoded image** is not visible to libvips. For a
-    JPEG given as a path or binary, the scan reads the file's segments
-    for comment segments and data after the end of the image; given an
-    image, it cannot. The segments of other formats are not read yet.
-    Any image `Image` writes leaves this data out.
+    JPEG or PNG given as a path or binary, the scan reads the file's
+    segments or chunks for comment segments and data after the end of
+    the image; given an image, it cannot. Other formats are not read
+    this way. Any image `Image` writes leaves this data out.
 
   * **C2PA Content Credentials** are not reported. They record an
     image's authenticity rather than track it, and libvips has no API
@@ -34,7 +35,7 @@ defmodule Image.Privacy do
   """
 
   alias Image.Exif.Gps
-  alias Image.Privacy.{Finding, Jpeg}
+  alias Image.Privacy.{Finding, Jpeg, Png}
   alias Vix.Vips.Image, as: Vimage
 
   # IPTC datasets that identify, with the kind of each.
@@ -109,14 +110,14 @@ defmodule Image.Privacy do
   * `image` is any `t:Vix.Vips.Image.t/0`, the path to an image file,
     or an image file's bytes. A binary that starts with an image
     signature is treated as the file's bytes, as in `Image.open/2`.
-    Given a path or bytes, a JPEG's segments are read as well as its
-    metadata.
+    Given a path or bytes, a JPEG's segments and a PNG's chunks are
+    read as well as its metadata.
 
   ### Returns
 
   * `{:ok, findings}` where `findings` is a list of
     `t:Image.Privacy.Finding.t/0`, in the order IPTC, EXIF, XMP, PNG
-    text and JPEG segments. An image with nothing to report returns an
+    text, JPEG segments and PNG chunks. An image with nothing to report returns an
     empty list, or
 
   * `{:error, %Image.Error{}}` if the file cannot be read or opened as
@@ -153,7 +154,7 @@ defmodule Image.Privacy do
     with {:ok, bytes} <- read_bytes(path_or_binary),
          {:ok, image} <- Image.open(bytes),
          {:ok, metadata_findings} <- scan(image) do
-      {:ok, metadata_findings ++ Jpeg.scan(bytes)}
+      {:ok, metadata_findings ++ Jpeg.scan(bytes) ++ Png.scan(bytes)}
     end
   end
 

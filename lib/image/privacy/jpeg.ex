@@ -7,7 +7,7 @@ defmodule Image.Privacy.Jpeg do
   # images after the first, such as an UltraHDR gain map; those are
   # declared, so they are walked past rather than reported.
 
-  alias Image.Privacy.Finding
+  alias Image.Privacy.{Finding, Trailer}
 
   @start_of_image 0xD8
   @end_of_image 0xD9
@@ -112,14 +112,7 @@ defmodule Image.Privacy.Jpeg do
   end
 
   defp trailer_findings(trailer, mpf?) do
-    rest = skip_declared_images(trailer, mpf?)
-
-    if padding?(rest) do
-      []
-    else
-      value = %{format: trailer_format(rest), bytes: byte_size(rest)}
-      [%Finding{source: :jpeg, field: :trailer, value: value, kind: :hidden_data}]
-    end
+    Trailer.findings(:jpeg, skip_declared_images(trailer, mpf?))
   end
 
   # With an MPF index, each JPEG after the first is a declared image.
@@ -132,22 +125,6 @@ defmodule Image.Privacy.Jpeg do
 
   defp skip_declared_images(trailer, _mpf?) do
     trailer
-  end
-
-  defp trailer_format(<<0xFF, @start_of_image, _rest::binary>>) do
-    :jpeg
-  end
-
-  defp trailer_format(trailer) do
-    cond do
-      String.ends_with?(trailer, "SEFT") -> :samsung
-      match?(<<_size::binary-size(4), "ftyp", _rest::binary>>, trailer) -> :mp4
-      true -> :unknown
-    end
-  end
-
-  defp padding?(binary) do
-    binary == :binary.copy(<<0>>, byte_size(binary))
   end
 
   # Removes trailing zero bytes and surrounding white space. Text that is

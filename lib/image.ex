@@ -4483,17 +4483,27 @@ defmodule Image do
     end
   end
 
-  # Some libvips-readable formats carry a bare TIFF header in their
-  # EXIF field rather than the "Exif\\0\\0" prefix.
+  # JPEG and WebP carry the EXIF TIFF data after an "Exif\\0\\0" prefix.
+  # PNG's eXIf chunk carries the bare TIFF data, starting with its byte
+  # order mark.
   defp exif_from_blob(<<"Exif"::binary, 0::16, exif::binary>>) do
-    case Exif.extract_exif(exif) do
-      exif_map when is_map(exif_map) -> {:ok, exif_map}
-      {:error, :invalid_exif} -> invalid_exif()
-    end
+    exif_from_tiff(exif)
+  end
+
+  defp exif_from_blob(<<byte_order::binary-size(2), _rest::binary>> = exif)
+       when byte_order in ["II", "MM"] do
+    exif_from_tiff(exif)
   end
 
   defp exif_from_blob(_blob) do
     invalid_exif()
+  end
+
+  defp exif_from_tiff(exif) do
+    case Exif.extract_exif(exif) do
+      exif_map when is_map(exif_map) -> {:ok, exif_map}
+      {:error, :invalid_exif} -> invalid_exif()
+    end
   end
 
   defp invalid_exif do

@@ -70,6 +70,24 @@ defmodule Image.TestSupport.Metadata do
   end
 
   @doc """
+  Returns the bytes of a PNG with `chunks`, a list of `{type, data}`
+  tuples, inserted after its IHDR chunk, and `trailer` appended after
+  its IEND chunk.
+  """
+  def png_with_chunks(chunks, trailer \\ <<>>) do
+    {:ok, png} = Image.write(Image.new!(16, 16, color: :red), :memory, suffix: ".png")
+    <<signature::binary-size(8), length::32, "IHDR", rest::binary>> = png
+    {ihdr, rest} = :erlang.split_binary(rest, length + 4)
+
+    inserted =
+      for {type, data} <- chunks, into: <<>> do
+        <<byte_size(data)::32, type::binary, data::binary, :erlang.crc32(type <> data)::32>>
+      end
+
+    signature <> <<length::32, "IHDR">> <> ihdr <> inserted <> rest <> trailer
+  end
+
+  @doc """
   Returns an image with the given string header fields set, written to
   `suffix` and opened again so the fields go through a real save.
   libvips writes `exif-ifd*` fields into EXIF and `png-comment-*`

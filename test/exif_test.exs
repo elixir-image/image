@@ -26,6 +26,21 @@ defmodule Image.ExitTest do
     assert {:ok, %{copyright: nil, image_description: nil}} = Image.exif(image)
   end
 
+  test "EXIF from a PNG eXIf chunk, which has no Exif prefix" do
+    image = Image.open!(image_path("jose.png"))
+    {:ok, blob} = Vix.Vips.Image.header_value(image, "exif-data")
+
+    assert <<"II", 42, 0, _rest::binary>> = blob
+    assert {:ok, %{x_resolution: 72}} = Image.exif(image)
+  end
+
+  test "EXIF written to a PNG reads back" do
+    {:ok, png} = Image.write(Image.new!(16, 16), :memory, suffix: ".png")
+
+    assert {:ok, exif} = Image.exif(Image.open!(png))
+    assert is_map(exif)
+  end
+
   test "No exif data" do
     image = Image.new!(10, 10)
     assert {:error, %Image.Error{reason: :no_exif}} = Image.exif(image)

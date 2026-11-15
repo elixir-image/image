@@ -14,7 +14,7 @@ This is the changelog for Image version 0.74.0 released on November 4th, 2026. F
 
 * Adds `Image.iptc/1` and `Image.Iptc.extract_iptc/1` to read an image's IPTC metadata, including the `FBMD` identifier Facebook writes to Special Instructions.
 
-* Adds `Image.Privacy.scan/1`, which reports tracking and identifying data in an image's IPTC, EXIF, XMP and PNG text, such as Facebook's `FBMD` identifier, serial numbers, GPS coordinates, document IDs and AI labels. Given a JPEG file's path or bytes, it also reports comment segments and data hidden after the end of the image.
+* Adds `Image.Privacy.scan/1`, which reports tracking and identifying data in an image's IPTC, EXIF, XMP and PNG text, such as Facebook's `FBMD` identifier, serial numbers, GPS coordinates, document IDs and AI labels. Given a JPEG or PNG file's path or bytes, it also reports JPEG comment segments and data hidden after the end of the image.
 
 * Adds `:camera_owner_name`, `:photographer`, `:image_editor`, `:host_computer`, `:camera_serial_number` and the Windows `:xp_author`, `:xp_comment`, `:xp_title`, `:xp_subject` and `:xp_keywords` to `Image.exif/1`. Adds GPS coordinates, the IPTC digital source type and the document identifiers to `Image.xmp/1`.
 
@@ -29,6 +29,8 @@ This is the changelog for Image version 0.74.0 released on November 4th, 2026. F
 * Requires `vix` 0.42.0 or later, the first release whose precompiled libvips (8.18.7) supports gain maps.
 
 ### Fixed
+
+* Fix `Image.exif/1` returning `:invalid_exif` for every PNG with EXIF. A PNG's `eXIf` chunk holds bare TIFF data without the `Exif` prefix JPEG and WebP use.
 
 * Fix `Image.exif/1` raising `ArgumentError` when a malformed file stores a text tag, such as the artist, with a numeric type.
 

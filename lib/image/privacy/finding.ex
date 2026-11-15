@@ -6,8 +6,8 @@ defmodule Image.Privacy.Finding do
   ### Fields
 
   * `:source` is where the data was found: `:iptc`, `:exif`, `:xmp`,
-    `:png_text`, or `:jpeg` for data found by reading a JPEG file's
-    segments.
+    `:png_text`, or `:jpeg` and `:png` for data found by reading a JPEG
+    file's segments or a PNG file's chunks.
 
   * `:field` names the data within its source, such as
     `:special_instructions` or `:body_serial_number`. For a PNG text
@@ -41,8 +41,9 @@ defmodule Image.Privacy.Finding do
       label.
 
     * `:hidden_data` — data a viewer does not show, such as bytes after
-      the end of a JPEG. The value is a map with the `:format` of the
-      data, when it is recognised, and its size in `:bytes`.
+      the end of a JPEG or PNG. The value is a map with the `:format` of
+      the data (`:jpeg`, `:png`, `:zip`, `:mp4`, `:samsung` or
+      `:unknown`) and its size in `:bytes`.
 
     * `:unreadable` — a metadata block is present but cannot be read,
       so it may hold data the scan could not check. The value is the
@@ -51,7 +52,7 @@ defmodule Image.Privacy.Finding do
   """
 
   @typedoc "Where a finding's data was found."
-  @type source :: :iptc | :exif | :xmp | :png_text | :jpeg
+  @type source :: :iptc | :exif | :xmp | :png_text | :jpeg | :png
 
   @typedoc "What a finding's data is."
   @type kind ::
