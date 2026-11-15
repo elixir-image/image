@@ -264,10 +264,12 @@ defmodule Image.Exif do
 
   defp read_gps(_gps_offset, _context), do: %Gps{}
 
-  @spec reshape(%{exif: t()}) :: %{exif: t()}
+  # The decoded IFD0 fields, with the Exif sub-IFD under `:exif` and the
+  # GPS block under `:gps` when the image has them.
+  @spec reshape(map()) :: map()
   defp reshape(result), do: extract_thumbnail(result)
 
-  @spec extract_thumbnail(%{exif: t()}) :: %{exif: t()}
+  @spec extract_thumbnail(map()) :: map()
   defp extract_thumbnail(%{exif: exif} = result) do
     exif_keys = Map.keys(exif)
 

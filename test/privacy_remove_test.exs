@@ -204,6 +204,24 @@ defmodule Image.PrivacyRemoveTest do
       assert xmp.locations_shown == [%{city: "Hue", gps_latitude: "16,28.0N"}]
     end
 
+    test "the editing history is reported and removed, keeping the rest of the XMP" do
+      image = Image.open!(image_path("Sydney-Opera-House-BW.jpg"))
+      {:ok, findings} = Image.Privacy.scan(image)
+
+      assert %Finding{kind: :document_id, value: history} =
+               Enum.find(findings, &(&1.field == :document_history))
+
+      assert length(history) == 7
+
+      {:ok, before} = Image.xmp(image)
+      saved = removed(image, findings, &(&1.field == :document_history))
+      {:ok, xmp} = Image.xmp(saved)
+
+      assert xmp.document_history == []
+      assert {xmp.title, xmp.keywords} == {before.title, before.keywords}
+      assert :document_id in fields(saved)
+    end
+
     test "every finding removed leaves nothing for the scan to find" do
       image = Image.open!(image_path("Kip_small.jpg"))
       {:ok, findings} = Image.Privacy.scan(image)

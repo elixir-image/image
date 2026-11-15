@@ -14,8 +14,6 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## In progress
 
-* [ ] **XMP editing history in the privacy scan** — Photoshop and Lightroom write document and instance IDs into `xmpMM:DerivedFrom` and `xmpMM:History`, which the scan does not report and `Image.Privacy.remove/2` therefore keeps. Plan in [plans/privacy-scan.md](plans/privacy-scan.md).
-
 * [ ] **Livebook smart cell** — a cell that composes an `Image` pipeline from a form, previews it and writes the equivalent source into the notebook. On `main` since `81980d1` for 0.74.0, awaiting live testing in a notebook before release. Design in [plans/livebook-smart-cell.md](plans/livebook-smart-cell.md), issue [#31](https://github.com/elixir-image/image/issues/31).
 
 ## Deferred
@@ -25,6 +23,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **XMP editing history in the privacy scan** — reported as `:document_history` and removable with `Image.Privacy.remove/2`. 2026-11-15, v0.74.0.
 
 * [x] **Targeted removal in the privacy scan** — `Image.Privacy.remove(image, findings)` removes each EXIF field, IPTC dataset, XMP property and PNG text chunk on its own, keeping the rest. 2026-11-15, v0.74.0.
 

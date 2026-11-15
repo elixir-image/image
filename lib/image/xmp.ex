@@ -7,7 +7,8 @@ defmodule Image.Xmp do
   artist, keywords, creation date, rating, copyright, title,
   description, location and GPS coordinates, the IPTC digital source
   type that labels AI-generated images, the document identifiers
-  editing software writes, the people shown and the names given to
+  editing software writes, including those in its editing history, the
+  people shown and the names given to
   face regions, the creator's contact details, and the IPTC locations
   shown and created. Properties are matched by their
   namespace URI rather than their prefix, and are read whether they
@@ -41,6 +42,8 @@ defmodule Image.Xmp do
   @mwg_regions "http://www.metadataworkinggroup.com/schemas/regions/"
   @microsoft_region "http://ns.microsoft.com/photo/1.2/t/Region#"
   @microsoft_photo "http://ns.microsoft.com/photo/1.2/"
+  @resource_ref "http://ns.adobe.com/xap/1.0/sType/ResourceRef#"
+  @resource_event "http://ns.adobe.com/xap/1.0/sType/ResourceEvent#"
 
   # The properties read, keyed by {namespace URI, local name}. The kind
   # says how the value is decoded: `:first` takes the first item of an
@@ -78,7 +81,11 @@ defmodule Image.Xmp do
     {@iptc_core, "CiAdrCity"} => {:creator_city, :text},
     {@iptc_core, "CiAdrRegion"} => {:creator_region, :text},
     {@iptc_core, "CiAdrPcode"} => {:creator_postal_code, :text},
-    {@iptc_core, "CiAdrCtry"} => {:creator_country, :text}
+    {@iptc_core, "CiAdrCtry"} => {:creator_country, :text},
+    {@resource_ref, "documentID"} => {:document_history, :collect},
+    {@resource_ref, "instanceID"} => {:document_history, :collect},
+    {@resource_ref, "originalDocumentID"} => {:document_history, :collect},
+    {@resource_event, "instanceID"} => {:document_history, :collect}
   }
 
   @location_keys [:city, :state, :territory, :territory_code]
@@ -138,7 +145,18 @@ defmodule Image.Xmp do
     region_names: [{@mwg_regions, "Regions"}, {@microsoft_photo, "RegionInfo"}],
     creator_contact: [{@iptc_core, "CreatorContactInfo"}],
     location_created: [{@iptc_extension, "LocationCreated"}],
-    locations_shown: [{@iptc_extension, "LocationShown"}]
+    locations_shown: [{@iptc_extension, "LocationShown"}],
+    document_history: [
+      {@xmp_media_management, "DerivedFrom"},
+      {@xmp_media_management, "History"},
+      {@xmp_media_management, "Ingredients"},
+      {@xmp_media_management, "ManagedFrom"},
+      {@xmp_media_management, "Manifest"},
+      {@resource_ref, "documentID"},
+      {@resource_ref, "instanceID"},
+      {@resource_ref, "originalDocumentID"},
+      {@resource_event, "instanceID"}
+    ]
   }
 
   # The language given to an array item that has no xml:lang.
@@ -159,11 +177,14 @@ defmodule Image.Xmp do
     `:gps_latitude`, `:gps_longitude`, `:digital_source_type`,
     `:document_id`, `:instance_id`, `:original_document_id`,
     `:document_ancestors`, `:people_in_image`, `:region_names`,
-    `:creator_contact`, `:location_created` and `:locations_shown`.
+    `:creator_contact`, `:location_created`, `:locations_shown` and
+    `:document_history`.
     `:people_in_image` lists the people the IPTC says are shown, and
     `:region_names` the names photo managers give to face regions.
     `:location_created` and `:locations_shown` are lists of maps, one
-    per IPTC location structure. A property the packet does not have
+    per IPTC location structure. `:document_history` lists the document
+    and instance IDs of the files the image was made from and of its
+    editing history. A property the packet does not have
     is `nil`, except the lists, which are empty, and the fields of
     `:location` and `:creator_contact`, which are each `nil`, or
 
@@ -548,7 +569,8 @@ defmodule Image.Xmp do
       region_names: Enum.uniq(Map.get(values, :region_names, [])),
       creator_contact: Map.new(@contact_keys, fn {key, value} -> {key, Map.get(values, value)} end),
       location_created: Map.get(values, :location_created, []),
-      locations_shown: Map.get(values, :locations_shown, [])
+      locations_shown: Map.get(values, :locations_shown, []),
+      document_history: Enum.uniq(Map.get(values, :document_history, []))
     }
   end
 end

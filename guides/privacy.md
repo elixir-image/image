@@ -32,7 +32,7 @@ Each finding has one of these kinds:
 |---|---|
 | `:tracking_id` | Facebook's `FBMD` identifier, IPTC Original Transmission Reference |
 | `:device_id` | camera body, lens and DNG serial numbers, the host computer |
-| `:document_id` | EXIF `ImageUniqueID`, XMP document, instance and ancestor IDs |
+| `:document_id` | EXIF `ImageUniqueID`, XMP document, instance and ancestor IDs, and the IDs in the XMP editing history |
 | `:person` | artist, camera owner, photographer, IPTC by-line and contact, Windows author, people shown, face region names, creator contact details |
 | `:location` | GPS coordinates in EXIF or XMP, place names in IPTC or XMP, IPTC locations shown and created |
 | `:embedded_text` | EXIF user comment, Windows comment, JPEG comments, PNG text chunks |
@@ -130,5 +130,3 @@ Any image `Image` writes leaves out JPEG comments and data after the end of the 
 * **C2PA Content Credentials** — they record an image's authenticity rather than track it, and libvips has no API to read them, so they are not reported. libvips does not carry a JPEG's credentials through a save either, so a JPEG `Image` writes has none.
 
 * **Other formats' hidden data** — comments and trailing data are read only from JPEG and PNG files.
-
-* **Editing history** — Photoshop and Lightroom record the document and instance IDs of the files an image was made from in the XMP `DerivedFrom` and `History` properties. They are not reported yet, so removing the `:document_id` findings leaves them; `Image.remove_metadata(image, :xmp)` removes them with the rest of the XMP.

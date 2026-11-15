@@ -398,6 +398,32 @@ defmodule Image.XmpCoverageTest do
       assert result.gps_latitude == nil
     end
 
+    test "the document and instance IDs of the editing history, without repeats" do
+      xmp =
+        packet("""
+        <xmpMM:DerivedFrom xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/"
+          xmlns:stRef="http://ns.adobe.com/xap/1.0/sType/ResourceRef#"
+          stRef:instanceID="xmp.iid:one" stRef:documentID="xmp.did:two"/>
+        <xmpMM:History xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/"
+          xmlns:stEvt="http://ns.adobe.com/xap/1.0/sType/ResourceEvent#"><rdf:Seq>
+          <rdf:li rdf:parseType="Resource"><stEvt:instanceID>xmp.iid:three</stEvt:instanceID></rdf:li>
+          <rdf:li stEvt:instanceID="xmp.iid:one"/>
+        </rdf:Seq></xmpMM:History>
+        """)
+
+      assert Xmp.extract_xmp(xmp).document_history == [
+               "xmp.iid:one",
+               "xmp.did:two",
+               "xmp.iid:three"
+             ]
+    end
+
+    test "the editing history from a real file" do
+      {:ok, image} = Image.open(image_path("Sydney-Opera-House-BW.jpg"))
+      assert {:ok, xmp} = Image.xmp(image)
+      assert length(xmp.document_history) == 7
+    end
+
     test "a packet without them has empty lists and an empty contact" do
       result = Xmp.extract_xmp(packet(""))
 
@@ -405,6 +431,7 @@ defmodule Image.XmpCoverageTest do
       assert result.region_names == []
       assert result.locations_shown == []
       assert result.location_created == []
+      assert result.document_history == []
       assert Enum.all?(result.creator_contact, fn {_key, value} -> is_nil(value) end)
     end
   end

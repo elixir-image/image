@@ -8306,7 +8306,7 @@ defmodule Image do
   """
   @doc subject: "Metadata"
 
-  @spec remove_metadata(Vimage.t(), list(binary() | atom())) ::
+  @spec remove_metadata(Vimage.t(), binary() | atom() | list(binary() | atom())) ::
           {:ok, Vimage.t()} | {:error, error()}
 
   def remove_metadata(image, fields \\ [])
@@ -8407,7 +8407,8 @@ defmodule Image do
   """
   @doc subject: "Metadata"
 
-  @spec remove_metadata!(Vimage.t(), list(binary() | atom())) :: Vimage.t() | no_return()
+  @spec remove_metadata!(Vimage.t(), binary() | atom() | list(binary() | atom())) ::
+          Vimage.t() | no_return()
   def remove_metadata!(image, fields \\ []) do
     case remove_metadata(image, fields) do
       {:ok, image} -> image

@@ -94,6 +94,7 @@ defmodule Image.Privacy do
     instance_id: :document_id,
     original_document_id: :document_id,
     document_ancestors: :document_id,
+    document_history: :document_id,
     people_in_image: :person,
     region_names: :person,
     location_created: :location,
@@ -602,10 +603,6 @@ defmodule Image.Privacy do
     else
       [finding(:xmp, :creator_contact, details, :person)]
     end
-  end
-
-  defp contact_finding(_xmp) do
-    []
   end
 
   defp source_type_finding(%{digital_source_type: source_type}) when is_binary(source_type) do

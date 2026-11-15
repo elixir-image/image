@@ -1,6 +1,6 @@
 # Privacy scan
 
-**Status:** in progress, 2026-11-15
+**Status:** implemented (v0.74.0), 2026-11-15
 
 A function that checks an image for known tracking and identifying data, reports each finding, and pairs with the existing metadata removal so a caller can scan and then strip. Prompted by the `FBMD` identifier Facebook writes into IPTC 2:40 Special Instructions of the photos it processes.
 
@@ -66,9 +66,9 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 ## Tasks
 
-* [ ] **XMP editing history** — report the document and instance IDs in `xmpMM:DerivedFrom` (`stRef`) and `xmpMM:History` (`stEvt`), and remove them with the `:document_id` findings. Eleven fixtures carry two to eight such IDs (found 2026-11-15).
-
 ### Done
+
+* [x] **XMP editing history** — `Image.xmp/1` collects the `stRef` and `stEvt` document and instance IDs as `:document_history`, reported as `:document_id`; removing it cuts `DerivedFrom`, `History`, `Ingredients`, `ManagedFrom` and `Manifest` and any stray ID properties. All twelve fixtures with history checked. 2026-11-15, v0.74.0.
 
 * [x] **Targeted removal: XMP** — `Image.Xmp.Edit` finds every element's and attribute's byte span (namespace-aware, no atoms) and `Image.Xmp.remove_properties/2` cuts the properties behind the chosen fields, keeping GPS inside IPTC location structures; the result is parsed again. Every fixture with XMP checked. 2026-11-15, v0.74.0.
 
