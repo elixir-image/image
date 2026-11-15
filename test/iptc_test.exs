@@ -20,6 +20,17 @@ defmodule Image.IptcTest do
       assert iptc.record_version == 4
     end
 
+    test "reads Facebook's identifiers from a photo Facebook processed" do
+      image = Image.open!(image_path("facebook_fbmd.jpg"))
+
+      assert {:ok, iptc} = Image.iptc(image)
+
+      assert iptc.special_instructions ==
+               "FBMD0f000771010000a94b0000aa04010014150100864801000f220200fa6303005f850300"
+
+      assert iptc.original_transmission_reference == "lvYkyRMFdS9GAseo9eoP"
+    end
+
     test "reads Facebook's identifiers from a JPEG APP13 segment" do
       path = jpeg_with_app13(iim([{2, 40, @fbmd}, {2, 103, @transmission_reference}]))
       image = Image.open!(path)

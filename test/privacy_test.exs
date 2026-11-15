@@ -25,6 +25,26 @@ defmodule Image.PrivacyTest do
                find(findings, :original_transmission_reference)
     end
 
+    test "reports exactly Facebook's two identifiers in a photo Facebook processed" do
+      assert {:ok, findings} = Image.Privacy.scan(image_path("facebook_fbmd.jpg"))
+
+      assert [
+               %Finding{source: :iptc, field: :special_instructions, kind: :tracking_id},
+               %Finding{source: :iptc, field: :original_transmission_reference, kind: :tracking_id}
+             ] = findings
+    end
+
+    test "Facebook's identifiers survive a plain save and are removed by strip_metadata" do
+      image = Image.open!(image_path("facebook_fbmd.jpg"))
+
+      {:ok, saved} = Image.write(image, :memory, suffix: ".jpg")
+      assert {:ok, [_fbmd, _transmission_reference]} = Image.Privacy.scan(saved)
+
+      {:ok, stripped} = Image.write(image, :memory, suffix: ".jpg", strip_metadata: true)
+      assert {:ok, []} = Image.Privacy.scan(stripped)
+      assert {:error, %Image.Error{reason: :no_iptc}} = Image.iptc(Image.open!(stripped))
+    end
+
     test "does not report other special instructions" do
       path = jpeg_with_app13(iim([{2, 40, "Embargoed until noon"}]))
 
