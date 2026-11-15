@@ -30,6 +30,8 @@ This is the changelog for Image version 0.74.0 released on November 4th, 2026. F
 
 ### Fixed
 
+* Fix `Image.remove_metadata(image, :exif)` leaving EXIF in the saved file. libvips rebuilds EXIF from per-tag `exif-ifd…` fields when it saves, so `:exif` now removes those and the EXIF thumbnail too, keeping only the orientation.
+
 * Fix `Image.exif/1` never returning `:thumbnail`. It now reads IFD1, which describes the thumbnail, including when IFD1 comes before IFD0 as in files Photoshop writes.
 
 * Fix `Image.exif/1` returning `:invalid_exif` for every PNG with EXIF. A PNG's `eXIf` chunk holds bare TIFF data without the `Exif` prefix JPEG and WebP use.

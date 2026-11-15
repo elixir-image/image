@@ -8270,7 +8270,10 @@ defmodule Image do
     metadata removal these are:
 
     * `:exif` which means remove all
-      [EXIF](https://en.wikipedia.org/wiki/Exif) metadata
+      [EXIF](https://en.wikipedia.org/wiki/Exif) metadata,
+      including the EXIF thumbnail and each EXIF tag libvips
+      holds as a separate `exif-ifd…` field. The orientation
+      is kept so the image still displays upright.
     * `:iptc` which means remove all
       [IPTC](https://en.wikipedia.org/wiki/IPTC_Information_Interchange_Model) metadata
     * `:xmp` which means remove all
@@ -8318,9 +8321,36 @@ defmodule Image do
   end
 
   def remove_metadata(%Vimage{} = image, fields) when is_list(fields) do
+    fields = Enum.flat_map(fields, &metadata_field_names(image, &1))
+
     Vimage.mutate(image, fn mut_img ->
-      Enum.each(fields, &remove_meta(mut_img, &1))
+      Enum.each(fields, &MutableImage.remove(mut_img, &1))
     end)
+  end
+
+  # libvips holds each EXIF tag as an "exif-ifd…" field as well as the
+  # "exif-data" blob, and rebuilds EXIF from those fields when it saves,
+  # so removing EXIF removes them and the EXIF thumbnail too. The
+  # orientation field is kept, so the image still displays upright.
+  defp metadata_field_names(image, :exif) do
+    case Vimage.header_field_names(image) do
+      {:ok, names} ->
+        [
+          "exif-data",
+          "jpeg-thumbnail-data" | Enum.filter(names, &String.starts_with?(&1, "exif-ifd"))
+        ]
+
+      {:error, _reason} ->
+        ["exif-data", "jpeg-thumbnail-data"]
+    end
+  end
+
+  defp metadata_field_names(_image, field) when field in @metadata_names do
+    [Map.fetch!(@metadata_fields, field)]
+  end
+
+  defp metadata_field_names(_image, field) do
+    [field]
   end
 
   @doc """
@@ -8341,7 +8371,10 @@ defmodule Image do
     metadata removal these are:
 
     * `:exif` which means remove all
-      [EXIF](https://en.wikipedia.org/wiki/Exif) metadata
+      [EXIF](https://en.wikipedia.org/wiki/Exif) metadata,
+      including the EXIF thumbnail and each EXIF tag libvips
+      holds as a separate `exif-ifd…` field. The orientation
+      is kept so the image still displays upright.
     * `:iptc` which means remove all
       [IPTC](https://en.wikipedia.org/wiki/IPTC_Information_Interchange_Model) metadata
     * `:xmp` which means remove all
@@ -8380,15 +8413,6 @@ defmodule Image do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
     end
-  end
-
-  defp remove_meta(image, field) when is_atom(field) and field in @metadata_names do
-    field = Map.fetch!(@metadata_fields, field)
-    remove_meta(image, field)
-  end
-
-  defp remove_meta(image, field) do
-    MutableImage.remove(image, field)
   end
 
   @doc """
