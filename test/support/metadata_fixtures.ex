@@ -39,14 +39,34 @@ defmodule Image.TestSupport.Metadata do
 
   def jpeg_with_app13(resources) do
     payload = "Photoshop 3.0" <> <<0>> <> resources
-    app13 = <<0xFF, 0xED, byte_size(payload) + 2::16>> <> payload
+    path = Path.join(System.tmp_dir!(), "metadata_#{System.unique_integer([:positive])}.jpg")
+    File.write!(path, jpeg_with_segments([{0xED, payload}]))
+    path
+  end
 
-    {:ok, jpeg} = Image.write(Image.new!(16, 16, color: :red), :memory, suffix: ".jpg")
+  @doc """
+  Returns the bytes of a JPEG with `segments`, a list of `{marker,
+  payload}` tuples, inserted after its start-of-image marker, and
+  `trailer` appended after its end-of-image marker. `jpeg` is the JPEG
+  to start from.
+  """
+  def jpeg_with_segments(segments, trailer \\ <<>>, jpeg \\ small_jpeg()) do
     <<0xFF, 0xD8, rest::binary>> = jpeg
 
-    path = Path.join(System.tmp_dir!(), "metadata_#{System.unique_integer([:positive])}.jpg")
-    File.write!(path, <<0xFF, 0xD8>> <> app13 <> rest)
-    path
+    inserted =
+      for {marker, payload} <- segments, into: <<>> do
+        <<0xFF, marker, byte_size(payload) + 2::16, payload::binary>>
+      end
+
+    <<0xFF, 0xD8>> <> inserted <> rest <> trailer
+  end
+
+  @doc "Returns the bytes of a small JPEG with no metadata."
+  def small_jpeg(options \\ []) do
+    {:ok, jpeg} =
+      Image.write(Image.new!(16, 16, color: :red), :memory, [suffix: ".jpg"] ++ options)
+
+    jpeg
   end
 
   @doc """

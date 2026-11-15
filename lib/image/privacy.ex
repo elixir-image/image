@@ -2,7 +2,8 @@ defmodule Image.Privacy do
   @moduledoc """
   Finds tracking and identifying data in an image's metadata.
 
-  `scan/1` reads an image's IPTC, EXIF, XMP and PNG text and returns
+  `scan/1` reads an image's IPTC, EXIF, XMP and PNG text, and a JPEG
+  file's comment segments and trailing data, and returns
   an `Image.Privacy.Finding` for each piece of data that could
   identify a person, a device, a place or the image itself, or that
   a platform added to follow the image: Facebook's `FBMD` identifier,
@@ -19,14 +20,16 @@ defmodule Image.Privacy do
     vendor's own decoder. A scan with no findings is not evidence that
     an image carries no watermark.
 
-  * **Data outside the decoded image**, such as JPEG comment segments,
-    C2PA manifests and bytes after the end of a JPEG, is not visible
-    to libvips. Any image `Image` writes leaves it out.
+  * **Data outside the decoded image** is not visible to libvips. For a
+    JPEG given as a path or binary, the scan reads the file's segments
+    for comment segments and data after the end of the image; given an
+    image, it cannot. C2PA manifests and the segments of other formats
+    are not read yet. Any image `Image` writes leaves this data out.
 
   """
 
   alias Image.Exif.Gps
-  alias Image.Privacy.Finding
+  alias Image.Privacy.{Finding, Jpeg}
   alias Vix.Vips.Image, as: Vimage
 
   # IPTC datasets that identify, with the kind of each.
@@ -94,21 +97,26 @@ defmodule Image.Privacy do
   @facebook_prefix "FBMD"
 
   @doc """
-  Scans an image's metadata for tracking and identifying data.
+  Scans an image for tracking and identifying data.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0`, the path to an image file,
+    or an image file's bytes. A binary that starts with an image
+    signature is treated as the file's bytes, as in `Image.open/2`.
+    Given a path or bytes, a JPEG's segments are read as well as its
+    metadata.
 
   ### Returns
 
   * `{:ok, findings}` where `findings` is a list of
-    `t:Image.Privacy.Finding.t/0`, in the order IPTC, EXIF, XMP and
-    PNG text. An image with nothing to report returns an empty list,
-    or
+    `t:Image.Privacy.Finding.t/0`, in the order IPTC, EXIF, XMP, PNG
+    text and JPEG segments. An image with nothing to report returns an
+    empty list, or
 
-  * `{:error, %Image.Error{reason: :invalid_image}}` if `image` is not
-    an image.
+  * `{:error, %Image.Error{}}` if the file cannot be read or opened as
+    an image, with reason `:invalid_image` if `image` is not an image,
+    a path or a binary.
 
   ### Examples
 
@@ -117,19 +125,31 @@ defmodule Image.Privacy do
       iex> Enum.find(findings, &(&1.source == :iptc and &1.kind == :person))
       %Image.Privacy.Finding{source: :iptc, field: :by_line, value: ["Kip Cole"], kind: :person}
 
+      iex> {:ok, findings} = Image.Privacy.scan("./test/support/images/kodak-dc210.jpg")
+      iex> Enum.find(findings, &(&1.field == :comment)).value
+      "Lovely smoke effect here, of which I'm secretly very proud."
+
       iex> Image.Privacy.scan(Image.new!(16, 16))
       {:ok, []}
 
   """
   @doc since: "0.74.0"
 
-  @spec scan(Vimage.t()) :: {:ok, [Finding.t()]} | {:error, Image.Error.t()}
+  @spec scan(Vimage.t() | Path.t() | binary()) :: {:ok, [Finding.t()]} | {:error, Image.Error.t()}
   def scan(%Vimage{} = image) do
     findings =
       iptc_findings(image) ++
         exif_findings(image) ++ xmp_findings(image) ++ png_text_findings(image)
 
     {:ok, findings}
+  end
+
+  def scan(path_or_binary) when is_binary(path_or_binary) do
+    with {:ok, bytes} <- read_bytes(path_or_binary),
+         {:ok, image} <- Image.open(bytes),
+         {:ok, metadata_findings} <- scan(image) do
+      {:ok, metadata_findings ++ Jpeg.scan(bytes)}
+    end
   end
 
   def scan(other) do
@@ -140,6 +160,26 @@ defmodule Image.Privacy do
        value: other,
        message: "Expected an image, got #{inspect(other)}"
      )}
+  end
+
+  # A binary that starts with an image signature is the image's bytes,
+  # as in `Image.open/2`, and any other binary is a path.
+  defp read_bytes(<<0xFF, 0xD8, 0xFF, _rest::binary>> = bytes), do: {:ok, bytes}
+  defp read_bytes(<<0x89, "PNG", 0x0D, 0x0A, 0x1A, 0x0A, _rest::binary>> = bytes), do: {:ok, bytes}
+  defp read_bytes(<<"RIFF", _size::32, "WEBP", _rest::binary>> = bytes), do: {:ok, bytes}
+  defp read_bytes(<<"GIF8", _rest::binary>> = bytes), do: {:ok, bytes}
+  defp read_bytes(<<"II", 0x2A, 0x00, _rest::binary>> = bytes), do: {:ok, bytes}
+  defp read_bytes(<<"MM", 0x00, 0x2A, _rest::binary>> = bytes), do: {:ok, bytes}
+  defp read_bytes(<<_size::binary-size(4), "ftyp", _rest::binary>> = bytes), do: {:ok, bytes}
+
+  defp read_bytes(path) do
+    case File.read(path) do
+      {:ok, bytes} ->
+        {:ok, bytes}
+
+      {:error, reason} ->
+        {:error, Image.Error.exception(reason: reason, operation: :scan, path: path)}
+    end
   end
 
   defp iptc_findings(image) do

@@ -62,11 +62,17 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 ## Tasks
 
-* [ ] **Stage 2: byte-level scan** — for a path or binary, walk the JPEG segments for COM, APP11 JUMBF (report presence and claim generator; no signature verification), trailing data after end-of-image, and an EXIF thumbnail whose aspect ratio differs from the image.
+* [ ] **Stage 2: C2PA in JPEG** — reassemble the APP11 JUMBF boxes, report the manifest store and the active manifest's claim generator; no signature verification.
+
+* [ ] **Stage 2: PNG chunks** — C2PA in `caBX` chunks and data after `IEND`.
+
+* [ ] **Stage 2: EXIF thumbnail** — report an embedded thumbnail, which can show the picture before it was cropped or edited.
 
 * [ ] **Guide section** — what the scan finds, what it cannot find (invisible watermarks), and how to remove what it reports.
 
 ### Done
+
+* [x] **Stage 2: JPEG segments** — `scan/1` takes a path or bytes and walks a JPEG's segments for comments and data after the end of the image, past restart markers, progressive scans and the images an MPF index declares; trailers are recognised as JPEG, MP4 or Samsung. 2026-11-15, v0.74.0.
 
 * [x] **Further EXIF fields** — `UserComment` decoded as text; `XP*`, `HostComputer`, `Photographer`, `ImageEditor` and DNG `CameraSerialNumber` decoded; all reported, with GPS destination coordinates. 2026-11-15, v0.74.0.
 

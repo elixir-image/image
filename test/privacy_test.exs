@@ -221,9 +221,15 @@ defmodule Image.PrivacyTest do
       assert {:ok, []} = Image.Privacy.scan(Image.open!(binary))
     end
 
-    test "a value that is not an image is an error" do
-      assert {:error, %Image.Error{reason: :invalid_image, value: "not an image"}} =
-               Image.Privacy.scan("not an image")
+    test "a value that is not an image, a path or a binary is an error" do
+      assert {:error, %Image.Error{reason: :invalid_image, value: 42}} = Image.Privacy.scan(42)
+    end
+
+    test "a file that is not an image is an error" do
+      path = Path.join(System.tmp_dir!(), "privacy_#{System.unique_integer([:positive])}.txt")
+      File.write!(path, "plain text")
+
+      assert {:error, %Image.Error{}} = Image.Privacy.scan(path)
     end
   end
 
