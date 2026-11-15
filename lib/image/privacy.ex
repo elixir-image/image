@@ -23,8 +23,13 @@ defmodule Image.Privacy do
   * **Data outside the decoded image** is not visible to libvips. For a
     JPEG given as a path or binary, the scan reads the file's segments
     for comment segments and data after the end of the image; given an
-    image, it cannot. C2PA manifests and the segments of other formats
-    are not read yet. Any image `Image` writes leaves this data out.
+    image, it cannot. The segments of other formats are not read yet.
+    Any image `Image` writes leaves this data out.
+
+  * **C2PA Content Credentials** are not reported. They record an
+    image's authenticity rather than track it, and libvips has no API
+    to read them. libvips does not carry a JPEG's credentials through
+    a save either, so a JPEG `Image` writes has none.
 
   """
 

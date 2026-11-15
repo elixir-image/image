@@ -52,6 +52,8 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 * **Module name** — decided 2026-11-15: `Image.Privacy.scan/1`, with `Image.Privacy.Finding`.
 
+* **C2PA** — decided 2026-11-15 not to scan for it. Content Credentials record authenticity rather than track, and libvips has no API to read them, so the scan leaves them alone. The open issue runs the other way: libvips does not carry a JPEG's APP11 segments through a save (probed 2026-11-15), so every JPEG `Image` re-saves loses its Content Credentials. PNG `caBX` chunks have not been checked. Revisit if libvips gains C2PA support, or if preserving credentials through a save becomes a goal. libvips tracks this in [libvips#4420](https://github.com/libvips/libvips/issues/4420): it is not in 8.19.0-rc1, and on 2026-11-04 the maintainer moved it to the 8.20 cycle, noting that the C2PA libraries work on whole files rather than as a component and that a separate post-processing step may suit better.
+
 * **Targeted removal** — whether to add a way to remove only the identifying fields (FBMD, Original Transmission Reference, serial numbers, GPS, document IDs) while keeping copyright and captions. libvips sets metadata as whole blobs, so this means rewriting the IPTC, EXIF and XMP blobs, which is a larger piece of work than the scan.
 
 * **PNG text chunks** — confirmed 2026-11-15: libvips exposes them as `png-comment-<index>-<keyword>` header fields.
@@ -62,9 +64,7 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 ## Tasks
 
-* [ ] **Stage 2: C2PA in JPEG** — reassemble the APP11 JUMBF boxes, report the manifest store and the active manifest's claim generator; no signature verification.
-
-* [ ] **Stage 2: PNG chunks** — C2PA in `caBX` chunks and data after `IEND`.
+* [ ] **Stage 2: PNG chunks** — data after `IEND`.
 
 * [ ] **Stage 2: EXIF thumbnail** — report an embedded thumbnail, which can show the picture before it was cropped or edited.
 
@@ -81,6 +81,8 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 * [x] **`Image.Iptc` parser** — `Image.iptc/1` and `Image.Iptc.extract_iptc/1` read APP13, resource-block and bare IIM forms; missing EXIF, XMP and IPTC now share atom reasons. 2026-11-15, v0.74.0.
 
 ### Deferred
+
+* [ ] **C2PA** — not scanned; see the open question.
 
 * [ ] **Encoder fingerprints** — needs maintained reference tables; revisit once stages 1 and 2 are in.
 

@@ -14,7 +14,7 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## In progress
 
-* [ ] **Privacy scan** — a function that reports tracking and identifying data in an image (Facebook's `FBMD` IPTC identifier, device serials, GPS, XMP document IDs, C2PA, hidden trailers), paired with metadata removal. Stage 1, the metadata scan, is on `main` as `Image.Privacy.scan/1`; stage 2 reads the file's bytes. Plan in [plans/privacy-scan.md](plans/privacy-scan.md).
+* [ ] **Privacy scan** — a function that reports tracking and identifying data in an image (Facebook's `FBMD` IPTC identifier, device serials, GPS, XMP document IDs, hidden trailers), paired with metadata removal. The metadata scan and the JPEG segment walk are on `main` as `Image.Privacy.scan/1`; PNG chunks and the EXIF thumbnail remain. C2PA is deliberately not scanned. Plan in [plans/privacy-scan.md](plans/privacy-scan.md).
 
 * [ ] **Livebook smart cell** — a cell that composes an `Image` pipeline from a form, previews it and writes the equivalent source into the notebook. On `main` since `81980d1` for 0.74.0, awaiting live testing in a notebook before release. Design in [plans/livebook-smart-cell.md](plans/livebook-smart-cell.md), issue [#31](https://github.com/elixir-image/image/issues/31).
 
