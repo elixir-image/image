@@ -214,6 +214,7 @@ defmodule Image.MixProject do
       Exif: [Image.Exif],
       Xmp: [Image.Xmp],
       Iptc: [Image.Iptc],
+      Privacy: [Image.Privacy, Image.Privacy.Finding],
       Kino: [Image.Kino],
       Options: ~r/Image.Options.*/,
       Enums: @enum_modules

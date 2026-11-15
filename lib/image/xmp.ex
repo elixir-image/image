@@ -5,7 +5,9 @@ defmodule Image.Xmp do
   [XMP](https://www.adobe.com/products/xmp.html) is RDF serialised as
   XML. This module reads a selected set of its properties: the
   artist, keywords, creation date, rating, copyright, title,
-  description and location. Properties are matched by their
+  description, location and GPS coordinates, the IPTC digital source
+  type that labels AI-generated images, and the document identifiers
+  editing software writes. Properties are matched by their
   namespace URI rather than their prefix, and are read whether they
   are written as attributes of `rdf:Description` or as child
   elements.
@@ -24,10 +26,14 @@ defmodule Image.Xmp do
   @rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
   # xml:lang arrives as a charlist attribute in the XML namespace.
   @xml_namespace ~c"http://www.w3.org/XML/1998/namespace"
+  @rdf_namespace ~c"http://www.w3.org/1999/02/22-rdf-syntax-ns#"
   @dc "http://purl.org/dc/elements/1.1/"
   @xmp "http://ns.adobe.com/xap/1.0/"
   @photoshop "http://ns.adobe.com/photoshop/1.0/"
   @iptc_core "http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/"
+  @iptc_extension "http://iptc.org/std/Iptc4xmpExt/2008-02-29/"
+  @xmp_media_management "http://ns.adobe.com/xap/1.0/mm/"
+  @exif "http://ns.adobe.com/exif/1.0/"
 
   # The properties read, keyed by {namespace URI, local name}. The kind
   # says how the value is decoded: `:first` takes the first item of an
@@ -44,7 +50,14 @@ defmodule Image.Xmp do
     {@photoshop, "City"} => {:city, :text},
     {@photoshop, "State"} => {:state, :text},
     {@photoshop, "Country"} => {:territory, :text},
-    {@iptc_core, "CountryCode"} => {:territory_code, :text}
+    {@iptc_core, "CountryCode"} => {:territory_code, :text},
+    {@iptc_extension, "DigitalSourceType"} => {:digital_source_type, :text},
+    {@xmp_media_management, "DocumentID"} => {:document_id, :text},
+    {@xmp_media_management, "InstanceID"} => {:instance_id, :text},
+    {@xmp_media_management, "OriginalDocumentID"} => {:original_document_id, :text},
+    {@photoshop, "DocumentAncestors"} => {:document_ancestors, :list},
+    {@exif, "GPSLatitude"} => {:gps_latitude, :text},
+    {@exif, "GPSLongitude"} => {:gps_longitude, :text}
   }
 
   @location_keys [:city, :state, :territory, :territory_code]
@@ -63,10 +76,13 @@ defmodule Image.Xmp do
   ### Returns
 
   * A map with the keys `:artist`, `:keywords`, `:created_at`,
-    `:rating`, `:copyright`, `:title`, `:description` and
-    `:location`. A property the packet does not have is `nil`, except
-    `:keywords`, which is an empty list, and the fields of
-    `:location`, which are each `nil`, or
+    `:rating`, `:copyright`, `:title`, `:description`, `:location`,
+    `:gps_latitude`, `:gps_longitude`, `:digital_source_type`,
+    `:document_id`, `:instance_id`, `:original_document_id` and
+    `:document_ancestors`. A property the packet does not have is
+    `nil`, except `:keywords` and `:document_ancestors`, which are
+    empty lists, and the fields of `:location`, which are each `nil`,
+    or
 
   * `{:error, :invalid_xmp}` if the packet is not well-formed XML,
     declares a DTD, or has no `rdf:RDF` element.
@@ -162,11 +178,29 @@ defmodule Image.Xmp do
     %{state | stack: [{:item, language(attributes)} | state.stack], text: []}
   end
 
-  defp push(state, element, _attributes) do
+  defp push(state, element, attributes) do
     case Map.fetch(@properties, element) do
-      {:ok, property} -> %{state | stack: [{:property, property, []} | state.stack], text: []}
+      {:ok, property} -> push_property(state, property, resource(attributes))
       :error -> %{state | stack: [:other | state.stack]}
     end
+  end
+
+  # A property whose value is a URI can be written as an empty element
+  # with an rdf:resource attribute.
+  defp push_property(state, property, nil) do
+    %{state | stack: [{:property, property, []} | state.stack], text: []}
+  end
+
+  defp push_property(state, property, resource) do
+    state = %{state | values: put_value(state.values, property, [{nil, resource}])}
+    %{state | stack: [:other | state.stack]}
+  end
+
+  defp resource(attributes) do
+    Enum.find_value(attributes, fn
+      {@rdf_namespace, _prefix, ~c"resource", resource} -> List.to_string(resource)
+      _attribute -> nil
+    end)
   end
 
   defp language(attributes) do
@@ -265,7 +299,14 @@ defmodule Image.Xmp do
       copyright: Map.get(values, :copyright),
       title: Map.get(values, :title),
       description: Map.get(values, :description),
-      location: Map.new(@location_keys, &{&1, Map.get(values, &1)})
+      location: Map.new(@location_keys, &{&1, Map.get(values, &1)}),
+      gps_latitude: Map.get(values, :gps_latitude),
+      gps_longitude: Map.get(values, :gps_longitude),
+      digital_source_type: Map.get(values, :digital_source_type),
+      document_id: Map.get(values, :document_id),
+      instance_id: Map.get(values, :instance_id),
+      original_document_id: Map.get(values, :original_document_id),
+      document_ancestors: Map.get(values, :document_ancestors, [])
     }
   end
 end

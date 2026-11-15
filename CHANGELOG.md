@@ -14,6 +14,10 @@ This is the changelog for Image version 0.74.0 released on November 4th, 2026. F
 
 * Adds `Image.iptc/1` and `Image.Iptc.extract_iptc/1` to read an image's IPTC metadata, including the `FBMD` identifier Facebook writes to Special Instructions.
 
+* Adds `Image.Privacy.scan/1`, which reports tracking and identifying data in an image's IPTC, EXIF, XMP and PNG text, such as Facebook's `FBMD` identifier, serial numbers, GPS coordinates, document IDs and AI labels.
+
+* Adds `:camera_owner_name` to `Image.exif/1`, and GPS coordinates, the IPTC digital source type and the document identifiers to `Image.xmp/1`.
+
 ### Changed
 
 * `Image.exif/1` and `Image.xmp/1` return the reason `:no_exif` or `:no_xmp` for an image without that metadata, rather than the string `"No such field"`, matching `:no_iptc` from `Image.iptc/1`.

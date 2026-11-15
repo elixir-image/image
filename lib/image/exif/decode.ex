@@ -103,6 +103,7 @@ defmodule Image.Exif.Decode do
   def tag(_, 0xA40B, value), do: {:device_setting_description, value}
   def tag(_, 0xA40C, value), do: {:subject_distance_range, subject_distance_range(value)}
   def tag(_, 0xA420, value), do: {:image_unique_id, value}
+  def tag(_, 0xA430, value), do: {:camera_owner_name, trim(value)}
   def tag(_, 0xA431, value), do: {:body_serial_number, value}
   def tag(_, 0xA432, value), do: {:lens_info, value}
   def tag(_, 0xA433, value), do: {:lens_make, value}

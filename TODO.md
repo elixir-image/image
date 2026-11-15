@@ -4,8 +4,6 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
-* [ ] **Privacy scan** — a function that reports tracking and identifying data in an image (Facebook's `FBMD` IPTC identifier, device serials, GPS, XMP document IDs, C2PA, hidden trailers), paired with metadata removal. Needs an IPTC parser first. Plan in [plans/privacy-scan.md](plans/privacy-scan.md).
-
 * [ ] **Finish the Rule 2 sweep** — `Image.compare/3` guards its options with `is_list/1` and three functions guard a callback with `is_function(fun, 1)`, so all four raise `FunctionClauseError` rather than returning an error. Both were left deliberately: #220 made non-keyword options raise on purpose, and a wrong-arity callback is a programmer error where a loud failure beats a hidden one. Decide whether that still stands.
 
 * [ ] **`Image.Social.image_usages/1` and `default_image_usage/1` raise for an unknown platform** — they return bare values rather than tuples, so converting them changes their contract shape rather than just their error path.
@@ -15,6 +13,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **Doc bullet punctuation** — around 480 documentation bullet items do not end in terminal punctuation, against the house rule. Roughly half of those legitimately end in "or", being the `X or` / `Y.` return pattern, so a blanket fix would corrupt them.
 
 ## In progress
+
+* [ ] **Privacy scan** — a function that reports tracking and identifying data in an image (Facebook's `FBMD` IPTC identifier, device serials, GPS, XMP document IDs, C2PA, hidden trailers), paired with metadata removal. Stage 1, the metadata scan, is on `main` as `Image.Privacy.scan/1`; stage 2 reads the file's bytes. Plan in [plans/privacy-scan.md](plans/privacy-scan.md).
 
 * [ ] **Livebook smart cell** — a cell that composes an `Image` pipeline from a form, previews it and writes the equivalent source into the notebook. On `main` since `81980d1` for 0.74.0, awaiting live testing in a notebook before release. Design in [plans/livebook-smart-cell.md](plans/livebook-smart-cell.md), issue [#31](https://github.com/elixir-image/image/issues/31).
 

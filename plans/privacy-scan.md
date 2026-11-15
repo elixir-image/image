@@ -50,23 +50,27 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 ## Open questions
 
-* **Module name** — `Image.Privacy` describes the purpose; `Image.Metadata.scan/1` would sit beside the existing metadata functions. Decide before stage 1.
+* **Module name** — decided 2026-11-15: `Image.Privacy.scan/1`, with `Image.Privacy.Finding`.
 
 * **Targeted removal** — whether to add a way to remove only the identifying fields (FBMD, Original Transmission Reference, serial numbers, GPS, document IDs) while keeping copyright and captions. libvips sets metadata as whole blobs, so this means rewriting the IPTC, EXIF and XMP blobs, which is a larger piece of work than the scan.
 
-* **PNG text chunks** — confirm how libvips exposes them (expected as `png-comment-N-key` header fields) before relying on that.
+* **PNG text chunks** — confirmed 2026-11-15: libvips exposes them as `png-comment-<index>-<keyword>` header fields.
+
+* **Further EXIF fields** — `UserComment` is decoded as raw bytes, the Windows `XPAuthor` and `XPComment` tags are not decoded, and maker notes can hold serial numbers. Stage 1 does not report them.
 
 * **Encoder fingerprints** — needs reference quantisation tables per platform, and those tables change without notice. Likely deferred.
 
 ## Tasks
 
-* [ ] **Stage 1: metadata scan** — `Image.Privacy.scan/1` on an image, covering IPTC, EXIF, XMP (adding the `xmpMM` and `photoshop:DocumentAncestors` fields to `Image.Xmp`) and PNG text.
+* [ ] **Further EXIF fields** — decode `UserComment` as text and the Windows `XP*` tags, and report them.
 
 * [ ] **Stage 2: byte-level scan** — for a path or binary, walk the JPEG segments for COM, APP11 JUMBF (report presence and claim generator; no signature verification), trailing data after end-of-image, and an EXIF thumbnail whose aspect ratio differs from the image.
 
 * [ ] **Guide section** — what the scan finds, what it cannot find (invisible watermarks), and how to remove what it reports.
 
 ### Done
+
+* [x] **Stage 1: metadata scan** — `Image.Privacy.scan/1` reports IPTC, EXIF, XMP and PNG text findings; `Image.exif/1` gained `:camera_owner_name` and `Image.xmp/1` the document IDs, GPS and digital source type. 2026-11-15, v0.74.0.
 
 * [x] **`Image.Iptc` parser** — `Image.iptc/1` and `Image.Iptc.extract_iptc/1` read APP13, resource-block and bare IIM forms; missing EXIF, XMP and IPTC now share atom reasons. 2026-11-15, v0.74.0.
 
