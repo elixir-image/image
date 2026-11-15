@@ -44,7 +44,7 @@ defmodule Image.Privacy do
   """
 
   alias Image.Exif.Gps
-  alias Image.Iptc
+  alias Image.{Iptc, Xmp}
   alias Image.Privacy.{Finding, Jpeg, Png}
   alias Vix.Vips.MutableImage
   alias Vix.Vips.Image, as: Vimage
@@ -230,12 +230,12 @@ defmodule Image.Privacy do
   * `{:error, %Image.Error{reason: :invalid_finding}}` if a list
     element is not a finding, or
 
-  * `{:error, %Image.Error{reason: :unsupported_finding}}` for an XMP
-    finding other than `:unreadable`, which cannot be removed on its
-    own yet, or
+  * `{:error, %Image.Error{reason: :invalid_iptc}}` or
+    `{:error, %Image.Error{reason: :invalid_xmp}}` if the image's IPTC
+    or XMP cannot be read to remove a finding from it, or
 
-  * `{:error, %Image.Error{reason: :invalid_iptc}}` if the image's IPTC
-    cannot be read to remove an IPTC finding.
+  * `{:error, %Image.Error{reason: :unsupported_finding}}` for a
+    finding this function does not know how to remove.
 
   ### Notes
 
@@ -248,6 +248,13 @@ defmodule Image.Privacy do
   * IPTC findings are removed by rewriting the IPTC block without them.
     Its other datasets and Photoshop resources are kept, and the block
     is removed when no content is left.
+
+  * XMP findings are removed from the XMP packet in place, keeping
+    every other property byte for byte. `:region_names` removes the
+    face regions whole, with their coordinates, and `:people_in_image`
+    both IPTC lists of people. GPS inside an IPTC location structure
+    describes that location and is kept when the image's GPS is
+    removed.
 
   * Findings from a JPEG's or PNG's segments, such as comments and
     data after the end of the image, need nothing removed: libvips
@@ -272,8 +279,9 @@ defmodule Image.Privacy do
   @spec remove(Vimage.t(), [Finding.t()]) :: {:ok, Vimage.t()} | {:error, Image.Error.t()}
   def remove(%Vimage{} = image, findings) when is_list(findings) do
     with {:ok, fields} <- removal_fields(image, findings),
-         {:ok, image} <- remove_fields(image, fields) do
-      remove_iptc_datasets(image, iptc_datasets(findings))
+         {:ok, image} <- remove_fields(image, fields),
+         {:ok, image} <- remove_iptc_datasets(image, block_fields(findings, :iptc)) do
+      remove_xmp_properties(image, block_fields(findings, :xmp))
     end
   end
 
@@ -296,9 +304,10 @@ defmodule Image.Privacy do
     Image.remove_metadata(image, fields)
   end
 
-  # IPTC is one blob, so its datasets are removed by rewriting it.
-  defp iptc_datasets(findings) do
-    for %Finding{source: :iptc, field: field, kind: kind} <- findings, kind != :unreadable do
+  # IPTC and XMP are each one blob, so their fields are removed by
+  # rewriting the blob.
+  defp block_fields(findings, source) do
+    for %Finding{source: ^source, field: field, kind: kind} <- findings, kind != :unreadable do
       field
     end
   end
@@ -327,6 +336,33 @@ defmodule Image.Privacy do
 
   defp rewrite_iptc(_image, {:error, _reason} = error) do
     error
+  end
+
+  defp remove_xmp_properties(image, []) do
+    {:ok, image}
+  end
+
+  defp remove_xmp_properties(image, fields) do
+    case Vimage.header_value(image, "xmp-data") do
+      {:ok, xmp} -> rewrite_xmp(image, Xmp.remove_properties(xmp, fields))
+      {:error, _no_xmp} -> {:ok, image}
+    end
+  end
+
+  defp rewrite_xmp(image, {:ok, xmp}) do
+    case Vimage.mutate(image, &MutableImage.set(&1, "xmp-data", :VipsBlob, xmp)) do
+      {:ok, image} -> {:ok, image}
+      {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :remove)}
+    end
+  end
+
+  defp rewrite_xmp(_image, {:error, :invalid_xmp}) do
+    {:error,
+     Image.Error.exception(
+       reason: :invalid_xmp,
+       operation: :remove,
+       message: "The image's XMP cannot be read to remove an XMP finding"
+     )}
   end
 
   defp removal_fields(image, findings) do
@@ -360,7 +396,7 @@ defmodule Image.Privacy do
     end
   end
 
-  defp finding_fields(_image, %Finding{source: :iptc}) do
+  defp finding_fields(_image, %Finding{source: source}) when source in [:iptc, :xmp] do
     {:ok, []}
   end
 

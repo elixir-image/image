@@ -18,7 +18,7 @@ This is the changelog for Image version 0.74.0 released on November 4th, 2026. F
 
 * Adds `Image.Privacy.scan/1`, which reports tracking and identifying data in an image's IPTC, EXIF, XMP and PNG text, such as Facebook's `FBMD` identifier, serial numbers, GPS coordinates, document IDs and AI labels. It also reports EXIF thumbnails and, given a JPEG or PNG file's path or bytes, comment segments and data hidden after the end of the image.
 
-* Adds `Image.Privacy.remove/2`, which removes the data that chosen findings describe and keeps the rest of the metadata. EXIF fields, IPTC datasets and PNG text chunks are removed one at a time.
+* Adds `Image.Privacy.remove/2`, which removes the data that chosen findings describe and keeps the rest of the metadata. Each EXIF field, IPTC dataset, XMP property and PNG text chunk is removed on its own.
 
 * Adds `:camera_owner_name`, `:photographer`, `:image_editor`, `:host_computer`, `:camera_serial_number` and the Windows `:xp_author`, `:xp_comment`, `:xp_title`, `:xp_subject` and `:xp_keywords` to `Image.exif/1`. Adds GPS coordinates, the digital source type, document identifiers, people shown, face region names, creator contact details and IPTC locations to `Image.xmp/1`.
 

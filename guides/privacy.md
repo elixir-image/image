@@ -117,7 +117,7 @@ iex> Enum.map(findings, & &1.field)
 [:artist, :thumbnail]
 ```
 
-EXIF, IPTC and PNG text findings can be removed one at a time; a `:gps` finding removes the whole GPS block. Removing Facebook's identifiers this way keeps the rest of the IPTC, such as the caption and copyright. XMP findings cannot be removed on their own yet and return `{:error, %Image.Error{reason: :unsupported_finding}}`; remove the whole XMP with `Image.remove_metadata/2` instead.
+Every finding can be removed on its own; the rest of the metadata is kept byte for byte. A `:gps` finding removes the whole EXIF GPS block, and `:region_names` removes the face regions with their coordinates. Removing Facebook's identifiers this way keeps the rest of the IPTC, such as the caption and copyright.
 
 Any image `Image` writes leaves out JPEG comments and data after the end of the image, because libvips never reads them. To check the result of a clean-up, scan the file that was written, as the examples do, rather than the image in memory.
 
@@ -131,4 +131,4 @@ Any image `Image` writes leaves out JPEG comments and data after the end of the 
 
 * **Other formats' hidden data** — comments and trailing data are read only from JPEG and PNG files.
 
-* **Removing single XMP properties** — XMP is removed whole. EXIF, IPTC and PNG text can be removed field by field with `Image.Privacy.remove/2`.
+* **Editing history** — Photoshop and Lightroom record the document and instance IDs of the files an image was made from in the XMP `DerivedFrom` and `History` properties. They are not reported yet, so removing the `:document_id` findings leaves them; `Image.remove_metadata(image, :xmp)` removes them with the rest of the XMP.

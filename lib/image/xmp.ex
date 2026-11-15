@@ -25,6 +25,8 @@ defmodule Image.Xmp do
 
   """
 
+  alias Image.Xmp.Edit
+
   @rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
   # xml:lang arrives as a charlist attribute in the XML namespace.
   @xml_namespace ~c"http://www.w3.org/XML/1998/namespace"
@@ -38,6 +40,7 @@ defmodule Image.Xmp do
   @exif "http://ns.adobe.com/exif/1.0/"
   @mwg_regions "http://www.metadataworkinggroup.com/schemas/regions/"
   @microsoft_region "http://ns.microsoft.com/photo/1.2/t/Region#"
+  @microsoft_photo "http://ns.microsoft.com/photo/1.2/"
 
   # The properties read, keyed by {namespace URI, local name}. The kind
   # says how the value is decoded: `:first` takes the first item of an
@@ -112,6 +115,32 @@ defmodule Image.Xmp do
     country: :creator_country
   ]
 
+  # The properties removed for each field `extract_xmp/1` returns. Every
+  # occurrence is removed, except that GPS inside an IPTC location
+  # structure describes that location and is kept.
+  @removal_properties %{
+    artist: [{@dc, "creator"}],
+    gps_latitude: [{@exif, "GPSLatitude"}],
+    gps_longitude: [{@exif, "GPSLongitude"}],
+    city: [{@photoshop, "City"}],
+    state: [{@photoshop, "State"}],
+    territory: [{@photoshop, "Country"}],
+    territory_code: [{@iptc_core, "CountryCode"}],
+    digital_source_type: [{@iptc_extension, "DigitalSourceType"}],
+    document_id: [{@xmp_media_management, "DocumentID"}],
+    instance_id: [{@xmp_media_management, "InstanceID"}],
+    original_document_id: [{@xmp_media_management, "OriginalDocumentID"}],
+    document_ancestors: [{@photoshop, "DocumentAncestors"}],
+    people_in_image: [
+      {@iptc_extension, "PersonInImage"},
+      {@iptc_extension, "PersonInImageWDetails"}
+    ],
+    region_names: [{@mwg_regions, "Regions"}, {@microsoft_photo, "RegionInfo"}],
+    creator_contact: [{@iptc_core, "CreatorContactInfo"}],
+    location_created: [{@iptc_extension, "LocationCreated"}],
+    locations_shown: [{@iptc_extension, "LocationShown"}]
+  }
+
   # The language given to an array item that has no xml:lang.
   @default_language "x-default"
 
@@ -166,6 +195,44 @@ defmodule Image.Xmp do
 
   def extract_xmp(_other) do
     {:error, :invalid_xmp}
+  end
+
+  @doc false
+  # Removes the properties behind the given fields of `extract_xmp/1` from
+  # the packet in place, keeping every other byte. The result is parsed
+  # again before it is returned.
+  @spec remove_properties(binary(), [atom()]) :: {:ok, binary()} | {:error, :invalid_xmp}
+  def remove_properties(xmp, fields) when is_binary(xmp) do
+    case extract_xmp(xmp) do
+      {:error, :invalid_xmp} = error -> error
+      _xmp -> cut_properties(xmp, Enum.flat_map(fields, &Map.get(@removal_properties, &1, [])))
+    end
+  end
+
+  defp cut_properties(xmp, targets) do
+    case Edit.properties(xmp) do
+      {:ok, properties} ->
+        spans = for property <- properties, removed?(property, targets), do: property.span
+        checked(Edit.cut(xmp, spans))
+
+      :error ->
+        {:error, :invalid_xmp}
+    end
+  end
+
+  defp checked(xmp) do
+    case extract_xmp(xmp) do
+      {:error, :invalid_xmp} = error -> error
+      _xmp -> {:ok, xmp}
+    end
+  end
+
+  defp removed?(%{name: {@exif, _local} = name, ancestors: ancestors}, targets) do
+    name in targets and not Enum.any?(ancestors, &Map.has_key?(@location_scopes, &1))
+  end
+
+  defp removed?(%{name: name}, targets) do
+    name in targets
   end
 
   defp parse(xmp) do

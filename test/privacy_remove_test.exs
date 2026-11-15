@@ -153,12 +153,62 @@ defmodule Image.PrivacyRemoveTest do
       assert %{copyright_notice: "Copyright (c) Kip Cole 2012", country_name: "Vietnam"} = iptc
     end
 
-    test "an XMP finding is not supported yet" do
+    test "removing XMP findings keeps the rest of the XMP" do
+      image = Image.open!(image_path("Kip_small.jpg"))
+      {:ok, findings} = Image.Privacy.scan(image)
+      saved = removed(image, findings, &(&1.source == :xmp))
+
+      refute Enum.any?(fields_with_source(saved), &match?({:xmp, _field}, &1))
+      assert {:ok, %{copyright: %{"x-default" => "Copyright (c) Kip Cole 2012"}}} = Image.xmp(saved)
+    end
+
+    test "removing one XMP finding keeps the others" do
+      image = Image.open!(image_path("Kip_small.jpg"))
+      {:ok, findings} = Image.Privacy.scan(image)
+      saved = removed(image, findings, &(&1.source == :xmp and &1.field == :artist))
+
+      xmp_fields = for {:xmp, field} <- fields_with_source(saved), do: field
+      refute :artist in xmp_fields
+      assert :document_id in xmp_fields and :creator_contact in xmp_fields
+    end
+
+    test "face regions, people and the image's GPS, keeping a location's GPS" do
+      image =
+        with_xmp("""
+        <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+          <rdf:Description
+            xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/"
+            xmlns:mwg-rs="http://www.metadataworkinggroup.com/schemas/regions/"
+            xmlns:exif="http://ns.adobe.com/exif/1.0/"
+            exif:GPSLatitude="21,1.5N">
+            <Iptc4xmpExt:PersonInImage><rdf:Bag><rdf:li>Ann</rdf:li></rdf:Bag></Iptc4xmpExt:PersonInImage>
+            <mwg-rs:Regions rdf:parseType="Resource"><mwg-rs:RegionList><rdf:Bag>
+              <rdf:li><rdf:Description mwg-rs:Name="Carol"/></rdf:li>
+            </rdf:Bag></mwg-rs:RegionList></mwg-rs:Regions>
+            <Iptc4xmpExt:LocationShown><rdf:Bag>
+              <rdf:li Iptc4xmpExt:City="Hue" exif:GPSLatitude="16,28.0N"/>
+            </rdf:Bag></Iptc4xmpExt:LocationShown>
+          </rdf:Description>
+        </rdf:RDF>
+        """)
+
+      {:ok, findings} = Image.Privacy.scan(image)
+
+      remove =
+        Enum.filter(findings, &(&1.field in [:region_names, :people_in_image, :gps_latitude]))
+
+      {:ok, cleaned} = Image.Privacy.remove(image, remove)
+
+      assert {:ok, xmp} = Image.xmp(cleaned)
+      assert xmp.region_names == [] and xmp.people_in_image == [] and is_nil(xmp.gps_latitude)
+      assert xmp.locations_shown == [%{city: "Hue", gps_latitude: "16,28.0N"}]
+    end
+
+    test "every finding removed leaves nothing for the scan to find" do
       image = Image.open!(image_path("Kip_small.jpg"))
       {:ok, findings} = Image.Privacy.scan(image)
 
-      assert {:error, %Image.Error{reason: :unsupported_finding}} =
-               Image.Privacy.remove(image, Enum.filter(findings, &(&1.source == :xmp)))
+      assert {:ok, []} = Image.Privacy.scan(removed(image, findings, fn _finding -> true end))
     end
   end
 
@@ -195,6 +245,11 @@ defmodule Image.PrivacyRemoveTest do
   defp to_jpeg(image) do
     {:ok, jpeg} = Image.write(image, :memory, suffix: ".jpg")
     jpeg
+  end
+
+  defp fields_with_source(image) do
+    {:ok, findings} = Image.Privacy.scan(image)
+    Enum.map(findings, &{&1.source, &1.field})
   end
 
   defp fields(image) do
