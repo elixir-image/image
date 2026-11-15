@@ -24,6 +24,11 @@ defmodule Image.Privacy do
     vendor's own decoder. A scan with no findings is not evidence that
     an image carries no watermark.
 
+  * **Maker notes**, the camera maker's own block in EXIF, can hold a
+    body serial number or the owner's name. They are not read yet. They
+    are removed with the rest of the EXIF by `strip_metadata: true` and
+    `Image.remove_metadata(image, :exif)`.
+
   * **Data outside the decoded image** is not visible to libvips. For a
     JPEG or PNG given as a path or binary, the scan reads the file's
     segments or chunks for comment segments and data after the end of

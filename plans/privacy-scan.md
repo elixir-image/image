@@ -1,6 +1,6 @@
 # Privacy scan
 
-**Status:** in progress, 2026-11-15
+**Status:** implemented (v0.74.0), 2026-11-15
 
 A function that checks an image for known tracking and identifying data, reports each finding, and pairs with the existing metadata removal so a caller can scan and then strip. Prompted by the `FBMD` identifier Facebook writes into IPTC 2:40 Special Instructions of the photos it processes.
 
@@ -66,8 +66,6 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 
 ## Tasks
 
-* [ ] **Maker notes** — decode the serial number, owner name and image ID tags of Canon, Nikon, Sony and Apple maker notes, which ExifTool reads and a serial number in them links photos from one camera. See the open question.
-
 ### Done
 
 * [x] **People in XMP** — `Image.xmp/1` reads people shown (`PersonInImage`, `PersonInImageWDetails`), MWG and Microsoft face region names, `CreatorContactInfo`, and `LocationShown` / `LocationCreated` as separate structures; all reported. Apple Photos face names, digiKam and Lightroom people keywords and IPTC `ImageRegion` names are not read. 2026-11-15, v0.74.0.
@@ -87,6 +85,8 @@ Probed on 2026-11-15 with hand-built JPEGs (vix 0.42.0):
 * [x] **`Image.Iptc` parser** — `Image.iptc/1` and `Image.Iptc.extract_iptc/1` read APP13, resource-block and bare IIM forms; missing EXIF, XMP and IPTC now share atom reasons. 2026-11-15, v0.74.0.
 
 ### Deferred
+
+* [ ] **Maker notes** — decode the serial number, owner name and image ID tags of Canon, Nikon, Sony and Apple maker notes, which ExifTool reads and a serial number in them links photos from one camera. Deferred 2026-11-15; tracked in `TODO.md`. See the open question.
 
 * [ ] **Stale thumbnail detection** — compare a thumbnail's content with the image to flag one that shows an earlier crop or edit. Shape alone misleads, because cameras letterbox thumbnails.
 

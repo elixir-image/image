@@ -108,7 +108,7 @@ Any image `Image` writes leaves out JPEG comments and data after the end of the 
 
 * **Invisible watermarks** — marks hidden in the pixels, such as Google SynthID, Meta's Video Seal and Digimarc, can only be read with the vendor's own decoder. A scan with no findings is not evidence that an image carries no watermark.
 
-* **Maker notes** — camera makers store their own block in EXIF, and it can hold a body serial number or the owner's name. Each maker uses its own format and the scan does not read them. `Image.remove_metadata(image, :exif)` removes them with the rest of the EXIF.
+* **Maker notes** — camera makers store their own block in EXIF, and it can hold a body serial number or the owner's name. Each maker uses its own format, and the scan does not read them yet; reading them is planned. They are removed with the rest of the EXIF by `strip_metadata: true` and `Image.remove_metadata(image, :exif)`, so remove the EXIF when serial numbers matter even if the scan reports none.
 
 * **C2PA Content Credentials** — they record an image's authenticity rather than track it, and libvips has no API to read them, so they are not reported. libvips does not carry a JPEG's credentials through a save either, so a JPEG `Image` writes has none.
 
