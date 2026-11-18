@@ -5,7 +5,8 @@ config :evision,
   display_inline_image_max_size: {8192, 8192}
 
 config :ex_aws,
-  region: "local"
+  region: "local",
+  http_client: ExAws.Request.Req
 
 config :ex_aws, :s3,
   access_key_id: {:system, "MINIO_ROOT_USER"},

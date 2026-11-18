@@ -63,7 +63,7 @@ Run that form if a font or codec you do not have is failing tests unrelated to y
 
 ### The streaming tests need minio
 
-`test/stream_image_test.exs` reads and writes through an S3-compatible endpoint, which is expected to be [minio](https://min.io) running locally. The Elixir side is `ex_aws_s3` and `hackney`, both declared `only: [:dev, :test]` in `mix.exs`, so nothing extra needs adding. The endpoint is configured in `config/test.exs`: host `127.0.0.1`, port `9000`, bucket `images`, region `local`, with credentials read from the environment.
+`test/stream_image_test.exs` reads and writes through an S3-compatible endpoint, which is expected to be [minio](https://min.io) running locally. The Elixir side is `ex_aws_s3`, declared `only: [:dev, :test]` in `mix.exs`, using `ExAws.Request.Req` over Image's optional `req` dependency, so nothing extra needs adding. The endpoint and HTTP client are configured in `config/test.exs`: host `127.0.0.1`, port `9000`, bucket `images`, region `local`, with credentials read from the environment.
 
 minio ships as a single binary; see [min.io's download page](https://min.io/download) for your platform. Run it against any empty directory, and set the two credential variables first — minio uses them for its root credentials and `config/test.exs` reads the same two names, so exporting them once serves both:
 

@@ -120,7 +120,6 @@ defmodule Image.MixProject do
 
       # For testing HTTP streaming
       {:ex_aws_s3, "~> 2.3", optional: true, only: [:dev, :test]},
-      {:hackney, "~> 1.18", optional: true, only: [:dev, :test]},
       # ExAws.S3 parses multipart-upload responses with SweetXml. Image
       # itself does not use it.
       {:sweet_xml, "~> 0.7", optional: true, only: [:dev, :test]}
