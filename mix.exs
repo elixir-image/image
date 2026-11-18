@@ -76,7 +76,7 @@ defmodule Image.MixProject do
       # Color science: conversions, gamut mapping, parsing,
       # palette generation, and the Cluster primitives used by
       # Image.Palette for image-pixel palette extraction.
-      {:color, "~> 0.13"},
+      {:color, "~> 1.0"},
 
       # FFmpeg bindings, used by Image.Video for video frame
       # extraction, seeking, and streaming.

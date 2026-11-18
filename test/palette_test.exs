@@ -29,7 +29,7 @@ defmodule Image.Palette.Test do
       {:ok, p1} = Image.Palette.extract(image, key: Nx.Random.key(42))
       {:ok, p2} = Image.Palette.extract(image, key: Nx.Random.key(42))
 
-      assert Enum.map(p1, &Color.to_hex/1) == Enum.map(p2, &Color.to_hex/1)
+      assert Enum.map(p1, &Color.to_hex!/1) == Enum.map(p2, &Color.to_hex!/1)
     end
 
     test "different :keys may produce different palettes" do
@@ -52,8 +52,8 @@ defmodule Image.Palette.Test do
       {:ok, unsorted} = Image.Palette.extract(image, sort: false, key: Nx.Random.key(42))
 
       # Same set of colours either way — sorting is a permutation.
-      assert Enum.sort(Enum.map(sorted, &Color.to_hex/1)) ==
-               Enum.sort(Enum.map(unsorted, &Color.to_hex/1))
+      assert Enum.sort(Enum.map(sorted, &Color.to_hex!/1)) ==
+               Enum.sort(Enum.map(unsorted, &Color.to_hex!/1))
     end
 
     test "small images (already under :longest_dim) skip the resize step" do

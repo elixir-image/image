@@ -2,7 +2,7 @@
 
 ## Image 0.74.0
 
-This is the changelog for Image version 0.74.0 released on November 4th, 2026. For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
+This is the changelog for Image version 0.74.0 released on November 18th, 2026. For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
 ### Added
 
@@ -31,6 +31,8 @@ This is the changelog for Image version 0.74.0 released on November 4th, 2026. F
 * `Image.Xmp.extract_xmp/1` accepts the XMP packet only as a binary, no longer a parsed SweetXml document, and `sweet_xml` is no longer a dependency.
 
 * Requires `vix` 0.42.0 or later, the first release whose precompiled libvips (8.18.7) supports gain maps.
+
+* Requires `color` 1.0.0 or later. Image does not call the Color functions whose return values changed in 1.0 (`to_hex/1`, `to_css/1,2`, `to_ansi/1,2`), so code that calls `Image` works unchanged.
 
 ### Fixed
 
