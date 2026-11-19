@@ -4450,7 +4450,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
@@ -4463,7 +4463,7 @@ defmodule Image do
   * `{:error, %Image.Error{reason: :invalid_exif}}` if its
     EXIF data cannot be read.
 
-  ### Example
+  ### Examples
 
       iex> image = Image.open!("./test/support/images/Kip_small.jpg")
       iex> {:ok, exif} = Image.exif(image)
@@ -4532,7 +4532,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
