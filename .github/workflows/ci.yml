@@ -95,11 +95,15 @@ jobs:
 
     # Step: Update dependencies
     - name: Update Ubuntu dependencies
-      run: sudo apt-get update
+      timeout-minutes: 10
+      run: sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=60 update
 
     # Step: Install the dependencies for libvips
     - name: Install libvips build dependencies
-      run: sudo apt-get install build-essential meson libwebp-dev libheif-dev libavif-dev libcgif0 libcgif-dev libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgirepository1.0-dev libgsf-1-dev libglib2.0-dev liborc-0.4-dev libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 curl xz-utils libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavdevice-dev
+      # A stalled Ubuntu mirror once hung this step for 38 minutes before
+      # failing; retry each download and give up rather than hang.
+      timeout-minutes: 15
+      run: sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=60 install build-essential meson libwebp-dev libheif-dev libavif-dev libcgif0 libcgif-dev libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgirepository1.0-dev libgsf-1-dev libglib2.0-dev liborc-0.4-dev libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 curl xz-utils libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavdevice-dev
 
     # Build whatever libvips release is current, resolved from the release
     # assets rather than pinned, so a libvips regression or a new compiler

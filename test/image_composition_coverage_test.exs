@@ -103,6 +103,73 @@ defmodule Image.CompositionCoverageTest do
       assert Image.get_pixel!(squircled, 15, 15) == [255, 0, 0, 255]
     end
 
+    test "squircle/2 has the same shape at every size" do
+      gauges =
+        for size <- [30, 64, 180, 512] do
+          {:ok, squircled} = Image.squircle(Image.new!(size, size, color: :red))
+          {_image, alpha} = Image.split_alpha(squircled)
+          inset = Enum.find(0..div(size, 2), &(hd(Image.get_pixel!(alpha, &1, &1)) > 127))
+          1 - 2 * inset / size
+        end
+
+      # The Apple icon shape the defaults approximate has a gauge of 0.809.
+      for gauge <- gauges do
+        assert_in_delta gauge, 0.809, 0.02
+      end
+    end
+
+    test "squircle/2 keeps the long sides of a wide image straight" do
+      {:ok, squircled} = Image.squircle(Image.new!(360, 120, color: :red))
+      {_image, alpha} = Image.split_alpha(squircled)
+
+      # The default radius is 46.2% of the 120-pixel height, so the top
+      # edge is straight from x = 56 to x = 304.
+      for x <- [60, 120, 180, 240, 300] do
+        assert Image.get_pixel!(alpha, x, 0) == [255]
+      end
+
+      assert Image.get_pixel!(alpha, 0, 0) == [0]
+    end
+
+    test "squircle/2 reduces a radius larger than half the shorter side" do
+      {:ok, squircled} = Image.squircle(Image.new!(30, 30, color: :red), radius: 100)
+      {_image, alpha} = Image.split_alpha(squircled)
+
+      # The curve meets each edge at its midpoint, with no spike beyond it.
+      assert hd(Image.get_pixel!(alpha, 15, 0)) > 200
+      assert hd(Image.get_pixel!(alpha, 0, 15)) > 200
+      assert Image.get_pixel!(alpha, 1, 1) == [0]
+    end
+
+    test "squircle/2 with an exponent of 2 has circular corners" do
+      {:ok, squircled} =
+        Image.squircle(Image.new!(100, 100, color: :red), radius: 50, exponent: 2)
+
+      {:ok, circle} = Image.circle(Image.new!(100, 100, color: :red))
+      {_image, squircle_alpha} = Image.split_alpha(squircled)
+      {_image, circle_alpha} = Image.split_alpha(circle)
+
+      {:ok, difference} = Image.Math.subtract(squircle_alpha, circle_alpha)
+      {:ok, mean} = Image.average(Image.Math.abs!(difference))
+      assert hd(mean) < 2
+    end
+
+    test "squircle/2 returns an error for an invalid radius or exponent" do
+      image = Image.new!(30, 30, color: :red)
+
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:radius, -1}}} =
+               Image.squircle(image, radius: -1)
+
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:radius, "big"}}} =
+               Image.squircle(image, radius: "big")
+
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:exponent, 0}}} =
+               Image.squircle(image, exponent: 0)
+
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:exponent, nil}}} =
+               Image.squircle(image, exponent: nil)
+    end
+
     test "squircle!/2 returns an image" do
       assert %Vimage{} = Image.squircle!(Image.new!(30, 30, color: :red))
     end

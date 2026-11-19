@@ -24,6 +24,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 
 ### Changed
 
+* `Image.squircle/2` draws superellipse corners joined by straight edges, so the shape is the same at every size and aspect ratio. `:radius` is now the corner radius (default 46.2% of the shorter side) and `:exponent` sets the corner's curve (default 3).
+
 * `Image.exif/1` and `Image.xmp/1` return the reason `:no_exif` or `:no_xmp` for an image without that metadata, rather than the string `"No such field"`, matching `:no_iptc` from `Image.iptc/1`.
 
 * `Image.exif/1` returns `:user_comment` as text, decoded according to its character code, rather than as a list of bytes.
@@ -35,6 +37,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 * Requires `color` 1.0.0 or later. Image does not call the Color functions whose return values changed in 1.0 (`to_hex/1`, `to_css/1,2`, `to_ansi/1,2`), so code that calls `Image` works unchanged.
 
 ### Fixed
+
+* Fix `Image.squircle/2` and `Image.avatar/2` with `shape: :squircle` drawing a spiked shape on images smaller than about 40 pixels, and returning an error rather than raising for an invalid option.
 
 * Fix `Image.remove_metadata(image, :exif)` leaving EXIF in the saved file. libvips rebuilds EXIF from per-tag `exif-ifd…` fields when it saves, so `:exif` now removes those and the EXIF thumbnail too, keeping only the orientation.
 

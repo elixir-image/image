@@ -221,8 +221,11 @@ defmodule Image do
   # Default radius of rounded corners
   @default_round_corner_radius 50
 
-  # Default squircle radius
-  @default_squircle_radius 20
+  # Default squircle corner radius, as a percentage of the shorter side,
+  # and the default superellipse exponent of each corner. Together they
+  # come closest to the Apple icon shape; see Image.squircle/2.
+  @default_squircle_radius_percent 46.2
+  @default_squircle_exponent 3
 
   # When pixelating an image resize to this scale
   # the scale up by the inverse using nearest_neighbour
@@ -7908,7 +7911,25 @@ defmodule Image do
   end
 
   @doc """
-  Apply squircle mask to an image.
+  Apply a squircle mask to an image.
+
+  Each corner is a quadrant of a superellipse,
+  `|x|ⁿ + |y|ⁿ = 1`, scaled to the corner radius, and the corners
+  are joined by straight edges. This is the flat-sided superellipse
+  that [Squircles](https://linebender.org/wiki/curves/squircle/)
+  recommends: the straight edges let one corner shape fit any
+  aspect ratio, and a superellipse with an exponent above `2` joins
+  the edge with zero curvature, so there is no visible kink where
+  the curve starts. The defaults, a radius of
+  #{@default_squircle_radius_percent}% of the shorter side and
+  an exponent of #{@default_squircle_exponent}, are the article's
+  closest match to the Apple icon shape, equivalent to the CSS
+  `border-radius: 46.2%; corner-shape: superellipse(1.585)`.
+
+  The curve is traced exactly rather than approximated with Bézier
+  curves, and the mask is anti-aliased. Because the default radius
+  is proportional to the image, the shape is the same at every
+  size.
 
   ### Arguments
 
@@ -7918,14 +7939,23 @@ defmodule Image do
 
   ### Options
 
-  * `:radius` is the desired squircle radius.
-    The default is #{@default_squircle_radius}.
+  * `:radius` is the corner radius in pixels: how far from each
+    corner the curve meets the straight edge. A radius larger than
+    half the shorter side is reduced to it, which leaves no straight
+    edge on that side. The default is #{@default_squircle_radius_percent}% of the
+    shorter side.
+
+  * `:exponent` is the superellipse exponent of each corner, a
+    positive number. `2` gives a circular arc, the same corner as
+    `Image.rounded/2`; larger values give a squarer corner that
+    curves more gradually, and values below `2` cut the corner more
+    sharply. The default is #{@default_squircle_exponent}.
 
   ### Returns
 
   * `{:ok, squircle_image}` or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -7934,26 +7964,30 @@ defmodule Image do
       iex> Image.has_alpha?(squircled)
       true
 
+      iex> image = Image.new!(120, 60, color: :red)
+      iex> {:ok, squircled} = Image.squircle(image, radius: 20, exponent: 4)
+      iex> Image.shape(squircled)
+      {120, 60, 4}
+
   """
-  @doc subject: "Generator"
+  @doc subject: "Mask"
 
   @spec squircle(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def squircle(%Vimage{} = image, options \\ []) do
     use Image.Math
 
-    options = Keyword.put_new(options, :radius, @default_squircle_radius)
     width = width(image)
     height = height(image)
 
-    {:ok, mask} = mask(:squircle, width, height, options)
+    with {:ok, mask} <- mask(:squircle, width, height, options) do
+      case split_alpha(image) do
+        {base_image, nil} ->
+          Operation.bandjoin([base_image, mask])
 
-    case split_alpha(image) do
-      {base_image, nil} ->
-        Operation.bandjoin([base_image, mask])
-
-      {base_image, alpha} ->
-        alpha = if_then_else!(mask == 0, mask, alpha)
-        Operation.bandjoin([base_image, alpha])
+        {base_image, alpha} ->
+          alpha = if_then_else!(mask == 0, mask, alpha)
+          Operation.bandjoin([base_image, alpha])
+      end
     end
   end
 
@@ -7969,8 +8003,17 @@ defmodule Image do
 
   ### Options
 
-  * `:radius` is the desired squircle radius.
-    The default is #{@default_squircle_radius}.
+  * `:radius` is the corner radius in pixels: how far from each
+    corner the curve meets the straight edge. A radius larger than
+    half the shorter side is reduced to it, which leaves no straight
+    edge on that side. The default is #{@default_squircle_radius_percent}% of the
+    shorter side.
+
+  * `:exponent` is the superellipse exponent of each corner, a
+    positive number. `2` gives a circular arc, the same corner as
+    `Image.rounded/2`; larger values give a squarer corner that
+    curves more gradually, and values below `2` cut the corner more
+    sharply. The default is #{@default_squircle_exponent}.
 
   ### Returns
 
@@ -8029,21 +8072,103 @@ defmodule Image do
     Operation.extract_band(mask, alpha_band(mask))
   end
 
+  # Each corner is the quadrant of a superellipse |x|^n + |y|^n = 1
+  # scaled to the corner radius, joined to the next corner by a straight
+  # edge. The curve is traced as a polygon rather than approximated with
+  # Bézier curves, since the mask is rasterised anyway.
   defp mask(:squircle, width, height, options) do
-    r = Keyword.get(options, :radius, @default_squircle_radius)
-    h2 = div(height, 2)
-    w2 = div(width, 2)
-    hr = height - r
-    wr = width - r
+    shorter = min(width, height)
+    default_radius = @default_squircle_radius_percent / 100 * shorter
+    radius = Keyword.get(options, :radius, default_radius)
+    exponent = Keyword.get(options, :exponent, @default_squircle_exponent)
 
-    svg = """
-    <svg viewBox="0 0 #{width} #{height}">
-      <path d="M 0 #{h2} C 0 #{r}, #{r} 0, #{w2} 0 S #{width} #{r}, #{width} #{h2}, #{wr} #{height} #{w2} #{height}, 0 #{hr}, 0 #{h2}" fill="black" />
-    </svg>
-    """
+    with {:ok, radius} <- squircle_radius(radius, shorter),
+         {:ok, exponent} <- squircle_exponent(exponent) do
+      points = squircle_points(width, height, radius, exponent)
 
-    {:ok, {mask, _flags}} = Operation.svgload_buffer(svg)
-    Operation.extract_band(mask, alpha_band(mask))
+      svg = """
+      <svg viewBox="0 0 #{width} #{height}">
+        <polygon points="#{points}" fill="black" />
+      </svg>
+      """
+
+      case Operation.svgload_buffer(svg) do
+        {:ok, {mask, _flags}} -> Operation.extract_band(mask, alpha_band(mask))
+        {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :squircle)}
+      end
+    end
+  end
+
+  # A radius larger than half the shorter side would make the corners
+  # overlap, so it is reduced to that.
+  defp squircle_radius(radius, shorter) when is_number(radius) and radius >= 0 do
+    {:ok, min(radius, shorter / 2)}
+  end
+
+  defp squircle_radius(radius, _shorter) do
+    {:error,
+     %Image.Error{
+       reason: :invalid_option,
+       value: {:radius, radius},
+       message: ":radius must be a non-negative number. Found #{inspect(radius)}"
+     }}
+  end
+
+  defp squircle_exponent(exponent) when is_number(exponent) and exponent > 0 do
+    {:ok, exponent}
+  end
+
+  defp squircle_exponent(exponent) do
+    {:error,
+     %Image.Error{
+       reason: :invalid_option,
+       value: {:exponent, exponent},
+       message: ":exponent must be a positive number. Found #{inspect(exponent)}"
+     }}
+  end
+
+  # The corners clockwise from the top right: the centre of each corner's
+  # curve, the direction it bulges in, and whether its points run from the
+  # vertical edge to the horizontal one or the other way round.
+  defp squircle_points(width, height, radius, exponent) do
+    right = width - radius
+    bottom = height - radius
+    angles = squircle_angles(radius)
+    reversed = Enum.reverse(angles)
+
+    [
+      {right, radius, 1, -1, reversed},
+      {right, bottom, 1, 1, angles},
+      {radius, bottom, -1, 1, reversed},
+      {radius, radius, -1, -1, angles}
+    ]
+    |> Enum.flat_map(&squircle_corner(&1, radius, 2 / exponent))
+    |> Enum.map_join(" ", fn {x, y} -> "#{svg_coordinate(x)},#{svg_coordinate(y)}" end)
+  end
+
+  # One point per pixel of radius traces the curve to well under a pixel.
+  defp squircle_angles(radius) do
+    steps =
+      radius
+      |> ceil()
+      |> max(8)
+      |> min(512)
+
+    for step <- 0..steps do
+      step * :math.pi() / (2 * steps)
+    end
+  end
+
+  defp squircle_corner({centre_x, centre_y, sign_x, sign_y, angles}, radius, power) do
+    for angle <- angles do
+      x = centre_x + sign_x * radius * :math.pow(abs(:math.cos(angle)), power)
+      y = centre_y + sign_y * radius * :math.pow(abs(:math.sin(angle)), power)
+      {x, y}
+    end
+  end
+
+  defp svg_coordinate(value) do
+    :erlang.float_to_binary(value * 1.0, decimals: 3)
   end
 
   @doc """

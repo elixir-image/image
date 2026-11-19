@@ -24,6 +24,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Done
 
+* [x] **Flat-sided superellipse squircle** — `Image.squircle/2` draws superellipse corners joined by straight edges, the same shape at every size; design in [plans/squircle.md](plans/squircle.md). 2026-11-20, v0.74.0.
+
 * [x] **XMP editing history in the privacy scan** — reported as `:document_history` and removable with `Image.Privacy.remove/2`. 2026-11-15, v0.74.0.
 
 * [x] **Targeted removal in the privacy scan** — `Image.Privacy.remove(image, findings)` removes each EXIF field, IPTC dataset, XMP property and PNG text chunk on its own, keeping the rest. 2026-11-15, v0.74.0.
