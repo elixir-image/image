@@ -3739,7 +3739,7 @@ defmodule Image do
   defp build_composition(image, prev_x, prev_y, prev_width, prev_height, acc, options) do
     import Compose, only: [get_x: 6, get_y: 6]
 
-    options = Map.merge(Compose.default_composit_options(), options)
+    options = Map.merge(Compose.default_composite_options(), options)
 
     with {:ok, x} <- get_x(image, prev_x, prev_width, options.x, options.dx, options.x_baseline),
          {:ok, y} <- get_y(image, prev_y, prev_height, options.y, options.dy, options.y_baseline),

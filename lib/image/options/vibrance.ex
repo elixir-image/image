@@ -18,11 +18,6 @@ defmodule Image.Options.Vibrance do
 
   @default_vibrance_threshold 60
 
-  @doc false
-  def default_vibrance_threshold do
-    @default_vibrance_threshold
-  end
-
   @doc """
   Validate the options for `Image.vibrance/3`.
 

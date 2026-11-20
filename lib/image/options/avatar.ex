@@ -18,6 +18,12 @@ defmodule Image.Options.Avatar do
   # this library
   @default_avatar_size 180
 
+  @doc """
+  Validate the options for `Image.avatar/2`.
+
+  See `t:Image.Options.Avatar.avatar_options/0`.
+
+  """
   def validate_options(options) do
     options = Keyword.merge(default_options(), options)
 

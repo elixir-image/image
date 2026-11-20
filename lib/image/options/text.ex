@@ -30,7 +30,7 @@ defmodule Image.Options.Text do
           | {:justify, boolean()}
         ]
 
-  def default_options do
+  defp default_options do
     [
       font: "Helvetica",
       font_size: 50,
@@ -295,9 +295,9 @@ defmodule Image.Options.Text do
     :erlang.iolist_to_binary(["#", convert_color(r), convert_color(g), convert_color(b)])
   end
 
-  @doc false
   # Any `t:Image.Pixel.opacity/0`, normalized to the 0.0..1.0 fraction
   # the drawing operations multiply by.
+  @doc false
   def validate_opacity(option, opacity, options) do
     case Image.Pixel.opacity_fraction(opacity) do
       {:ok, normalized} -> {:cont, Keyword.put(options, option, normalized)}
@@ -320,8 +320,7 @@ defmodule Image.Options.Text do
     %Image.Error{reason: :invalid_option, value: option, message: message}
   end
 
-  @doc false
-  def invalid_option(option, value) do
+  defp invalid_option(option, value) do
     message = "Invalid option or option value: #{option}: #{inspect(value)}"
     %Image.Error{reason: :invalid_option, value: value, message: message}
   end

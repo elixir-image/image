@@ -49,8 +49,7 @@ defmodule Image.Options.Draw do
             {:mode, CombineMode.t()}
           ]
 
-  @doc false
-  def default_options(:circle) do
+  defp default_options(:circle) do
     [
       color: :black,
       fill: true,
@@ -58,8 +57,7 @@ defmodule Image.Options.Draw do
     ]
   end
 
-  @doc false
-  def default_options(:rect) do
+  defp default_options(:rect) do
     [
       color: :black,
       fill: true,
@@ -67,44 +65,38 @@ defmodule Image.Options.Draw do
     ]
   end
 
-  @doc false
-  def default_options(:line) do
+  defp default_options(:line) do
     [
       color: :black
     ]
   end
 
-  @doc false
-  def default_options(:point) do
+  defp default_options(:point) do
     [
       color: :black
     ]
   end
 
-  @doc false
-  def default_options(:mask) do
+  defp default_options(:mask) do
     [
       color: :black
     ]
   end
 
-  @doc false
-  def default_options(:flood) do
+  defp default_options(:flood) do
     [
       color: :black,
       equal: false
     ]
   end
 
-  @doc false
-  def default_options(:image) do
+  defp default_options(:image) do
     [
       mode: :VIPS_COMBINE_MODE_SET
     ]
   end
 
-  @doc false
-  def default_options(:smudge) do
+  defp default_options(:smudge) do
     []
   end
 
@@ -181,14 +173,7 @@ defmodule Image.Options.Draw do
     {:halt, {:error, invalid_option(type, option, value)}}
   end
 
-  @doc false
-  def invalid_option(type, option) do
-    message = "Invalid option or option value for draw_#{type}: #{inspect(option)}"
-    %Image.Error{reason: :invalid_option, value: option, message: message}
-  end
-
-  @doc false
-  def invalid_option(type, option, value) do
+  defp invalid_option(type, option, value) do
     message = "Invalid option or option value for draw_#{type}: #{option}: #{inspect(value)}"
     %Image.Error{reason: :invalid_option, value: value, message: message}
   end

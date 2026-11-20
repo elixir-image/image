@@ -132,7 +132,7 @@ defmodule Image.Options.Meme do
     }
   end
 
-  def no_such_font_file(file) do
+  defp no_such_font_file(file) do
     message = "Font file #{inspect(file)} could not be found"
     %Image.Error{message: message, reason: message, path: file}
   end
@@ -155,7 +155,7 @@ defmodule Image.Options.Meme do
     ]
   end
 
-  def default_margin(image) do
+  defp default_margin(image) do
     div(Image.width(image), 20)
   end
 

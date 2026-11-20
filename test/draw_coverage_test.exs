@@ -327,36 +327,6 @@ defmodule Image.DrawCoverage.Test do
   end
 
   describe "Image.Options.Draw" do
-    test "default options for each draw operation" do
-      assert Image.Options.Draw.default_options(:point) == [color: :black]
-      assert Image.Options.Draw.default_options(:line) == [color: :black]
-      assert Image.Options.Draw.default_options(:mask) == [color: :black]
-
-      assert Image.Options.Draw.default_options(:circle) == [
-               color: :black,
-               fill: true,
-               stroke_width: 1
-             ]
-
-      assert Image.Options.Draw.default_options(:rect) == [
-               color: :black,
-               fill: true,
-               stroke_width: 1
-             ]
-
-      assert Image.Options.Draw.default_options(:flood) == [color: :black, equal: false]
-      assert Image.Options.Draw.default_options(:image) == [mode: :VIPS_COMBINE_MODE_SET]
-      assert Image.Options.Draw.default_options(:smudge) == []
-    end
-
-    test "invalid_option/2 and invalid_option/3 build error structs" do
-      assert %Image.Error{message: "Invalid option or option value for draw_rect: :bogus"} =
-               Image.Options.Draw.invalid_option(:rect, :bogus)
-
-      assert %Image.Error{message: "Invalid option or option value for draw_rect: bogus: 1"} =
-               Image.Options.Draw.invalid_option(:rect, :bogus, 1)
-    end
-
     test "flood :equal option is normalised to a boolean" do
       assert {:ok, %{equal: true}} =
                Image.Options.Draw.validate_options(white_image(), :flood, equal: 1)

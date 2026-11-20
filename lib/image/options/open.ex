@@ -101,6 +101,12 @@ defmodule Image.Options.Open do
 
   @default_access :VIPS_ACCESS_RANDOM
 
+  @doc """
+  Validate the options for `Image.open/2`.
+
+  See `t:Image.Options.Open.image_open_options/0`.
+
+  """
   def validate_options(options) do
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
       {:error, value} ->
@@ -111,22 +117,22 @@ defmodule Image.Options.Open do
     end
   end
 
-  def validate_option({:access, access}, options) when is_map_key(@access_map, access) do
+  defp validate_option({:access, access}, options) when is_map_key(@access_map, access) do
     access = Map.fetch!(@access_map, access)
     options = Keyword.put(options, :access, access)
 
     {:cont, options}
   end
 
-  def validate_option({:autorotate, rotate}, _options) do
+  defp validate_option({:autorotate, rotate}, _options) do
     {:halt, {:error, invalid_autorotate_option(rotate)}}
   end
 
-  def validate_option({:page, n}, options) when is_integer(n) and n in 0..100_000 do
+  defp validate_option({:page, n}, options) when is_integer(n) and n in 0..100_000 do
     {:cont, options}
   end
 
-  def validate_option({:pages, :all}, options) do
+  defp validate_option({:pages, :all}, options) do
     options =
       options
       |> Keyword.delete(:pages)
@@ -135,8 +141,8 @@ defmodule Image.Options.Open do
     {:cont, options}
   end
 
-  def validate_option({:pages, n}, options)
-      when is_integer(n) and (n == -1 or n in 1..100_000) do
+  defp validate_option({:pages, n}, options)
+       when is_integer(n) and (n == -1 or n in 1..100_000) do
     options =
       options
       |> Keyword.delete(:pages)
@@ -145,20 +151,20 @@ defmodule Image.Options.Open do
     {:cont, options}
   end
 
-  def validate_option({:shrink, shrink}, options) when is_integer(shrink) and shrink in 1..16 do
+  defp validate_option({:shrink, shrink}, options) when is_integer(shrink) and shrink in 1..16 do
     {:cont, options}
   end
 
-  def validate_option({:scale, scale}, options) when is_integer(scale) and scale in 1..1024 do
+  defp validate_option({:scale, scale}, options) when is_integer(scale) and scale in 1..1024 do
     {:cont, options}
   end
 
-  def validate_option({:scale, scale}, options)
-      when is_float(scale) and scale > 0.0 and scale <= 1024.0 do
+  defp validate_option({:scale, scale}, options)
+       when is_float(scale) and scale > 0.0 and scale <= 1024.0 do
     {:cont, options}
   end
 
-  def validate_option({:fail_on, failure}, options) when failure in @failure_modes do
+  defp validate_option({:fail_on, failure}, options) when failure in @failure_modes do
     failure = Map.fetch!(@fail_on_open, failure)
 
     options =
@@ -169,7 +175,7 @@ defmodule Image.Options.Open do
     {:cont, options}
   end
 
-  def validate_option(option, _options) do
+  defp validate_option(option, _options) do
     {:halt, {:error, invalid_option(option)}}
   end
 

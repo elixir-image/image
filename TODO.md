@@ -4,9 +4,7 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
-* [ ] **Stop exposing helpers from the options modules** — `Image.Options.Open`, `Write`, `New`, `Text`, `Meme`, `Avatar` and `Compose` export undocumented helpers such as `validate_options/1` and `default_composit_options/0`; make them private or `@doc false`.
-
-* [ ] **`Image.Math` visibility** — 44 undocumented public functions; decide whether the module becomes `@moduledoc false` or is documented.
+* [ ] **Document `Image.Math`** — the module stays public, since `use Image.Math` is a documented feature; its 44 operator functions need docs (decided 2026-11-20).
 
 * [ ] **Missing `@spec`s** — 84 public functions have none, most in `Image.Math` and `Image`.
 
@@ -35,6 +33,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **Options modules stop exposing helpers** — each `Image.Options.*` module shows only `validate_options`; helpers other modules need are `@doc false`, the rest private, and dead ones removed. 2026-11-20, v0.74.0.
 
 * [x] **Bundled meme font** — `Image.meme/3` uses Anton (SIL OFL 1.1) in place of a copy of Monotype's Impact, and the three Impact files are gone from the package. 2026-11-20, v0.74.0.
 

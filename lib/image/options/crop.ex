@@ -218,37 +218,6 @@ defmodule Image.Options.Crop do
      )}
   end
 
-  @doc false
-  def normalize_dims({w, _h} = dims, width, height) when is_positive_percent(width) do
-    normalize_dims(dims, round(width * w), height)
-  end
-
-  def normalize_dims({_w, h} = dims, width, height) when is_positive_percent(height) do
-    normalize_dims(dims, width, round(height * h))
-  end
-
-  def normalize_dims(_dims, width, height) when is_size(width) and is_size(height) do
-    {width, height}
-  end
-
-  def normalize_dims(_dims, width, _height)
-      when not is_integer(width) and not is_positive_percent(width) do
-    {:error, size_error("width", width)}
-  end
-
-  def normalize_dims(_dims, _width, height)
-      when not is_integer(height) and not is_positive_percent(height) do
-    {:error, size_error("height", height)}
-  end
-
-  def normalize_dims(_dims, width, height) do
-    {:error,
-     crop_error(
-       "Could not define a crop region with dimensions " <>
-         "width #{inspect(width)} and height #{inspect(height)}"
-     )}
-  end
-
   defp size_error(dim, size) do
     crop_error(
       "#{dim} must be a percentage expressed as a float greater than 0.0 and " <>

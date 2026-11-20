@@ -18,7 +18,7 @@ defmodule Image.Options.New do
 
   @default_bands 3
 
-  def default_options do
+  defp default_options do
     [
       format: {:u, 8},
       interpretation: :srgb,
@@ -128,26 +128,19 @@ defmodule Image.Options.New do
     {:halt, {:error, invalid_option(option, value)}}
   end
 
-  def set_default_bands(%{bands: _bands} = options) do
+  defp set_default_bands(%{bands: _bands} = options) do
     options
   end
 
-  def set_default_bands(%{color: color} = options) when is_integer(color) do
+  defp set_default_bands(%{color: color} = options) when is_integer(color) do
     Map.put(options, :bands, @default_bands)
   end
 
-  def set_default_bands(%{color: color} = options) when is_list(color) do
+  defp set_default_bands(%{color: color} = options) when is_list(color) do
     Map.put(options, :bands, length(color))
   end
 
-  @doc false
-  def invalid_option(option) do
-    message = "Invalid option or option value: #{inspect(option)}"
-    %Image.Error{reason: :invalid_option, value: option, message: message}
-  end
-
-  @doc false
-  def invalid_option(option, value) do
+  defp invalid_option(option, value) do
     message = "Invalid option or option value: #{option}: #{inspect(value)}"
     %Image.Error{reason: :invalid_option, value: value, message: message}
   end

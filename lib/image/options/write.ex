@@ -69,26 +69,19 @@ defmodule Image.Options.Write do
   @typedoc "Allowable compression types for heif images."
   @type heif_compression :: :hevc | :avc | :jpeg | :av1
 
-  @doc false
-  defguard is_jpg(image_type) when image_type in [".jpg", ".jpeg"]
+  defguardp is_jpg(image_type) when image_type in [".jpg", ".jpeg"]
 
-  @doc false
-  defguard is_png(image_type) when image_type in [".png"]
+  defguardp is_png(image_type) when image_type in [".png"]
 
-  @doc false
-  defguard is_webp(image_type) when image_type in [".webp"]
+  defguardp is_webp(image_type) when image_type in [".webp"]
 
-  @doc false
-  defguard is_tiff(image_type) when image_type in [".tiff", ".tif"]
+  defguardp is_tiff(image_type) when image_type in [".tiff", ".tif"]
 
-  @doc false
-  defguard is_heif(image_type) when image_type in [".heif", ".heic"]
+  defguardp is_heif(image_type) when image_type in [".heif", ".heic"]
 
-  @doc false
-  defguard is_avif(image_type) when image_type == ".avif"
+  defguardp is_avif(image_type) when image_type == ".avif"
 
-  @doc false
-  defguard is_gif(image_type) when image_type in [".gif", ".GIF"]
+  defguardp is_gif(image_type) when image_type in [".gif", ".GIF"]
 
   @suffix_map %{
     ".jpg" => :jpg,
@@ -117,6 +110,7 @@ defmodule Image.Options.Write do
   @suffix_keys Map.keys(@suffix_map)
   @suffix_values Map.values(@suffix_map) |> Enum.uniq()
 
+  @doc false
   def validate_options(%Vimage{} = image, options, :require_suffix) when is_list(options) do
     case Keyword.fetch(options, :suffix) do
       {:ok, _options} ->

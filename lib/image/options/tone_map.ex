@@ -40,19 +40,11 @@ defmodule Image.Options.ToneCurve do
   """
   @type tone_adjustment :: -30..30
 
-  @doc """
-  Valid range for setting the black point and
-  white point.
+  # Valid range for setting the black point and white point.
+  defguardp is_set_point(point) when point in 0..100
 
-  """
-  defguard is_set_point(point) when point in 0..100
-
-  @doc """
-  The range in which the shadows, mids and highlights
-  can be adjusted.
-
-  """
-  defguard is_tone_adjustment(tone) when tone in -30..30
+  # The range in which the shadows, mids and highlights can be adjusted.
+  defguardp is_tone_adjustment(tone) when tone in -30..30
 
   @doc """
   Validate the options for `Image.apply_tone_curve/2`.

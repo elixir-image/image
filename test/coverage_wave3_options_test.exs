@@ -124,20 +124,8 @@ defmodule Image.CoverageWave3.Options.Test do
     end
   end
 
-  describe "Image.Options.Crop normalize_dims" do
+  describe "Image.Options.Crop normalize_box" do
     alias Image.Options.Crop
-
-    test "percent width and height are scaled to pixels" do
-      assert Crop.normalize_dims({100, 100}, 0.5, 0.5) == {50, 50}
-      assert Crop.normalize_dims({100, 100}, 0.5, 50) == {50, 50}
-      assert Crop.normalize_dims({100, 100}, 50, 0.5) == {50, 50}
-    end
-
-    test "invalid dimensions return errors" do
-      assert {:error, %Image.Error{}} = Crop.normalize_dims({100, 100}, :bogus, 50)
-      assert {:error, %Image.Error{}} = Crop.normalize_dims({100, 100}, 50, :bogus)
-      assert {:error, %Image.Error{}} = Crop.normalize_dims({100, 100}, -5, -5)
-    end
 
     test "normalize_box rejects invalid top and generic invalid combinations" do
       assert {:error, %Image.Error{}} = Crop.normalize_box({100, 100}, 0, :bogus, 10, 10)
@@ -261,12 +249,6 @@ defmodule Image.CoverageWave3.Options.Test do
 
     test "height without width is an error" do
       assert {:error, _} = Image.Options.Text.validate_options(height: 50, width: nil)
-    end
-  end
-
-  describe "Image.Options.Vibrance" do
-    test "default_vibrance_threshold/0" do
-      assert Image.Options.Vibrance.default_vibrance_threshold() == 60
     end
   end
 

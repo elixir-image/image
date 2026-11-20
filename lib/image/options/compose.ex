@@ -179,7 +179,8 @@ defmodule Image.Options.Compose do
      }}
   end
 
-  def default_composit_options do
+  @doc false
+  def default_composite_options do
     %{
       x: nil,
       y: nil,

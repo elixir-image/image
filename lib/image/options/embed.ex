@@ -194,9 +194,8 @@ defmodule Image.Options.Embed do
      }}
   end
 
-  @doc false
-  def normalize_dim(a, _max) when a >= 0, do: a
-  def normalize_dim(a, max) when a < 0, do: max + a
+  defp normalize_dim(a, _max) when a >= 0, do: a
+  defp normalize_dim(a, max) when a < 0, do: max + a
 
   defp default_options do
     [

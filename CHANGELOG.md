@@ -28,6 +28,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 
 * `Image.meme/3` defaults to the bundled Anton font, under the SIL Open Font License 1.1, in place of a copy of Impact whose licence did not allow redistribution. The three Impact font files are no longer in the package.
 
+* The `Image.Options.*` modules export only `validate_options` and no longer expose their helpers. The `Image.Options.ToneCurve` guards `is_set_point/1` and `is_tone_adjustment/1` are now private.
+
 * `Image.exif/1` and `Image.xmp/1` return the reason `:no_exif` or `:no_xmp` for an image without that metadata, rather than the string `"No such field"`, matching `:no_iptc` from `Image.iptc/1`.
 
 * `Image.exif/1` returns `:user_comment` as text, decoded according to its character code, rather than as a list of bytes.

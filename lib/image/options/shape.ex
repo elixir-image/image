@@ -1,9 +1,16 @@
 defmodule Image.Options.Shape do
   @moduledoc false
 
-  import Image.Options.Text
+  import Image.Options.Text,
+    only: [
+      invalid_option: 1,
+      validate_color: 3,
+      validate_opacity: 3,
+      validate_stroke_width: 3,
+      wrap: 2
+    ]
 
-  def default_polygon_options do
+  defp default_polygon_options do
     [
       opacity: 0.7,
       fill_color: "none",
@@ -12,6 +19,7 @@ defmodule Image.Options.Shape do
     ]
   end
 
+  @doc false
   def validate_polygon_options(options) do
     validate_options(options, default_polygon_options())
   end
