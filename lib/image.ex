@@ -4153,12 +4153,14 @@ defmodule Image do
     image.
 
   * `:font` is the name of the font family to be applied.
-    The default is `"Impact"`.
+    The default is `"Anton"`, a display face in the style of
+    Impact that is included with `Image` under the SIL Open Font
+    License, so the default meme looks the same on every system.
 
   * `:font_file` is the path name to a font file that will be
     loaded. The default is `:default` which will load the included
-    `Impact` font if the font family is `"Impact"`. If the font family
-    is not `"Impact"` and the `:font_file` is `:default` then the
+    `Anton` font if the font family is `"Anton"`. If the font family
+    is not `"Anton"` and the `:font_file` is `:default` then the
     font displayed is resolved by the underlying operating system.
     If `:font_file` is a string, then it is expected to be a valid
     font file. If `:font_file` is set to a path then the `:font` option
@@ -4252,15 +4254,14 @@ defmodule Image do
     image.
 
   * `:font` is the name of the font family to be applied.
-    The default is `"Impact"`. If the font family name is `"Impact"`
-    then the included `unicode.impact.ttf` font file will also be
-    loaded. This ensures that the `Impact` font is available on all
-    systems.
+    The default is `"Anton"`, a display face in the style of
+    Impact that is included with `Image` under the SIL Open Font
+    License, so the default meme looks the same on every system.
 
   * `:font_file` is the path name to a font file that will be
     loaded. The default is `:default` which will load the included
-    `Impact` font if the font family is `"Impact"`. If the font family
-    is not `"Impact"` and the `:font_file` is `:default` then the
+    `Anton` font if the font family is `"Anton"`. If the font family
+    is not `"Anton"` and the `:font_file` is `:default` then the
     font displayed is resolved by the underlying operating system.
     If `:font_file` is a string, then it is expected to be a valid
     font file. If `:font_file` is set to a path then the `:font` option

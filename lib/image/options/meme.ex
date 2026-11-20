@@ -6,6 +6,12 @@ defmodule Image.Options.Meme do
 
   alias Image.Pixel
 
+  # The font Image.meme/3 uses by default, and the file it is loaded from.
+  # Anton is a libre display face in the style of Impact, distributed
+  # under the SIL Open Font License 1.1 (see LICENSE.md).
+  @bundled_font "Anton"
+  @bundled_font_file "priv/fonts/Anton-Regular.ttf"
+
   @typedoc "Valid font weights"
   @type font_weight :: :ultralight | :light | :normal | :bold | :ultrabold | :heavy
 
@@ -40,8 +46,8 @@ defmodule Image.Options.Meme do
       options ->
         options =
           cond do
-            options[:font] == "Impact" && options[:fontfile] == :default ->
-              Keyword.put(options, :fontfile, font_file("Impact"))
+            options[:font] == @bundled_font && options[:fontfile] == :default ->
+              Keyword.put(options, :fontfile, bundled_font_file())
 
             options[:fontfile] == :default ->
               Keyword.delete(options, :fontfile)
@@ -59,8 +65,6 @@ defmodule Image.Options.Meme do
   end
 
   defp validate_option({:font_file, font_file}, options) when is_binary(font_file) do
-    font_file = font_file(font_file)
-
     if File.exists?(font_file) do
       options =
         options
@@ -138,7 +142,7 @@ defmodule Image.Options.Meme do
 
     [
       text: "",
-      font: "Impact",
+      font: @bundled_font,
       font_file: :default,
       weight: :bold,
       color: :white,
@@ -167,11 +171,7 @@ defmodule Image.Options.Meme do
     div(height, 72)
   end
 
-  defp font_file("Impact") do
-    Path.join(to_string(:code.priv_dir(:image)), "fonts/unicode.impact.ttf")
-  end
-
-  defp font_file(name) when is_binary(name) do
-    name
+  defp bundled_font_file do
+    Application.app_dir(:image, @bundled_font_file)
   end
 end

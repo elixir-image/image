@@ -26,6 +26,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 
 * `Image.squircle/2` draws superellipse corners joined by straight edges, so the shape is the same at every size and aspect ratio. `:radius` is now the corner radius (default 46.2% of the shorter side) and `:exponent` sets the corner's curve (default 3).
 
+* `Image.meme/3` defaults to the bundled Anton font, under the SIL Open Font License 1.1, in place of a copy of Impact whose licence did not allow redistribution. The three Impact font files are no longer in the package.
+
 * `Image.exif/1` and `Image.xmp/1` return the reason `:no_exif` or `:no_xmp` for an image without that metadata, rather than the string `"No such field"`, matching `:no_iptc` from `Image.iptc/1`.
 
 * `Image.exif/1` returns `:user_comment` as text, decoded according to its character code, rather than as a list of bytes.

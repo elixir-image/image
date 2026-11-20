@@ -4,11 +4,21 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
-* [ ] **Finish the Rule 2 sweep** — `Image.compare/3` guards its options with `is_list/1` and three functions guard a callback with `is_function(fun, 1)`, so all four raise `FunctionClauseError` rather than returning an error. Both were left deliberately: #220 made non-keyword options raise on purpose, and a wrong-arity callback is a programmer error where a loud failure beats a hidden one. Decide whether that still stands.
+* [ ] **Stop exposing helpers from the options modules** — `Image.Options.Open`, `Write`, `New`, `Text`, `Meme`, `Avatar` and `Compose` export undocumented helpers such as `validate_options/1` and `default_composit_options/0`; make them private or `@doc false`.
+
+* [ ] **`Image.Math` visibility** — 44 undocumented public functions; decide whether the module becomes `@moduledoc false` or is documented.
+
+* [ ] **Missing `@spec`s** — 84 public functions have none, most in `Image.Math` and `Image`.
+
+* [ ] **House-rule violations in `lib`** — `String.to_atom/1` on a smart cell text field (`lib/image/smart_cell/transform.ex`), 56 `{:ok, _} =` match-bangs (some on user-input paths), and six `with … else` clauses.
+
+* [ ] **Run the excluded tests in CI** — about 40 tests tagged `text`, `text_avatar`, `video`, `circular_gradient` and `full` never run in CI.
 
 * [ ] **`Image.Social.image_usages/1` and `default_image_usage/1` raise for an unknown platform** — they return bare values rather than tuples, so converting them changes their contract shape rather than just their error path.
 
 * [ ] **`Image.compare/3`'s "Invalid metric" error uses a string `:reason`** — every other error path uses an atom after #231. Changing it is breaking.
+
+* [ ] **`:font_file` has no effect on macOS** — the precompiled libvips renders text with Pango's CoreText backend, which never sees a font registered through fontconfig, so `Image.meme/3` and `Image.Text` fall back to a system font unless `PANGOCAIRO_BACKEND=fc` is set. Linux is unaffected. Belongs upstream in libvips or vix's precompiled build.
 
 * [ ] **Doc bullet punctuation** — around 480 documentation bullet items do not end in terminal punctuation, against the house rule. Roughly half of those legitimately end in "or", being the `X or` / `Y.` return pattern, so a blanket fix would corrupt them.
 
@@ -18,11 +28,15 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Deferred
 
+* [ ] **Remove `Image.opacity/2` and `Image.opacity!/2`** — deprecated; removed at 1.0 and not before (user's decision, 2026-11-20).
+
 * [ ] **Maker notes in the privacy scan** — camera makers' proprietary EXIF blocks can hold body serial numbers and owner names (Canon's `OwnerName` and `InternalSerialNumber`, for example), and `Image.Privacy.scan/1` does not read them. Needs a parser per maker, starting with Canon, Nikon, Sony and Apple, and sample photos to test against. `Image.remove_metadata(image, :exif)` and `strip_metadata: true` already remove them. Detail in [plans/privacy-scan.md](plans/privacy-scan.md).
 
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **Bundled meme font** — `Image.meme/3` uses Anton (SIL OFL 1.1) in place of a copy of Monotype's Impact, and the three Impact files are gone from the package. 2026-11-20, v0.74.0.
 
 * [x] **Flat-sided superellipse squircle** — `Image.squircle/2` draws superellipse corners joined by straight edges, the same shape at every size; design in [plans/squircle.md](plans/squircle.md). 2026-11-20, v0.74.0.
 

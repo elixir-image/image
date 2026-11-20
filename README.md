@@ -56,7 +56,7 @@ Documentation can be found at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 * **Social media presets** — `Image.Social` with the standard image sizes for Twitter, Facebook, Instagram, LinkedIn, Pinterest, YouTube, Snapchat, and TikTok.
 
-* **Bundled fonts** — ships the Impact font for meme rendering so `Image.meme/3` works out of the box.
+* **Bundled fonts** — ships Anton, an openly licensed font in the style of Impact, so `Image.meme/3` renders the same everywhere.
 
 * **Structured errors** — every fallible function returns `{:ok, value}` or `{:error, %Image.Error{}}`. The error struct carries `:reason` (atom or `{atom, value}`), `:operation`, `:path`, `:value`, and a derived `:message`. Bang variants raise the same struct.
 
@@ -303,4 +303,4 @@ The full API reference is at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 ## License
 
-Apache 2.0. See [LICENSE.md](https://github.com/elixir-image/image/blob/v0.74.0/LICENSE.md) for the full text.
+Apache 2.0, with the bundled Anton font under the SIL Open Font License 1.1. See [LICENSE.md](https://github.com/elixir-image/image/blob/v0.74.0/LICENSE.md) for the full text.
