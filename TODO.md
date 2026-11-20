@@ -4,8 +4,6 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
-* [ ] **Document `Image.Math`** — the module stays public, since `use Image.Math` is a documented feature; its 44 operator functions need docs (decided 2026-11-20).
-
 * [ ] **Missing `@spec`s** — 84 public functions have none, most in `Image.Math` and `Image`.
 
 * [ ] **House-rule violations in `lib`** — `String.to_atom/1` on a smart cell text field (`lib/image/smart_cell/transform.ex`), 56 `{:ok, _} =` match-bangs (some on user-input paths), and six `with … else` clauses.
@@ -33,6 +31,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **Document `Image.Math`** — the 44 undocumented functions have docs and doctests; the module stays public for `use Image.Math`. 2026-11-20, v0.74.0.
 
 * [x] **Options modules stop exposing helpers** — each `Image.Options.*` module shows only `validate_options`; helpers other modules need are `@doc false`, the rest private, and dead ones removed. 2026-11-20, v0.74.0.
 

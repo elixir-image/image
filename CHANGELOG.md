@@ -42,6 +42,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 
 ### Fixed
 
+* Fix the `@spec` of `Image.Math.less_than!/2` and the other comparison `!` functions, which return a boolean, not a number, when given two numbers.
+
 * Fix `Image.squircle/2` and `Image.avatar/2` with `shape: :squircle` drawing a spiked shape on images smaller than about 40 pixels, and returning an error rather than raising for an invalid option.
 
 * Fix `Image.remove_metadata(image, :exif)` leaving EXIF in the saved file. libvips rebuilds EXIF from per-tag `exif-ifd…` fields when it saves, so `:exif` now removes those and the EXIF thumbnail too, keeping only the orientation.
