@@ -16,6 +16,9 @@ env:
   EVISION_PREFER_PRECOMPILED: true
   # VIX_COMPILATION_MODE: PLATFORM_PROVIDED_LIBVIPS
   VIX_COMPILATION_MODE: PRECOMPILED_NIF_AND_LIBVIPS
+  # What xav's Makefile asks pkg-config for. Changing this list changes
+  # the Ubuntu package cache key.
+  APT_PACKAGES: pkg-config libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libswresample-dev libavdevice-dev
 
 permissions:
   contents: read
@@ -93,69 +96,46 @@ jobs:
         restore-keys: |
           mix-${{ matrix.elixir }}-${{ matrix.otp }}-
 
-    # Step: Update dependencies
-    - name: Update Ubuntu dependencies
+    # vix loads its own precompiled libvips (VIX_COMPILATION_MODE above),
+    # so no system libvips is built. The only native code compiled from
+    # source is xav's NIF, which needs the ffmpeg development packages.
+    # Their .deb files are cached, so a slow Ubuntu mirror only matters
+    # when the package list or the Ubuntu release changes.
+    - name: Identify the Ubuntu release and package list
+      run: |
+        . /etc/os-release
+        echo "UBUNTU_RELEASE=${ID}${VERSION_ID}" >> $GITHUB_ENV
+        echo "APT_PACKAGES_HASH=$(echo "${APT_PACKAGES}" | sha256sum | cut -c1-16)" >> $GITHUB_ENV
+
+    - name: Cache Ubuntu packages
+      uses: actions/cache@v6
+      with:
+        path: ~/apt-archives
+        key: apt-${{ env.UBUNTU_RELEASE }}-${{ env.APT_PACKAGES_HASH }}
+        restore-keys: |
+          apt-${{ env.UBUNTU_RELEASE }}-
+
+    - name: Update the Ubuntu package lists
       timeout-minutes: 10
       run: sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=60 update
 
-    # Step: Install the dependencies for libvips
-    - name: Install libvips build dependencies
-      # A stalled Ubuntu mirror once hung this step for 38 minutes before
-      # failing; retry each download and give up rather than hang.
-      timeout-minutes: 15
-      run: sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=60 install build-essential meson libwebp-dev libheif-dev libavif-dev libcgif0 libcgif-dev libxml2-dev libfftw3-dev libmagickwand-dev libopenexr-dev liborc-0.4-0 gobject-introspection libgirepository1.0-dev libgsf-1-dev libglib2.0-dev liborc-0.4-dev libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 curl xz-utils libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavdevice-dev
-
-    # Build whatever libvips release is current, resolved from the release
-    # assets rather than pinned, so a libvips regression or a new compiler
-    # incompatibility shows up here straight away. A pinned URL left 8.18.0
-    # in place for seven patch releases, and the gcc 15.2 on Ubuntu 26.04
-    # cannot compile it at all: its VIPS_FREEF expands to `(void) F((S))`,
-    # which fails with "void value not ignored as it ought to be". Upstream
-    # parenthesised the call in libvips/libvips#4836, released in 8.18.1.
-    - name: Resolve the latest libvips release
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # The install usually takes under a minute, but a slow mirror has
+    # stretched a successful one to 30 minutes and a stalled one hung it
+    # for 38 before failing. The timeout allows for a slow mirror on a
+    # cache miss while still stopping one that never finishes.
+    - name: Install the ffmpeg development packages
+      timeout-minutes: 35
       run: |
-        VIPS_LATEST_RELEASE=$(gh api repos/libvips/libvips/releases/latest \
-          --jq '.assets[] | select(.name | test("^vips-[0-9.]+\\.tar\\.xz$")) | .browser_download_url' | head -1)
-
-        if [ -z "${VIPS_LATEST_RELEASE}" ]; then
-          echo "Could not resolve a libvips source tarball from the latest release." >&2
-          exit 1
-        fi
-
-        echo "Building libvips from ${VIPS_LATEST_RELEASE}"
-        echo "VIPS_LATEST_RELEASE=${VIPS_LATEST_RELEASE}" >> $GITHUB_ENV
-
-        . /etc/os-release
-        echo "VIPS_CACHE_OS=${ID}${VERSION_ID}" >> $GITHUB_ENV
-
-    - name: Cache libvips artifacts
-      uses: actions/cache@v6
-      id: vips-cache
-      with:
-        path: vips
-        # Keyed on the OS release, not `runner.os`: that is only "Linux"
-        # and cannot tell one Ubuntu release's compiled libvips from
-        # another's, which matters while `ubuntu-latest` is migrating.
-        key: ${{ env.VIPS_CACHE_OS }}-vips-${{ env.VIPS_LATEST_RELEASE }}
-
-    - name: Compile libvips from source
-      if: steps.vips-cache.outputs.cache-hit != 'true'
-      run: |
-        mkdir vips
-        curl -s -L "${VIPS_LATEST_RELEASE}" | unxz | tar x -C ./vips --strip-components=1
-        cd vips
-        meson setup build -Ddebug=false -Dcgif=enabled -Ddeprecated=false -Dexamples=false
-        cd build
-        meson compile
-
-    - name: Install libvips
-      run: |
-        cd vips/build
-        sudo meson install
-        sudo ldconfig -v
-        vips --vips-config
+        mkdir -p ~/apt-archives/partial
+        sudo apt-get -y \
+          -o Acquire::Retries=5 \
+          -o Acquire::http::Timeout=60 \
+          -o Dir::Cache::archives="${HOME}/apt-archives" \
+          install ${APT_PACKAGES}
+        # apt leaves a root-owned lock and partial directory that the
+        # cache step cannot read.
+        sudo rm -rf ~/apt-archives/partial ~/apt-archives/lock
+        sudo chown -R "$(id -u):$(id -g)" ~/apt-archives
 
     # Step: Download project dependencies. If unchanged, uses
     # the cached version.
