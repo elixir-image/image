@@ -103,7 +103,7 @@ defmodule Image.SmartCell.TransformTest do
     end
 
     test "falls back when the target variable is not a valid name" do
-      for name <- ["9bad", "Bad", "has space", "", nil] do
+      for name <- ["9bad", "Bad", "has space", "", nil, "name\n", "end", "nil"] do
         source = Transform.to_source(attrs(%{"to_variable" => name}))
         assert source =~ "transformed ="
       end
@@ -148,7 +148,10 @@ defmodule Image.SmartCell.TransformTest do
 
       # The second statement renders through Kino, which needs a running
       # Livebook, so only the assignment is evaluated here.
-      {:__block__, _meta, [assignment, _show]} = Transform.quoted_source(source_attrs)
+      {:__block__, _meta, [assignment, _show]} =
+        source_attrs
+        |> Transform.to_source()
+        |> Code.string_to_quoted!()
 
       {result, binding} = Code.eval_quoted(assignment)
 

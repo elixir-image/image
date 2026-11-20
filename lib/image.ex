@@ -466,14 +466,11 @@ defmodule Image do
 
   def new(width, height, options)
       when is_integer(width) and is_integer(height) and width > 0 and height > 0 do
-    with {:ok, options} <- Options.New.validate_options(options) do
-      {:ok, pixel} =
-        Operation.black!(1, 1, bands: options.bands)
-        |> Image.Math.add!(options.color)
-        |> Operation.cast(options.format)
-
-      {:ok, image} = Operation.embed(pixel, 0, 0, width, height, extend: :VIPS_EXTEND_COPY)
-
+    with {:ok, options} <- Options.New.validate_options(options),
+         {:ok, black} <- Operation.black(1, 1, bands: options.bands),
+         {:ok, colored} <- Image.Math.add(black, options.color),
+         {:ok, pixel} <- Operation.cast(colored, options.format),
+         {:ok, image} <- Operation.embed(pixel, 0, 0, width, height, extend: :VIPS_EXTEND_COPY) do
       Operation.copy(image,
         interpretation: options.interpretation,
         xres: options.x_res,
@@ -4358,31 +4355,24 @@ defmodule Image do
     width = width(image) + 2 * radius
     height = height(image) + 2 * radius
 
-    {:ok, text} = Operation.embed(image, radius, radius, width, height)
+    with {:ok, text} <- Operation.embed(image, radius, radius, width, height),
+         {:ok, black} <- Operation.black(radius * 2 + 1, radius * 2 + 1),
+         {:ok, grey} <- Math.add(black, 128),
+         {:ok, circle_mask} <- Draw.circle(grey, radius, radius, radius, fill: true, color: :white),
+         {:ok, dilated} <- Operation.morph(text, circle_mask, :VIPS_OPERATION_MORPHOLOGY_DILATE),
+         {:ok, outlined} <- blur(dilated, sigma: 0.5, min_amplitude: 0.1),
+         {:ok, background_text} <- colored_text(outlined, outline_color),
+         {:ok, foreground_text} <- colored_text(text, color) do
+      compose(background_text, foreground_text)
+    end
+  end
 
-    {:ok, circle_mask} =
-      Operation.black!(radius * 2 + 1, radius * 2 + 1)
-      |> Math.add!(128)
-      |> Draw.circle(radius, radius, radius, fill: true, color: :white)
-
-    {:ok, outlined} =
-      text
-      |> Operation.morph!(circle_mask, :VIPS_OPERATION_MORPHOLOGY_DILATE)
-      |> blur(sigma: 0.5, min_amplitude: 0.1)
-
-    {:ok, background_text} =
-      outlined
-      |> new!(color: outline_color, bands: 3)
-      |> bandjoin!(outlined)
-      |> Operation.copy(interpretation: :VIPS_INTERPRETATION_sRGB)
-
-    {:ok, foreground_text} =
-      text
-      |> new!(color: color, bands: 3)
-      |> bandjoin!(text)
-      |> Operation.copy(interpretation: :VIPS_INTERPRETATION_sRGB)
-
-    compose(background_text, foreground_text)
+  # Fills a single-band text mask with a color, keeping the mask as alpha.
+  defp colored_text(mask, color) do
+    with {:ok, fill} <- new(mask, color: color, bands: 3),
+         {:ok, joined} <- Operation.bandjoin([fill, mask]) do
+      Operation.copy(joined, interpretation: :VIPS_INTERPRETATION_sRGB)
+    end
   end
 
   defp transform(text, :none), do: text
@@ -5662,20 +5652,23 @@ defmodule Image do
   # applied to form the final shape.
 
   defp do_avatar(image, size, :square) do
-    {:ok, squared} = center_crop(image, size, size)
-    remove_metadata(squared)
+    with {:ok, squared} <- center_crop(image, size, size) do
+      remove_metadata(squared)
+    end
   end
 
   defp do_avatar(image, size, :squircle) do
-    {:ok, squared} = center_crop(image, size, size)
-    {:ok, image} = squircle(squared)
-    remove_metadata(image)
+    with {:ok, squared} <- center_crop(image, size, size),
+         {:ok, image} <- squircle(squared) do
+      remove_metadata(image)
+    end
   end
 
   defp do_avatar(image, size, :circle) do
-    {:ok, squared} = center_crop(image, size, size)
-    {:ok, image} = circle(squared)
-    remove_metadata(image)
+    with {:ok, squared} <- center_crop(image, size, size),
+         {:ok, image} <- circle(squared) do
+      remove_metadata(image)
+    end
   end
 
   # thumbnail/2 takes a size argument but its to establish the
@@ -7658,34 +7651,23 @@ defmodule Image do
   def ripple(%Vimage{} = image, options \\ []) do
     use Image.Math
 
+    width = width(image)
+    height = height(image)
+
+    # The index image has pixel (0, 0) at the top left with value [0, 0], and
+    # pixel (width, height) at the bottom right with value [width, height].
+    # Centred on (0, 0) and converted to polar space, each pixel is a distance
+    # and an angle in degrees. The sine of the distance scaled by 1/distance
+    # makes the ripple, and converting back to rectangular coordinates gives
+    # vectors that displace the original index image.
     with {:ok, options} <-
-           Options.Mapim.validate_options(image, options, [:interpolate, :background]) do
-      width = width(image)
-      height = height(image)
-
-      # this makes an image where pixel (0, 0) (at the top-left) has value [0, 0],
-      # and pixel (image.width, image.height) at the bottom-right has value
-      # [image.width, image.height]
-      {:ok, index} = Operation.xyz(width, height)
-
-      # make a version with (0, 0) at the centre, negative values up and left,
-      # positive down and right
-      center = index - [width / 2, height / 2]
-
-      # to polar space, so each pixel is now distance and angle in degrees
-      {:ok, polar} = Complex.polar(center)
-
-      # scale sin(distance) by 1/distance to make a wavey pattern
-      d = 10_000 * sin!(polar[0] * 3) / (1 + polar[0])
-
-      # and back to rectangular coordinates again to make a set of vectors we can
-      # apply to the original index image
-      {:ok, joined} = Operation.bandjoin([d, polar[1]])
-      {:ok, rectangular} = Complex.rectangular(joined)
-      index = index + rectangular
-
-      # finally, use our modified index image to distort the input!
-      mapim(image, index, options)
+           Options.Mapim.validate_options(image, options, [:interpolate, :background]),
+         {:ok, index} <- Operation.xyz(width, height),
+         {:ok, polar} <- Complex.polar(index - [width / 2, height / 2]),
+         ripple = 10_000 * sin!(polar[0] * 3) / (1 + polar[0]),
+         {:ok, joined} <- Operation.bandjoin([ripple, polar[1]]),
+         {:ok, rectangular} <- Complex.rectangular(joined) do
+      mapim(image, index + rectangular, options)
     end
   end
 
@@ -7833,14 +7815,15 @@ defmodule Image do
 
   ### Options
 
-  * `:radius` is the desired corner radius.
-    The default is #{@default_round_corner_radius}.
+  * `:radius` is the desired corner radius in pixels, a
+    non-negative number. A radius larger than half the shorter
+    side is reduced to it. The default is #{@default_round_corner_radius}.
 
   ### Returns
 
-  * `{:ok, rounded_corner_image}` or
+  * `{:ok, rounded_corner_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -7859,18 +7842,24 @@ defmodule Image do
     use Image.Math
 
     options = Keyword.put_new(options, :radius, @default_round_corner_radius)
-    width = width(image)
-    height = height(image)
 
-    {:ok, mask} = mask(:rounded_corners, width, height, options)
+    with {:ok, mask} <- mask(:rounded_corners, width(image), height(image), options) do
+      image
+      |> split_alpha()
+      |> join_rounded_mask(mask)
+    end
+  end
 
-    case split_alpha(image) do
-      {base_image, nil} ->
-        Operation.bandjoin([base_image, mask])
+  defp join_rounded_mask({base_image, nil}, mask) do
+    Operation.bandjoin([base_image, mask])
+  end
 
-      {base_image, alpha} ->
-        alpha = if_then_else!(mask == 0, mask, alpha)
-        Operation.bandjoin([base_image, alpha])
+  # An existing alpha is kept inside the mask and cleared outside it.
+  defp join_rounded_mask({base_image, alpha}, mask) do
+    use Image.Math
+
+    with {:ok, alpha} <- if_then_else(mask == 0, mask, alpha) do
+      Operation.bandjoin([base_image, alpha])
     end
   end
 
@@ -8058,21 +8047,19 @@ defmodule Image do
     </svg>
     """
 
-    {:ok, {circle, _flags}} = Operation.svgload_buffer(svg)
-    Operation.extract_band(circle, alpha_band(circle))
+    with {:ok, {circle, _flags}} <- Operation.svgload_buffer(svg) do
+      Operation.extract_band(circle, alpha_band(circle))
+    end
   end
 
   defp mask(:rounded_corners, width, height, options) do
     radius = Keyword.get(options, :radius, @default_round_corner_radius)
 
-    svg = """
-    <svg viewBox="0 0 #{width} #{height}">
-      <rect rx="#{radius}" ry="#{radius}" x="0" y="0" width="#{width}" height="#{height}" fill="black" />
-    </svg>
-    """
-
-    {:ok, {mask, _flags}} = Operation.svgload_buffer(svg)
-    Operation.extract_band(mask, alpha_band(mask))
+    with {:ok, radius} <- corner_radius(radius, min(width, height)),
+         {:ok, {mask, _flags}} <-
+           Operation.svgload_buffer(rounded_corners_svg(width, height, radius)) do
+      Operation.extract_band(mask, alpha_band(mask))
+    end
   end
 
   # Each corner is the quadrant of a superellipse |x|^n + |y|^n = 1
@@ -8085,7 +8072,7 @@ defmodule Image do
     radius = Keyword.get(options, :radius, default_radius)
     exponent = Keyword.get(options, :exponent, @default_squircle_exponent)
 
-    with {:ok, radius} <- squircle_radius(radius, shorter),
+    with {:ok, radius} <- corner_radius(radius, shorter),
          {:ok, exponent} <- squircle_exponent(exponent) do
       points = squircle_points(width, height, radius, exponent)
 
@@ -8104,17 +8091,25 @@ defmodule Image do
 
   # A radius larger than half the shorter side would make the corners
   # overlap, so it is reduced to that.
-  defp squircle_radius(radius, shorter) when is_number(radius) and radius >= 0 do
+  defp corner_radius(radius, shorter) when is_number(radius) and radius >= 0 do
     {:ok, min(radius, shorter / 2)}
   end
 
-  defp squircle_radius(radius, _shorter) do
+  defp corner_radius(radius, _shorter) do
     {:error,
      %Image.Error{
        reason: :invalid_option,
        value: {:radius, radius},
        message: ":radius must be a non-negative number. Found #{inspect(radius)}"
      }}
+  end
+
+  defp rounded_corners_svg(width, height, radius) do
+    """
+    <svg viewBox="0 0 #{width} #{height}">
+      <rect rx="#{radius}" ry="#{radius}" x="0" y="0" width="#{width}" height="#{height}" fill="black" />
+    </svg>
+    """
   end
 
   defp squircle_exponent(exponent) when is_number(exponent) and exponent > 0 do
@@ -8444,8 +8439,9 @@ defmodule Image do
   end
 
   def remove_metadata(image, []) do
-    {:ok, fields} = Vimage.header_field_names(image)
-    remove_metadata(image, fields)
+    with {:ok, fields} <- Vimage.header_field_names(image) do
+      remove_metadata(image, fields)
+    end
   end
 
   def remove_metadata(%Vimage{} = image, fields) when is_list(fields) do
@@ -8653,32 +8649,29 @@ defmodule Image do
   defp linear_gradient(width, height, start, finish, angle) when angle == 0 or angle == 360 do
     use Image.Math
 
-    {:ok, xyz} = Operation.xyz(width, height)
-    {:ok, y} = Operation.extract_band(xyz, @y_band)
+    # The distance image runs from 0 to 1 from the start to the end of the
+    # gradient, and fades between the colors. The result is tagged as sRGB.
+    with {:ok, xyz} <- Operation.xyz(width, height),
+         {:ok, y} <- Operation.extract_band(xyz, @y_band) do
+      d = y / height
 
-    # the distance image: 0 - 1 for the start to the end of the gradient
-    d = y / height
-
-    # and use it to fade the quads ... we need to tag the result as an RGB
-    # image
-    (d * finish + (1 - d) * start)
-    |> Operation.copy(interpretation: :VIPS_INTERPRETATION_sRGB)
+      (d * finish + (1 - d) * start)
+      |> Operation.copy(interpretation: :VIPS_INTERPRETATION_sRGB)
+    end
   end
 
   # Horizontal gradient
   defp linear_gradient(width, height, start, finish, angle) when angle == 90 do
     use Image.Math
 
-    {:ok, xyz} = Operation.xyz(width, height)
-    {:ok, x} = Operation.extract_band(xyz, @x_band)
+    # As for the vertical gradient, along the x axis.
+    with {:ok, xyz} <- Operation.xyz(width, height),
+         {:ok, x} <- Operation.extract_band(xyz, @x_band) do
+      d = x / width
 
-    # the distance image: 0 - 1 for the start to the end of the gradient
-    d = x / width
-
-    # and use it to fade the quads ... we need to tag the result as an RGB
-    # image
-    (d * start + (1 - d) * finish)
-    |> Operation.copy(interpretation: :VIPS_INTERPRETATION_sRGB)
+      (d * start + (1 - d) * finish)
+      |> Operation.copy(interpretation: :VIPS_INTERPRETATION_sRGB)
+    end
   end
 
   # 180 degree rotation is a synomym for a vertical gradient from finish to start
@@ -9158,9 +9151,10 @@ defmodule Image do
   # here R, G and B are all between 0 and 51, so blackish pixels.
 
   defp dominant_color_no_alpha(image, bins, count) do
-    {:ok, histogram} = Operation.hist_find_ndim(image, bins: bins)
-    {:ok, unfolded} = Operation.bandunfold(histogram)
-    find_maximum(unfolded, bins, count)
+    with {:ok, histogram} <- Operation.hist_find_ndim(image, bins: bins),
+         {:ok, unfolded} <- Operation.bandunfold(histogram) do
+      find_maximum(unfolded, bins, count)
+    end
   end
 
   # Suggestion by @jcupitt from https://github.com/libvips/libvips/discussions/3692
@@ -9174,22 +9168,15 @@ defmodule Image do
     alpha_black_pixel_count =
       alpha_black_pixel_count(image[-1])
 
-    {:ok, histogram} =
-      Operation.hist_find_ndim(flatten!(image), bins: bins)
-
-    [black | remaining_pixels] =
-      Operation.getpoint!(histogram, 0, 0)
-
-    {:ok, histogram} =
-      Image.mutate(histogram, fn img ->
-        pixel = [max(black - alpha_black_pixel_count, 0) | remaining_pixels]
-        Image.Vips.MutableOperation.draw_rect!(img, pixel, 0, 0, 1, 1)
-      end)
-
-    {:ok, unfolded} =
-      Operation.bandunfold(histogram)
-
-    find_maximum(unfolded, bins, count)
+    with {:ok, flattened} <- flatten(image),
+         {:ok, histogram} <- Operation.hist_find_ndim(flattened, bins: bins),
+         {:ok, [black | remaining_pixels]} <- Operation.getpoint(histogram, 0, 0),
+         pixel = [max(black - alpha_black_pixel_count, 0) | remaining_pixels],
+         {:ok, histogram} <-
+           Image.mutate(histogram, &Image.Vips.MutableOperation.draw_rect!(&1, pixel, 0, 0, 1, 1)),
+         {:ok, unfolded} <- Operation.bandunfold(histogram) do
+      find_maximum(unfolded, bins, count)
+    end
   end
 
   # Max value for an sRGB image
@@ -9650,8 +9637,6 @@ defmodule Image do
           |> Enum.map(fn rgb -> Pixel.to_pixel!(target_image, rgb) end)
 
         {:ok, k_means}
-      else
-        {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :k_means)}
       end
     end
 
@@ -10384,17 +10369,12 @@ defmodule Image do
            Options.Mapim.validate_options(image, options, [:interpolate, :background]) do
       width = width(image)
       height = height(image)
-      min = min(width, height)
-      scale = Kernel./(min, width)
+      scale = Kernel./(min(width, height), width)
 
-      xy = Operation.xyz!(width, height)
-      xy = xy - [width / 2.0, height / 2.0]
-      xy = xy * 2.0 / scale
-
-      {:ok, index} = Complex.polar(xy)
-      index = index * [1.0, height / 360.0]
-
-      mapim(image, index, options)
+      with {:ok, xyz} <- Operation.xyz(width, height),
+           {:ok, index} <- Complex.polar((xyz - [width / 2.0, height / 2.0]) * 2.0 / scale) do
+        mapim(image, index * [1.0, height / 360.0], options)
+      end
     end
   end
 
@@ -10487,19 +10467,13 @@ defmodule Image do
     with {:ok, options} <- Options.Mapim.validate_options(image, options, [:interpolate]) do
       width = width(image)
       height = height(image)
-      min = min(width, height)
-      scale = Kernel./(min, width)
+      scale = Kernel./(min(width, height), width)
 
-      xy = Operation.xyz!(width, height)
-      xy = xy * [1.0, 360.0 / height]
-
-      {:ok, index} = Complex.rectangular(xy)
-
-      index = index * scale / 2.0
-      index = index + [width / 2.0, height / 2.0]
-
-      options = Keyword.put(options, :extend, :VIPS_EXTEND_COPY)
-      mapim(image, index, options)
+      with {:ok, xyz} <- Operation.xyz(width, height),
+           {:ok, index} <- Complex.rectangular(xyz * [1.0, 360.0 / height]) do
+        index = index * scale / 2.0 + [width / 2.0, height / 2.0]
+        mapim(image, index, Keyword.put(options, :extend, :VIPS_EXTEND_COPY))
+      end
     end
   end
 
@@ -11126,21 +11100,18 @@ defmodule Image do
 
     without_alpha_band(image, fn image ->
       with_colorspace(image, :srgb, fn image ->
-        bands =
-          image
-          |> Operation.hist_find!()
-          |> split_bands()
+        with {:ok, histogram} <- Operation.hist_find(image),
+             bands = split_bands(histogram),
+             {:ok, low} <- band_levels(bands, @level_trim_percent),
+             {:ok, high} <- band_levels(bands, 100 - @level_trim_percent) do
+          # A constant-color band has coincident percentiles. There is
+          # nothing to expand so the band is scaled by 1.0 rather than
+          # dividing by zero.
+          scale = for {h, l} <- Enum.zip(high, low), do: if(h == l, do: 1.0, else: 255.0 / (h - l))
+          scaled = (image - low) * scale
 
-        low = Enum.map(bands, &level_percent(&1, @level_trim_percent))
-        high = Enum.map(bands, &level_percent(&1, 100 - @level_trim_percent))
-
-        # A constant-color band has coincident percentiles. There is
-        # nothing to expand so the band is scaled by 1.0 rather than
-        # dividing by zero.
-        scale = for {h, l} <- Enum.zip(high, low), do: if(h == l, do: 1.0, else: 255.0 / (h - l))
-        scaled = (image - low) * scale
-
-        Operation.cast(scaled, band_format)
+          Operation.cast(scaled, band_format)
+        end
       end)
     end)
   end
@@ -11165,17 +11136,29 @@ defmodule Image do
     {:error, %Image.Error{message: message, reason: message}}
   end
 
+  # The level of each band below which `percentage` percent of its pixels fall.
+  defp band_levels(bands, percentage) do
+    with {:ok, levels} <-
+           Enum.reduce_while(bands, {:ok, []}, &collect_band_level(&1, &2, percentage)) do
+      {:ok, Enum.reverse(levels)}
+    end
+  end
+
+  defp collect_band_level(band, {:ok, levels}, percentage) do
+    case level_percent(band, percentage) do
+      {:ok, level} -> {:cont, {:ok, [level | levels]}}
+      error -> {:halt, error}
+    end
+  end
+
   defp level_percent(hist, percentage) do
     use Image.Math
 
-    norm =
-      hist
-      |> Operation.hist_cum!()
-      |> Operation.hist_norm!()
-
-    {:ok, {_c, r}} = Operation.profile(norm > width(norm) * percentage / 100)
-
-    Operation.avg!(r)
+    with {:ok, cumulative} <- Operation.hist_cum(hist),
+         {:ok, norm} <- Operation.hist_norm(cumulative),
+         {:ok, {_c, r}} <- Operation.profile(norm > width(norm) * percentage / 100) do
+      Operation.avg(r)
+    end
   end
 
   defp normalize_if_possible(lab_image, luminance, min, max) when abs(max - min) >= 1 do
@@ -14278,8 +14261,10 @@ defmodule Image do
             {:ok, transform_matrix :: Vimage.t()} | {:error, error()}
 
     def transform_matrix(image, source, destination) do
-      with [{sx1, sy1}, {sx2, sy2}, {sx3, sy3}, {sx4, sy4}] <- source,
-           [{dx1, dy1}, {dx2, dy2}, {dx3, dy3}, {dx4, dy4}] <- destination do
+      with {:ok, [{sx1, sy1}, {sx2, sy2}, {sx3, sy3}, {sx4, sy4}]} <-
+             validate_quadrilateral(source, "source"),
+           {:ok, [{dx1, dy1}, {dx2, dy2}, {dx3, dy3}, {dx4, dy4}]} <-
+             validate_quadrilateral(destination, "destination") do
         source =
           Nx.tensor([
             [dx1, dy1, 1, 0, 0, 0, -dx1 * sx1, -dy1 * sx1],
@@ -14296,12 +14281,24 @@ defmodule Image do
 
         transform_matrix = Nx.LinAlg.solve(source, destination)
         {:ok, generate_map(Image.width(image), Image.height(image), transform_matrix)}
-      else
-        _error ->
-          {:error,
-           "Invalid source or destination quadrilateral. " <>
-             "Found source #{inspect(source)} and destination #{inspect(destination)}."}
       end
+    end
+
+    defp validate_quadrilateral([{x1, y1}, {x2, y2}, {x3, y3}, {x4, y4}] = quadrilateral, _name)
+         when is_number(x1) and is_number(y1) and is_number(x2) and is_number(y2) and
+                is_number(x3) and is_number(y3) and is_number(x4) and is_number(y4) do
+      {:ok, quadrilateral}
+    end
+
+    defp validate_quadrilateral(other, name) do
+      {:error,
+       %Image.Error{
+         reason: :invalid_quadrilateral,
+         value: other,
+         message:
+           "Invalid #{name} quadrilateral #{inspect(other)}. " <>
+             "Must be a list of four {x, y} points."
+       }}
     end
 
     defp generate_map(width, height, tensor) do
@@ -15122,29 +15119,55 @@ defmodule Image do
 
     ### Returns
 
-    * `skew_angle` which is an estimated float number
-      of degrees the image is tilted from the
-      upright.
+    * `{:ok, skew_angle}` where `skew_angle` is an estimated
+      float number of degrees the image is tilted from the
+      upright, or
+
+    * `{:error, reason}`.
 
     """
     @doc subject: "Operation"
 
-    @spec skew_angle(Vimage.t()) :: float()
+    @spec skew_angle(Vimage.t()) :: {:ok, float()} | {:error, error()}
 
     def skew_angle(%Vimage{} = image) do
-      {_columns, rows} =
-        image
-        |> fft!()
-        |> to_rectangular_coordinates!()
-        |> Operation.project!()
+      with {:ok, transformed} <- fft(image),
+           {:ok, rectangular} <- to_rectangular_coordinates(transformed),
+           {:ok, {_columns, rows}} <- Operation.project(rectangular),
+           {:ok, blurred} <- Operation.gaussblur(rows, 10.0),
+           {:ok, {_v, _x, y, _max_coordinates}} <- Math.top_n(blurred, 1) do
+        # The angle in degrees to counter-rotate by.
+        {:ok, 270 - 360 * y / height(rows)}
+      end
+    end
 
-      {_v, _x, y, _max_coordinates} =
-        rows
-        |> Operation.gaussblur!(10.0)
-        |> Math.top_n(1)
+    @doc """
+    Attempts to determine the distance from the perpendicular
+    for a given image, raising on error.
 
-      # and turn to an angle in degrees we should counter-rotate by
-      270 - 360 * y / height(rows)
+    See `Image.skew_angle/1`.
+
+    ### Arguments
+
+    * `image` is any `t:Vix.Vips.Image.t/0`.
+
+    ### Returns
+
+    * `skew_angle`, an estimated float number of degrees the
+      image is tilted from the upright, or
+
+    * raises an exception.
+
+    """
+    @doc subject: "Operation", since: "0.74.0"
+
+    @spec skew_angle!(Vimage.t()) :: float() | no_return()
+
+    def skew_angle!(%Vimage{} = image) do
+      case skew_angle(image) do
+        {:ok, angle} -> angle
+        {:error, reason} -> raise Image.Error, reason
+      end
     end
   end
 
@@ -15178,8 +15201,9 @@ defmodule Image do
   @spec convert_alpha_to_mask(Vimage.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def convert_alpha_to_mask(%Vimage{} = image) do
     if alpha_band = alpha_band(image) do
-      {:ok, mask} = Operation.extract_band(image, alpha_band)
-      Operation.invert(mask)
+      with {:ok, mask} <- Operation.extract_band(image, alpha_band) do
+        Operation.invert(mask)
+      end
     else
       {:error, %Image.Error{message: "Image has no alpha band", reason: "Image has no alpha band"}}
     end
@@ -15939,22 +15963,28 @@ defmodule Image do
   defp reduce_pages(image, pages, page_height, fun) do
     width = width(image)
 
-    Enum.reduce_while(1..pages, {:ok, []}, fn n, {:ok, acc} ->
-      {:ok, page_n} = Operation.extract_area(image, 0, page_height * (n - 1), width, page_height)
+    Enum.reduce_while(1..pages, {:ok, []}, &reduce_page(&1, &2, image, width, page_height, fun))
+  end
 
-      case fun.(page_n) do
-        {:ok, new_page_n} ->
-          {:cont, {:ok, [new_page_n | acc]}}
-
-        {:error, reason} ->
-          {:halt,
-           {:error,
-            %Image.Error{
-              message: "Page #{n} returned #{inspect(reason)}",
-              reason: "Page #{n} returned #{inspect(reason)}"
-            }}}
+  defp reduce_page(n, {:ok, acc}, image, width, page_height, fun) do
+    result =
+      with {:ok, page} <-
+             Operation.extract_area(image, 0, page_height * (n - 1), width, page_height) do
+        fun.(page)
       end
-    end)
+
+    case result do
+      {:ok, new_page} ->
+        {:cont, {:ok, [new_page | acc]}}
+
+      {:error, reason} ->
+        {:halt,
+         {:error,
+          %Image.Error{
+            message: "Page #{n} returned #{inspect(reason)}",
+            reason: "Page #{n} returned #{inspect(reason)}"
+          }}}
+    end
   end
 
   @doc """
@@ -16080,17 +16110,15 @@ defmodule Image do
           Vimage.t() | {:ok, Vimage.t()} | {:error, error()}
 
   def preview(%Vimage{} = image) do
-    with {:ok, "iTerm2"} <- supported_terminal(System.get_env("LC_TERMINAL")) do
+    with {:ok, "iTerm2"} <- supported_terminal(System.get_env("LC_TERMINAL")),
+         {:ok, resized} <- maybe_resize_to_fit(image, shape(image)),
+         {:ok, binary} <- Vix.Vips.Image.write_to_buffer(resized, ".png") do
       {prelude, epilog} = get_prelude_epilog_for_term(System.get_env("TERM"))
-      {:ok, image} = maybe_resize_to_fit(image, shape(image))
-
-      with {:ok, binary} <- Vix.Vips.Image.write_to_buffer(image, ".png") do
-        encoded_image = Base.encode64(binary, padding: true)
-        bin_size = byte_size(binary)
-        head = prelude <> "]1337;File=size=#{bin_size};inline=1:"
-        IO.write(head <> encoded_image <> epilog)
-        image
-      end
+      encoded_image = Base.encode64(binary, padding: true)
+      bin_size = byte_size(binary)
+      head = prelude <> "]1337;File=size=#{bin_size};inline=1:"
+      IO.write(head <> encoded_image <> epilog)
+      resized
     end
   end
 

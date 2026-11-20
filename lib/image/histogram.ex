@@ -115,14 +115,18 @@ defmodule Image.Histogram do
          {:ok, srgb_histogram} <- Operation.hist_find(srgb),
          {:ok, lch_histogram} <- Operation.hist_find(lch),
          {:ok, {srgb_max, _}} <- Operation.max(srgb_histogram),
-         {:ok, {lch_max, _}} <- Operation.max(lch_histogram) do
+         {:ok, {lch_max, _}} <- Operation.max(lch_histogram),
+         {:ok, blue} <- generate_histogram(srgb_histogram[2], srgb_max, :blue),
+         {:ok, green} <- generate_histogram(srgb_histogram[1], srgb_max, :green),
+         {:ok, red} <- generate_histogram(srgb_histogram[0], srgb_max, :red),
+         {:ok, luminance} <- generate_histogram(lch_histogram[0], lch_max, :white) do
       svg =
         """
         <svg height="#{options.height}" width="#{options.width}" viewBox="0 0 #{@max_value} #{@max_value}" preserveAspectRatio="none">
-          #{generate_histogram(srgb_histogram[2], srgb_max, :blue)}
-          #{generate_histogram(srgb_histogram[1], srgb_max, :green)}
-          #{generate_histogram(srgb_histogram[0], srgb_max, :red)}
-          #{generate_histogram(lch_histogram[0], lch_max, :white)}
+          #{blue}
+          #{green}
+          #{red}
+          #{luminance}
         </svg>
         """
 
@@ -305,26 +309,28 @@ defmodule Image.Histogram do
   def as_image!(%Vimage{} = image, options \\ []) do
     case as_image(image, options) do
       {:ok, image} -> image
-      {:error, reason} -> {:error, reason}
+      {:error, reason} -> raise Image.Error, reason
     end
   end
 
-  defp generate_histogram(image, max, stroke_color, fill_color \\ nil) do
-    {:ok, tensor} = Vix.Vips.Image.write_to_tensor(image)
-    values = decode_binary(tensor, max)
-    fill_color = fill_color || stroke_color
+  defp generate_histogram(image, max, color) do
+    with {:ok, tensor} <- Vix.Vips.Image.write_to_tensor(image) do
+      {:ok, histogram_paths(decode_binary(tensor, max), color)}
+    end
+  end
 
+  defp histogram_paths(values, color) do
     """
     <path
       d="#{generate_fill(values)}"
       stroke="transparent"
-      fill="#{fill_color}"
+      fill="#{color}"
       fill-opacity="0.2"
     />
     <path
       d="#{generate_path(values)}"
       stroke-width="2"
-      stroke="#{stroke_color}"
+      stroke="#{color}"
       fill="transparent"
       vector-effect="non-scaling-stroke"
     />

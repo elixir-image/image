@@ -9,7 +9,8 @@ if Code.ensure_loaded?(Vix.Vips.Operation) && function_exported?(Vix.Vips.Operat
 
       {:ok, image} = Image.open(image, access: :random)
 
-      skew_angle = Image.skew_angle(image)
+      {:ok, skew_angle} = Image.skew_angle(image)
+      assert Image.skew_angle!(image) == skew_angle
       {:ok, straight} = Image.rotate(image, skew_angle)
 
       assert_in_delta skew_angle, 1.1628, 0.0001

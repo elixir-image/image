@@ -20,6 +20,9 @@ if Code.ensure_loaded?(Kino.SmartCell) do
 
     alias Image.SmartCell.Operations
 
+    # Words that match the variable-name pattern but cannot be variables.
+    @reserved_words ~w(true false nil when and or not in fn do end catch rescue after else)
+
     @default_fields %{
       "source_type" => "path",
       "source_path" => "",
@@ -133,40 +136,34 @@ if Code.ensure_loaded?(Kino.SmartCell) do
 
     @impl true
     def to_source(attrs) do
-      attrs
-      |> quoted_source()
-      |> Kino.SmartCell.quoted_to_string()
-    end
+      target = variable_name(attrs["to_variable"], "transformed")
 
-    @doc false
-    def quoted_source(attrs) do
-      variable = variable_name(attrs["to_variable"], :transformed)
-
-      pipeline =
+      steps =
         attrs
         |> operation_calls()
-        |> Enum.reduce(source_expression(attrs), fn call, accumulator ->
-          {:|>, [], [accumulator, call]}
-        end)
+        |> Enum.map(&Macro.to_string/1)
 
-      quote do
-        unquote(Macro.var(variable, nil)) = unquote(pipeline)
-        Image.Kino.show(unquote(Macro.var(variable, nil)))
-      end
+      pipeline = Enum.join([source_expression(attrs) | steps], " |> ")
+
+      "#{target} = #{pipeline}\nImage.Kino.show(#{target})"
+      |> Code.format_string!()
+      |> IO.iodata_to_binary()
     end
 
+    # The variable names are interpolated as text, never converted to
+    # atoms: they come from text fields, and atoms are not collected.
     defp source_expression(%{"source_type" => "variable"} = attrs) do
-      Macro.var(variable_name(attrs["source_variable"], :image), nil)
+      variable_name(attrs["source_variable"], "image")
     end
 
     defp source_expression(attrs) do
-      quote do: Image.open!(unquote(attrs["source_path"] || ""))
+      Macro.to_string(quote do: Image.open!(unquote(attrs["source_path"] || "")))
     end
 
     defp operation_calls(attrs) do
       for operation <- attrs["operations"] || [],
           name = existing_operation(operation["name"]),
-          {:ok, call} = Operations.quoted_call(name, operation["params"] || %{}),
+          {:ok, call} <- [Operations.quoted_call(name, operation["params"] || %{})],
           do: call
     end
 
@@ -178,11 +175,11 @@ if Code.ensure_loaded?(Kino.SmartCell) do
 
     defp existing_operation(_name), do: nil
 
-    # A variable name comes from a text field, so it is validated rather
-    # than converted straight to an atom.
+    # A variable name comes from a text field, so it is validated as an
+    # Elixir variable name before it is written into the source.
     defp variable_name(name, fallback) when is_binary(name) do
-      if Regex.match?(~r/^[a-z_][a-zA-Z0-9_]*$/, name) do
-        String.to_atom(name)
+      if Regex.match?(~r/\A[a-z_][a-zA-Z0-9_]*\z/, name) and name not in @reserved_words do
+        name
       else
         fallback
       end

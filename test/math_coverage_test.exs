@@ -314,14 +314,14 @@ defmodule Image.MathCoverage.Test do
   describe "extrema coordinates" do
     test "top_n/2" do
       image = Image.new!(4, 4, color: 3) |> Image.to_colorspace!(:bw)
-      assert {3.0, x, y, coordinates} = Math.top_n(image, 2)
+      assert {:ok, {3.0, x, y, coordinates}} = Math.top_n(image, 2)
       assert is_integer(x) and is_integer(y)
       assert length(coordinates) == 2
     end
 
     test "bottom_n/2" do
       image = Image.new!(4, 4, color: 3) |> Image.to_colorspace!(:bw)
-      assert {3.0, x, y, coordinates} = Math.bottom_n(image, 2)
+      assert {:ok, {3.0, x, y, coordinates}} = Math.bottom_n(image, 2)
       assert is_integer(x) and is_integer(y)
       assert length(coordinates) == 2
     end
@@ -334,7 +334,7 @@ defmodule Image.MathCoverage.Test do
         end)
 
       mask = image |> Math.equal!([0, 255, 0]) |> Image.band_and!()
-      assert Math.maxpos(mask) == {255, [{2, 2}], nil}
+      assert Math.maxpos(mask) == {:ok, {255, [{2, 2}], nil}}
     end
 
     test "maxpos/2 signals a possible overflow" do
@@ -343,7 +343,7 @@ defmodule Image.MathCoverage.Test do
         |> Math.equal!([255, 0, 0])
         |> Image.band_and!()
 
-      assert {255, coordinates, :maybe_overflow} = Math.maxpos(mask, 3)
+      assert {:ok, {255, coordinates, :maybe_overflow}} = Math.maxpos(mask, 3)
       assert length(coordinates) == 3
     end
 
@@ -355,7 +355,7 @@ defmodule Image.MathCoverage.Test do
           Image.Draw.point!(mutable, 2, 2, color: 10)
         end)
 
-      assert {minimum, [{2, 2}], nil} = Math.minpos(image)
+      assert {:ok, {minimum, [{2, 2}], nil}} = Math.minpos(image)
       assert minimum == trunc(Math.min!(image))
     end
   end
@@ -631,6 +631,18 @@ defmodule Image.MathCoverage.Test do
       assert Math.exp(0) == {:ok, 1.0}
       assert Math.exp!(0) == 1.0
       assert Math.abs!(-3) == 3
+    end
+  end
+
+  describe "extrema with invalid arguments" do
+    test "return an error tuple" do
+      image = grey_image(10)
+
+      for function <- [:top_n, :bottom_n, :maxpos, :minpos],
+          arguments <- [[image, 0], [image, :bogus], [:not_an_image, 2]] do
+        assert {:error, %Image.Error{reason: :invalid_argument}} =
+                 apply(Math, function, arguments)
+      end
     end
   end
 end

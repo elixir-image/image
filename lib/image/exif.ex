@@ -132,16 +132,22 @@ defmodule Image.Exif do
   def extract_exif(exif) do
     # EXIF payloads come from untrusted image files so a truncated or
     # corrupt blob must produce an error, never a crash.
-    with <<byte_order::16, forty_two::binary-size(2), offset::binary-size(4), _rest::binary>> <-
-           exif,
+    with {:ok, byte_order, magic, offset} <- tiff_header(exif),
          {:ok, read_unsigned} <- byte_order_decoder(byte_order),
-         42 <- read_unsigned.(forty_two) do
+         :ok <- check_tiff_magic(read_unsigned.(magic)) do
       offset = read_unsigned.(offset)
       reshape(read_ifd({exif, offset, read_unsigned}))
-    else
-      _other -> {:error, :invalid_exif}
     end
   end
+
+  defp tiff_header(<<byte_order::16, magic::binary-size(2), offset::binary-size(4), _rest::binary>>) do
+    {:ok, byte_order, magic, offset}
+  end
+
+  defp tiff_header(_other), do: {:error, :invalid_exif}
+
+  defp check_tiff_magic(42), do: :ok
+  defp check_tiff_magic(_other), do: {:error, :invalid_exif}
 
   defp byte_order_decoder(0x4949), do: {:ok, &:binary.decode_unsigned(&1, :little)}
   defp byte_order_decoder(0x4D4D), do: {:ok, &:binary.decode_unsigned(&1, :big)}

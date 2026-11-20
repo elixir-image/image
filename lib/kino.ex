@@ -49,13 +49,15 @@ if match?({:module, _module}, Code.ensure_compiled(Kino)) do
     """
     @doc since: "0.18.0"
 
-    @spec show(image :: Vimage.t(), options :: Keyword.t()) :: Kino.Image.t()
+    @spec show(image :: Vimage.t(), options :: Keyword.t()) ::
+            Kino.Image.t() | {:error, Image.error()}
 
     def show(%Vimage{} = image, opts \\ []) do
       image = maybe_resize_image(image, opts)
 
-      {:ok, image_bin} = Vimage.write_to_buffer(image, ".png")
-      Kino.Image.new(image_bin, "image/png")
+      with {:ok, image_bin} <- Vimage.write_to_buffer(image, ".png") do
+        Kino.Image.new(image_bin, "image/png")
+      end
     end
 
     # scale down if image height is larger than max_height

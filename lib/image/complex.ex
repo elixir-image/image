@@ -67,8 +67,9 @@ defmodule Image.Complex do
   end
 
   defp to_complex(%Vimage{} = image, _format, bands) do
-    {:ok, image} = Operation.cast(image, :VIPS_FORMAT_FLOAT)
-    to_complex(image, Vimage.format(image), bands)
+    with {:ok, image} <- Operation.cast(image, :VIPS_FORMAT_FLOAT) do
+      to_complex(image, Vimage.format(image), bands)
+    end
   end
 
   # Convert from complex

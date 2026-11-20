@@ -169,11 +169,8 @@ defmodule Image.PixelColorGapTest do
       assert %Vix.Vips.Image{} = Image.Histogram.as_image!(image, width: 50, height: 50)
     end
 
-    # Note: as_image!/2 currently returns an error tuple rather than
-    # raising. This test documents the current behaviour.
-    test "as_image! with invalid options returns an error tuple", %{image: image} do
-      assert {:error, %Image.Error{reason: :invalid_option}} =
-               Image.Histogram.as_image!(image, width: -1)
+    test "as_image! with invalid options raises", %{image: image} do
+      assert_raise Image.Error, fn -> Image.Histogram.as_image!(image, width: -1) end
     end
   end
 end

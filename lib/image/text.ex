@@ -614,17 +614,8 @@ defmodule Image.Text do
   end
 
   def add_background(%Vimage{} = image, %{} = options) do
-    {:ok, background} = render_background(image, options)
-
-    # If its transparent text then the image
-    # is a mask and we add it as the alpha channel
-    # otherwise just composite the two images
-
-    if transparent_text?(options) do
-      {:ok, image} = Operation.bandjoin([background, image])
-      {:ok, apply_opacity(image, options)}
-    else
-      Operation.composite2(background, image, :VIPS_BLEND_MODE_OVER)
+    with {:ok, background} <- render_background(image, options) do
+      join_background(background, image, options)
     end
   end
 
@@ -1178,6 +1169,18 @@ defmodule Image.Text do
     end
   end
 
+  # Transparent text is a mask, so it becomes the background's alpha
+  # channel. Otherwise the text is composited over the background.
+  defp join_background(background, image, options) do
+    if transparent_text?(options) do
+      with {:ok, joined} <- Operation.bandjoin([background, image]) do
+        {:ok, apply_opacity(joined, options)}
+      end
+    else
+      Operation.composite2(background, image, :VIPS_BLEND_MODE_OVER)
+    end
+  end
+
   # Render a background rectangle and return
   # it without its alpha channel since we will
   # apply transparency from the text image
@@ -1200,12 +1203,12 @@ defmodule Image.Text do
     </svg>
     """
 
-    {:ok, {rectangle, _flags}} = Operation.svgload_buffer(svg)
-
-    if transparent_text?(options) do
-      Operation.extract_band(rectangle, 0, n: 3)
-    else
-      {:ok, rectangle}
+    with {:ok, {rectangle, _flags}} <- Operation.svgload_buffer(svg) do
+      if transparent_text?(options) do
+        Operation.extract_band(rectangle, 0, n: 3)
+      else
+        {:ok, rectangle}
+      end
     end
   end
 

@@ -236,12 +236,12 @@ defmodule Image.Pixel do
 
   def to_pixel(%MutableImage{} = image, color, _options)
       when is_list(color) and color != [] do
-    {:ok, {_w, _h, bands}} = MutableImage.shape(image)
-
-    if length(color) == bands and pre_encoded?(color, :srgb) do
-      {:ok, color}
-    else
-      do_to_pixel_mutable(image, color, [])
+    with {:ok, {_w, _h, bands}} <- MutableImage.shape(image) do
+      if length(color) == bands and pre_encoded?(color, :srgb) do
+        {:ok, color}
+      else
+        do_to_pixel_mutable(image, color, [])
+      end
     end
   end
 
@@ -277,17 +277,18 @@ defmodule Image.Pixel do
     do_to_pixel(interpretation, bands, has_alpha, color, options)
   end
 
+  # MutableImage does not expose an interpretation accessor, so we
+  # default to :srgb. The mutable code path is almost always sRGB
+  # because Image.mutate/2 is mostly used by the drawing functions
+  # which assume sRGB inputs today. Callers who need exact
+  # interpretation handling for mutable images should call
+  # to_pixel/3 with the source Vimage before entering the mutate
+  # block.
   defp do_to_pixel_mutable(image, color, options) do
-    {:ok, {_w, _h, bands}} = MutableImage.shape(image)
-    {:ok, has_alpha} = MutableImage.has_alpha?(image)
-    # MutableImage does not expose an interpretation accessor, so we
-    # default to :srgb. The mutable code path is almost always sRGB
-    # because Image.mutate/2 is mostly used by the drawing functions
-    # which assume sRGB inputs today. Callers who need exact
-    # interpretation handling for mutable images should call
-    # to_pixel/3 with the source Vimage before entering the mutate
-    # block.
-    do_to_pixel(:srgb, bands, has_alpha, color, options)
+    with {:ok, {_w, _h, bands}} <- MutableImage.shape(image),
+         {:ok, has_alpha} <- MutableImage.has_alpha?(image) do
+      do_to_pixel(:srgb, bands, has_alpha, color, options)
+    end
   end
 
   defp do_to_pixel(interpretation, bands, has_alpha, color, options) do
@@ -297,14 +298,10 @@ defmodule Image.Pixel do
 
     with {:ok, source_struct} <- resolve(color),
          {:ok, {target_module, encoder}} <- target_for(interpretation, color_bands),
-         {:ok, converted} <- convert(source_struct, target_module, intent),
-         {:ok, base_pixel} <- encode(encoder, converted),
+         {:ok, converted} <- color_result(convert(source_struct, target_module, intent), color),
+         {:ok, base_pixel} <- color_result(encode(encoder, converted), color),
          {:ok, alpha_value} <- resolve_alpha(encoder, explicit_opacity, source_struct, has_alpha) do
       {:ok, fit_bands(base_pixel, alpha_value, bands, has_alpha)}
-    else
-      # `Color.convert/3` reports failures with its own exceptions too.
-      {:error, %Image.Error{} = error} -> {:error, error}
-      {:error, reason} -> {:error, invalid_color(color, reason)}
     end
   end
 
@@ -482,7 +479,7 @@ defmodule Image.Pixel do
   def to_srgb(color) do
     with {:ok, source_struct} <- resolve(color),
          {:ok, %Color.SRGB{r: r, g: g, b: b, alpha: alpha}} <-
-           Color.convert(source_struct, Color.SRGB) do
+           color_result(Color.convert(source_struct, Color.SRGB), color) do
       base = [scale(r, 255), scale(g, 255), scale(b, 255)]
 
       if is_nil(alpha) do
@@ -490,9 +487,6 @@ defmodule Image.Pixel do
       else
         {:ok, base ++ [scale(alpha, 255)]}
       end
-    else
-      {:error, %Image.Error{} = error} -> {:error, error}
-      {:error, reason} -> {:error, invalid_color(color, reason)}
     end
   end
 
@@ -669,6 +663,12 @@ defmodule Image.Pixel do
       {:error, reason} -> {:error, invalid_color(other, reason)}
     end
   end
+
+  # `Color` reports failures with its own exceptions. They are translated
+  # so that no foreign error shape escapes this module.
+  defp color_result({:error, %Image.Error{}} = error, _color), do: error
+  defp color_result({:error, reason}, color), do: {:error, invalid_color(color, reason)}
+  defp color_result(result, _color), do: result
 
   defp invalid_color(value, reason) do
     message = if is_exception(reason), do: Exception.message(reason), else: to_string(reason)

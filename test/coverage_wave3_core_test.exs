@@ -49,17 +49,17 @@ defmodule Image.CoverageWave3.Core.Test do
     end
 
     test "top_n and bottom_n with default n" do
-      assert {_value, _x, _y, positions} = Math.top_n(Image.to_colorspace!(rgb(), :bw))
+      assert {:ok, {_value, _x, _y, positions}} = Math.top_n(Image.to_colorspace!(rgb(), :bw))
       assert is_list(positions)
-      assert {_value, _x, _y, positions} = Math.bottom_n(Image.to_colorspace!(rgb(), :bw))
+      assert {:ok, {_value, _x, _y, positions}} = Math.bottom_n(Image.to_colorspace!(rgb(), :bw))
       assert is_list(positions)
     end
 
     test "minpos and maxpos on a constant image flag possible overflow" do
       grey = Image.new!(10, 10, color: 128) |> Image.to_colorspace!(:bw)
 
-      assert {_value, _coordinates, :maybe_overflow} = Math.minpos(grey)
-      assert {_value, _coordinates, :maybe_overflow} = Math.maxpos(grey)
+      assert {:ok, {_value, _coordinates, :maybe_overflow}} = Math.minpos(grey)
+      assert {:ok, {_value, _coordinates, :maybe_overflow}} = Math.maxpos(grey)
     end
   end
 

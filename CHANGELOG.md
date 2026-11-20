@@ -6,6 +6,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 
 ### Added
 
+* `Image.skew_angle!/1`.
+
 * `Image.Math` accepts a number or a list of numbers on the left of arithmetic and comparisons, such as `100 - image`, `5 < image` and `2 ** image`, and `exp/1` and the `!` unary functions accept numbers.
 
 * Adds an `Image: transform` Livebook smart cell for building an image transformation visually; it is registered automatically when `kino` is loaded. ([#31](https://github.com/elixir-image/image/issues/31))
@@ -30,6 +32,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 
 * `Image.meme/3` defaults to the bundled Anton font, under the SIL Open Font License 1.1, in place of a copy of Impact whose licence did not allow redistribution. The three Impact font files are no longer in the package.
 
+* `Image.Math.top_n/2`, `bottom_n/2`, `maxpos/2` and `minpos/2` return `{:ok, result}` or `{:error, reason}` rather than a bare tuple, and `Image.skew_angle/1` returns `{:ok, angle}`.
+
 * `Image.Math.cos/1` and `Image.Math.sin/1` take a number in degrees, as they always took an image's pixel values, rather than in radians.
 
 * `Image.Math` functions return `{:error, %Image.Error{reason: :invalid_argument}}` for an invalid operand, and the `!` functions and operators raise `Image.Error`, rather than `FunctionClauseError`. With no image involved the operators behave as `Kernel` and `Bitwise`.
@@ -49,6 +53,14 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 * Requires `color` 1.0.0 or later. Image does not call the Color functions whose return values changed in 1.0 (`to_hex/1`, `to_css/1,2`, `to_ansi/1,2`), so code that calls `Image` works unchanged.
 
 ### Fixed
+
+* Fix `Image.rounded/2` writing an unvalidated `:radius` into the SVG it renders; an invalid radius now returns an `:invalid_option` error.
+
+* Fix `Image.transform_matrix/3` returning a string error for an invalid quadrilateral; it now returns an `Image.Error` with reason `:invalid_quadrilateral`.
+
+* Fix `Image.Histogram.as_image!/2` returning an error tuple rather than raising.
+
+* Fix several functions, among them `Image.new/3`, `Image.avatar/2`, `Image.meme/3`, `Image.equalize/2` and `Image.Kino.show/2`, raising `MatchError` when a libvips operation failed, rather than returning the error.
 
 * Fix a comparison operator with the image on the right, such as `5 < image` under `use Image.Math`, returning a boolean from term ordering instead of comparing each pixel.
 

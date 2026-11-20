@@ -44,18 +44,28 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
     @spec unique_colors(Vimage.t()) ::
             {:ok, {counts :: Nx.Tensor.t(), colors :: Nx.Tensor.t()}} | {:error, Image.error()}
     def unique_colors(%Vimage{} = image) do
+      checked_unique_colors(image, :unique_colors)
+    end
+
+    # The operation is named by the caller so that an error from k_means/2
+    # reports :k_means.
+    defp checked_unique_colors(image, operation) do
       bands = Image.bands(image)
 
       cond do
         bands not in [3, 4] ->
           {:error,
-           scholar_error("unique_colors/1 requires a 3- or 4-band image. Found #{bands} bands")}
+           scholar_error(
+             "unique_colors/1 requires a 3- or 4-band image. Found #{bands} bands",
+             operation
+           )}
 
         Image.band_format(image) != {:u, 8} ->
           {:error,
            scholar_error(
              "unique_colors/1 requires an 8-bit unsigned image. " <>
-               "Found #{inspect(Image.band_format(image))}"
+               "Found #{inspect(Image.band_format(image))}",
+             operation
            )}
 
         true ->
@@ -155,21 +165,24 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
           {:error,
            scholar_error(
              "unique_color_count requires a {height, width, bands} tensor. " <>
-               "Found rank #{Nx.rank(tensor)}"
+               "Found rank #{Nx.rank(tensor)}",
+             :unique_color_count
            )}
 
         Nx.axis_size(tensor, 2) not in [3, 4] ->
           {:error,
            scholar_error(
              "unique_color_count requires a 3- or 4-band image. " <>
-               "Found #{Nx.axis_size(tensor, 2)} bands"
+               "Found #{Nx.axis_size(tensor, 2)} bands",
+             :unique_color_count
            )}
 
         Nx.type(tensor) != {:u, 8} ->
           {:error,
            scholar_error(
              "unique_color_count requires an 8-bit unsigned image. " <>
-               "Found #{inspect(Nx.type(tensor))}"
+               "Found #{inspect(Nx.type(tensor))}",
+             :unique_color_count
            )}
 
         true ->
@@ -194,8 +207,8 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
       end
     end
 
-    defp scholar_error(message) do
-      %Image.Error{message: message, reason: message}
+    defp scholar_error(message, operation) do
+      %Image.Error{message: message, reason: message, operation: operation}
     end
 
     # Scholar.Cluster.KMeans.fit/2 raises rather than returning an error:
@@ -213,7 +226,8 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
         {:error,
          scholar_error(
            "K-means requires at least 2 samples to cluster. " <>
-             "Found #{Nx.axis_size(samples, 0)}"
+             "Found #{Nx.axis_size(samples, 0)}",
+           :k_means
          )}
       else
         {:ok, Scholar.Cluster.KMeans.fit(samples, clamp_clusters(options, max_clusters))}
@@ -223,7 +237,12 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
         {:error, invalid_option(exception)}
 
       exception in ArgumentError ->
-        {:error, %Image.Error{reason: :invalid_option, message: Exception.message(exception)}}
+        {:error,
+         %Image.Error{
+           reason: :invalid_option,
+           operation: :k_means,
+           message: Exception.message(exception)
+         }}
     end
 
     defp clamp_clusters(options, nil), do: options
@@ -244,6 +263,7 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
          when is_list(keys) do
       %Image.Error{
         reason: :invalid_option,
+        operation: :k_means,
         value: keys,
         message: Exception.message(exception)
       }
@@ -252,6 +272,7 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
     defp invalid_option(exception) do
       %Image.Error{
         reason: :invalid_option,
+        operation: :k_means,
         value: {exception.key, exception.value},
         message: Exception.message(exception)
       }
@@ -287,7 +308,7 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
     @spec k_means(Vimage.t(), options :: Keyword.t()) ::
             {:ok, k_means_model :: struct()} | {:error, Image.error()}
     def k_means(%Vimage{} = image, options \\ []) do
-      with {:ok, {_count, colors}} <- unique_colors(image) do
+      with {:ok, {_count, colors}} <- checked_unique_colors(image, :k_means) do
         # A single unique color (solid image) is duplicated because
         # the random centroid initialisation needs at least 2 samples.
         unique_count = Nx.axis_size(colors, 0)

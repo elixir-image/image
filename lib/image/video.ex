@@ -310,7 +310,7 @@ if Image.xav_configured?() do
     @doc subject: "Load and save"
     @spec close(t()) :: {:ok, t()}
     def close(%__MODULE__{} = video) do
-      {:ok, %{video | reader: nil}}
+      {:ok, closed(video)}
     end
 
     @doc """
@@ -329,8 +329,11 @@ if Image.xav_configured?() do
     @doc subject: "Load and save"
     @spec close!(t()) :: t()
     def close!(%__MODULE__{} = video) do
-      {:ok, closed} = close(video)
-      closed
+      closed(video)
+    end
+
+    defp closed(video) do
+      %{video | reader: nil}
     end
 
     # ----- stream! -----------------------------------------------------------

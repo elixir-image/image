@@ -14,17 +14,11 @@ defmodule Image.Blurhash.Decoder do
       pixels = construct_pixel_iodata(width, height, matrix)
 
       {:ok, pixels, average_color}
-    else
-      {:error, %Image.Error{}} = error ->
-        error
-
-      {:error, _reason} ->
-        {:error, %Image.Error{message: "Invalid blurhash", reason: "Invalid blurhash"}}
     end
   end
 
   defp size_flag(blurhash) do
-    with {:ok, encoded_flag, rest} <- Base83.decode_number(blurhash, 1) do
+    with {:ok, encoded_flag, rest} <- decode_number(blurhash, 1) do
       x = rem(encoded_flag, 9) + 1
       y = floor(encoded_flag / 9) + 1
       {:ok, {x, y}, rest}
@@ -32,13 +26,13 @@ defmodule Image.Blurhash.Decoder do
   end
 
   defp max_ac(blurhash) do
-    with {:ok, quantized_max, rest} <- Base83.decode_number(blurhash, 1) do
+    with {:ok, quantized_max, rest} <- decode_number(blurhash, 1) do
       {:ok, (quantized_max + 1) / 166, rest}
     end
   end
 
   defp average_color_and_dc(blurhash) do
-    with {:ok, raw, rest} <- Base83.decode_number(blurhash, 4) do
+    with {:ok, raw, rest} <- decode_number(blurhash, 4) do
       {r, g, b} = color = {bsr(raw, 16), band(bsr(raw, 8), 255), band(raw, 255)}
       dc = {srgb_to_linear(r), srgb_to_linear(g), srgb_to_linear(b)}
       {:ok, {color, dc}, rest}
@@ -48,46 +42,62 @@ defmodule Image.Blurhash.Decoder do
   def construct_matrix(encoded_ac, max_ac, x, y, dc) do
     size = x * y - 1
 
-    try do
-      # We start with 1 because {0, 0} is the DC
-      {ac_values, rest} =
-        Enum.map_reduce(1..size//1, encoded_ac, fn index, rest ->
-          case Base83.decode_number(rest, 2) do
-            {:ok, value, rest} ->
-              # add matrix position with the color since we will need it for
-              # inverse dct later
-              matrix_pos = {rem(index, x), floor(index / x)}
+    # Index 0 is the DC component, so the AC components start at 1.
+    1..size//1
+    |> Enum.reduce_while({[], encoded_ac}, &decode_ac_component(&1, &2, x, max_ac))
+    |> finish_matrix(dc)
+  end
 
-              quantized_r = floor(value / (19 * 19))
-              quantized_g = floor(rem(floor(value / 19), 19))
-              quantized_b = rem(value, 19)
+  defp decode_ac_component(index, {components, rest}, x, max_ac) do
+    case decode_number(rest, 2) do
+      {:ok, value, rest} ->
+        {:cont, {[ac_component(index, value, x, max_ac) | components], rest}}
 
-              r = unquantize_color(quantized_r, max_ac)
-              g = unquantize_color(quantized_g, max_ac)
-              b = unquantize_color(quantized_b, max_ac)
-
-              {{matrix_pos, {r, g, b}}, rest}
-
-            # Haven't found a more elegant solution to throwing in this case
-            error ->
-              throw(error)
-          end
-        end)
-
-      if rest != "" do
-        {:error,
-         %Image.Error{
-           message: "Unexpected number of blurhash components",
-           reason: "Unexpected number of blurhash components"
-         }}
-      else
-        {r, g, b} = dc
-        matrix = [{{0, 0}, {r, g, b}} | ac_values]
-        {:ok, matrix}
-      end
-    catch
-      {:error, _} -> {:error, %Image.Error{message: "Invalid blurhash", reason: "Invalid blurhash"}}
+      error ->
+        {:halt, error}
     end
+  end
+
+  # The matrix position is kept with the colour for the inverse DCT.
+  defp ac_component(index, value, x, max_ac) do
+    matrix_position = {rem(index, x), floor(index / x)}
+
+    quantized_r = floor(value / (19 * 19))
+    quantized_g = floor(rem(floor(value / 19), 19))
+    quantized_b = rem(value, 19)
+
+    r = unquantize_color(quantized_r, max_ac)
+    g = unquantize_color(quantized_g, max_ac)
+    b = unquantize_color(quantized_b, max_ac)
+
+    {matrix_position, {r, g, b}}
+  end
+
+  defp finish_matrix({:error, _reason} = error, _dc) do
+    error
+  end
+
+  defp finish_matrix({components, ""}, dc) do
+    {:ok, [{{0, 0}, dc} | Enum.reverse(components)]}
+  end
+
+  defp finish_matrix({_components, _rest}, _dc) do
+    {:error,
+     %Image.Error{
+       message: "Unexpected number of blurhash components",
+       reason: "Unexpected number of blurhash components"
+     }}
+  end
+
+  defp decode_number(string, length) do
+    case Base83.decode_number(string, length) do
+      {:ok, _value, _rest} = result -> result
+      {:error, _reason} -> {:error, invalid_blurhash()}
+    end
+  end
+
+  defp invalid_blurhash do
+    %Image.Error{message: "Invalid blurhash", reason: "Invalid blurhash"}
   end
 
   def construct_pixel_iodata(width, height, matrix) do

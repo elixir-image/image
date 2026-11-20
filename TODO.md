@@ -4,7 +4,7 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
-* [ ] **House-rule violations in `lib`** — `String.to_atom/1` on a smart cell text field (`lib/image/smart_cell/transform.ex`), 56 `{:ok, _} =` match-bangs (some on user-input paths), and six `with … else` clauses. `Image.Math.top_n/2`, `bottom_n/2`, `maxpos/2` and `minpos/2` also return bare tuples and match `{:ok, _} =` on libvips results.
+* [ ] **Rule 2 bang sweep** — 173 calls to `!` functions remain inside non-bang functions (84 in `lib/image.ex`, 48 in `Image.Math`, mostly its operators). Each needs judging: a bang on values the library built itself is acceptable, one on caller input is not.
 
 * [ ] **Run the excluded tests in CI** — about 40 tests tagged `text`, `text_avatar`, `video`, `circular_gradient` and `full` never run in CI.
 
@@ -29,6 +29,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **House-rule violations** — the smart cell no longer creates atoms from text fields, no `with` has an `else`, and no `{:ok, _} =` match remains on a runtime path. 2026-11-21, v0.74.0.
 
 * [x] **Every public function has a `@spec`** — including the `Image.Math` operators and the options modules' `validate_options`, whose docs now follow the house template and run as doctests. 2026-11-20, v0.74.0.
 

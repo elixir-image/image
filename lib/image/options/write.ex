@@ -486,8 +486,10 @@ defmodule Image.Options.Write do
   end
 
   defp keep_option_supported? do
-    {:ok, version} = Image.vips_version()
-    Version.compare(version, "8.15.0") != :lt
+    case Image.vips_version() do
+      {:ok, version} -> Version.compare(version, "8.15.0") != :lt
+      _other -> false
+    end
   end
 
   defp image_type_from("", suffix) when is_binary(suffix) and suffix != "" do

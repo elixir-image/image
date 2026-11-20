@@ -75,6 +75,26 @@ defmodule Image.CompositionCoverageTest do
   end
 
   describe "Image.rounded/2, Image.squircle/2 and Image.circle/2" do
+    test "rounded/2 returns an error for an invalid radius" do
+      image = Image.new!(40, 40, color: :red)
+
+      for radius <- [-1, :bogus, "10\"/><rect"] do
+        assert {:error, %Image.Error{reason: :invalid_option, value: {:radius, ^radius}}} =
+                 Image.rounded(image, radius: radius)
+      end
+    end
+
+    test "transform_matrix/3 returns an error for an invalid quadrilateral" do
+      image = Image.new!(40, 40, color: :red)
+      square = [{0, 0}, {39, 0}, {39, 39}, {0, 39}]
+
+      assert {:error, %Image.Error{reason: :invalid_quadrilateral}} =
+               Image.transform_matrix(image, [{0, 0}], square)
+
+      assert {:error, %Image.Error{reason: :invalid_quadrilateral}} =
+               Image.transform_matrix(image, square, [{0, 0}, {1, 0}, {1, 1}, {:x, 1}])
+    end
+
     test "rounded/2 adds an alpha band with transparent corners" do
       image = Image.new!(30, 20, color: :red)
       assert {:ok, rounded} = Image.rounded(image, radius: 8)
