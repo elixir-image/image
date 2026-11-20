@@ -30,7 +30,26 @@ defmodule Image.Options.Vignette do
 
   See `t:Image.Options.Vignette.vignette_options/0`.
 
+  ### Arguments
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a map of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> {:ok, options} = Image.Options.Vignette.validate_options([])
+      iex> options.k1
+      -0.5
+
   """
+  @spec validate_options(options :: vignette_options()) ::
+          {:ok, map()} | {:error, Image.error()}
   def validate_options(options) when is_list(options) do
     options = Keyword.merge(default_options(), options)
 

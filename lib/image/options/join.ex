@@ -58,7 +58,29 @@ defmodule Image.Options.Join do
   @doc """
   Validate the options for `Image.join/2`.
 
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` the options apply to.
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a keyword list of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, options} = Image.Options.Join.validate_options(image, [])
+      iex> Keyword.fetch!(options, :across)
+      1
+
   """
+  @spec validate_options(image :: Vimage.t(), options :: join_options()) ::
+          {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(image, options) when is_list(options) do
     # A nil `:background` means "unset", i.e. it falls back to the default.
     options = Enum.reject(options, &match?({:background, nil}, &1))

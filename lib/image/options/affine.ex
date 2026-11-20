@@ -81,8 +81,28 @@ defmodule Image.Options.Affine do
 
   See `t:Image.Options.Affine.affine_options/0`.
 
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` the options apply to.
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a keyword list of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, options} = Image.Options.Affine.validate_options(image, [])
+      iex> Keyword.fetch!(options, :extend)
+      :VIPS_EXTEND_BACKGROUND
+
   """
-  @spec validate_options(Vimage.t(), Keyword.t()) ::
+  @spec validate_options(image :: Vimage.t(), options :: affine_options()) ::
           {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(image, options) when is_list(options) do
     # A nil `:background` means "unset", i.e. it falls back to the default.

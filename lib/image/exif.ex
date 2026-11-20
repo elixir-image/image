@@ -128,6 +128,7 @@ defmodule Image.Exif do
       {:error, :invalid_exif}
 
   """
+  @spec extract_exif(binary()) :: t() | {:error, :invalid_exif}
   def extract_exif(exif) do
     # EXIF payloads come from untrusted image files so a truncated or
     # corrupt blob must produce an error, never a crash.
@@ -237,8 +238,9 @@ defmodule Image.Exif do
   # Handle malformed data
   defp read_tags(_, _, _, _, result), do: Map.new(result)
 
-  def read_exif(exif_offset, {exif, _offset, ru} = context)
-      when is_integer(exif_offset) and exif_offset >= 0 do
+  @spec read_exif(non_neg_integer(), context()) :: map()
+  defp read_exif(exif_offset, {exif, _offset, ru} = context)
+       when is_integer(exif_offset) and exif_offset >= 0 do
     case exif do
       <<_::binary-size(^exif_offset), count::binary-size(2), tags::binary>> ->
         read_tags(ru.(count), tags, context, :exif, [])
@@ -248,7 +250,7 @@ defmodule Image.Exif do
     end
   end
 
-  def read_exif(_exif_offset, _context), do: %{}
+  defp read_exif(_exif_offset, _context), do: %{}
 
   @spec read_gps(non_neg_integer(), context()) :: struct()
   defp read_gps(gps_offset, {gps, _offset, ru} = context)

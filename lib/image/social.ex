@@ -134,6 +134,7 @@ defmodule Image.Social do
       "1280x720"
 
   """
+  @spec media_sizes() :: %{optional(platform()) => %{optional(image_usage()) => term()}}
   def media_sizes do
     @social_sizes
   end

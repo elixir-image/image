@@ -23,7 +23,26 @@ defmodule Image.Options.Avatar do
 
   See `t:Image.Options.Avatar.avatar_options/0`.
 
+  ### Arguments
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a keyword list of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> {:ok, options} = Image.Options.Avatar.validate_options(size: 100)
+      iex> Keyword.fetch!(options, :size)
+      100
+
   """
+  @spec validate_options(options :: avatar_options()) ::
+          {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(options) do
     options = Keyword.merge(default_options(), options)
 

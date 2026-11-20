@@ -106,7 +106,25 @@ defmodule Image.Options.Open do
 
   See `t:Image.Options.Open.image_open_options/0`.
 
+  ### Arguments
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a keyword list of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> Image.Options.Open.validate_options([])
+      {:ok, [access: :VIPS_ACCESS_RANDOM]}
+
   """
+  @spec validate_options(options :: image_open_options()) ::
+          {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(options) do
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
       {:error, value} ->

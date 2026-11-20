@@ -547,4 +547,90 @@ defmodule Image.MathCoverage.Test do
       assert Image.get_pixel!(comparison, 0, 0) == [255, 255, 255]
     end
   end
+
+  describe "consistent operands" do
+    test "invalid operands with an image return an error tuple" do
+      image = grey_image(10)
+
+      for {function, arguments} <- [
+            add: [image, :bogus],
+            subtract: [image, "x"],
+            multiply: [image, %{}],
+            divide: [image, nil],
+            pow: [image, :bogus],
+            less_than: [image, :bogus],
+            equal: [image, nil],
+            boolean_and: [image, 1],
+            exp: [:bogus],
+            abs: [:bogus],
+            cos: [:bogus],
+            sin: [:bogus],
+            max: [5],
+            min: [5]
+          ] do
+        assert {:error, %Image.Error{reason: :invalid_argument}} =
+                 apply(Math, function, arguments)
+      end
+    end
+
+    test "bang functions and operators raise Image.Error for invalid operands" do
+      use Image.Math
+      image = grey_image(10)
+
+      assert_raise Image.Error, fn -> Math.add!(image, :bogus) end
+      assert_raise Image.Error, fn -> Math.cos!(:bogus) end
+      assert_raise Image.Error, fn -> Math.boolean_and!(image, 1) end
+      assert_raise Image.Error, fn -> image + :bogus end
+      assert_raise Image.Error, fn -> image == nil end
+    end
+
+    test "operators without an image behave as Kernel and Bitwise" do
+      use Image.Math
+
+      assert 1 + 2 == 3
+      assert "a" == "a"
+      assert -3 == Kernel.-(3)
+      assert (6 &&& 3) == 2
+      assert (6 ||| 3) == 7
+      assert 1 <<< 4 == 16
+      assert 16 >>> 2 == 4
+      assert_raise ArithmeticError, fn -> Math.divide!(:a, 1) end
+    end
+
+    test "a comparison accepts the image on either side" do
+      use Image.Math
+      image = band_image([10, 20, 30])
+
+      assert Image.get_pixel!(15 < image, 0, 0) == [0, 255, 255]
+      assert Image.get_pixel!(20 >= image, 0, 0) == [255, 255, 0]
+      assert Image.get_pixel!([10, 0, 30] == image, 0, 0) == [255, 0, 255]
+    end
+
+    test "a number or list may be the left operand of arithmetic" do
+      use Image.Math
+      image = band_image([10, 20, 30])
+
+      assert Image.get_pixel!([1, 2, 3] + image, 0, 0) == [11.0, 22.0, 33.0]
+      assert Image.get_pixel!([2, 2, 2] * image, 0, 0) == [20.0, 40.0, 60.0]
+      assert Image.get_pixel!(100 - image, 0, 0) == [90.0, 80.0, 70.0]
+      assert Image.get_pixel!(60 / image, 0, 0) == [6.0, 3.0, 2.0]
+      assert Image.get_pixel!(2 ** band_image([1, 2, 3]), 0, 0) == [2.0, 4.0, 8.0]
+    end
+
+    test "trigonometry uses degrees for numbers as for images" do
+      assert {:ok, cosine} = Math.cos(180)
+      assert_in_delta cosine, -1.0, 1.0e-12
+      assert {:ok, sine} = Math.sin(90)
+      assert_in_delta sine, 1.0, 1.0e-12
+
+      {:ok, image} = Math.sin(band_image([90, 90, 90]))
+      assert Image.get_pixel!(image, 0, 0) == [1.0, 1.0, 1.0]
+    end
+
+    test "exp and abs accept numbers" do
+      assert Math.exp(0) == {:ok, 1.0}
+      assert Math.exp!(0) == 1.0
+      assert Math.abs!(-3) == 3
+    end
+  end
 end

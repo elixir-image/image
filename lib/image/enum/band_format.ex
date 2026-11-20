@@ -63,6 +63,7 @@ defmodule Image.BandFormat do
   Returns a list of the known band formats.
 
   """
+  @spec known_band_formats() :: [t()]
   def known_band_formats do
     @known_band_formats
   end
@@ -95,6 +96,7 @@ defmodule Image.BandFormat do
         {:ok, :VIPS_FORMAT_UCHAR}
 
   """
+  @spec validate(t() | atom()) :: {:ok, atom()} | {:error, Image.error()}
   def validate(format) when format in @vips_band_formats do
     {:ok, format}
   end
@@ -112,6 +114,8 @@ defmodule Image.BandFormat do
         {:ok, format}
     end
   end
+
+  @spec image_format_from_nx(Nx.Tensor.t() | t()) :: {:ok, atom()} | {:error, Image.error()}
 
   if Code.ensure_loaded?(Nx) do
     def image_format_from_nx(%Nx.Tensor{} = tensor) do
@@ -182,6 +186,7 @@ defmodule Image.BandFormat do
       {:ok, {:u, 8}}
 
   """
+  @spec nx_format(Vimage.t() | atom()) :: {:ok, t()} | {:error, Image.error()}
   def nx_format(%Vimage{} = image) do
     nx_format(Vix.Vips.Image.format(image))
   end
@@ -231,6 +236,7 @@ defmodule Image.BandFormat do
       {:u, 8}
 
   """
+  @spec nx_format!(Vimage.t() | atom()) :: t() | no_return()
   def nx_format!(image_or_format) do
     case nx_format(image_or_format) do
       {:ok, format} -> format

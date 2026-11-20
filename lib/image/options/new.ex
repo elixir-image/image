@@ -33,7 +33,26 @@ defmodule Image.Options.New do
   @doc """
   Validate the options for `Image.new/2`.
 
+  ### Arguments
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a map of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> {:ok, options} = Image.Options.New.validate_options([])
+      iex> options.bands
+      3
+
   """
+  @spec validate_options(options :: t()) ::
+          {:ok, map()} | {:error, Image.error()}
   def validate_options(options) do
     options = Keyword.merge(default_options(), options)
 

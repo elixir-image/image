@@ -46,6 +46,7 @@ defmodule Image.Interpretation do
   Returns the known colorspace interpretations
 
   """
+  @spec known_interpretations() :: [t()]
   def known_interpretations do
     @interpretation
   end
@@ -76,6 +77,8 @@ defmodule Image.Interpretation do
       {:error, %Image.Error{message: "Unknown interpretation. Found :unknown", reason: "Unknown interpretation. Found :unknown"}}
 
   """
+  @spec validate_interpretation(t() | atom() | String.t()) ::
+          {:ok, atom()} | {:error, Image.error()}
   def validate_interpretation(interpretation) when interpretation in @vips_interpretation do
     {:ok, interpretation}
   end

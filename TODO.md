@@ -4,9 +4,7 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
-* [ ] **Missing `@spec`s** — 84 public functions have none, most in `Image.Math` and `Image`.
-
-* [ ] **House-rule violations in `lib`** — `String.to_atom/1` on a smart cell text field (`lib/image/smart_cell/transform.ex`), 56 `{:ok, _} =` match-bangs (some on user-input paths), and six `with … else` clauses.
+* [ ] **House-rule violations in `lib`** — `String.to_atom/1` on a smart cell text field (`lib/image/smart_cell/transform.ex`), 56 `{:ok, _} =` match-bangs (some on user-input paths), and six `with … else` clauses. `Image.Math.top_n/2`, `bottom_n/2`, `maxpos/2` and `minpos/2` also return bare tuples and match `{:ok, _} =` on libvips results.
 
 * [ ] **Run the excluded tests in CI** — about 40 tests tagged `text`, `text_avatar`, `video`, `circular_gradient` and `full` never run in CI.
 
@@ -31,6 +29,10 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **Every public function has a `@spec`** — including the `Image.Math` operators and the options modules' `validate_options`, whose docs now follow the house template and run as doctests. 2026-11-20, v0.74.0.
+
+* [x] **Consistent `Image.Math` operands** — invalid operands return or raise `Image.Error`, numbers and lists may be the left operand, operators fall back to `Kernel` and `Bitwise` without an image, and trigonometry is in degrees throughout. 2026-11-20, v0.74.0.
 
 * [x] **Document `Image.Math`** — the 44 undocumented functions have docs and doctests; the module stays public for `use Image.Math`. 2026-11-20, v0.74.0.
 

@@ -55,7 +55,26 @@ defmodule Image.Options.Text do
   @doc """
   Validate the options for `Image.Text.text/2`.
 
+  ### Arguments
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a map of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> {:ok, options} = Image.Options.Text.validate_options([])
+      iex> options.font
+      "Helvetica"
+
   """
+  @spec validate_options(options :: t()) ::
+          {:ok, map()} | {:error, Image.error()}
   def validate_options(options) do
     options =
       default_options()

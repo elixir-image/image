@@ -668,6 +668,8 @@ defmodule Image do
   """
   @doc subject: "Load and save", since: "0.1.13"
 
+  @spec new!(image :: Vimage.t()) :: Vimage.t() | no_return()
+
   def new!(%Vimage{} = image) do
     case new(image, []) do
       {:ok, image} -> image
@@ -1872,7 +1874,7 @@ defmodule Image do
     """
     @doc since: "0.61.0"
 
-    @spec from_req_stream(url_or_request :: binary() | Req.Request.t()) ::
+    @spec from_req_stream(url_or_request :: binary() | Req.Request.t(), options :: Keyword.t()) ::
             {:ok, image :: Vimage.t()} | {:error, error()}
 
     def from_req_stream(url_or_request, options \\ []) do
@@ -8780,12 +8782,17 @@ defmodule Image do
 
   @doc subject: "Generator"
 
-  @spec linear_gradient!(Vimage.t(), options :: Keyword.t()) ::
-          Vimage.t() | no_return()
+  @spec linear_gradient!(Vimage.t()) :: Vimage.t() | no_return()
 
   def linear_gradient!(%Vimage{} = image) do
     linear_gradient!(image, [])
   end
+
+  @spec linear_gradient!(Vimage.t(), options :: Keyword.t()) ::
+          Vimage.t() | no_return()
+
+  @spec linear_gradient!(width :: pos_integer(), height :: pos_integer()) ::
+          Vimage.t() | no_return()
 
   def linear_gradient!(%Vimage{} = image, options) do
     case linear_gradient(image, options) do
@@ -8799,7 +8806,10 @@ defmodule Image do
     linear_gradient!(width, height, [])
   end
 
-  def linear_gradient!(width, height, options \\ [])
+  @spec linear_gradient!(width :: pos_integer(), height :: pos_integer(), options :: Keyword.t()) ::
+          Vimage.t() | no_return()
+
+  def linear_gradient!(width, height, options)
       when is_number(width) and is_number(height) and width > 0 and height > 0 do
     case linear_gradient(width, height, options) do
       {:ok, image} -> image
@@ -9503,6 +9513,12 @@ defmodule Image do
 
   """
   @doc subject: "Color Difference", since: "0.51.0"
+
+  @spec delta_e!(
+          color_1 :: Vimage.t() | Pixel.t(),
+          color_2 :: Vimage.t() | Pixel.t(),
+          version :: :de76 | :de00 | :decmc
+        ) :: float() | no_return()
   def delta_e!(color_1, color_2, version \\ @default_delta_e_version) do
     case delta_e(color_1, color_2, version) do
       {:ok, delta_e} -> delta_e
@@ -14367,6 +14383,9 @@ defmodule Image do
 
       @doc subject: "Matrix", since: "0.9.0"
 
+      @spec to_evision(image :: Vimage.t(), convert_to_bgr :: boolean()) ::
+              {:ok, Evision.Mat.t()} | {:error, error() | String.t()}
+
       def to_evision(%Vimage{} = image, convert_to_bgr \\ true) do
         with {:ok, tensor} <- to_nx(image),
              {width, height, bands} <- validate_transferable_image(image),
@@ -14413,6 +14432,9 @@ defmodule Image do
 
       @doc subject: "Matrix", since: "0.9.0"
 
+      @spec from_evision(evision_image :: Evision.Mat.t()) ::
+              {:ok, Vimage.t()} | {:error, error() | String.t()}
+
       def from_evision(%Evision.Mat{} = evision_image) do
         with %Evision.Mat{} = mat <-
                Evision.cvtColor(evision_image, Evision.Constant.cv_COLOR_BGR2RGB()) do
@@ -14453,6 +14475,8 @@ defmodule Image do
 
       """
       @doc subject: "Kino", since: "0.51.0"
+
+      @spec to_kino(image :: Vimage.t()) :: struct() | {:error, error()}
 
       def to_kino(%Vimage{} = image) do
         with {:ok, srgb_image} <- Image.to_colorspace(image, :srgb),
@@ -16255,7 +16279,7 @@ defmodule Image do
   """
   @doc subject: "Image info"
 
-  @spec aspect(Vimage.t()) :: aspect()
+  @spec aspect(Vimage.t(), options :: Keyword.t()) :: aspect()
   def aspect(%Vimage{} = image, options \\ []) do
     square_ratio = Keyword.get(options, :square_ratio, @square_when_ratio_less_than)
     width = Image.width(image)

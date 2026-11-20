@@ -27,7 +27,28 @@ defmodule Image.Options.Shape do
   @doc """
   Validate the options for `Image.Shape functions`.
 
+  ### Arguments
+
+  * `options` is a keyword list of options.
+
+  * `default_options` is a keyword list of default values that
+    `options` override.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a map of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> Image.Options.Shape.validate_options([width: 10], [])
+      {:ok, %{width: 10}}
+
   """
+  @spec validate_options(options :: Keyword.t(), default_options :: Keyword.t()) ::
+          {:ok, map()} | {:error, Image.error()}
   def validate_options(options, default_options) do
     options = Keyword.merge(default_options, options)
 

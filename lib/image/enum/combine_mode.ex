@@ -7,6 +7,31 @@ defmodule Image.CombineMode do
 
   @type t :: :VIPS_COMBINE_MODE_SET | :VIPS_COMBINE_MODE_ADD | :VIPS_COMBINE_MODE_LAST
 
+  @doc """
+  Normalizes and validates a combine mode.
+
+  ### Arguments
+
+  * `mode` is `:set`, `:add` or `:last`, or the matching
+    libvips value such as `:VIPS_COMBINE_MODE_SET`.
+
+  ### Returns
+
+  * `{:ok, combine_mode}` where `combine_mode` is a
+    `t:Image.CombineMode.t/0`, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> Image.CombineMode.validate(:add)
+      {:ok, :VIPS_COMBINE_MODE_ADD}
+
+      iex> Image.CombineMode.validate(:VIPS_COMBINE_MODE_SET)
+      {:ok, :VIPS_COMBINE_MODE_SET}
+
+  """
+  @spec validate(:set | :add | :last | t()) :: {:ok, t()} | {:error, Image.error()}
   def validate(mode)
       when mode in [:VIPS_COMBINE_MODE_SET, :VIPS_COMBINE_MODE_ADD, :VIPS_COMBINE_MODE_LAST] do
     {:ok, mode}

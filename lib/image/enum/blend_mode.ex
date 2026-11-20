@@ -97,6 +97,7 @@ defmodule Image.BlendMode do
   of each mode.
 
   """
+  @spec known_blend_modes() :: [t()]
   def known_blend_modes do
     @blend_modes
   end
@@ -110,6 +111,7 @@ defmodule Image.BlendMode do
       :VIPS_BLEND_MODE_OVER
 
   """
+  @spec default_blend_mode() :: atom()
   def default_blend_mode do
     @default_blend_mode
   end

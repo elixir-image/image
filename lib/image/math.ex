@@ -12,6 +12,23 @@ defmodule Image.Math do
   is recommended that `use Image.Math` be added
   to only those functions that require it.
 
+  ### Operands
+
+  When at least one operand is an image, the operation is done by
+  libvips. A number or a list of numbers (one per band) may be on
+  either side, so `100 - image` and `5 < image` work as expected.
+  An operand that cannot be combined with an image returns
+  `{:error, %Image.Error{reason: :invalid_argument}}` from the
+  functions, and raises `Image.Error` from the `!` functions and the
+  operators.
+
+  When neither operand is an image, the operators behave exactly as
+  the `Kernel` operators, and `&&&`, `|||`, `<<<` and `>>>` as the
+  `Bitwise` ones.
+
+  Trigonometric functions take angles in degrees, for numbers as
+  for images, since that is what libvips uses.
+
   ### Example
 
       defmodule MyModule do
@@ -37,6 +54,13 @@ defmodule Image.Math do
 
   import Kernel,
     except: [+: 2, -: 1, -: 2, *: 2, /: 2, **: 2, <: 2, >: 2, ==: 2, !=: 2, >=: 2, <=: 2, abs: 1]
+
+  @typedoc """
+  A value the arithmetic and comparison operators accept: an
+  image, a number, or a list of numbers with one number per band.
+
+  """
+  @type operand :: Vimage.t() | number() | [number()]
 
   @doc """
   Guards if a given value might be reasonably interpreted
@@ -70,10 +94,21 @@ defmodule Image.Math do
   end
 
   @doc """
-  Matrix unary minues of an
-  image or a number.
+  Negates each pixel of an image, or a number.
 
-  ### Example
+  Applies `Kernel.-/1` when the argument is not an image.
+
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0` or a number.
+
+  ### Returns
+
+  * an image when `a` is an image, or
+
+  * a number when `a` is a number.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -81,22 +116,37 @@ defmodule Image.Math do
       [-10.0, -20.0, -30.0]
 
   """
+  @spec -Vimage.t() :: Vimage.t()
+  @spec -number() :: number()
   def -a when is_struct(a, Vimage) do
     multiply!(a, -1)
   end
 
-  def -a when is_number(a) do
+  def -a do
     Kernel.-(a)
   end
 
   @doc """
-  Matrix addition of two images or
-  one image and a constant or vector.
+  Adds two images, or an image and a number or a list of numbers, pixel by pixel.
 
-  Delegates to `Kernel.+/2` if none of
-  the parameters is a `t:Vix.Vips.Image.t/0`.
+  Delegates to `Kernel.+/2` when neither argument is an image.
+  Raises `Image.Error` if the operation fails.
 
-  ### Example
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  * `b` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  ### Returns
+
+  * an image when either argument is an image, or
+
+  * a number when both are numbers.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -104,18 +154,32 @@ defmodule Image.Math do
       [15.0, 25.0, 35.0]
 
   """
+  @spec operand() + operand() :: Vimage.t() | number()
   def a + b do
     add!(a, b)
   end
 
   @doc """
-  Matrix subtraction of two images or
-  one image and a constant or vector.
+  Subtracts one image from another, or a number or a list of numbers from an image, or an image from a number, pixel by pixel.
 
-  Delegates to `Kernel.-/2` if none of
-  the parameters is a `t:Vix.Vips.Image.t/0`.
+  Delegates to `Kernel.-/2` when neither argument is an image.
+  Raises `Image.Error` if the operation fails.
 
-  ### Example
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  * `b` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  ### Returns
+
+  * an image when either argument is an image, or
+
+  * a number when both are numbers.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -123,18 +187,32 @@ defmodule Image.Math do
       [5.0, 15.0, 25.0]
 
   """
+  @spec operand() - operand() :: Vimage.t() | number()
   def a - b do
     subtract!(a, b)
   end
 
   @doc """
-  Matrix multiplation of two images or
-  one image and a constant or vector.
+  Multiplies two images, or an image and a number or a list of numbers, pixel by pixel.
 
-  Delegates to `Kernel.*/2` if none of
-  the parameters is a `t:Vix.Vips.Image.t/0`.
+  Delegates to `Kernel.*/2` when neither argument is an image.
+  Raises `Image.Error` if the operation fails.
 
-  ### Example
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  * `b` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  ### Returns
+
+  * an image when either argument is an image, or
+
+  * a number when both are numbers.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -142,18 +220,32 @@ defmodule Image.Math do
       [20.0, 40.0, 60.0]
 
   """
+  @spec operand() * operand() :: Vimage.t() | number()
   def a * b do
     multiply!(a, b)
   end
 
   @doc """
-  Matrix division of two images or
-  one image and a constant or vector.
+  Divides one image by another, an image by a number or a list of numbers, or a number by an image, pixel by pixel.
 
-  Delegates to `Kernel.//2` if none of
-  the parameters is a `t:Vix.Vips.Image.t/0`.
+  Delegates to `Kernel.//2` when neither argument is an image.
+  Raises `Image.Error` if the operation fails.
 
-  ### Example
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  * `b` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  ### Returns
+
+  * an image when either argument is an image, or
+
+  * a number when both are numbers.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -161,18 +253,31 @@ defmodule Image.Math do
       [5.0, 10.0, 15.0]
 
   """
+  @spec operand() / operand() :: Vimage.t() | number()
   def a / b do
     divide!(a, b)
   end
 
   @doc """
-  Matrix exponent of two images or
-  one image and a constant or vector.
+  Raises each pixel of an image to a power, given as a number or as the
+  matching pixel of a second image, or a number to the power of each pixel.
 
-  Delegates to `Kernel.**/2` if none of
-  the parameters is a `t:Vix.Vips.Image.t/0`.
+  Delegates to `Kernel.**/2` when neither argument is an image.
+  Raises `Image.Error` if the operation fails.
 
-  ### Example
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0` or a number.
+
+  * `b` is any `t:Vix.Vips.Image.t/0` or a number.
+
+  ### Returns
+
+  * an image when either argument is an image, or
+
+  * a number when both are numbers.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -180,18 +285,34 @@ defmodule Image.Math do
       [100.0, 400.0, 900.0]
 
   """
+  @spec (Vimage.t() | number()) ** (Vimage.t() | number()) :: Vimage.t() | number()
   def a ** b do
     pow!(a, b)
   end
 
   @doc """
-  Matrix less than of two images or
-  one image and a constant or vector.
+  Compares an image with another image, a number or a list of
+  numbers, returning an image that is `255` in each band of each
+  pixel where `a` is less than `b`, and `0` elsewhere.
 
-  Delegates to `Kernel.</2` if none of
-  the parameters is a `t:Vix.Vips.Image.t/0`.
+  Delegates to `Kernel.</2` when neither argument is an image, and
+  either argument may be the image. Raises `Image.Error` if the operation fails.
 
-  ### Example
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  * `b` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  ### Returns
+
+  * the comparison image when either argument is an image, or
+
+  * a boolean when neither is.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -199,18 +320,34 @@ defmodule Image.Math do
       [255, 0, 0]
 
   """
+  @spec term() < term() :: Vimage.t() | boolean()
   def a < b do
     less_than!(a, b)
   end
 
   @doc """
-  Matrix less than or equal of two images or
-  one image and a constant or vector.
+  Compares an image with another image, a number or a list of
+  numbers, returning an image that is `255` in each band of each
+  pixel where `a` is less than or equal to `b`, and `0` elsewhere.
 
-  Delegates to `Kernel.<=/2` if none of
-  the parameters is a `t:Vix.Vips.Image.t/0`.
+  Delegates to `Kernel.<=/2` when neither argument is an image, and
+  either argument may be the image. Raises `Image.Error` if the operation fails.
 
-  ### Example
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  * `b` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  ### Returns
+
+  * the comparison image when either argument is an image, or
+
+  * a boolean when neither is.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -218,18 +355,34 @@ defmodule Image.Math do
       [255, 255, 0]
 
   """
+  @spec term() <= term() :: Vimage.t() | boolean()
   def a <= b do
     less_than_or_equal!(a, b)
   end
 
   @doc """
-  Matrix greater than of two images or
-  one image and a constant or vector.
+  Compares an image with another image, a number or a list of
+  numbers, returning an image that is `255` in each band of each
+  pixel where `a` is greater than `b`, and `0` elsewhere.
 
-  Delegates to `Kernel.>/2` if none of
-  the parameters is a `t:Vix.Vips.Image.t/0`.
+  Delegates to `Kernel.>/2` when neither argument is an image, and
+  either argument may be the image. Raises `Image.Error` if the operation fails.
 
-  ### Example
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  * `b` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  ### Returns
+
+  * the comparison image when either argument is an image, or
+
+  * a boolean when neither is.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -237,18 +390,34 @@ defmodule Image.Math do
       [0, 0, 255]
 
   """
+  @spec term() > term() :: Vimage.t() | boolean()
   def a > b do
     greater_than!(a, b)
   end
 
   @doc """
-  Matrix greater than or equal of two images or
-  one image and a constant or vector.
+  Compares an image with another image, a number or a list of
+  numbers, returning an image that is `255` in each band of each
+  pixel where `a` is greater than or equal to `b`, and `0` elsewhere.
 
-  Delegates to `Kernel.>=/2` if none of
-  the parameters is a `t:Vix.Vips.Image.t/0`.
+  Delegates to `Kernel.>=/2` when neither argument is an image, and
+  either argument may be the image. Raises `Image.Error` if the operation fails.
 
-  ### Example
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  * `b` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  ### Returns
+
+  * the comparison image when either argument is an image, or
+
+  * a boolean when neither is.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -256,18 +425,34 @@ defmodule Image.Math do
       [0, 255, 255]
 
   """
+  @spec term() >= term() :: Vimage.t() | boolean()
   def a >= b do
     greater_than_or_equal!(a, b)
   end
 
   @doc """
-  Matrix equality of two images or
-  one image and a constant or vector.
+  Compares an image with another image, a number or a list of
+  numbers, returning an image that is `255` in each band of each
+  pixel where `a` is equal to `b`, and `0` elsewhere.
 
-  Delegates to `Kernel.==/2` if none of
-  the parameters is a `t:Vix.Vips.Image.t/0`.
+  Delegates to `Kernel.==/2` when neither argument is an image, and
+  either argument may be the image. Raises `Image.Error` if the operation fails.
 
-  ### Example
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  * `b` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  ### Returns
+
+  * the comparison image when either argument is an image, or
+
+  * a boolean when neither is.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -275,18 +460,34 @@ defmodule Image.Math do
       [255, 255, 255]
 
   """
+  @spec term() == term() :: Vimage.t() | boolean()
   def a == b do
     equal!(a, b)
   end
 
   @doc """
-  Matrix inequality of two images or
-  one image and a constant or vector.
+  Compares an image with another image, a number or a list of
+  numbers, returning an image that is `255` in each band of each
+  pixel where `a` is not equal to `b`, and `0` elsewhere.
 
-  Delegates to `Kernel.!=/2` if none of
-  the parameters is a `t:Vix.Vips.Image.t/0`.
+  Delegates to `Kernel.!=/2` when neither argument is an image, and
+  either argument may be the image. Raises `Image.Error` if the operation fails.
 
-  ### Example
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  * `b` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
+
+  ### Returns
+
+  * the comparison image when either argument is an image, or
+
+  * a boolean when neither is.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -294,15 +495,30 @@ defmodule Image.Math do
       [0, 0, 0]
 
   """
+  @spec term() != term() :: Vimage.t() | boolean()
   def a != b do
     not_equal!(a, b)
   end
 
   @doc """
-  Matrix bitwise 'and' of
-  two images.
+  Returns the bitwise *and*, band by band, of two images.
 
-  ### Example
+  Raises `Image.Error` if the operation fails. Delegates to
+  `Bitwise.&&&/2` when neither argument is an image.
+
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0` or an integer.
+
+  * `b` is any `t:Vix.Vips.Image.t/0` or an integer.
+
+  ### Returns
+
+  * the resulting image when either argument is an image, or
+
+  * an integer when neither is.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -310,15 +526,30 @@ defmodule Image.Math do
       [10, 20, 30]
 
   """
+  @spec (Vimage.t() | integer()) &&& (Vimage.t() | integer()) :: Vimage.t() | integer()
   def a &&& b do
     boolean_and!(a, b)
   end
 
   @doc """
-  Matrix bitwise 'or' of
-  two images.
+  Returns the bitwise *or*, band by band, of two images.
 
-  ### Example
+  Raises `Image.Error` if the operation fails. Delegates to
+  `Bitwise.|||/2` when neither argument is an image.
+
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0` or an integer.
+
+  * `b` is any `t:Vix.Vips.Image.t/0` or an integer.
+
+  ### Returns
+
+  * the resulting image when either argument is an image, or
+
+  * an integer when neither is.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -326,6 +557,7 @@ defmodule Image.Math do
       [10, 20, 30]
 
   """
+  @spec (Vimage.t() | integer()) ||| (Vimage.t() | integer()) :: Vimage.t() | integer()
   def a ||| b do
     boolean_or!(a, b)
   end
@@ -340,10 +572,24 @@ defmodule Image.Math do
   # end
 
   @doc """
-  Matrix bitwise 'left shift' of
-  two images.
+  Returns the left shift of the first image's pixels by the number of bits in the second's, band by band, of two images.
 
-  ### Example
+  Raises `Image.Error` if the operation fails. Delegates to
+  `Bitwise.<<</2` when neither argument is an image.
+
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0` or an integer.
+
+  * `b` is any `t:Vix.Vips.Image.t/0` or an integer.
+
+  ### Returns
+
+  * the resulting image when either argument is an image, or
+
+  * an integer when neither is.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -352,15 +598,30 @@ defmodule Image.Math do
       [20, 40, 60]
 
   """
+  @spec (Vimage.t() | integer()) <<< (Vimage.t() | integer()) :: Vimage.t() | integer()
   def a <<< b do
     boolean_lshift!(a, b)
   end
 
   @doc """
-  Matrix bitwise 'right shift' of
-  two images.
+  Returns the right shift of the first image's pixels by the number of bits in the second's, band by band, of two images.
 
-  ### Example
+  Raises `Image.Error` if the operation fails. Delegates to
+  `Bitwise.>>>/2` when neither argument is an image.
+
+  ### Arguments
+
+  * `a` is any `t:Vix.Vips.Image.t/0` or an integer.
+
+  * `b` is any `t:Vix.Vips.Image.t/0` or an integer.
+
+  ### Returns
+
+  * the resulting image when either argument is an image, or
+
+  * an integer when neither is.
+
+  ### Examples
 
       iex> use Image.Math
       iex> image = Image.new!(2, 2, color: [10, 20, 30])
@@ -369,22 +630,24 @@ defmodule Image.Math do
       [5, 10, 15]
 
   """
+  @spec (Vimage.t() | integer()) >>> (Vimage.t() | integer()) :: Vimage.t() | integer()
   def a >>> b do
     boolean_rshift!(a, b)
   end
 
   @doc """
   Raises *e* to the power of each pixel value of an image,
-  band by band.
+  band by band, or of a number.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `value` is any `t:Vix.Vips.Image.t/0` or a number.
 
   ### Returns
 
-  * `{:ok, image}` where each pixel is *e* raised to the power
-    of the original value, or
+  * `{:ok, image}` for an image, or
+
+  * `{:ok, float}` for a number, or
 
   * `{:error, reason}`.
 
@@ -395,10 +658,21 @@ defmodule Image.Math do
       iex> Enum.map(Image.get_pixel!(result, 0, 0), &Float.round(&1, 3))
       [1.0, 2.718, 7.389]
 
+      iex> Image.Math.exp(0)
+      {:ok, 1.0}
+
   """
-  @spec exp(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
-  def exp(image) do
+  @spec exp(Vimage.t() | number()) :: {:ok, Vimage.t() | float()} | {:error, Image.error()}
+  def exp(%Vimage{} = image) do
     Operation.math(image, :VIPS_OPERATION_MATH_EXP)
+  end
+
+  def exp(number) when is_number(number) do
+    {:ok, :math.exp(number)}
+  end
+
+  def exp(other) do
+    invalid_operands(:exp, [other])
   end
 
   @doc """
@@ -428,14 +702,17 @@ defmodule Image.Math do
       {:ok, 3}
 
   """
-  @spec abs(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
+  @spec abs(Vimage.t() | number()) :: {:ok, Vimage.t() | number()} | {:error, Image.error()}
   def abs(%Vimage{} = image) do
     Operation.abs(image)
   end
 
-  @spec abs(number) :: {:ok, number}
-  def abs(number) do
+  def abs(number) when is_number(number) do
     {:ok, Kernel.abs(number)}
+  end
+
+  def abs(other) do
+    invalid_operands(:abs, [other])
   end
 
   @doc """
@@ -468,6 +745,10 @@ defmodule Image.Math do
     end
   end
 
+  def max(other) do
+    invalid_operands(:max, [other])
+  end
+
   @doc """
   Returns the minimum pixel value of an image, across all bands.
 
@@ -498,8 +779,14 @@ defmodule Image.Math do
     end
   end
 
+  def min(other) do
+    invalid_operands(:min, [other])
+  end
+
   @doc """
-  Raises each pixel of an image to a power, given as a number or as the matching pixel of a second image.
+  Raises each pixel of an image to a power, given as a number or
+  as the matching pixel of a second image, or raises a number to
+  the power of each pixel of an image.
 
   When both arguments are numbers the result is that of `Kernel.**/2`.
 
@@ -519,44 +806,52 @@ defmodule Image.Math do
 
   ### Examples
 
-      iex> image = Image.new!(2, 2, color: [10, 20, 30])
+      iex> image = Image.new!(2, 2, color: [1, 2, 3])
       iex> {:ok, result} = Image.Math.pow(image, 2)
       iex> Image.get_pixel!(result, 0, 0)
-      [100.0, 400.0, 900.0]
+      [1.0, 4.0, 9.0]
+      iex> {:ok, result} = Image.Math.pow(2, image)
+      iex> Image.get_pixel!(result, 0, 0)
+      [2.0, 4.0, 8.0]
 
       iex> Image.Math.pow(2, 3)
       {:ok, 8}
 
   """
-  @spec pow(Vimage.t(), Vimage.t()) ::
-          {:ok, Vimage.t()} | {:error, Image.error()}
+  @spec pow(Vimage.t() | number(), Vimage.t() | number()) ::
+          {:ok, Vimage.t() | number()} | {:error, Image.error()}
 
   def pow(%Vimage{} = image, %Vimage{} = image2) do
     Operation.math2(image, image2, :VIPS_OPERATION_MATH2_POW)
   end
 
-  @spec pow(Vimage.t(), number()) ::
-          {:ok, Vimage.t()} | {:error, Image.error()}
-
   def pow(%Vimage{} = image, value) when is_number(value) do
     Operation.math2_const(image, :VIPS_OPERATION_MATH2_POW, [value])
   end
 
-  @spec pow(number(), number()) :: {:ok, number()}
+  # VIPS_OPERATION_MATH2_WOP is pow with its arguments swapped: the
+  # constant raised to the power of each pixel.
+  def pow(value, %Vimage{} = image) when is_number(value) do
+    Operation.math2_const(image, :VIPS_OPERATION_MATH2_WOP, [value])
+  end
+
   def pow(a, b) when is_number(a) and is_number(b) do
     {:ok, Kernel.**(a, b)}
+  end
+
+  def pow(a, b) do
+    invalid_operands(:pow, [a, b])
   end
 
   @doc """
   Returns the cosine of each pixel of an image, or of a number.
 
-  The pixel values of an image are taken to be angles in degrees,
-  as libvips does. A number is taken to be an angle in radians,
-  as `:math.cos/1` does.
+  Angles are in degrees, for numbers as for the pixel values of
+  an image, since that is what libvips uses.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`, or a number.
+  * `value` is any `t:Vix.Vips.Image.t/0` or a number.
 
   ### Returns
 
@@ -573,30 +868,32 @@ defmodule Image.Math do
       iex> Image.get_pixel!(result, 0, 0)
       [1.0, -1.0, 1.0]
 
-      iex> Image.Math.cos(0)
-      {:ok, 1.0}
+      iex> Image.Math.cos(180)
+      {:ok, -1.0}
 
   """
-  @spec cos(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
+  @spec cos(Vimage.t() | number()) :: {:ok, Vimage.t() | float()} | {:error, Image.error()}
   def cos(%Vimage{} = image) do
     Operation.math(image, :VIPS_OPERATION_MATH_COS)
   end
 
-  @spec cos(number()) :: {:ok, number()}
+  def cos(degrees) when is_number(degrees) do
+    {:ok, :math.cos(degrees * :math.pi() / 180)}
+  end
+
   def cos(other) do
-    {:ok, :math.cos(other)}
+    invalid_operands(:cos, [other])
   end
 
   @doc """
   Returns the sine of each pixel of an image, or of a number.
 
-  The pixel values of an image are taken to be angles in degrees,
-  as libvips does. A number is taken to be an angle in radians,
-  as `:math.sin/1` does.
+  Angles are in degrees, for numbers as for the pixel values of
+  an image, since that is what libvips uses.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`, or a number.
+  * `value` is any `t:Vix.Vips.Image.t/0` or a number.
 
   ### Returns
 
@@ -613,18 +910,21 @@ defmodule Image.Math do
       iex> Image.get_pixel!(result, 0, 0)
       [0.0, 1.0, 0.0]
 
-      iex> Image.Math.sin(0)
-      {:ok, 0.0}
+      iex> Image.Math.sin(90)
+      {:ok, 1.0}
 
   """
-  @spec sin(Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
+  @spec sin(Vimage.t() | number()) :: {:ok, Vimage.t() | float()} | {:error, Image.error()}
   def sin(%Vimage{} = image) do
     Operation.math(image, :VIPS_OPERATION_MATH_SIN)
   end
 
-  @spec sin(number()) :: {:ok, number()}
+  def sin(degrees) when is_number(degrees) do
+    {:ok, :math.sin(degrees * :math.pi() / 180)}
+  end
+
   def sin(other) do
-    {:ok, :math.sin(other)}
+    invalid_operands(:sin, [other])
   end
 
   @doc """
@@ -658,29 +958,29 @@ defmodule Image.Math do
       {:ok, 3}
 
   """
-  @spec add(Vimage.t(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
+  @spec add(operand(), operand()) :: {:ok, Vimage.t() | number()} | {:error, Image.error()}
   def add(%Vimage{} = image, %Vimage{} = image2) do
     Operation.add(image, image2)
   end
 
-  @spec add(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def add(%Vimage{} = image, value) when is_number(value) do
     add(image, [value])
   end
 
-  @spec add(Vimage.t(), [number(), ...]) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def add(%Vimage{} = image, value) when is_list(value) do
     Operation.linear(image, [1.0], value)
   end
 
-  @spec add(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
-  def add(value, %Vimage{} = image) when is_number(value) do
+  def add(value, %Vimage{} = image) when is_pixel(value) do
     add(image, value)
   end
 
-  @spec add(number(), number()) :: {:ok, number}
   def add(a, b) when is_number(a) and is_number(b) do
     {:ok, Kernel.+(a, b)}
+  end
+
+  def add(a, b) do
+    invalid_operands(:add, [a, b])
   end
 
   @doc """
@@ -714,32 +1014,31 @@ defmodule Image.Math do
       {:ok, 2}
 
   """
-  @spec subtract(Vimage.t(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
+  @spec subtract(operand(), operand()) :: {:ok, Vimage.t() | number()} | {:error, Image.error()}
   def subtract(%Vimage{} = image, %Vimage{} = image2) do
     Operation.subtract(image, image2)
   end
 
-  @spec subtract(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def subtract(%Vimage{} = image, value) when is_number(value) do
     subtract(image, [value])
   end
 
-  @spec subtract(Vimage.t(), [number()]) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def subtract(%Vimage{} = image, value) when is_list(value) do
     Operation.linear(image, [1.0], Enum.map(value, &(-&1)))
   end
 
-  @spec subtract(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
-  def subtract(value, %Vimage{} = image) when is_number(value) do
-    image
-    |> multiply!(-1)
-    |> add!(value)
-    |> wrap(:ok)
+  def subtract(value, %Vimage{} = image) when is_pixel(value) do
+    with {:ok, negated} <- multiply(image, -1) do
+      add(negated, value)
+    end
   end
 
-  @spec subtract(number(), number()) :: {:ok, number}
   def subtract(a, b) when is_number(a) and is_number(b) do
     {:ok, Kernel.-(a, b)}
+  end
+
+  def subtract(a, b) do
+    invalid_operands(:subtract, [a, b])
   end
 
   @doc """
@@ -773,29 +1072,29 @@ defmodule Image.Math do
       {:ok, 6}
 
   """
-  @spec multiply(Vimage.t(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
+  @spec multiply(operand(), operand()) :: {:ok, Vimage.t() | number()} | {:error, Image.error()}
   def multiply(%Vimage{} = image, %Vimage{} = image2) do
     Operation.multiply(image, image2)
   end
 
-  @spec multiply(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def multiply(%Vimage{} = image, value) when is_number(value) do
     multiply(image, [value])
   end
 
-  @spec multiply(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
-  def multiply(value, %Vimage{} = image) when is_number(value) do
-    multiply(image, [value])
-  end
-
-  @spec multiply(Vimage.t(), list()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def multiply(%Vimage{} = image, value) when is_list(value) do
     Operation.linear(image, value, [0.0])
   end
 
-  @spec multiply(number(), number()) :: {:ok, number}
+  def multiply(value, %Vimage{} = image) when is_pixel(value) do
+    multiply(image, value)
+  end
+
   def multiply(a, b) when is_number(a) and is_number(b) do
     {:ok, Kernel.*(a, b)}
+  end
+
+  def multiply(a, b) do
+    invalid_operands(:multiply, [a, b])
   end
 
   @doc """
@@ -829,42 +1128,48 @@ defmodule Image.Math do
       {:ok, 2.0}
 
   """
-  @spec divide(Vimage.t(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
+  @spec divide(operand(), operand()) :: {:ok, Vimage.t() | number()} | {:error, Image.error()}
   def divide(%Vimage{} = image, %Vimage{} = image2) do
     Operation.divide(image, image2)
   end
 
-  @spec divide(Vimage.t(), number()) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def divide(%Vimage{} = image, value) when is_number(value) do
     divide(image, [value])
   end
 
-  # See https://github.com/libvips/libvips/blob/master/cplusplus/VImage.cpp#L1062-L1066
-  @spec divide(number(), Vimage.t()) :: {:ok, Vimage.t()} | {:error, Image.error()}
-  def divide(value, %Vimage{} = image) when is_number(value) do
-    image
-    |> pow!(-1.0)
-    |> multiply(value)
-  end
-
-  @spec divide(Vimage.t(), [number()]) :: {:ok, Vimage.t()} | {:error, Image.error()}
   def divide(%Vimage{} = image, value) when is_list(value) do
     Operation.linear(image, Enum.map(value, &(1.0 / &1)), [0.0])
   end
 
-  @spec divide(number(), number()) :: {:ok, number}
+  # See https://github.com/libvips/libvips/blob/master/cplusplus/VImage.cpp#L1062-L1066
+  def divide(value, %Vimage{} = image) when is_pixel(value) do
+    with {:ok, reciprocal} <- pow(image, -1.0) do
+      multiply(reciprocal, value)
+    end
+  end
+
   def divide(a, b) when is_number(a) and is_number(b) do
     {:ok, Kernel./(a, b)}
+  end
+
+  def divide(a, b) do
+    invalid_operands(:divide, [a, b])
   end
 
   @doc """
   Compares an image with another image, a number or a list of
   numbers, and returns an image that is `255` in each band of each
-  pixel where the first is less than the second, and `0` elsewhere.
+  pixel where `image` is less than `other`, and `0` elsewhere.
+
+  The image may be either argument: `less_than(5, image)` compares
+  `5` with each pixel.
+
+  One of the two arguments must be an image.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
 
   * `other` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
     numbers with one number per band.
@@ -883,28 +1188,39 @@ defmodule Image.Math do
       [255, 0, 0]
 
   """
-  @spec less_than(Vimage.t(), Vimage.t()) ::
+  @spec less_than(Vimage.t() | Image.pixel(), Vimage.t() | Image.pixel()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def less_than(%Vimage{} = image, %Vimage{} = other) do
     Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_LESS)
   end
 
-  @spec less_than(Vimage.t(), Image.pixel()) ::
-          {:ok, Vimage.t()} | {:error, Image.error()}
-
   def less_than(%Vimage{} = image, other) when is_pixel(other) do
     Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_LESS, List.wrap(other))
+  end
+
+  def less_than(other, %Vimage{} = image) when is_pixel(other) do
+    greater_than(image, other)
+  end
+
+  def less_than(a, b) do
+    invalid_operands(:less_than, [a, b])
   end
 
   @doc """
   Compares an image with another image, a number or a list of
   numbers, and returns an image that is `255` in each band of each
-  pixel where the first is less than or equal to the second, and `0` elsewhere.
+  pixel where `image` is less than or equal to `other`, and `0` elsewhere.
+
+  The image may be either argument: `less_than_or_equal(5, image)` compares
+  `5` with each pixel.
+
+  One of the two arguments must be an image.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
 
   * `other` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
     numbers with one number per band.
@@ -923,28 +1239,39 @@ defmodule Image.Math do
       [255, 255, 0]
 
   """
-  @spec less_than_or_equal(Vimage.t(), Vimage.t()) ::
+  @spec less_than_or_equal(Vimage.t() | Image.pixel(), Vimage.t() | Image.pixel()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def less_than_or_equal(%Vimage{} = image, %Vimage{} = other) do
     Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_LESSEQ)
   end
 
-  @spec less_than_or_equal(Vimage.t(), Image.pixel()) ::
-          {:ok, Vimage.t()} | {:error, Image.error()}
-
   def less_than_or_equal(%Vimage{} = image, other) when is_pixel(other) do
     Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_LESSEQ, List.wrap(other))
+  end
+
+  def less_than_or_equal(other, %Vimage{} = image) when is_pixel(other) do
+    greater_than_or_equal(image, other)
+  end
+
+  def less_than_or_equal(a, b) do
+    invalid_operands(:less_than_or_equal, [a, b])
   end
 
   @doc """
   Compares an image with another image, a number or a list of
   numbers, and returns an image that is `255` in each band of each
-  pixel where the first is greater than the second, and `0` elsewhere.
+  pixel where `image` is greater than `other`, and `0` elsewhere.
+
+  The image may be either argument: `greater_than(5, image)` compares
+  `5` with each pixel.
+
+  One of the two arguments must be an image.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
 
   * `other` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
     numbers with one number per band.
@@ -963,28 +1290,39 @@ defmodule Image.Math do
       [0, 0, 255]
 
   """
-  @spec greater_than(Vimage.t(), Vimage.t()) ::
+  @spec greater_than(Vimage.t() | Image.pixel(), Vimage.t() | Image.pixel()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def greater_than(%Vimage{} = image, %Vimage{} = other) do
     Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_MORE)
   end
 
-  @spec greater_than(Vimage.t(), Image.pixel()) ::
-          {:ok, Vimage.t()} | {:error, Image.error()}
-
   def greater_than(%Vimage{} = image, other) when is_pixel(other) do
     Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_MORE, List.wrap(other))
+  end
+
+  def greater_than(other, %Vimage{} = image) when is_pixel(other) do
+    less_than(image, other)
+  end
+
+  def greater_than(a, b) do
+    invalid_operands(:greater_than, [a, b])
   end
 
   @doc """
   Compares an image with another image, a number or a list of
   numbers, and returns an image that is `255` in each band of each
-  pixel where the first is greater than or equal to the second, and `0` elsewhere.
+  pixel where `image` is greater than or equal to `other`, and `0` elsewhere.
+
+  The image may be either argument: `greater_than_or_equal(5, image)` compares
+  `5` with each pixel.
+
+  One of the two arguments must be an image.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
 
   * `other` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
     numbers with one number per band.
@@ -1003,28 +1341,39 @@ defmodule Image.Math do
       [0, 255, 255]
 
   """
-  @spec greater_than_or_equal(Vimage.t(), Vimage.t()) ::
+  @spec greater_than_or_equal(Vimage.t() | Image.pixel(), Vimage.t() | Image.pixel()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def greater_than_or_equal(%Vimage{} = image, %Vimage{} = other) do
     Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_MOREEQ)
   end
 
-  @spec greater_than_or_equal(Vimage.t(), Image.pixel()) ::
-          {:ok, Vimage.t()} | {:error, Image.error()}
-
   def greater_than_or_equal(%Vimage{} = image, other) when is_pixel(other) do
     Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_MOREEQ, List.wrap(other))
+  end
+
+  def greater_than_or_equal(other, %Vimage{} = image) when is_pixel(other) do
+    less_than_or_equal(image, other)
+  end
+
+  def greater_than_or_equal(a, b) do
+    invalid_operands(:greater_than_or_equal, [a, b])
   end
 
   @doc """
   Compares an image with another image, a number or a list of
   numbers, and returns an image that is `255` in each band of each
-  pixel where the first is equal to the second, and `0` elsewhere.
+  pixel where `image` is equal to `other`, and `0` elsewhere.
+
+  The image may be either argument: `equal(5, image)` compares
+  `5` with each pixel.
+
+  One of the two arguments must be an image.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
 
   * `other` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
     numbers with one number per band.
@@ -1043,28 +1392,39 @@ defmodule Image.Math do
       [255, 0, 255]
 
   """
-  @spec equal(Vimage.t(), Vimage.t()) ::
+  @spec equal(Vimage.t() | Image.pixel(), Vimage.t() | Image.pixel()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def equal(%Vimage{} = image, %Vimage{} = other) do
     Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_EQUAL)
   end
 
-  @spec equal(Vimage.t(), Image.pixel()) ::
-          {:ok, Vimage.t()} | {:error, Image.error()}
-
   def equal(%Vimage{} = image, other) when is_pixel(other) do
     Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_EQUAL, List.wrap(other))
+  end
+
+  def equal(other, %Vimage{} = image) when is_pixel(other) do
+    equal(image, other)
+  end
+
+  def equal(a, b) do
+    invalid_operands(:equal, [a, b])
   end
 
   @doc """
   Compares an image with another image, a number or a list of
   numbers, and returns an image that is `255` in each band of each
-  pixel where the first is not equal to the second, and `0` elsewhere.
+  pixel where `image` is not equal to `other`, and `0` elsewhere.
+
+  The image may be either argument: `not_equal(5, image)` compares
+  `5` with each pixel.
+
+  One of the two arguments must be an image.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `image` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
 
   * `other` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
     numbers with one number per band.
@@ -1083,40 +1443,49 @@ defmodule Image.Math do
       [0, 255, 0]
 
   """
-  @spec not_equal(Vimage.t(), Vimage.t()) ::
+  @spec not_equal(Vimage.t() | Image.pixel(), Vimage.t() | Image.pixel()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def not_equal(%Vimage{} = image, %Vimage{} = other) do
     Operation.relational(image, other, :VIPS_OPERATION_RELATIONAL_NOTEQ)
   end
 
-  @spec not_equal(Vimage.t(), Image.pixel()) ::
-          {:ok, Vimage.t()} | {:error, Image.error()}
-
   def not_equal(%Vimage{} = image, other) when is_pixel(other) do
     Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_NOTEQ, List.wrap(other))
+  end
+
+  def not_equal(other, %Vimage{} = image) when is_pixel(other) do
+    not_equal(image, other)
+  end
+
+  def not_equal(a, b) do
+    invalid_operands(:not_equal, [a, b])
   end
 
   @doc """
   Compares an image with another image, a number or a list of
   numbers, and returns an image that is `255` in each band of each
-  pixel where the first is less than the second, and `0` elsewhere.
+  pixel where `image` is less than `other`, and `0` elsewhere.
 
-  Raises on error. When both arguments are numbers the result is
-  that of `Kernel.</2`.
+  The image may be either argument: `less_than(5, image)` compares
+  `5` with each pixel.
+
+  Raises `Image.Error` on error. When neither argument is an image
+  the result is that of `Kernel.</2`.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`, or a number.
+  * `image` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
 
   * `other` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
     numbers with one number per band.
 
   ### Returns
 
-  * the comparison image when `image` is an image, or
+  * the comparison image when either argument is an image, or
 
-  * a boolean when both arguments are numbers.
+  * a boolean when neither is.
 
   ### Examples
 
@@ -1128,15 +1497,11 @@ defmodule Image.Math do
       true
 
   """
-  @spec less_than!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
-  def less_than!(%Vimage{} = image, value) do
-    case less_than(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec less_than!(term(), term()) :: Vimage.t() | boolean() | no_return()
+  def less_than!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(less_than(a, b))
   end
 
-  @spec less_than!(number(), number()) :: boolean()
   def less_than!(a, b) do
     Kernel.<(a, b)
   end
@@ -1144,23 +1509,27 @@ defmodule Image.Math do
   @doc """
   Compares an image with another image, a number or a list of
   numbers, and returns an image that is `255` in each band of each
-  pixel where the first is less than or equal to the second, and `0` elsewhere.
+  pixel where `image` is less than or equal to `other`, and `0` elsewhere.
 
-  Raises on error. When both arguments are numbers the result is
-  that of `Kernel.<=/2`.
+  The image may be either argument: `less_than_or_equal(5, image)` compares
+  `5` with each pixel.
+
+  Raises `Image.Error` on error. When neither argument is an image
+  the result is that of `Kernel.<=/2`.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`, or a number.
+  * `image` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
 
   * `other` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
     numbers with one number per band.
 
   ### Returns
 
-  * the comparison image when `image` is an image, or
+  * the comparison image when either argument is an image, or
 
-  * a boolean when both arguments are numbers.
+  * a boolean when neither is.
 
   ### Examples
 
@@ -1172,15 +1541,11 @@ defmodule Image.Math do
       true
 
   """
-  @spec less_than_or_equal!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
-  def less_than_or_equal!(%Vimage{} = image, value) do
-    case less_than_or_equal(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec less_than_or_equal!(term(), term()) :: Vimage.t() | boolean() | no_return()
+  def less_than_or_equal!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(less_than_or_equal(a, b))
   end
 
-  @spec less_than_or_equal!(number(), number()) :: boolean()
   def less_than_or_equal!(a, b) do
     Kernel.<=(a, b)
   end
@@ -1188,23 +1553,27 @@ defmodule Image.Math do
   @doc """
   Compares an image with another image, a number or a list of
   numbers, and returns an image that is `255` in each band of each
-  pixel where the first is greater than the second, and `0` elsewhere.
+  pixel where `image` is greater than `other`, and `0` elsewhere.
 
-  Raises on error. When both arguments are numbers the result is
-  that of `Kernel.>/2`.
+  The image may be either argument: `greater_than(5, image)` compares
+  `5` with each pixel.
+
+  Raises `Image.Error` on error. When neither argument is an image
+  the result is that of `Kernel.>/2`.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`, or a number.
+  * `image` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
 
   * `other` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
     numbers with one number per band.
 
   ### Returns
 
-  * the comparison image when `image` is an image, or
+  * the comparison image when either argument is an image, or
 
-  * a boolean when both arguments are numbers.
+  * a boolean when neither is.
 
   ### Examples
 
@@ -1216,15 +1585,11 @@ defmodule Image.Math do
       false
 
   """
-  @spec greater_than!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
-  def greater_than!(%Vimage{} = image, value) do
-    case greater_than(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec greater_than!(term(), term()) :: Vimage.t() | boolean() | no_return()
+  def greater_than!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(greater_than(a, b))
   end
 
-  @spec greater_than!(number(), number()) :: boolean()
   def greater_than!(a, b) do
     Kernel.>(a, b)
   end
@@ -1232,23 +1597,27 @@ defmodule Image.Math do
   @doc """
   Compares an image with another image, a number or a list of
   numbers, and returns an image that is `255` in each band of each
-  pixel where the first is greater than or equal to the second, and `0` elsewhere.
+  pixel where `image` is greater than or equal to `other`, and `0` elsewhere.
 
-  Raises on error. When both arguments are numbers the result is
-  that of `Kernel.>=/2`.
+  The image may be either argument: `greater_than_or_equal(5, image)` compares
+  `5` with each pixel.
+
+  Raises `Image.Error` on error. When neither argument is an image
+  the result is that of `Kernel.>=/2`.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`, or a number.
+  * `image` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
 
   * `other` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
     numbers with one number per band.
 
   ### Returns
 
-  * the comparison image when `image` is an image, or
+  * the comparison image when either argument is an image, or
 
-  * a boolean when both arguments are numbers.
+  * a boolean when neither is.
 
   ### Examples
 
@@ -1260,15 +1629,11 @@ defmodule Image.Math do
       true
 
   """
-  @spec greater_than_or_equal!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
-  def greater_than_or_equal!(%Vimage{} = image, value) do
-    case greater_than_or_equal(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec greater_than_or_equal!(term(), term()) :: Vimage.t() | boolean() | no_return()
+  def greater_than_or_equal!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(greater_than_or_equal(a, b))
   end
 
-  @spec greater_than_or_equal!(number(), number()) :: boolean()
   def greater_than_or_equal!(a, b) do
     Kernel.>=(a, b)
   end
@@ -1276,23 +1641,27 @@ defmodule Image.Math do
   @doc """
   Compares an image with another image, a number or a list of
   numbers, and returns an image that is `255` in each band of each
-  pixel where the first is equal to the second, and `0` elsewhere.
+  pixel where `image` is equal to `other`, and `0` elsewhere.
 
-  Raises on error. When both arguments are numbers the result is
-  that of `Kernel.==/2`.
+  The image may be either argument: `equal(5, image)` compares
+  `5` with each pixel.
+
+  Raises `Image.Error` on error. When neither argument is an image
+  the result is that of `Kernel.==/2`.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`, or a number.
+  * `image` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
 
   * `other` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
     numbers with one number per band.
 
   ### Returns
 
-  * the comparison image when `image` is an image, or
+  * the comparison image when either argument is an image, or
 
-  * a boolean when both arguments are numbers.
+  * a boolean when neither is.
 
   ### Examples
 
@@ -1304,15 +1673,11 @@ defmodule Image.Math do
       true
 
   """
-  @spec equal!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
-  def equal!(%Vimage{} = image, value) do
-    case equal(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec equal!(term(), term()) :: Vimage.t() | boolean() | no_return()
+  def equal!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(equal(a, b))
   end
 
-  @spec equal!(number(), number()) :: boolean()
   def equal!(a, b) do
     Kernel.==(a, b)
   end
@@ -1320,23 +1685,27 @@ defmodule Image.Math do
   @doc """
   Compares an image with another image, a number or a list of
   numbers, and returns an image that is `255` in each band of each
-  pixel where the first is not equal to the second, and `0` elsewhere.
+  pixel where `image` is not equal to `other`, and `0` elsewhere.
 
-  Raises on error. When both arguments are numbers the result is
-  that of `Kernel.!=/2`.
+  The image may be either argument: `not_equal(5, image)` compares
+  `5` with each pixel.
+
+  Raises `Image.Error` on error. When neither argument is an image
+  the result is that of `Kernel.!=/2`.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`, or a number.
+  * `image` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
+    numbers with one number per band.
 
   * `other` is any `t:Vix.Vips.Image.t/0`, a number, or a list of
     numbers with one number per band.
 
   ### Returns
 
-  * the comparison image when `image` is an image, or
+  * the comparison image when either argument is an image, or
 
-  * a boolean when both arguments are numbers.
+  * a boolean when neither is.
 
   ### Examples
 
@@ -1348,15 +1717,11 @@ defmodule Image.Math do
       false
 
   """
-  @spec not_equal!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
-  def not_equal!(%Vimage{} = image, value) do
-    case not_equal(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec not_equal!(term(), term()) :: Vimage.t() | boolean() | no_return()
+  def not_equal!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(not_equal(a, b))
   end
 
-  @spec not_equal!(number(), number()) :: boolean()
   def not_equal!(a, b) do
     Kernel.!=(a, b)
   end
@@ -1390,23 +1755,11 @@ defmodule Image.Math do
       3
 
   """
-  @spec add!(Vimage.t(), Vimage.t() | Image.pixel() | number()) :: Vimage.t() | no_return()
-  def add!(%Vimage{} = image, value) do
-    case add(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec add!(operand(), operand()) :: Vimage.t() | number() | no_return()
+  def add!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(add(a, b))
   end
 
-  @spec add!(Image.pixel() | number(), Vimage.t()) :: Vimage.t() | no_return()
-  def add!(value, %Vimage{} = image) do
-    case add(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  @spec add!(number(), number()) :: number() | no_return()
   def add!(a, b) do
     Kernel.+(a, b)
   end
@@ -1440,23 +1793,11 @@ defmodule Image.Math do
       2
 
   """
-  @spec subtract!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
-  def subtract!(%Vimage{} = image, value) do
-    case subtract(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec subtract!(operand(), operand()) :: Vimage.t() | number() | no_return()
+  def subtract!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(subtract(a, b))
   end
 
-  @spec subtract!(Image.pixel(), Vimage.t()) :: Vimage.t() | no_return()
-  def subtract!(value, %Vimage{} = image) when is_number(value) do
-    case subtract(value, image) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  @spec subtract!(number(), number()) :: number() | no_return()
   def subtract!(a, b) do
     Kernel.-(a, b)
   end
@@ -1490,23 +1831,11 @@ defmodule Image.Math do
       6
 
   """
-  @spec multiply!(Vimage.t(), Vimage.t() | Image.pixel() | number()) :: Vimage.t() | no_return()
-  def multiply!(%Vimage{} = image, value) do
-    case multiply(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec multiply!(operand(), operand()) :: Vimage.t() | number() | no_return()
+  def multiply!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(multiply(a, b))
   end
 
-  @spec multiply!(Image.pixel() | number(), Vimage.t()) :: Vimage.t() | no_return()
-  def multiply!(value, %Vimage{} = image) do
-    case multiply(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  @spec multiply!(number(), number()) :: number() | no_return()
   def multiply!(a, b) do
     Kernel.*(a, b)
   end
@@ -1540,38 +1869,28 @@ defmodule Image.Math do
       2.0
 
   """
-  @spec divide!(Vimage.t(), Vimage.t() | Image.pixel()) :: Vimage.t() | no_return()
-  def divide!(%Vimage{} = image, value) do
-    case divide(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec divide!(operand(), operand()) :: Vimage.t() | number() | no_return()
+  def divide!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(divide(a, b))
   end
 
-  @spec divide!(Image.pixel(), Vimage.t()) :: Vimage.t() | no_return()
-  def divide!(value, %Vimage{} = image) do
-    case divide(value, image) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
-  end
-
-  @spec divide!(number(), number()) :: number() | no_return()
-  def divide!(a, b) when is_number(a) and is_number(b) do
+  def divide!(a, b) do
     Kernel./(a, b)
   end
 
   @doc """
   Raises *e* to the power of each pixel value of an image,
-  band by band, raising on error.
+  band by band, or of a number, raising on error.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `value` is any `t:Vix.Vips.Image.t/0` or a number.
 
   ### Returns
 
-  * the resulting image.
+  * an image for an image, or
+
+  * a float for a number.
 
   ### Examples
 
@@ -1580,25 +1899,24 @@ defmodule Image.Math do
       [1.0, 2.718, 7.389]
 
   """
-  @spec exp!(Vimage.t()) :: Vimage.t() | no_return()
-  def exp!(image) do
-    case exp(image) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec exp!(Vimage.t() | number()) :: Vimage.t() | float() | no_return()
+  def exp!(value) do
+    unwrap!(exp(value))
   end
 
   @doc """
-  Returns the absolute value of each pixel of an image, raising
-  on error.
+  Returns the absolute value of each pixel of an image, or of a
+  number, raising on error.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `value` is any `t:Vix.Vips.Image.t/0` or a number.
 
   ### Returns
 
-  * the resulting image.
+  * an image for an image, or
+
+  * a number for a number.
 
   ### Examples
 
@@ -1606,13 +1924,13 @@ defmodule Image.Math do
       iex> Image.get_pixel!(Image.Math.abs!(Image.Math.subtract!(image, 5)), 0, 0)
       [4.0, 3.0, 2.0]
 
+      iex> Image.Math.abs!(-3)
+      3
+
   """
-  @spec abs!(Vimage.t()) :: Vimage.t() | no_return()
-  def abs!(image) do
-    case abs(image) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec abs!(Vimage.t() | number()) :: Vimage.t() | number() | no_return()
+  def abs!(value) do
+    unwrap!(abs(value))
   end
 
   @doc """
@@ -1635,11 +1953,8 @@ defmodule Image.Math do
 
   """
   @spec max!(Vimage.t()) :: float() | no_return()
-  def max!(image) do
-    case max(image) do
-      {:ok, float} -> float
-      {:error, reason} -> raise Image.Error, reason
-    end
+  def max!(value) do
+    unwrap!(max(value))
   end
 
   @doc """
@@ -1662,11 +1977,8 @@ defmodule Image.Math do
 
   """
   @spec min!(Vimage.t()) :: float() | no_return()
-  def min!(image) do
-    case min(image) do
-      {:ok, float} -> float
-      {:error, reason} -> raise Image.Error, reason
-    end
+  def min!(value) do
+    unwrap!(min(value))
   end
 
   @doc """
@@ -1697,31 +2009,30 @@ defmodule Image.Math do
       8
 
   """
-  @spec pow!(Vimage.t(), Vimage.t() | number()) :: Vimage.t() | no_return()
-  def pow!(%Vimage{} = image, value) do
-    case pow(image, value) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec pow!(operand(), operand()) :: Vimage.t() | number() | no_return()
+  def pow!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(pow(a, b))
   end
 
-  @spec pow!(number(), number()) :: number() | no_return()
-  def pow!(a, b) when is_number(a) and is_number(b) do
+  def pow!(a, b) do
     Kernel.**(a, b)
   end
 
   @doc """
-  Returns the cosine of each pixel of an image, raising on error.
+  Returns the cosine of each pixel of an image, or of a number,
+  raising on error.
 
-  The pixel values are taken to be angles in degrees.
+  Angles are in degrees.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `value` is any `t:Vix.Vips.Image.t/0` or a number.
 
   ### Returns
 
-  * the resulting image.
+  * an image for an image, or
+
+  * a float for a number.
 
   ### Examples
 
@@ -1729,27 +2040,30 @@ defmodule Image.Math do
       iex> Image.get_pixel!(Image.Math.cos!(image), 0, 0)
       [1.0, -1.0, 1.0]
 
+      iex> Image.Math.cos!(180)
+      -1.0
+
   """
-  @spec cos!(Vimage.t()) :: Vimage.t() | no_return()
-  def cos!(%Vimage{} = image) do
-    case cos(image) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec cos!(Vimage.t() | number()) :: Vimage.t() | float() | no_return()
+  def cos!(value) do
+    unwrap!(cos(value))
   end
 
   @doc """
-  Returns the sine of each pixel of an image, raising on error.
+  Returns the sine of each pixel of an image, or of a number,
+  raising on error.
 
-  The pixel values are taken to be angles in degrees.
+  Angles are in degrees.
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`.
+  * `value` is any `t:Vix.Vips.Image.t/0` or a number.
 
   ### Returns
 
-  * the resulting image.
+  * an image for an image, or
+
+  * a float for a number.
 
   ### Examples
 
@@ -1757,13 +2071,13 @@ defmodule Image.Math do
       iex> Image.get_pixel!(Image.Math.sin!(image), 0, 0)
       [0.0, 1.0, 0.0]
 
+      iex> Image.Math.sin!(90)
+      1.0
+
   """
-  @spec sin!(Vimage.t()) :: Vimage.t() | no_return()
-  def sin!(%Vimage{} = image) do
-    case sin(image) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec sin!(Vimage.t() | number()) :: Vimage.t() | float() | no_return()
+  def sin!(value) do
+    unwrap!(sin(value))
   end
 
   ### Logical operations
@@ -1798,20 +2112,27 @@ defmodule Image.Math do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_AND)
   end
 
+  def boolean_and(image_1, image_2) do
+    invalid_operands(:boolean_and, [image_1, image_2])
+  end
+
   @doc """
   Returns the bitwise *and*, band by band, of two images.
 
-  Raises on error.
+  Raises `Image.Error` on error. When neither argument is an image
+  the result is that of `Bitwise.band/2`.
 
   ### Arguments
 
-  * `image_1` is any `t:Vix.Vips.Image.t/0`.
+  * `image_1` is any `t:Vix.Vips.Image.t/0` or an integer.
 
-  * `image_2` is any `t:Vix.Vips.Image.t/0`.
+  * `image_2` is any `t:Vix.Vips.Image.t/0` or an integer.
 
   ### Returns
 
-  * the resulting image.
+  * the resulting image when either argument is an image, or
+
+  * an integer when neither is.
 
   ### Examples
 
@@ -1820,13 +2141,18 @@ defmodule Image.Math do
       iex> Image.get_pixel!(Image.Math.boolean_and!(image_1, image_2), 0, 0)
       [0, 0, 2]
 
+      iex> Image.Math.boolean_and!(6, 3)
+      2
+
   """
-  @spec boolean_and!(Vimage.t(), Vimage.t()) :: Vimage.t() | no_return()
-  def boolean_and!(%Vimage{} = image_1, %Vimage{} = image_2) do
-    case boolean_and(image_1, image_2) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec boolean_and!(Vimage.t() | integer(), Vimage.t() | integer()) ::
+          Vimage.t() | integer() | no_return()
+  def boolean_and!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(boolean_and(a, b))
+  end
+
+  def boolean_and!(a, b) do
+    Bitwise.band(a, b)
   end
 
   @doc """
@@ -1859,20 +2185,27 @@ defmodule Image.Math do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_OR)
   end
 
+  def boolean_or(image_1, image_2) do
+    invalid_operands(:boolean_or, [image_1, image_2])
+  end
+
   @doc """
   Returns the bitwise *or*, band by band, of two images.
 
-  Raises on error.
+  Raises `Image.Error` on error. When neither argument is an image
+  the result is that of `Bitwise.bor/2`.
 
   ### Arguments
 
-  * `image_1` is any `t:Vix.Vips.Image.t/0`.
+  * `image_1` is any `t:Vix.Vips.Image.t/0` or an integer.
 
-  * `image_2` is any `t:Vix.Vips.Image.t/0`.
+  * `image_2` is any `t:Vix.Vips.Image.t/0` or an integer.
 
   ### Returns
 
-  * the resulting image.
+  * the resulting image when either argument is an image, or
+
+  * an integer when neither is.
 
   ### Examples
 
@@ -1881,13 +2214,18 @@ defmodule Image.Math do
       iex> Image.get_pixel!(Image.Math.boolean_or!(image_1, image_2), 0, 0)
       [11, 22, 31]
 
+      iex> Image.Math.boolean_or!(6, 3)
+      7
+
   """
-  @spec boolean_or!(Vimage.t(), Vimage.t()) :: Vimage.t() | no_return()
-  def boolean_or!(%Vimage{} = image_1, %Vimage{} = image_2) do
-    case boolean_or(image_1, image_2) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec boolean_or!(Vimage.t() | integer(), Vimage.t() | integer()) ::
+          Vimage.t() | integer() | no_return()
+  def boolean_or!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(boolean_or(a, b))
+  end
+
+  def boolean_or!(a, b) do
+    Bitwise.bor(a, b)
   end
 
   @doc """
@@ -1920,20 +2258,27 @@ defmodule Image.Math do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_EOR)
   end
 
+  def boolean_xor(image_1, image_2) do
+    invalid_operands(:boolean_xor, [image_1, image_2])
+  end
+
   @doc """
   Returns the bitwise *exclusive or*, band by band, of two images.
 
-  Raises on error.
+  Raises `Image.Error` on error. When neither argument is an image
+  the result is that of `Bitwise.bxor/2`.
 
   ### Arguments
 
-  * `image_1` is any `t:Vix.Vips.Image.t/0`.
+  * `image_1` is any `t:Vix.Vips.Image.t/0` or an integer.
 
-  * `image_2` is any `t:Vix.Vips.Image.t/0`.
+  * `image_2` is any `t:Vix.Vips.Image.t/0` or an integer.
 
   ### Returns
 
-  * the resulting image.
+  * the resulting image when either argument is an image, or
+
+  * an integer when neither is.
 
   ### Examples
 
@@ -1942,13 +2287,18 @@ defmodule Image.Math do
       iex> Image.get_pixel!(Image.Math.boolean_xor!(image_1, image_2), 0, 0)
       [11, 22, 29]
 
+      iex> Image.Math.boolean_xor!(6, 3)
+      5
+
   """
-  @spec boolean_xor!(Vimage.t(), Vimage.t()) :: Vimage.t() | no_return()
-  def boolean_xor!(%Vimage{} = image_1, %Vimage{} = image_2) do
-    case boolean_xor(image_1, image_2) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec boolean_xor!(Vimage.t() | integer(), Vimage.t() | integer()) ::
+          Vimage.t() | integer() | no_return()
+  def boolean_xor!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(boolean_xor(a, b))
+  end
+
+  def boolean_xor!(a, b) do
+    Bitwise.bxor(a, b)
   end
 
   @doc """
@@ -1981,20 +2331,27 @@ defmodule Image.Math do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_LSHIFT)
   end
 
+  def boolean_lshift(image_1, image_2) do
+    invalid_operands(:boolean_lshift, [image_1, image_2])
+  end
+
   @doc """
   Returns the left shift of the first image's pixels by the number of bits in the second's, band by band, of two images.
 
-  Raises on error.
+  Raises `Image.Error` on error. When neither argument is an image
+  the result is that of `Bitwise.bsl/2`.
 
   ### Arguments
 
-  * `image_1` is any `t:Vix.Vips.Image.t/0`.
+  * `image_1` is any `t:Vix.Vips.Image.t/0` or an integer.
 
-  * `image_2` is any `t:Vix.Vips.Image.t/0`.
+  * `image_2` is any `t:Vix.Vips.Image.t/0` or an integer.
 
   ### Returns
 
-  * the resulting image.
+  * the resulting image when either argument is an image, or
+
+  * an integer when neither is.
 
   ### Examples
 
@@ -2003,13 +2360,18 @@ defmodule Image.Math do
       iex> Image.get_pixel!(Image.Math.boolean_lshift!(image_1, image_2), 0, 0)
       [20, 80, 240]
 
+      iex> Image.Math.boolean_lshift!(1, 4)
+      16
+
   """
-  @spec boolean_lshift!(Vimage.t(), Vimage.t()) :: Vimage.t() | no_return()
-  def boolean_lshift!(%Vimage{} = image_1, %Vimage{} = image_2) do
-    case boolean_lshift(image_1, image_2) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec boolean_lshift!(Vimage.t() | integer(), Vimage.t() | integer()) ::
+          Vimage.t() | integer() | no_return()
+  def boolean_lshift!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(boolean_lshift(a, b))
+  end
+
+  def boolean_lshift!(a, b) do
+    Bitwise.bsl(a, b)
   end
 
   @doc """
@@ -2042,20 +2404,27 @@ defmodule Image.Math do
     Operation.boolean(image_1, image_2, :VIPS_OPERATION_BOOLEAN_RSHIFT)
   end
 
+  def boolean_rshift(image_1, image_2) do
+    invalid_operands(:boolean_rshift, [image_1, image_2])
+  end
+
   @doc """
   Returns the right shift of the first image's pixels by the number of bits in the second's, band by band, of two images.
 
-  Raises on error.
+  Raises `Image.Error` on error. When neither argument is an image
+  the result is that of `Bitwise.bsr/2`.
 
   ### Arguments
 
-  * `image_1` is any `t:Vix.Vips.Image.t/0`.
+  * `image_1` is any `t:Vix.Vips.Image.t/0` or an integer.
 
-  * `image_2` is any `t:Vix.Vips.Image.t/0`.
+  * `image_2` is any `t:Vix.Vips.Image.t/0` or an integer.
 
   ### Returns
 
-  * the resulting image.
+  * the resulting image when either argument is an image, or
+
+  * an integer when neither is.
 
   ### Examples
 
@@ -2064,13 +2433,18 @@ defmodule Image.Math do
       iex> Image.get_pixel!(Image.Math.boolean_rshift!(image_1, image_2), 0, 0)
       [5, 5, 3]
 
+      iex> Image.Math.boolean_rshift!(16, 2)
+      4
+
   """
-  @spec boolean_rshift!(Vimage.t(), Vimage.t()) :: Vimage.t() | no_return()
-  def boolean_rshift!(%Vimage{} = image_1, %Vimage{} = image_2) do
-    case boolean_rshift(image_1, image_2) do
-      {:ok, image} -> image
-      {:error, reason} -> raise Image.Error, reason
-    end
+  @spec boolean_rshift!(Vimage.t() | integer(), Vimage.t() | integer()) ::
+          Vimage.t() | integer() | no_return()
+  def boolean_rshift!(a, b) when is_struct(a, Vimage) or is_struct(b, Vimage) do
+    unwrap!(boolean_rshift(a, b))
+  end
+
+  def boolean_rshift!(a, b) do
+    Bitwise.bsr(a, b)
   end
 
   @doc """
@@ -2294,7 +2668,27 @@ defmodule Image.Math do
   def list_width([first | _rest]) when is_list(first), do: length(first)
   def list_width(list) when is_list(list), do: length(list)
 
-  defp wrap(elem, atom) do
-    {atom, elem}
+  defp unwrap!({:ok, value}) do
+    value
+  end
+
+  defp unwrap!({:error, reason}) do
+    raise Image.Error, reason
+  end
+
+  defp invalid_operands(function, arguments) do
+    message =
+      "Invalid arguments to Image.Math.#{function}: " <>
+        Enum.map_join(arguments, ", ", &describe_operand/1)
+
+    {:error, %Image.Error{reason: :invalid_argument, value: arguments, message: message}}
+  end
+
+  defp describe_operand(%Vimage{}) do
+    "an image"
+  end
+
+  defp describe_operand(other) do
+    inspect(other)
   end
 end

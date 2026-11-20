@@ -5,6 +5,8 @@ defmodule Image.Options.Draw do
 
   """
 
+  alias Vix.Vips.Image, as: Vimage
+
   alias Image.Pixel
   alias Image.CombineMode
 
@@ -103,7 +105,32 @@ defmodule Image.Options.Draw do
   @doc """
   Validate the options for `Image.Draw`.
 
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` the options apply to.
+
+  * `type` is the drawing operation the options are for, such as
+    `:circle`, `:rect` or `:line`.
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a map of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, options} = Image.Options.Draw.validate_options(image, :circle, fill: false)
+      iex> options.fill
+      false
+
   """
+  @spec validate_options(image :: Vimage.t(), type :: atom(), options :: Keyword.t()) ::
+          {:ok, map()} | {:error, Image.error()}
   def validate_options(image, type, options) when is_list(options) do
     options = Keyword.merge(default_options(type), options)
 

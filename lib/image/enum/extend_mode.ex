@@ -30,6 +30,7 @@ defmodule Image.ExtendMode do
   Returns the known extend modes.
 
   """
+  @spec known_extend_modes() :: [t()]
   def known_extend_modes do
     @extend
   end
@@ -60,6 +61,7 @@ defmodule Image.ExtendMode do
       {:error, %Image.Error{message: "Unknown extend mode. Found :unknown", reason: "Unknown extend mode. Found :unknown"}}
 
   """
+  @spec validate_extend(t() | atom() | String.t()) :: {:ok, atom()} | {:error, Image.error()}
   def validate_extend(extend) when extend in @vips_extend do
     {:ok, extend}
   end

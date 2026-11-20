@@ -698,6 +698,9 @@ defmodule Image.YUV do
   """
   @doc since: "0.41.0"
 
+  @spec decode(binary(), pos_integer(), pos_integer(), yuv_encoding()) ::
+          {:ok, yuv_list()} | {:error, Image.error()}
+
   def decode(binary, width, height, :C444) do
     y_bytes = width * height
 

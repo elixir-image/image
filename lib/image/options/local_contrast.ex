@@ -27,7 +27,26 @@ defmodule Image.Options.LocalContrast do
   @doc """
   Validate the options for `Image.local_contrast/2`.
 
+  ### Arguments
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a map of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> {:ok, options} = Image.Options.LocalContrast.validate_options([])
+      iex> options.window_size
+      3
+
   """
+  @spec validate_options(options :: local_contrast_options()) ::
+          {:ok, map()} | {:error, Image.error()}
   def validate_options(options) when is_list(options) do
     options = Keyword.merge(default_options(), options)
 

@@ -30,7 +30,26 @@ defmodule Image.Options.Blur do
 
   See `t:Image.Options.Blur.blur_options/0`.
 
+  ### Arguments
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a map of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> {:ok, options} = Image.Options.Blur.validate_options(sigma: 2)
+      iex> options.sigma
+      2
+
   """
+  @spec validate_options(options :: blur_options()) ::
+          {:ok, map()} | {:error, Image.error()}
   def validate_options(options) when is_list(options) do
     options = Keyword.merge(default_options(), options)
 

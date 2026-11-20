@@ -6,6 +6,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 
 ### Added
 
+* `Image.Math` accepts a number or a list of numbers on the left of arithmetic and comparisons, such as `100 - image`, `5 < image` and `2 ** image`, and `exp/1` and the `!` unary functions accept numbers.
+
 * Adds an `Image: transform` Livebook smart cell for building an image transformation visually; it is registered automatically when `kino` is loaded. ([#31](https://github.com/elixir-image/image/issues/31))
 
 * Adds `Image.GainMap` to detect, read, inspect, remove and apply the gain map of an UltraHDR image, and a `:gain_map` option to `Image.open/2` that keeps, drops or applies it on load.
@@ -28,6 +30,12 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 
 * `Image.meme/3` defaults to the bundled Anton font, under the SIL Open Font License 1.1, in place of a copy of Impact whose licence did not allow redistribution. The three Impact font files are no longer in the package.
 
+* `Image.Math.cos/1` and `Image.Math.sin/1` take a number in degrees, as they always took an image's pixel values, rather than in radians.
+
+* `Image.Math` functions return `{:error, %Image.Error{reason: :invalid_argument}}` for an invalid operand, and the `!` functions and operators raise `Image.Error`, rather than `FunctionClauseError`. With no image involved the operators behave as `Kernel` and `Bitwise`.
+
+* `Image.Exif.read_exif/2`, an undocumented helper, is now private.
+
 * The `Image.Options.*` modules export only `validate_options` and no longer expose their helpers. The `Image.Options.ToneCurve` guards `is_set_point/1` and `is_tone_adjustment/1` are now private.
 
 * `Image.exif/1` and `Image.xmp/1` return the reason `:no_exif` or `:no_xmp` for an image without that metadata, rather than the string `"No such field"`, matching `:no_iptc` from `Image.iptc/1`.
@@ -41,6 +49,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 * Requires `color` 1.0.0 or later. Image does not call the Color functions whose return values changed in 1.0 (`to_hex/1`, `to_css/1,2`, `to_ansi/1,2`), so code that calls `Image` works unchanged.
 
 ### Fixed
+
+* Fix a comparison operator with the image on the right, such as `5 < image` under `use Image.Math`, returning a boolean from term ordering instead of comparing each pixel.
 
 * Fix the `@spec` of `Image.Math.less_than!/2` and the other comparison `!` functions, which return a boolean, not a number, when given two numbers.
 

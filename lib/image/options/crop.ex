@@ -76,7 +76,25 @@ defmodule Image.Options.Crop do
   @doc """
   Validates options to `Image.crop/5`.
 
+  ### Arguments
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a keyword list of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> Image.Options.Crop.validate_options([])
+      {:ok, []}
+
   """
+  @spec validate_options(options :: crop_options()) ::
+          {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(options) do
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
       {:error, value} ->

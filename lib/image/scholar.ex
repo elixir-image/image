@@ -41,6 +41,8 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
         {{1}, {1, 3}}
 
     """
+    @spec unique_colors(Vimage.t()) ::
+            {:ok, {counts :: Nx.Tensor.t(), colors :: Nx.Tensor.t()}} | {:error, Image.error()}
     def unique_colors(%Vimage{} = image) do
       bands = Image.bands(image)
 
@@ -282,6 +284,8 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
         {3, 3}
 
     """
+    @spec k_means(Vimage.t(), options :: Keyword.t()) ::
+            {:ok, k_means_model :: struct()} | {:error, Image.error()}
     def k_means(%Vimage{} = image, options \\ []) do
       with {:ok, {_count, colors}} <- unique_colors(image) do
         # A single unique color (solid image) is duplicated because

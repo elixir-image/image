@@ -4,6 +4,8 @@ defmodule Image.Options.Blurhash do
 
   """
 
+  alias Vix.Vips.Image, as: Vimage
+
   @typedoc """
   Options applicable to `Image.Blurhash.encode/2`
 
@@ -26,7 +28,29 @@ defmodule Image.Options.Blurhash do
 
   See `t:Image.Options.Blurhash.blurhash_options/0`.
 
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` the options apply to.
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a map of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, options} = Image.Options.Blurhash.validate_options(image, [])
+      iex> options.x_components
+      4
+
   """
+  @spec validate_options(image :: Vimage.t(), options :: blurhash_options()) ::
+          {:ok, map()} | {:error, Image.error()}
   def validate_options(image, options) when is_list(options) do
     options = Keyword.merge(default_options(), options)
 

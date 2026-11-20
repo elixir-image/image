@@ -21,7 +21,25 @@ defmodule Image.Options.Resize do
 
   See `t:Image.Options.Resize.resize_options/0`.
 
+  ### Arguments
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a keyword list of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> Image.Options.Resize.validate_options([])
+      {:ok, []}
+
   """
+  @spec validate_options(options :: resize_options()) ::
+          {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(options) when is_list(options) do
     case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
       {:error, value} ->

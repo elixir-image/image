@@ -23,7 +23,26 @@ defmodule Image.Options.Vibrance do
 
   See `t:Image.Options.Vibrance.vibrance_options/0`.
 
+  ### Arguments
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a map of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> {:ok, options} = Image.Options.Vibrance.validate_options([])
+      iex> options.threshold
+      60
+
   """
+  @spec validate_options(options :: vibrance_options()) ::
+          {:ok, map()} | {:error, Image.error()}
   def validate_options(options) when is_list(options) do
     options = Keyword.merge(default_options(), options)
 

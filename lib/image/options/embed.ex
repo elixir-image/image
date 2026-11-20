@@ -51,7 +51,38 @@ defmodule Image.Options.Embed do
   @doc """
   Validate the options for `Image.embed/4`.
 
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` the options apply to.
+
+  * `width` is the width of the image to embed into.
+
+  * `height` is the height of the image to embed into.
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a map of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, options} = Image.Options.Embed.validate_options(image, 20, 20, [])
+      iex> {options.x, options.y}
+      {5, 5}
+
   """
+  @spec validate_options(
+          image :: Vimage.t(),
+          width :: pos_integer(),
+          height :: pos_integer(),
+          options :: embed_options()
+        ) ::
+          {:ok, map()} | {:error, Image.error()}
   def validate_options(image, width, height, options) when is_list(options) do
     # A nil `:background` means "unset". It falls back to the default and does
     # not count as an explicitly-supplied background, so it does not conflict

@@ -23,7 +23,29 @@ defmodule Image.Options.ChromaKey do
   @doc """
   Validate the options for `Image.chroma_key/2`.
 
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` the options apply to.
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a map of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, options} = Image.Options.ChromaKey.validate_options(image, [])
+      iex> options.strategy
+      :threshold
+
   """
+  @spec validate_options(image :: Vimage.t(), options :: chroma_key_options()) ::
+          {:ok, map()} | {:error, Image.error()}
   def validate_options(image, options) when is_list(options) do
     with {:ok, strategy} <- select_strategy(Keyword.keys(options)) do
       options = Keyword.merge(default_options(strategy), options)

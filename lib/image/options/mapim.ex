@@ -78,8 +78,35 @@ defmodule Image.Options.Mapim do
 
   All mapim options are allowed by default.
 
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` the options apply to.
+
+  * `options` is a keyword list of options.
+
+  * `allowed_options` is the list of option names to accept. The
+    default is every option the module knows.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a keyword list of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, options} = Image.Options.Mapim.validate_options(image, [])
+      iex> Keyword.fetch!(options, :extend)
+      :VIPS_EXTEND_BACKGROUND
+
   """
-  @spec validate_options(Vimage.t(), Keyword.t(), [option_name()]) ::
+  @spec validate_options(
+          image :: Vimage.t(),
+          options :: Keyword.t(),
+          allowed_options :: [option_name()]
+        ) ::
           {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(image, options, allowed_options \\ @option_names) when is_list(options) do
     options =

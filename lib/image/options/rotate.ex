@@ -4,6 +4,8 @@ defmodule Image.Options.Rotate do
 
   """
 
+  alias Vix.Vips.Image, as: Vimage
+
   alias Vix.Vips.Interpolate
   alias Image.BackgroundColor
 
@@ -55,8 +57,28 @@ defmodule Image.Options.Rotate do
 
   See `t:Image.Options.Rotate.rotation_options/0`.
 
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0` the options apply to.
+
+  * `options` is a keyword list of options.
+
+  ### Returns
+
+  * `{:ok, validated_options}` where `validated_options` is
+    a keyword list of the options with their defaults applied, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.new!(10, 10, color: :red)
+      iex> {:ok, options} = Image.Options.Rotate.validate_options(image, [])
+      iex> Keyword.has_key?(options, :interpolate)
+      true
+
   """
-  @spec validate_options(Vix.Vips.Image.t(), Keyword.t()) ::
+  @spec validate_options(image :: Vimage.t(), options :: rotation_options()) ::
           {:ok, Keyword.t()} | {:error, Image.error()}
   def validate_options(image, options) when is_list(options) do
     # A nil `:background` means "unset", i.e. it falls back to the default.

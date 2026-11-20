@@ -27,9 +27,10 @@ defmodule Image.Kernel do
   @type t :: unquote(Enum.reduce(@kernel, &{:|, [], [&1, &2]}))
 
   @doc """
-  Returns the known colorspace interpretations
+  Returns the known resampling kernels.
 
   """
+  @spec known_kernel() :: [t()]
   def known_kernel do
     @kernel
   end
@@ -60,6 +61,7 @@ defmodule Image.Kernel do
       {:error, %Image.Error{message: "Unknown kernel. Found :unknown", reason: "Unknown kernel. Found :unknown"}}
 
   """
+  @spec validate_kernel(t() | atom() | String.t()) :: {:ok, atom()} | {:error, Image.error()}
   def validate_kernel(kernel) when kernel in @vips_kernel do
     {:ok, kernel}
   end
