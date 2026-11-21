@@ -8,8 +8,6 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 * [ ] **Value attributes defined between functions** — 33 module attributes such as `@max_rgb_band_value` sit after the first function definition (20 in `lib/image.ex`, the rest across nine files), against the house rule that they go in one block at the top.
 
-* [ ] **`Image.Social.image_usages/1` and `default_image_usage/1` raise for an unknown platform** — they return bare values rather than tuples, so converting them changes their contract shape rather than just their error path.
-
 * [ ] **`Image.compare/3`'s "Invalid metric" error uses a string `:reason`** — every other error path uses an atom after #231. Changing it is breaking.
 
 * [ ] **`:font_file` has no effect on macOS** — the precompiled libvips renders text with Pango's CoreText backend, which never sees a font registered through fontconfig, so `Image.meme/3` and `Image.Text` fall back to a system font unless `PANGOCAIRO_BACKEND=fc` is set. Linux is unaffected. Belongs upstream in libvips or vix's precompiled build.
@@ -29,6 +27,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **`Image.Social` returns errors instead of raising** — `image_usages/1` and `default_image_usage/1` return tagged tuples, errors carry atom reasons, `resize/3` has no bang calls. 2026-11-21, v0.74.0.
 
 * [x] **Every test runs in CI** — text tests render with fontconfig and fonts bundled in `test/support/fonts`, so their references match on every platform; CI sets `PANGOCAIRO_BACKEND` and `FONTCONFIG_FILE`, and locally the text tests run only when both are set. 2026-11-21.
 

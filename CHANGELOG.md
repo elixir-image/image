@@ -34,6 +34,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 
 * `Image.Math.top_n/2`, `bottom_n/2`, `maxpos/2` and `minpos/2` return `{:ok, result}` or `{:error, reason}` rather than a bare tuple, and `Image.skew_angle/1` returns `{:ok, angle}`.
 
+* `Image.Social.image_usages/1` and `Image.Social.default_image_usage/1` return `{:ok, result}` or `{:error, reason}` rather than a bare value, nil or `FunctionClauseError`. `Image.Social` errors carry atom reasons, and `Image.Social.resize/3` returns an error for a non-image or an invalid thumbnail option rather than raising.
+
 * `Image.Math.cos/1` and `Image.Math.sin/1` take a number in degrees, as they always took an image's pixel values, rather than in radians.
 
 * `Image.Math` functions return `{:error, %Image.Error{reason: :invalid_argument}}` for an invalid operand, and the `!` functions and operators raise `Image.Error`, rather than `FunctionClauseError`. With no image involved the operators behave as `Kernel` and `Bitwise`.

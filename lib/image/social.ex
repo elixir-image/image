@@ -161,7 +161,7 @@ defmodule Image.Social do
   end
 
   @doc """
-  Returns the image types for the given
+  Returns the image usages for the given
   social platform.
 
   ### Arguments
@@ -171,24 +171,34 @@ defmodule Image.Social do
 
   ### Returns
 
-  * A list of images uses available for the
-    platform.
+  * `{:ok, usages}` where `usages` is a list of the image
+    usages available for the platform, or
+
+  * `{:error, %Image.Error{reason: :unknown_platform}}`.
 
   ### Examples
 
-      iex> :profile in Image.Social.image_usages(:twitter)
+      iex> {:ok, usages} = Image.Social.image_usages(:twitter)
+      iex> :profile in usages
       true
 
-      iex> :thumbnail in Image.Social.image_usages(:youtube)
-      true
+      iex> {:error, %Image.Error{reason: :unknown_platform}} =
+      ...>   Image.Social.image_usages(:myspace)
 
   """
-  @spec image_usages(platform()) :: [image_usage()]
+  @spec image_usages(platform()) :: {:ok, [image_usage()]} | {:error, Image.Error.t()}
   def image_usages(platform) when platform in @social_platforms do
-    media_sizes()
-    |> Map.fetch!(platform)
-    |> Map.delete(:default)
-    |> Map.keys()
+    usages =
+      media_sizes()
+      |> Map.fetch!(platform)
+      |> Map.delete(:default)
+      |> Map.keys()
+
+    {:ok, usages}
+  end
+
+  def image_usages(platform) do
+    {:error, unknown_platform_error(platform, :image_usages)}
   end
 
   @doc """
@@ -203,16 +213,26 @@ defmodule Image.Social do
 
   ### Returns
 
-  * The default image type for the platform.
+  * `{:ok, usage}` where `usage` is the platform's default
+    image usage, or
 
-  ### Example
+  * `{:error, %Image.Error{reason: :no_default_usage}}` if
+    the platform has no default usage, or
+
+  * `{:error, %Image.Error{reason: :unknown_platform}}`.
+
+  ### Examples
+
+      iex> Image.Social.default_image_usage(:facebook)
+      {:ok, :post}
+
+      iex> {:error, %Image.Error{reason: :no_default_usage}} =
+      ...>   Image.Social.default_image_usage(:twitter)
 
   """
-  @spec default_image_usage(platform()) :: image_usage()
-  def default_image_usage(platform) when platform in @social_platforms do
-    media_sizes()
-    |> Map.fetch!(platform)
-    |> Map.get(:default)
+  @spec default_image_usage(platform()) :: {:ok, image_usage()} | {:error, Image.Error.t()}
+  def default_image_usage(platform) do
+    default_usage(platform, :default_image_usage)
   end
 
   @doc """
@@ -222,13 +242,15 @@ defmodule Image.Social do
   This function:
 
   * Resizes an image to the correct dimensions, including being
-    image aspect aware
-  * Converts to the sRGB color space
-  * Minimises metadata (retains only Artist and Copyright)
+    image aspect aware.
+
+  * Converts to the sRGB color space.
+
+  * Minimises metadata (retains only Artist and Copyright).
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `platform` is the name of a known social
     media platform. See `Image.Social.known_platforms/0`.
@@ -239,15 +261,18 @@ defmodule Image.Social do
 
   * `:usage` is the image usage within the social
     platform for which the image should be resized. See
-    `Image.Social.image_usages/1`.
+    `Image.Social.image_usages/1`. The default is the
+    platform's default usage. See
+    `Image.Social.default_image_usage/1`.
 
-  * All other options are passed to `Image.thumbnail!/3`.
+  * All other options are passed to `Image.thumbnail/3`.
+    `:crop` defaults to `:attention`.
 
   ### Returns
 
   * `{:ok, resized_image}` or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -257,7 +282,8 @@ defmodule Image.Social do
       {1280, 720, 3}
 
       iex> image = Image.new!(1500, 1500, color: :blue)
-      iex> {:error, %Image.Error{}} = Image.Social.resize(image, :not_a_platform)
+      iex> {:error, %Image.Error{reason: :unknown_platform}} =
+      ...>   Image.Social.resize(image, :not_a_platform)
 
   """
   @spec resize(Vimage.t(), platform(), Keyword.t()) ::
@@ -268,35 +294,40 @@ defmodule Image.Social do
   def resize(%Vimage{} = image, platform, options) when platform in @social_platforms do
     {usage, options} = Keyword.pop(options, :usage, :default)
     options = Keyword.put_new(options, :crop, :attention)
-    aspect = Image.aspect(image)
-    platform = Map.fetch!(media_sizes(), platform)
 
-    with {:ok, size} <- get_image_size(platform, usage, aspect) do
-      image
-      |> Image.thumbnail!(size, options)
-      |> Image.to_colorspace!(:srgb)
-      |> Image.minimize_metadata()
+    with {:ok, usage} <- resolve_usage(platform, usage),
+         {:ok, size} <- image_size(platform, usage, Image.aspect(image)),
+         {:ok, resized} <- Image.thumbnail(image, size, options),
+         {:ok, srgb} <- Image.to_colorspace(resized, :srgb) do
+      Image.minimize_metadata(srgb)
     end
   end
 
   def resize(%Vimage{} = _image, platform, _options) do
-    {:error, unknown_platform_error(platform)}
+    {:error, unknown_platform_error(platform, :resize)}
+  end
+
+  def resize(other, _platform, _options) do
+    {:error,
+     social_error(:invalid_image, :resize, other, "Expected an image, got #{inspect(other)}")}
   end
 
   @doc """
   Resize an image for a particular social
-  platform and usage.
+  platform and usage, raising on error.
 
   This function:
 
   * Resizes an image to the correct dimensions, including being
-    image orientation aware
-  * Converts to the sRGB color space
-  * Minimises metadata (retains only Artist and Copyright)
+    image aspect aware.
+
+  * Converts to the sRGB color space.
+
+  * Minimises metadata (retains only Artist and Copyright).
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `platform` is the name of a known social
     media platform. See `Image.Social.known_platforms/0`.
@@ -305,17 +336,13 @@ defmodule Image.Social do
 
   ### Options
 
-  * `:usage` is the image usage within the social
-    platform for which the image should be resized. See
-    `Image.Social.image_usages/1`.
+  * See `Image.Social.resize/3`.
 
-  * All other options are passed to `Image.thumbnail!/3`.
-
-  ## Returns
+  ### Returns
 
   * `resized_image` or
 
-  * Raises an exception.
+  * raises an exception.
 
   ### Examples
 
@@ -325,10 +352,9 @@ defmodule Image.Social do
       {400, 400, 3}
 
   """
-  @spec resize!(Vimage.t(), platform(), Keyword.t()) ::
-          Vimage.t() | no_return
+  @spec resize!(Vimage.t(), platform(), Keyword.t()) :: Vimage.t() | no_return()
 
-  def resize!(%Vimage{} = image, platform, options \\ []) do
+  def resize!(image, platform, options \\ []) do
     case resize(image, platform, options) do
       {:ok, image} -> image
       {:error, reason} -> raise Image.Error, reason
@@ -337,54 +363,65 @@ defmodule Image.Social do
 
   # ---- Helpers -----
 
-  defp get_image_size(platform, :default = type, orientation) do
-    default = Map.get(platform, type, {nil, type})
-    get_image_size(platform, default, orientation)
+  defp resolve_usage(platform, :default) do
+    default_usage(platform, :resize)
   end
 
-  defp get_image_size(_platform, {nil, usage}, _orientation) do
-    {:error, unknown_usage_error(usage)}
+  defp resolve_usage(_platform, usage) do
+    {:ok, usage}
   end
 
-  defp get_image_size(platform, usage, orientation) when is_map_key(platform, usage) do
-    platform
-    |> Map.get(usage)
-    |> resolve_orientation(orientation)
+  defp default_usage(platform, operation) when platform in @social_platforms do
+    sizes = Map.fetch!(media_sizes(), platform)
+
+    case Map.fetch(sizes, :default) do
+      {:ok, usage} ->
+        {:ok, usage}
+
+      :error ->
+        message = "No default usage is configured for #{inspect(platform)}"
+        {:error, social_error(:no_default_usage, operation, platform, message)}
+    end
   end
 
-  defp get_image_size(_platform, usage, _orientation) do
-    {:error, unknown_usage_error(usage)}
+  defp default_usage(platform, operation) do
+    {:error, unknown_platform_error(platform, operation)}
   end
 
-  defp resolve_orientation(size, _orientation) when is_binary(size) do
-    {:ok, size}
+  # A :default usage is resolved by resolve_usage/2 before this is
+  # called, so the :default key is never looked up as a size.
+  defp image_size(platform, usage, aspect) do
+    sizes = Map.fetch!(media_sizes(), platform)
+
+    case Map.fetch(sizes, usage) do
+      {:ok, size} when is_binary(size) -> {:ok, size}
+      {:ok, %{} = sizes_by_aspect} -> size_for_aspect(sizes_by_aspect, aspect)
+      :error -> {:error, unknown_usage_error(usage)}
+    end
   end
 
-  defp resolve_orientation(sizes, orientation) when is_map_key(sizes, orientation) do
-    {:ok, Map.fetch!(sizes, orientation)}
+  defp size_for_aspect(sizes_by_aspect, aspect) do
+    case Map.fetch(sizes_by_aspect, aspect) do
+      {:ok, size} ->
+        {:ok, size}
+
+      :error ->
+        message = "Unknown aspect #{inspect(aspect)}"
+        {:error, social_error(:unknown_aspect, :resize, aspect, message)}
+    end
   end
 
-  defp resolve_orientation(_sizes, orientation) do
-    {:error, unknown_orientation_error(orientation)}
-  end
-
-  defp unknown_platform_error(platform) do
+  defp unknown_platform_error(platform, operation) do
     message = "Unknown social platform #{inspect(platform)}"
-    %Image.Error{message: message, reason: message}
-  end
-
-  defp unknown_usage_error(:default) do
-    message = "No :default usage is configured"
-    %Image.Error{message: message, reason: message}
+    social_error(:unknown_platform, operation, platform, message)
   end
 
   defp unknown_usage_error(usage) do
     message = "Unknown image usage #{inspect(usage)}"
-    %Image.Error{message: message, reason: message}
+    social_error(:unknown_usage, :resize, usage, message)
   end
 
-  defp unknown_orientation_error(orientation) do
-    message = "Unknown orientation #{inspect(orientation)}"
-    %Image.Error{message: message, reason: message}
+  defp social_error(reason, operation, value, message) do
+    %Image.Error{reason: reason, operation: operation, value: value, message: message}
   end
 end

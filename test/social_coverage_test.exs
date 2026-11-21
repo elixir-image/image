@@ -55,10 +55,15 @@ defmodule Image.SocialCoverageTest do
     String.to_atom("myspace")
   end
 
+  # A value the type checker cannot narrow to nil, for the same reason.
+  defp not_an_image do
+    List.first([nil])
+  end
+
   describe "image_usages/1" do
     test "returns the usages for each known platform without :default" do
       for platform <- Image.Social.known_platforms() do
-        usages = Image.Social.image_usages(platform)
+        assert {:ok, usages} = Image.Social.image_usages(platform)
         assert is_list(usages)
         refute Enum.empty?(usages)
         refute :default in usages
@@ -66,28 +71,52 @@ defmodule Image.SocialCoverageTest do
     end
 
     test "youtube usages include :thumbnail" do
-      assert :thumbnail in Image.Social.image_usages(:youtube)
+      assert {:ok, usages} = Image.Social.image_usages(:youtube)
+      assert :thumbnail in usages
     end
 
-    test "raises for an unknown platform" do
-      assert_raise FunctionClauseError, fn ->
-        Image.Social.image_usages(unknown_platform())
+    test "returns an error for an unknown platform" do
+      assert {:error,
+              %Image.Error{
+                reason: :unknown_platform,
+                operation: :image_usages,
+                value: :myspace,
+                message: "Unknown social platform :myspace"
+              }} = Image.Social.image_usages(unknown_platform())
+    end
+
+    test "returns an error for a non-atom platform" do
+      for platform <- [nil, "", "twitter", 42, %{}] do
+        assert {:error, %Image.Error{reason: :unknown_platform}} =
+                 Image.Social.image_usages(platform)
       end
     end
   end
 
   describe "default_image_usage/1" do
     test "facebook default is :post" do
-      assert Image.Social.default_image_usage(:facebook) == :post
+      assert Image.Social.default_image_usage(:facebook) == {:ok, :post}
     end
 
-    test "platforms without a configured default return nil" do
-      assert Image.Social.default_image_usage(:twitter) == nil
+    test "platforms without a configured default return an error" do
+      assert {:error,
+              %Image.Error{
+                reason: :no_default_usage,
+                operation: :default_image_usage,
+                value: :twitter,
+                message: "No default usage is configured for :twitter"
+              }} = Image.Social.default_image_usage(:twitter)
     end
 
-    test "raises for an unknown platform" do
-      assert_raise FunctionClauseError, fn ->
-        Image.Social.default_image_usage(unknown_platform())
+    test "returns an error for an unknown platform" do
+      assert {:error, %Image.Error{reason: :unknown_platform, value: :myspace}} =
+               Image.Social.default_image_usage(unknown_platform())
+    end
+
+    test "returns an error for a non-atom platform" do
+      for platform <- [nil, "", "facebook", 42, %{}] do
+        assert {:error, %Image.Error{reason: :unknown_platform}} =
+                 Image.Social.default_image_usage(platform)
       end
     end
   end
@@ -129,22 +158,65 @@ defmodule Image.SocialCoverageTest do
     test "returns an error when the platform has no default usage" do
       image = Image.new!(10, 10, color: [10, 20, 30])
 
-      assert {:error, %Image.Error{message: "No :default usage is configured"}} =
-               Image.Social.resize(image, :twitter)
+      assert {:error,
+              %Image.Error{
+                reason: :no_default_usage,
+                operation: :resize,
+                message: "No default usage is configured for :twitter"
+              }} = Image.Social.resize(image, :twitter)
     end
 
     test "returns an error for an unknown usage" do
       image = Image.new!(10, 10, color: [10, 20, 30])
 
-      assert {:error, %Image.Error{message: "Unknown image usage :bogus"}} =
-               Image.Social.resize(image, :twitter, usage: :bogus)
+      assert {:error,
+              %Image.Error{
+                reason: :unknown_usage,
+                value: :bogus,
+                message: "Unknown image usage :bogus"
+              }} = Image.Social.resize(image, :twitter, usage: :bogus)
+    end
+
+    test "returns an error for a usage that is not an atom" do
+      image = Image.new!(10, 10, color: [10, 20, 30])
+
+      for usage <- [nil, "", "profile", 42, %{}] do
+        assert {:error, %Image.Error{reason: :unknown_usage}} =
+                 Image.Social.resize(image, :twitter, usage: usage)
+      end
+    end
+
+    test "an explicit :default usage resolves to the platform default" do
+      image = Image.new!(120, 63, color: [10, 20, 30])
+
+      assert {:ok, resized} = Image.Social.resize(image, :facebook, usage: :default)
+      assert Image.width(resized) == 1200
+    end
+
+    test "returns an error for an invalid thumbnail option rather than raising" do
+      image = Image.new!(10, 10, color: [10, 20, 30])
+
+      assert {:error, %Image.Error{}} =
+               Image.Social.resize(image, :tiktok, usage: :profile, crop: :bogus)
+    end
+
+    test "returns an error when the image is not an image" do
+      for image <- [nil, "", "image.jpg", 42, %{}] do
+        assert {:error, %Image.Error{reason: :invalid_image, operation: :resize}} =
+                 Image.Social.resize(image, :tiktok, usage: :profile)
+      end
     end
 
     test "returns an error for an unknown platform" do
       image = Image.new!(10, 10, color: [10, 20, 30])
 
-      assert {:error, %Image.Error{message: "Unknown social platform :myspace"}} =
-               Image.Social.resize(image, unknown_platform())
+      assert {:error,
+              %Image.Error{
+                reason: :unknown_platform,
+                operation: :resize,
+                value: :myspace,
+                message: "Unknown social platform :myspace"
+              }} = Image.Social.resize(image, unknown_platform())
     end
   end
 
@@ -170,6 +242,12 @@ defmodule Image.SocialCoverageTest do
 
       assert_raise Image.Error, "Unknown image usage :bogus", fn ->
         Image.Social.resize!(image, :twitter, usage: :bogus)
+      end
+    end
+
+    test "raises Image.Error when the image is not an image" do
+      assert_raise Image.Error, fn ->
+        Image.Social.resize!(not_an_image(), :tiktok, usage: :profile)
       end
     end
   end
