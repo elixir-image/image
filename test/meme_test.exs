@@ -9,7 +9,7 @@ defmodule Image.Meme.Test do
     {:ok, %{dir: dir}}
   end
 
-  @tag :full
+  @tag :text
 
   test "Meme image generation", %{dir: dir} do
     image = image_path("meme.jpg")

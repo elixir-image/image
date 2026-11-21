@@ -55,7 +55,6 @@ defmodule Image.Resize.Test do
                Image.thumbnail("some-non-existing-path", 200)
     end
 
-    @tag :full
     test "Resize to fill with none crop", %{image: image} do
       validate_path = validate_path("resize/kamchatka_fill_none.png")
 
@@ -112,7 +111,6 @@ defmodule Image.Resize.Test do
       end
     end
 
-    @tag :full
     test "Resize to fill with none crop", %{image: image} do
       validate_path = validate_path("resize/kamchatka_fill_none.png")
 

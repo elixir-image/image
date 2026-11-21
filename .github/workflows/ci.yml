@@ -19,6 +19,10 @@ env:
   # What xav's Makefile asks pkg-config for. Changing this list changes
   # the Ubuntu package cache key.
   APT_PACKAGES: pkg-config libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libswresample-dev libavdevice-dev
+  # Text is rendered with fontconfig and the fonts in test/support/fonts, so
+  # the text reference images match on every platform (see test_helper.exs).
+  PANGOCAIRO_BACKEND: fc
+  FONTCONFIG_FILE: ${{ github.workspace }}/test/support/fonts/fonts.conf
 
 permissions:
   contents: read
@@ -156,7 +160,7 @@ jobs:
 
     # Step: Execute the tests.
     - name: Run tests
-      run: mix test --exclude text --exclude text_avatar --exclude video --exclude circular_gradient
+      run: mix test
 
     # Step: Cache the dialyzer PLT. Keyed on both versions for the same
     # reason as the build cache.

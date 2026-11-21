@@ -6,7 +6,7 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 * [ ] **Rule 2 bang sweep** — 173 calls to `!` functions remain inside non-bang functions (84 in `lib/image.ex`, 48 in `Image.Math`, mostly its operators). Each needs judging: a bang on values the library built itself is acceptable, one on caller input is not.
 
-* [ ] **Run the excluded tests in CI** — about 40 tests tagged `text`, `text_avatar`, `video`, `circular_gradient` and `full` never run in CI.
+* [ ] **Value attributes defined between functions** — 33 module attributes such as `@max_rgb_band_value` sit after the first function definition (20 in `lib/image.ex`, the rest across nine files), against the house rule that they go in one block at the top.
 
 * [ ] **`Image.Social.image_usages/1` and `default_image_usage/1` raise for an unknown platform** — they return bare values rather than tuples, so converting them changes their contract shape rather than just their error path.
 
@@ -29,6 +29,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **Every test runs in CI** — text tests render with fontconfig and fonts bundled in `test/support/fonts`, so their references match on every platform; CI sets `PANGOCAIRO_BACKEND` and `FONTCONFIG_FILE`, and locally the text tests run only when both are set. 2026-11-21.
 
 * [x] **House-rule violations** — the smart cell no longer creates atoms from text fields, no `with` has an `else`, and no `{:ok, _} =` match remains on a runtime path. 2026-11-21, v0.74.0.
 
