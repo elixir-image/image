@@ -54,7 +54,7 @@ Documentation can be found at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 * **Kino integration** — `Image.Kino` renders images in [Livebook](https://livebook.dev) without manual conversion, and the `Image: transform` smart cell builds an image pipeline from a form and writes the equivalent code into the notebook.
 
-* **Social media presets** — `Image.Social` with the standard image sizes for Twitter, Facebook, Instagram, LinkedIn, Pinterest, YouTube, Snapchat, and TikTok.
+* **Social media presets** — `Image.Social` with the standard image sizes for X, Facebook, Instagram, LinkedIn, Pinterest, YouTube, Snapchat, and TikTok.
 
 * **Bundled fonts** — ships Anton, an openly licensed font in the style of Impact, so `Image.meme/3` renders the same everywhere.
 

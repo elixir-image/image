@@ -1,7 +1,27 @@
 defmodule Image.Social do
   @moduledoc """
   Functions to introspect standard image sizes for
-  various social media platforms.
+  various social media platforms, and to resize an image
+  for a platform.
+
+  The public API is `resize/3` and `resize!/3`, which resize
+  an image for a platform and image usage, and
+  `known_platforms/0`, `image_usages/1`,
+  `default_image_usage/1` and `media_sizes/0`, which describe
+  the platforms and sizes available.
+
+  The known platforms are `:facebook`, `:x`, `:linkedin`,
+  `:pinterest`, `:instagram`, `:tumblr`, `:youtube`,
+  `:snapchat` and `:tiktok`. Every platform has a default
+  usage, which `resize/3` uses when no `:usage` is given.
+
+  `:twitter` is accepted wherever a platform is expected and
+  is treated as `:x`. It is deprecated and will be removed at
+  version 1.0.
+
+  The sizes are each platform's recommended upload size, taken
+  from the platform's own help pages where they publish one and
+  otherwise from current social media image size guides.
 
   """
 
@@ -14,11 +34,13 @@ defmodule Image.Social do
   @type image_usage :: atom()
 
   @typedoc """
-  The known social media platforms.
+  The known social media platforms. `:twitter` is a deprecated
+  alias for `:x`.
 
   """
   @type platform ::
           :facebook
+          | :x
           | :twitter
           | :linkedin
           | :pinterest
@@ -28,46 +50,47 @@ defmodule Image.Social do
           | :snapchat
           | :tiktok
 
-  # Before Version 1.0, this content will move from being a static
-  # list to a dynamic one that can be updated at runtime
-
-  # Facebook: https://www.facebook.com/help/125379114252045?helpref=faq_content
-  # https://www.socialpilot.co/blog/social-media-image-sizes
-  # https://blog.hootsuite.com/social-media-image-sizes-guide/
+  # Sources, reviewed 2026-11-21:
+  # Facebook: https://www.facebook.com/help/125379114252045
+  # X: https://help.x.com/en/managing-your-account/common-issues-when-uploading-profile-photo
+  # LinkedIn: https://www.linkedin.com/help/linkedin/answer/a563309
+  # Pinterest: https://business.pinterest.com/creative-best-practices
+  # YouTube: https://support.google.com/youtube/answer/10456525
+  # Others: https://blog.hootsuite.com/social-media-image-sizes-guide/
+  # and https://sproutsocial.com/insights/social-media-image-sizes-guide/
 
   @social_sizes %{
     facebook: %{
       default: :post,
-      profile: "170x170",
-      cover_desktop: "820x312",
-      cover_mobile: "640x360",
+      profile: "320x320",
+      cover: "851x315",
       post: "1200x630",
-      banner: "1200x630",
       story: "1080x1920"
     },
-    twitter: %{
+    x: %{
+      default: :post,
       profile: "400x400",
       cover: "1500x500",
-      shared: "900x450",
-      stream: "440x220"
+      post: "1600x900"
     },
     linkedin: %{
+      default: :blog,
       profile: "400x400",
       cover: "1584x396",
       company_logo: "400x400",
       blog: "1200x627"
     },
     pinterest: %{
+      default: :pin,
       profile: "165x165",
       cover: "800x450",
-      pin: "1080x1920",
-      board: "222x150"
+      pin: "1000x1500"
     },
     instagram: %{
+      default: :photo,
       profile: "320x320",
-      cover: "1080x1920",
       photo: %{
-        landscape: "1080x596",
+        landscape: "1080x566",
         portrait: "1080x1350",
         square: "1080x1080"
       },
@@ -80,27 +103,32 @@ defmodule Image.Social do
       }
     },
     tumblr: %{
+      default: :post,
       profile: "128x128",
       banner: "3000x1055",
       post: "500x750"
     },
     youtube: %{
-      cover: "2560x1440",
+      default: :thumbnail,
       profile: "800x800",
-      banner: "2048x1152",
+      banner: "2560x1440",
       thumbnail: "1280x720"
     },
     snapchat: %{
-      photo: "1080x1920",
-      share: "750x1334"
+      default: :photo,
+      photo: "1080x1920"
     },
     tiktok: %{
-      profile: "20x20",
+      default: :video,
+      profile: "200x200",
       video: "1080x1920"
     }
   }
 
   @social_platforms Map.keys(@social_sizes)
+
+  # Deprecated platform names and the platform each now names.
+  @platform_aliases %{twitter: :x}
 
   @doc """
   Return the map of social media image
@@ -108,10 +136,11 @@ defmodule Image.Social do
 
   The returned map of maps is of a standard form:
 
-  * The first key is the platform name, such as `:twitter`.
+  * The first key is the platform name, such as `:x`.
 
-  * The second key is the image type for that platform, such as
-    `:profile`.
+  * The second key is the image usage for that platform, such as
+    `:profile`. The `:default` key names the usage that
+    `resize/3` uses when no `:usage` is given.
 
   * The third level is optional, but when it exists it has three
     keys: `:landscape`, `:portrait` and `:square`.
@@ -126,7 +155,7 @@ defmodule Image.Social do
   ### Examples
 
       iex> sizes = Image.Social.media_sizes()
-      iex> Map.has_key?(sizes, :twitter)
+      iex> Map.has_key?(sizes, :x)
       true
 
       iex> sizes = Image.Social.media_sizes()
@@ -144,11 +173,12 @@ defmodule Image.Social do
 
   ### Returns
 
-  * a list of platform names as atoms.
+  * a list of platform names as atoms. The deprecated
+    `:twitter` alias is not included.
 
   ### Examples
 
-      iex> :twitter in Image.Social.known_platforms()
+      iex> :x in Image.Social.known_platforms()
       true
 
       iex> :instagram in Image.Social.known_platforms()
@@ -178,27 +208,19 @@ defmodule Image.Social do
 
   ### Examples
 
-      iex> {:ok, usages} = Image.Social.image_usages(:twitter)
-      iex> :profile in usages
-      true
+      iex> {:ok, usages} = Image.Social.image_usages(:x)
+      iex> Enum.sort(usages)
+      [:cover, :post, :profile]
 
       iex> {:error, %Image.Error{reason: :unknown_platform}} =
       ...>   Image.Social.image_usages(:myspace)
 
   """
   @spec image_usages(platform()) :: {:ok, [image_usage()]} | {:error, Image.Error.t()}
-  def image_usages(platform) when platform in @social_platforms do
-    usages =
-      media_sizes()
-      |> Map.fetch!(platform)
-      |> Map.delete(:default)
-      |> Map.keys()
-
-    {:ok, usages}
-  end
-
   def image_usages(platform) do
-    {:error, unknown_platform_error(platform, :image_usages)}
+    platform
+    |> canonical_platform()
+    |> usages()
   end
 
   @doc """
@@ -216,9 +238,6 @@ defmodule Image.Social do
   * `{:ok, usage}` where `usage` is the platform's default
     image usage, or
 
-  * `{:error, %Image.Error{reason: :no_default_usage}}` if
-    the platform has no default usage, or
-
   * `{:error, %Image.Error{reason: :unknown_platform}}`.
 
   ### Examples
@@ -226,13 +245,15 @@ defmodule Image.Social do
       iex> Image.Social.default_image_usage(:facebook)
       {:ok, :post}
 
-      iex> {:error, %Image.Error{reason: :no_default_usage}} =
-      ...>   Image.Social.default_image_usage(:twitter)
+      iex> Image.Social.default_image_usage(:youtube)
+      {:ok, :thumbnail}
 
   """
   @spec default_image_usage(platform()) :: {:ok, image_usage()} | {:error, Image.Error.t()}
   def default_image_usage(platform) do
-    default_usage(platform, :default_image_usage)
+    platform
+    |> canonical_platform()
+    |> default_usage(:default_image_usage)
   end
 
   @doc """
@@ -289,27 +310,8 @@ defmodule Image.Social do
   @spec resize(Vimage.t(), platform(), Keyword.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
-  def resize(image, platform, options \\ [])
-
-  def resize(%Vimage{} = image, platform, options) when platform in @social_platforms do
-    {usage, options} = Keyword.pop(options, :usage, :default)
-    options = Keyword.put_new(options, :crop, :attention)
-
-    with {:ok, usage} <- resolve_usage(platform, usage),
-         {:ok, size} <- image_size(platform, usage, Image.aspect(image)),
-         {:ok, resized} <- Image.thumbnail(image, size, options),
-         {:ok, srgb} <- Image.to_colorspace(resized, :srgb) do
-      Image.minimize_metadata(srgb)
-    end
-  end
-
-  def resize(%Vimage{} = _image, platform, _options) do
-    {:error, unknown_platform_error(platform, :resize)}
-  end
-
-  def resize(other, _platform, _options) do
-    {:error,
-     social_error(:invalid_image, :resize, other, "Expected an image, got #{inspect(other)}")}
+  def resize(image, platform, options \\ []) do
+    do_resize(image, canonical_platform(platform), options)
   end
 
   @doc """
@@ -347,7 +349,7 @@ defmodule Image.Social do
   ### Examples
 
       iex> image = Image.new!(1500, 1500, color: :blue)
-      iex> resized = Image.Social.resize!(image, :twitter, usage: :profile)
+      iex> resized = Image.Social.resize!(image, :x, usage: :profile)
       iex> Image.shape(resized)
       {400, 400, 3}
 
@@ -363,6 +365,45 @@ defmodule Image.Social do
 
   # ---- Helpers -----
 
+  defp canonical_platform(platform) do
+    Map.get(@platform_aliases, platform, platform)
+  end
+
+  defp usages(platform) when platform in @social_platforms do
+    usages =
+      media_sizes()
+      |> Map.fetch!(platform)
+      |> Map.delete(:default)
+      |> Map.keys()
+
+    {:ok, usages}
+  end
+
+  defp usages(platform) do
+    {:error, unknown_platform_error(platform, :image_usages)}
+  end
+
+  defp do_resize(%Vimage{} = image, platform, options) when platform in @social_platforms do
+    {usage, options} = Keyword.pop(options, :usage, :default)
+    options = Keyword.put_new(options, :crop, :attention)
+
+    with {:ok, usage} <- resolve_usage(platform, usage),
+         {:ok, size} <- image_size(platform, usage, Image.aspect(image)),
+         {:ok, resized} <- Image.thumbnail(image, size, options),
+         {:ok, srgb} <- Image.to_colorspace(resized, :srgb) do
+      Image.minimize_metadata(srgb)
+    end
+  end
+
+  defp do_resize(%Vimage{} = _image, platform, _options) do
+    {:error, unknown_platform_error(platform, :resize)}
+  end
+
+  defp do_resize(other, _platform, _options) do
+    {:error,
+     social_error(:invalid_image, :resize, other, "Expected an image, got #{inspect(other)}")}
+  end
+
   defp resolve_usage(platform, :default) do
     default_usage(platform, :resize)
   end
@@ -371,17 +412,15 @@ defmodule Image.Social do
     {:ok, usage}
   end
 
-  defp default_usage(platform, operation) when platform in @social_platforms do
-    sizes = Map.fetch!(media_sizes(), platform)
+  # Every platform in @social_sizes has a :default usage, which a test
+  # checks, so the fetch cannot fail.
+  defp default_usage(platform, _operation) when platform in @social_platforms do
+    usage =
+      media_sizes()
+      |> Map.fetch!(platform)
+      |> Map.fetch!(:default)
 
-    case Map.fetch(sizes, :default) do
-      {:ok, usage} ->
-        {:ok, usage}
-
-      :error ->
-        message = "No default usage is configured for #{inspect(platform)}"
-        {:error, social_error(:no_default_usage, operation, platform, message)}
-    end
+    {:ok, usage}
   end
 
   defp default_usage(platform, operation) do

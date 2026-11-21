@@ -20,11 +20,15 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 * [ ] **Remove `Image.opacity/2` and `Image.opacity!/2`** — deprecated; removed at 1.0 and not before (user's decision, 2026-11-20).
 
+* [ ] **Remove the `:twitter` alias from `Image.Social`** — deprecated in favour of `:x`; removed at 1.0 and not before (user's decision, 2026-11-21).
+
 * [ ] **Maker notes in the privacy scan** — camera makers' proprietary EXIF blocks can hold body serial numbers and owner names (Canon's `OwnerName` and `InternalSerialNumber`, for example), and `Image.Privacy.scan/1` does not read them. Needs a parser per maker, starting with Canon, Nikon, Sony and Apple, and sample photos to test against. `Image.remove_metadata(image, :exif)` and `strip_metadata: true` already remove them. Detail in [plans/privacy-scan.md](plans/privacy-scan.md).
 
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **`Image.Social` sizes and names reviewed** — `:twitter` renamed `:x` with an alias, sizes corrected against current platform guidance, every platform given a default usage. 2026-11-21, v0.74.0.
 
 * [x] **Doc bullet punctuation** — every bullet in `lib` docs ends in a period or `, or`, with a blank line after it; 475 items punctuated and 93 tight items spaced. 2026-11-21, v0.74.0.
 
