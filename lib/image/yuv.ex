@@ -194,8 +194,9 @@ defmodule Image.YUV do
 
   The data is assumed, and required to be in:
 
-  * Planar format
-  * 8-bit color depth
+  * Planar format.
+
+  * 8-bit color depth.
 
   ### Arguments
 
@@ -219,7 +220,7 @@ defmodule Image.YUV do
 
   ### Returns
 
-  * `{:ok, rgb_image}` or
+  * `{:ok, rgb_image}`, or
 
   * `{:error, reason}`.
 
@@ -260,8 +261,9 @@ defmodule Image.YUV do
 
   The data is assumed, and required to be in:
 
-  * Planar format
-  * 8-bit color depth
+  * Planar format.
+
+  * 8-bit color depth.
 
   ### Arguments
 
@@ -285,7 +287,7 @@ defmodule Image.YUV do
 
   ### Returns
 
-  * `{:ok, rgb_image}` or
+  * `{:ok, rgb_image}`, or
 
   * `{:error, reason}`.
 
@@ -338,7 +340,7 @@ defmodule Image.YUV do
 
   ### Returns
 
-  * `:ok` or
+  * `:ok`, or
 
   * `{:error, reason}`.
 
@@ -387,7 +389,7 @@ defmodule Image.YUV do
 
   ### Returns
 
-  * `{:ok, yuv_binary}` or
+  * `{:ok, yuv_binary}`, or
 
   * `{:error, reason}`.
 
@@ -434,7 +436,7 @@ defmodule Image.YUV do
 
   ### Returns
 
-  * `{:ok, rgb_image}` or
+  * `{:ok, rgb_image}`, or
 
   * `{:error, reason}`.
 
@@ -487,7 +489,7 @@ defmodule Image.YUV do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
   * `{:error, reason}`.
 
@@ -567,7 +569,7 @@ defmodule Image.YUV do
 
   ### Returns
 
-  * `{:ok, [y, u, v]}` or
+  * `{:ok, [y, u, v]}`, or
 
   * `{:error, reason}`.
 
@@ -622,7 +624,7 @@ defmodule Image.YUV do
 
   ### Returns
 
-  * `{:ok, [y, u, v]}` or
+  * `{:ok, [y, u, v]}`, or
 
   * `{:error, Image.error()}`.
 
@@ -682,7 +684,7 @@ defmodule Image.YUV do
 
   ### Returns
 
-  * `{:ok, [y, u, v]}` or
+  * `{:ok, [y, u, v]}`, or
 
   * `{:error, reason}`.
 

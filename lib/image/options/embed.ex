@@ -22,6 +22,7 @@ defmodule Image.Options.Embed do
 
   * `:copy`, `:repeat` and `:mirror` synthesize the border from the *image
     content*.
+
   * `:background` fills the border with the `:background` color. This is the
     default behavior when no `:extend_mode` is given, so passing it is only
     ever explicit documentation of intent. The color still comes from the

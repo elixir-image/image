@@ -45,9 +45,9 @@ defmodule Image.Kernel do
 
   ### Returns
 
-  * `{:ok, normalized_kernel}` or
+  * `{:ok, normalized_kernel}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 

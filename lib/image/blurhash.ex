@@ -53,9 +53,9 @@ defmodule Image.Blurhash do
 
   ### Returns
 
-  * `{:ok, blurhash}` or
+  * `{:ok, blurhash}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Selecting the number of X and Y components
 
@@ -113,9 +113,9 @@ defmodule Image.Blurhash do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 

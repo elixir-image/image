@@ -41,7 +41,7 @@ defmodule Image.BackgroundColor do
     `image` (an opaque alpha component is appended for `:average` when
     the image has alpha), or
 
-  * `{:error, t:Image.Error.t/0}`
+  * `{:error, t:Image.Error.t/0}`.
 
   ### Examples
 

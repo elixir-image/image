@@ -16,12 +16,17 @@ defmodule Image.Options.Affine do
   The interpolators that may be selected with the `:interpolate`
   option (descriptions from `vips -l interpolate`):
 
-  * `:nearest` - nearest-neighbour interpolation
-  * `:bilinear` (default) - bilinear interpolation
-  * `:bicubic` - bicubic interpolation (Catmull-Rom)
-  * `:lbb` - reduced halo bicubic
-  * `:nohalo` - edge sharpening resampler with halo reduction
-  * `:vsqbs` - B-Splines with antialiasing smoothing
+  * `:nearest` - nearest-neighbour interpolation.
+
+  * `:bilinear` (default) - bilinear interpolation.
+
+  * `:bicubic` - bicubic interpolation (Catmull-Rom).
+
+  * `:lbb` - reduced halo bicubic.
+
+  * `:nohalo` - edge sharpening resampler with halo reduction.
+
+  * `:vsqbs` - B-Splines with antialiasing smoothing.
 
   """
   @type interpolate ::
@@ -39,6 +44,7 @@ defmodule Image.Options.Affine do
   * `:background` (the default) blends the fringe toward the
     `:background` color. This is correct whenever the transform
     exposes canvas.
+
   * `:copy` clamps to the nearest content pixel. Use it when the
     content fills the whole canvas, where the default would leave a
     faint border along the outermost row and column.

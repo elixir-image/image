@@ -15,9 +15,11 @@ defmodule Image.Text do
   `text/2` creates an image with the
   following steps:
 
-  * Render the text
-  * Add an optional background color
-  * Expand the background according to the required padding
+  * Render the text.
+
+  * Add an optional background color.
+
+  * Expand the background according to the required padding.
 
   The text can be rendered as a positive (the default)
   in which an image of the provided string is rendered
@@ -117,7 +119,7 @@ defmodule Image.Text do
     background.
 
   * `:background_stroke_color` is the colour of the outline
-    of the background. The default is "none",
+    of the background. The default is "none".
 
   * `:background_stroke_width` is the integer size in pixels
     of the background border. The default is `1`.
@@ -148,9 +150,9 @@ defmodule Image.Text do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -196,9 +198,11 @@ defmodule Image.Text do
   `text!/2` creates an image with the
   following steps:
 
-  * Render the text
-  * Add an optional background color
-  * Expand the background according to the required padding
+  * Render the text.
+
+  * Add an optional background color.
+
+  * Expand the background according to the required padding.
 
   The text can be rendered as a positive (the default)
   in which an image of the provided string is rendered
@@ -233,7 +237,7 @@ defmodule Image.Text do
     you can pass it by calling with `Phoenix.HTML.raw/1`
     on the string first.
 
-  * `options` is a `t:Keyword.t/0` list of options
+  * `options` is a `t:Keyword.t/0` list of options.
 
   ### Options
 
@@ -298,7 +302,7 @@ defmodule Image.Text do
     background.
 
   * `:background_stroke_color` is the colour of the outline
-    of the background. The default is "none",
+    of the background. The default is "none".
 
   * `:background_stroke_width` is the integer size in pixels
     of the background border. The default is `1`.
@@ -329,7 +333,7 @@ defmodule Image.Text do
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
   * raises an exception.
 
@@ -420,7 +424,7 @@ defmodule Image.Text do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
   * `{:error, reason}`.
 
@@ -524,7 +528,7 @@ defmodule Image.Text do
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
   * raises an exception.
 
@@ -571,7 +575,7 @@ defmodule Image.Text do
 
   * `:background_fill_color` is the background fill color behind
     the text. The default is `:none` which indicates no
-    background. Note that if
+    background. Note that if.
 
   * `:background_fill_opacity` is the opacity of the background, as any
     `t:Image.Pixel.opacity/0`: a float in `0.0..1.0`, an integer in
@@ -580,9 +584,9 @@ defmodule Image.Text do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -643,9 +647,9 @@ defmodule Image.Text do
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Notes
 
@@ -706,9 +710,9 @@ defmodule Image.Text do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -812,9 +816,9 @@ defmodule Image.Text do
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Notes
 
@@ -855,14 +859,14 @@ defmodule Image.Text do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `options` is a `t:Keyword.t/0` list of options
+  * `options` is a `t:Keyword.t/0` list of options.
 
   ### Options
 
   * `:background_stroke_color` is the colour of the outline
-    of the background. The default is ":none",
+    of the background. The default is ":none".
 
   * `:background_stroke_width` is the integer size in pixels
     of the background border. The default is `1`.
@@ -874,9 +878,9 @@ defmodule Image.Text do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -924,14 +928,14 @@ defmodule Image.Text do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `options` is a `t:Keyword.t/0` list of options
+  * `options` is a `t:Keyword.t/0` list of options.
 
   ### Options
 
   * `:background_stroke_color` is the colour of the outline
-    of the background. The default is "none",
+    of the background. The default is "none".
 
   * `:background_stroke_width` is the integer size in pixels
     of the background border. The default is `1`.
@@ -943,9 +947,9 @@ defmodule Image.Text do
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Notes
 

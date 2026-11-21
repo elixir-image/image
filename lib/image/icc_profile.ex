@@ -20,7 +20,9 @@ defmodule Image.ICCProfile do
   ## API summary
 
   * `inbuilt/0` returns the four built-in atoms.
+
   * `is_inbuilt/1` is a `defguard` for the same set.
+
   * `known?/1` returns `true` for any built-in *or* any loadable file
     path. Use it to validate user-supplied profile arguments.
 
@@ -37,8 +39,10 @@ defmodule Image.ICCProfile do
   An ICC profile reference.
 
   * `:none` means no profile.
+
   * `:srgb`, `:cmyk`, and `:p3` refer to the libvips built-in
     profiles.
+
   * A path is any file system path. Relative paths are resolved
     against the system profile directory.
 

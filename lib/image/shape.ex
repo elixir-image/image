@@ -6,11 +6,15 @@ defmodule Image.Shape do
   [Scalable Vector Graphics](https://developer.mozilla.org/en-US/docs/Web/SVG)
   including:
 
-  * Rectangle
-  * Polygon
-  * Circle
-  * Ellipse
-  * Line
+  * Rectangle.
+
+  * Polygon.
+
+  * Circle.
+
+  * Ellipse.
+
+  * Line.
 
   """
 
@@ -76,9 +80,9 @@ defmodule Image.Shape do
 
   ### Returns
 
-  * `{:ok, rectangle_image}` or
+  * `{:ok, rectangle_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -146,7 +150,7 @@ defmodule Image.Shape do
 
   ### Returns
 
-  * `rectangle_image` or
+  * `rectangle_image`, or
 
   * raises an exception.
 
@@ -201,7 +205,7 @@ defmodule Image.Shape do
     to draw the polygon. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the polygon. The default is `:white`
+    of the polygon. The default is `:white`.
 
   * `:opacity` is any `t:Image.Pixel.opacity/0`: a
     float in `0.0..1.0`, an integer in `0..255` as the
@@ -232,9 +236,9 @@ defmodule Image.Shape do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -383,9 +387,9 @@ defmodule Image.Shape do
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Examples
 
@@ -427,9 +431,9 @@ defmodule Image.Shape do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -496,7 +500,7 @@ defmodule Image.Shape do
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
   * raises an exception.
 
@@ -541,9 +545,9 @@ defmodule Image.Shape do
 
   ### Returns
 
-  * `{:ok, circle_image}` or
+  * `{:ok, circle_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -608,7 +612,7 @@ defmodule Image.Shape do
 
   ### Returns
 
-  * `circle_image` or
+  * `circle_image`, or
 
   * raises an exception.
 
@@ -660,9 +664,9 @@ defmodule Image.Shape do
 
   ### Returns
 
-  * `{:ok, ellipse_image}` or
+  * `{:ok, ellipse_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -723,7 +727,7 @@ defmodule Image.Shape do
     to draw the rectangle. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the polygon. The default is `:white`
+    of the polygon. The default is `:white`.
 
   * `:opacity` is any `t:Image.Pixel.opacity/0`: a
     float in `0.0..1.0`, an integer in `0..255` as the
@@ -732,7 +736,7 @@ defmodule Image.Shape do
 
   ### Returns
 
-  * `ellipse_image` or
+  * `ellipse_image`, or
 
   * raises an exception.
 
@@ -790,9 +794,9 @@ defmodule Image.Shape do
 
   ### Returns
 
-  * `{:ok, line_image}` or
+  * `{:ok, line_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -862,7 +866,7 @@ defmodule Image.Shape do
     to draw the rectangle. The default is `1px`.
 
   * `:stroke_color` is the color used for the outline
-    of the polygon. The default is `:white`
+    of the polygon. The default is `:white`.
 
   * `:opacity` is any `t:Image.Pixel.opacity/0`: a
     float in `0.0..1.0`, an integer in `0..255` as the
@@ -871,7 +875,7 @@ defmodule Image.Shape do
 
   ### Returns
 
-  * `line_image` or
+  * `line_image`, or
 
   * raises an exception.
 

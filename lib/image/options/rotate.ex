@@ -13,12 +13,17 @@ defmodule Image.Options.Rotate do
   The interpolators that may be selected with the `:interpolate`
   option (descriptions from `vips -l interpolate`):
 
-  * `:nearest` - nearest-neighbour interpolation
-  * `:bilinear` (default) - bilinear interpolation
-  * `:bicubic` - bicubic interpolation (Catmull-Rom)
-  * `:lbb` - reduced halo bicubic
-  * `:nohalo` - edge sharpening resampler with halo reduction
-  * `:vsqbs` - B-Splines with antialiasing smoothing
+  * `:nearest` - nearest-neighbour interpolation.
+
+  * `:bilinear` (default) - bilinear interpolation.
+
+  * `:bicubic` - bicubic interpolation (Catmull-Rom).
+
+  * `:lbb` - reduced halo bicubic.
+
+  * `:nohalo` - edge sharpening resampler with halo reduction.
+
+  * `:vsqbs` - B-Splines with antialiasing smoothing.
 
   """
   @type interpolate ::

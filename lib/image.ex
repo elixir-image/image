@@ -421,9 +421,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -521,9 +521,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -586,13 +586,13 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0` from
     which the new images `width` and `height` and
-  ` bands` will be derived.
+    `bands` will be derived.
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -624,7 +624,7 @@ defmodule Image do
 
   * `image` is any `t:Vix.Vips.Image.t/0` from
     which the new images `width` and `height` and
-  ` bands` will be derived.
+    `bands` will be derived.
 
   * `options` is a keyword list of options.
 
@@ -651,9 +651,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -776,9 +776,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, message}`
+  * `{:error, message}`.
 
   ### Example
 
@@ -1105,7 +1105,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
   * raises an exception.
 
@@ -1161,9 +1161,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -1226,7 +1226,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
   * raises an exception.
 
@@ -1280,9 +1280,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -1323,14 +1323,14 @@ defmodule Image do
 
   ### Arguments
 
-  * `binary` is a binary representation of a formatted image
+  * `binary` is a binary representation of a formatted image.
 
   * `options` is a keyword list of options. See `Image.open/2`
     for the list of applicable options.
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
   * raises an exception.
 
@@ -1366,9 +1366,12 @@ defmodule Image do
       the following fields:
 
       * `:file_ref` which contains a file reference to the image. It can be dereferenced
-        into a path with `Kino.Input.file_path/1`
-      * `:width` which is the width of the image in pixels
-      * `:height` which is the height of the image in pixels
+        into a path with `Kino.Input.file_path/1`.
+
+      * `:width` which is the width of the image in pixels.
+
+      * `:height` which is the height of the image in pixels.
+
       * `:format` which is the image band format which must be `:rgb` or `:png`.
 
     * `options` is a keyword list of options that is passed to `Image.open/2`
@@ -1387,9 +1390,9 @@ defmodule Image do
 
     ### Returns
 
-    * `{:ok, image}` or
+    * `{:ok, image}`, or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Example
 
@@ -1436,12 +1439,15 @@ defmodule Image do
       the following fields:
 
       * `:file_ref` which contains a file reference to the image. It can be dereferenced
-        into a path with `Kino.Input.file_path/1`
-      * `:width` which is the width of the image in pixels
-      * `:height` which is the height of the image in pixels
+        into a path with `Kino.Input.file_path/1`.
+
+      * `:width` which is the width of the image in pixels.
+
+      * `:height` which is the height of the image in pixels.
+
       * `:format` which is the image band format which must be `:rgb` or `:png`.
 
-    * `options` is a keyword list of options
+    * `options` is a keyword list of options.
 
     ### Options
 
@@ -1461,7 +1467,7 @@ defmodule Image do
 
     ### Returns
 
-    * `image` or
+    * `image`, or
 
     * raises an exception.
 
@@ -1698,9 +1704,9 @@ defmodule Image do
   ### Returns
 
   * `{:ok, image}`, or `{:ok, binary}` if the destination is
-    `:memory`) or `{:ok, conn}` if the destination is a `t:Plug.Conn.t/0` or
+    `:memory`) or `{:ok, conn}` if the destination is a `t:Plug.Conn.t/0`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -1839,7 +1845,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `url` is any URL representing an image or a t:Req.Request.t/1
+    * `url` is any URL representing an image or a t:Req.Request.t/1.
 
     * `options` is a keyword list of options.
 
@@ -1852,9 +1858,9 @@ defmodule Image do
 
     ### Returns
 
-    * `{:ok, image}` or
+    * `{:ok, image}`, or
 
-    * `{:error reason}`
+    * `{:error, reason}`.
 
     ### Notes
 
@@ -1964,7 +1970,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image` (or a binary if the destination is `:memory`) or
+  * `image` (or a binary if the destination is `:memory`), or
 
   * raises an exception.
 
@@ -2135,7 +2141,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
   * `{:error, reason}`.
 
@@ -2245,7 +2251,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
   * raises an exception.
 
@@ -2312,7 +2318,7 @@ defmodule Image do
   * `{:ok, color}` where `color` is an RGB color as a
     three-element list of integers, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -2439,7 +2445,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, mask_image}` or
+  * `{:ok, mask_image}`, or
 
   * `{:error, reason}`.
 
@@ -2549,20 +2555,20 @@ defmodule Image do
   are required.
 
   * `:greater_than` is an RGB color which represents the lower
-     end of the color range to be masked. The color can be an
-     integer between `0..255`, a three-element list of
-     integers representing an RGB color or an atom
-     representing a CSS color name.
+    end of the color range to be masked. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name.
 
-   * `:less_than` is an RGB color which represents the upper
-     end of the color range to be masked. The color can be an
-     integer between `0..255`, a three-element list of
-     integers representing an RGB color or an atom
-     representing a CSS color name.
+  * `:less_than` is an RGB color which represents the upper
+    end of the color range to be masked. The color can be an
+    integer between `0..255`, a three-element list of
+    integers representing an RGB color or an atom
+    representing a CSS color name.
 
   ### Returns
 
-  * `mask_image` or
+  * `mask_image`, or
 
   * raises an exception.
 
@@ -2647,7 +2653,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, masked_image}` or
+  * `{:ok, masked_image}`, or
 
   * `{:error, reason}`.
 
@@ -2736,7 +2742,7 @@ defmodule Image do
 
   ### Returns
 
-  * `masked_image` or
+  * `masked_image`, or
 
   * raises an exception.
 
@@ -2780,13 +2786,13 @@ defmodule Image do
   * `:min_amplitude` is a `float` that determines
     the accuracy of the mask. The default is `0.2`.
     A smaller number will generate a larger, more
-    accurate mask,
+    accurate mask.
 
   ### Returns
 
-  * `{:ok, blurred_image}` or
+  * `{:ok, blurred_image}`, or
 
-  * `{:error reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -2832,11 +2838,11 @@ defmodule Image do
   * `:min_amplitude` is a `float` that determines
     the accuracy of the mask. The default is `0.2`.
     A smaller number will generate a larger, more
-    accurate mask,
+    accurate mask.
 
   ### Returns
 
-  * `blurred_image` or
+  * `blurred_image`, or
 
   * raises an exception.
 
@@ -2895,11 +2901,15 @@ defmodule Image do
 
   Where:
 
-  * `m1` is `:flat_amount`
-  * `m2` is `:jagged_amount`
-  * `x1` is `:threshold`
-  * `y2` is `:max_brightening`
-  * `y3` is `:max_darkening`
+  * `m1` is `:flat_amount`.
+
+  * `m2` is `:jagged_amount`.
+
+  * `x1` is `:threshold`.
+
+  * `y2` is `:max_brightening`.
+
+  * `y3` is `:max_darkening`.
 
   ### Arguments
 
@@ -2940,9 +2950,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, sharpened_image}` or
+  * `{:ok, sharpened_image}`, or
 
-  * `{:error reason}`
+  * `{:error, reason}`.
 
   ### Output sharpening
 
@@ -3011,11 +3021,15 @@ defmodule Image do
 
   Where:
 
-  * `m1` is `:flat_amount`
-  * `m2` is `:jagged_amount`
-  * `x1` is `:threshold`
-  * `y2` is `:max_brightening`
-  * `y3` is `:max_darkening`
+  * `m1` is `:flat_amount`.
+
+  * `m2` is `:jagged_amount`.
+
+  * `x1` is `:threshold`.
+
+  * `y2` is `:max_brightening`.
+
+  * `y3` is `:max_darkening`.
 
   ### Arguments
 
@@ -3056,7 +3070,7 @@ defmodule Image do
 
   ### Returns
 
-  * `sharpened_image` or
+  * `sharpened_image`, or
 
   * raises an exception.
 
@@ -3113,13 +3127,13 @@ defmodule Image do
   * `:min_amplitude` is a `float` that determines
     the accuracy of the mask. The default is `0.2`.
     A smaller number will generate a larger, more
-    accurate mask,
+    accurate mask.
 
   ### Returns
 
-  * `{:ok, blurred_mask_image}` or
+  * `{:ok, blurred_mask_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -3206,11 +3220,11 @@ defmodule Image do
   * `:min_amplitude` is a `float` that determines
     the accuracy of the mask. The default is `0.2`.
     A smaller number will generate a larger, more
-    accurate mask,
+    accurate mask.
 
   ### Returns
 
-  * `blurred_mask_image` or
+  * `blurred_mask_image`, or
 
   * raises an exception.
 
@@ -3261,7 +3275,7 @@ defmodule Image do
     pixel values which can be interpreted as the average
     color of the image, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -3368,7 +3382,7 @@ defmodule Image do
 
   * `alpha_image` is any single-band image
     that will be added as an alpha image to
-    `image`
+    `image`.
 
   OR
 
@@ -3380,9 +3394,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image_with_added_alpha_band}` or
+  * `{:ok, image_with_added_alpha_band}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -3443,7 +3457,7 @@ defmodule Image do
 
   * `alpha_image` is any single-band image
     that will be added as an alpha image to
-    `image`
+    `image`.
 
   OR
 
@@ -3468,7 +3482,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image_with_added_alpha_band` or
+  * `image_with_added_alpha_band`, or
 
   * raises an exception.
 
@@ -3504,7 +3518,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{image_without_alpha, alpha_band}` or
+  * `{image_without_alpha, alpha_band}`, or
 
   * `{image, nil}` if there is no
     alpha band detected.
@@ -3633,9 +3647,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, composed_image}` or
+  * `{:ok, composed_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -3856,9 +3870,9 @@ defmodule Image do
 
   ### Returns
 
-  * `composed_image` or
+  * `composed_image`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Examples
 
@@ -3968,9 +3982,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, joined_image}` or
+  * `{:ok, joined_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -4079,9 +4093,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, joined_image}` or
+  * `{:ok, joined_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -4190,7 +4204,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, meme_image}` or
+  * `{:ok, meme_image}`, or
 
   * `{:error, reason}`.
 
@@ -4296,7 +4310,7 @@ defmodule Image do
 
   ### Returns
 
-  * `meme_image` or
+  * `meme_image`, or
 
   * raises an exception.
 
@@ -4854,7 +4868,7 @@ defmodule Image do
 
   ### Notes
 
-  * See also `Image.Interpretation.known_interpretations/0`
+  * See also `Image.Interpretation.known_interpretations/0`.
 
   ### Example
 
@@ -4890,9 +4904,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, flipped_image}` or
+  * `{:ok, flipped_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -4942,7 +4956,7 @@ defmodule Image do
 
   ### Returns
 
-  * `flipped_image` or
+  * `flipped_image`, or
 
   * raises an exception.
 
@@ -4999,9 +5013,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, resized_image}` or
+  * `{:ok, resized_image}`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Example
 
@@ -5093,9 +5107,9 @@ defmodule Image do
 
   ### Returns
 
-  * `resized_image` or
+  * `resized_image`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Example
 
@@ -5135,9 +5149,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, pixelated_image}` or
+  * `{:ok, pixelated_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -5181,9 +5195,9 @@ defmodule Image do
 
   ### Returns
 
-  * `pixelated_image` or
+  * `pixelated_image`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Example
 
@@ -5309,9 +5323,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, thumbnailed_image}` or
+  * `{:ok, thumbnailed_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -5409,7 +5423,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
   * raises an exception.
 
@@ -5468,7 +5482,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, memory_image}` or
+  * `{:ok, memory_image}`, or
 
   * `{:error, reason}`.
 
@@ -5550,9 +5564,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, avatar_image}` or
+  * `{:ok, avatar_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -5624,7 +5638,7 @@ defmodule Image do
 
   ### Returns
 
-  * `avatar_image` or
+  * `avatar_image`, or
 
   * raises an exception.
 
@@ -5767,9 +5781,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, cropped_image}` or
+  * `{:ok, cropped_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -5844,9 +5858,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, cropped_image}` or
+  * `{:ok, cropped_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Note
 
@@ -5897,7 +5911,7 @@ defmodule Image do
 
   ### Returns
 
-  * `cropped_image` or
+  * `cropped_image`, or
 
   * raises an exception.
 
@@ -5967,7 +5981,7 @@ defmodule Image do
 
   ### Returns
 
-  * `cropped_image` or
+  * `cropped_image`, or
 
   * raises an exception.
 
@@ -6030,7 +6044,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, cropped_image}` or
+  * `{:ok, cropped_image}`, or
 
   * `{:error, reason}`.
 
@@ -6066,7 +6080,7 @@ defmodule Image do
 
   * `height` is the width of area remaining as a
     positive integer or float in the range `0.0..1.0`.
-    If `height` is an integer it is the absolute number
+    If `height` is an integer it is the absolute number.
 
     of pixels. If `height` is a float it is the fraction
     of the original image height.
@@ -6081,7 +6095,7 @@ defmodule Image do
 
   ### Returns
 
-  * `cropped_image` or
+  * `cropped_image`, or
 
   * raises an exception.
 
@@ -6167,10 +6181,13 @@ defmodule Image do
 
     * `:copy` means the generated pixels take the value of the
       nearest edge pixel of the base image.
+
     * `:repeat` means the generated pixels are tiles from the
       base image.
+
     * `:mirror` means the generated pixels are reflected tiles of
       the base image.
+
     * `:background` explicitly selects the background color fill,
       which is also the default behavior when no `:extend_mode` is
       given. The color comes from the `:background` option.
@@ -6183,9 +6200,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, embedded_image}` or
+  * `{:ok, embedded_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -6270,7 +6287,7 @@ defmodule Image do
 
   ### Returns
 
-  * `embedded_image` or
+  * `embedded_image`, or
 
   * raises an exception.
 
@@ -6364,7 +6381,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
   * `{:error, reason}`.
 
@@ -6462,7 +6479,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image` or
+  * `image`, or
 
   * raises an exception.
 
@@ -6599,7 +6616,7 @@ defmodule Image do
 
   * `cropped_image` which is the image
     cropped to the bounding box of the non-background
-    area or
+    area, or
 
   * raises an exception.
 
@@ -6662,7 +6679,7 @@ defmodule Image do
   ### Returns
 
   * `{:ok, {left, top, width, height}}` which is the bounding box
-    of the non-background area or
+    of the non-background area, or
 
   * `{:error, reason}`.
 
@@ -6783,7 +6800,7 @@ defmodule Image do
   ### Returns
 
   * `{left, top, width, height}` which is the bounding box
-    of the non-background area or
+    of the non-background area, or
 
   * raises an exception.
 
@@ -6829,9 +6846,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, flattened_image}` or
+  * `{:ok, flattened_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -6890,9 +6907,9 @@ defmodule Image do
 
   ### Returns
 
-  * `flattened_image` or
+  * `flattened_image`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Example
 
@@ -6933,9 +6950,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, dilated_mask}` or
+  * `{:ok, dilated_mask}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -7013,7 +7030,7 @@ defmodule Image do
 
   ### Returns
 
-  * `dilated_mask` or
+  * `dilated_mask`, or
 
   * raises an exception.
 
@@ -7065,9 +7082,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, eroded_mask}` or
+  * `{:ok, eroded_mask}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -7128,9 +7145,9 @@ defmodule Image do
 
   ### Returns
 
-  * `eroded_mask` or
+  * `eroded_mask`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Notes
 
@@ -7235,9 +7252,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, rotated_image}` or
+  * `{:ok, rotated_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -7348,7 +7365,7 @@ defmodule Image do
 
   ### Returns
 
-  * `rotated_image` or
+  * `rotated_image`, or
 
   * raises an exception.
 
@@ -7392,9 +7409,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, {auto_rotated_image, flags}}` or
+  * `{:ok, {auto_rotated_image, flags}}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Flags
 
@@ -7402,7 +7419,7 @@ defmodule Image do
   were taken:
 
   * `:flip` which is a boolean indicating if the image
-    was flipped or not and
+    was flipped or not.
 
   * `:angle` through which the image was rotated.
     This value will be one of `0`, `90`, `180` or
@@ -7482,7 +7499,7 @@ defmodule Image do
 
   ### Returns
 
-  * `auto_rotated_image` or
+  * `auto_rotated_image`, or
 
   * raises an exception.
 
@@ -7533,7 +7550,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image_with_orientation}` or
+  * `{:ok, image_with_orientation}`, or
 
   * `{:error, reason}`.
 
@@ -7632,9 +7649,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image_with_ripple}` or
+  * `{:ok, image_with_ripple}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -7683,7 +7700,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image_with_ripple` or
+  * `image_with_ripple`, or
 
   * raises an exception.
 
@@ -7724,9 +7741,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, circular_image}` or
+  * `{:ok, circular_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -7782,7 +7799,7 @@ defmodule Image do
 
   ### Returns
 
-  * `circular_image` or
+  * `circular_image`, or
 
   * raises an exception.
 
@@ -7880,7 +7897,7 @@ defmodule Image do
 
   ### Returns
 
-  * `rounded_corner_image` or
+  * `rounded_corner_image`, or
 
   * raises an exception.
 
@@ -7945,7 +7962,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, squircle_image}` or
+  * `{:ok, squircle_image}`, or
 
   * `{:error, reason}`.
 
@@ -8009,7 +8026,7 @@ defmodule Image do
 
   ### Returns
 
-  * `squircle_image` or
+  * `squircle_image`, or
 
   * raises an exception.
 
@@ -8198,13 +8215,13 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
-  * `{:ok, image_with_minimal_metadata}` or
+  * `{:ok, image_with_minimal_metadata}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -8263,7 +8280,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image_with_minimal_metadata}` or
+  * `{:ok, image_with_minimal_metadata}`, or
 
   * `{:error, reason}`.
 
@@ -8302,11 +8319,11 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   ### Returns
 
-  * ` image_with_minimal_metadata` or
+  * `image_with_minimal_metadata`, or
 
   * raises an exception.
 
@@ -8384,7 +8401,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `fields` is a list of metadata field names
     as strings. The default is all known
@@ -8397,10 +8414,12 @@ defmodule Image do
       including the EXIF thumbnail and each EXIF tag libvips
       holds as a separate `exif-ifd…` field. The orientation
       is kept so the image still displays upright.
+
     * `:iptc` which means remove all
-      [IPTC](https://en.wikipedia.org/wiki/IPTC_Information_Interchange_Model) metadata
+      [IPTC](https://en.wikipedia.org/wiki/IPTC_Information_Interchange_Model) metadata.
+
     * `:xmp` which means remove all
-      [xmp](https://en.wikipedia.org/wiki/Extensible_Metadata_Platform) data
+      [xmp](https://en.wikipedia.org/wiki/Extensible_Metadata_Platform) data.
 
   ## Notes
 
@@ -8415,9 +8434,9 @@ defmodule Image do
 
   ### Returns
 
-    * `{:ok, image_without_metadata_fields}` or
+    * `{:ok, image_without_metadata_fields}`, or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
   ### Example
 
@@ -8486,7 +8505,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `fields` is a list of metadata field names
     as strings. The default is all known
@@ -8499,10 +8518,12 @@ defmodule Image do
       including the EXIF thumbnail and each EXIF tag libvips
       holds as a separate `exif-ifd…` field. The orientation
       is kept so the image still displays upright.
+
     * `:iptc` which means remove all
-      [IPTC](https://en.wikipedia.org/wiki/IPTC_Information_Interchange_Model) metadata
+      [IPTC](https://en.wikipedia.org/wiki/IPTC_Information_Interchange_Model) metadata.
+
     * `:xmp` which means remove all
-      [xmp](https://en.wikipedia.org/wiki/Extensible_Metadata_Platform) data
+      [xmp](https://en.wikipedia.org/wiki/Extensible_Metadata_Platform) data.
 
   ## Notes
 
@@ -8517,7 +8538,7 @@ defmodule Image do
 
   ### Returns
 
-    * `image_without_metadata_fields` or
+    * `image_without_metadata_fields`, or
 
     * raises an exception.
 
@@ -8584,9 +8605,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, gradient_image}` or
+  * `{:ok, gradient_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -8759,7 +8780,7 @@ defmodule Image do
 
   ### Returns
 
-  * `gradient_image` or
+  * `gradient_image`, or
 
   * raises an exception.
 
@@ -8856,9 +8877,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, gradient_image}` or
+  * `{:ok, gradient_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -8938,9 +8959,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, gradient_image}` or
+  * `{:ok, gradient_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -9307,9 +9328,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, histogram_image}` or
+  * `{:ok, histogram_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -9373,9 +9394,11 @@ defmodule Image do
 
   The available difference algorithms are:
 
-  * [CIDE2000](https://en.wikipedia.org/wiki/Color_difference#CIEDE2000)
-  * [CIE CMC](https://en.wikipedia.org/wiki/Color_difference#CMC_l:c_(1984))
-  * [CIE 1976](https://en.wikipedia.org/wiki/Color_difference#CIE76)
+  * [CIDE2000](https://en.wikipedia.org/wiki/Color_difference#CIEDE2000).
+
+  * [CIE CMC](https://en.wikipedia.org/wiki/Color_difference#CMC_l:c_(1984)).
+
+  * [CIE 1976](https://en.wikipedia.org/wiki/Color_difference#CIE76).
 
   ### Arguments
 
@@ -9453,9 +9476,11 @@ defmodule Image do
 
   The available difference algorithms are:
 
-  * [CIDE2000](https://en.wikipedia.org/wiki/Color_difference#CIEDE2000)
-  * [CIE CMC](https://en.wikipedia.org/wiki/Color_difference#CMC_l:c_(1984))
-  * [CIE 1976](https://en.wikipedia.org/wiki/Color_difference#CIE76)
+  * [CIDE2000](https://en.wikipedia.org/wiki/Color_difference#CIEDE2000).
+
+  * [CIE CMC](https://en.wikipedia.org/wiki/Color_difference#CMC_l:c_(1984)).
+
+  * [CIE 1976](https://en.wikipedia.org/wiki/Color_difference#CIE76).
 
   ### Arguments
 
@@ -9552,9 +9577,9 @@ defmodule Image do
 
     ### Returns
 
-    * `{:ok, list_of_colors}` or
+    * `{:ok, list_of_colors}`, or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Notes
 
@@ -9662,9 +9687,9 @@ defmodule Image do
 
     ### Returns
 
-    * `{:ok, list_of_colors}` or
+    * `{:ok, list_of_colors}`, or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Notes
 
@@ -9777,9 +9802,9 @@ defmodule Image do
 
     ### Returns
 
-    * `{:ok, reduced_colors_image}` or
+    * `{:ok, reduced_colors_image}`, or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Example
 
@@ -9873,7 +9898,7 @@ defmodule Image do
 
     ### Returns
 
-    * `reduced_colors_image` or
+    * `reduced_colors_image`, or
 
     * raises an exception.
 
@@ -9924,9 +9949,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, pixel_value}` or
+  * `{:ok, pixel_value}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -9979,9 +10004,9 @@ defmodule Image do
 
   ### Returns
 
-  * `pixel_value` or
+  * `pixel_value`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Example
 
@@ -10041,9 +10066,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, mutated_image}` or
+  * `{:ok, mutated_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -10084,7 +10109,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `colorspace` is any known colorspace. See
     `Image.Interpretation.known_interpretations/0`
@@ -10100,9 +10125,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{;ok, image_in_new_colorspace}` or
+  * `{:ok, image_in_new_colorspace}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -10185,7 +10210,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image_in_target_profile}` or
+  * `{:ok, image_in_target_profile}`, or
 
   * `{:error, reason}`.
 
@@ -10271,7 +10296,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `colorspace` is any known colorspace. See
     `Image.Interpretation.known_interpretations/0`
@@ -10279,9 +10304,9 @@ defmodule Image do
 
   ### Returns
 
-  * `image_in_new_colorspace` or
+  * `image_in_new_colorspace`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Example
 
@@ -10346,9 +10371,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image_in_polar_coordinates}` or
+  * `{:ok, image_in_polar_coordinates}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -10391,7 +10416,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image_in_polar_coordinates` or
+  * `image_in_polar_coordinates`, or
 
   * raises an exception.
 
@@ -10444,9 +10469,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image_in_rectangular_coordinates}` or
+  * `{:ok, image_in_rectangular_coordinates}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -10490,7 +10515,7 @@ defmodule Image do
 
   ### Returns
 
-  * `image_in_rectangular_coordinates` or
+  * `image_in_rectangular_coordinates`, or
 
   * raises an exception.
 
@@ -10532,7 +10557,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, adjusted_image}` or
+  * `{:ok, adjusted_image}`, or
 
   * `{:error, reason}`.
 
@@ -10582,7 +10607,7 @@ defmodule Image do
 
   ### Returns
 
-  * `adjusted_image` or
+  * `adjusted_image`, or
 
   * raises an exception.
 
@@ -10624,7 +10649,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, adjusted_image}` or
+  * `{:ok, adjusted_image}`, or
 
   * `{:error, reason}`.
 
@@ -10684,7 +10709,7 @@ defmodule Image do
 
   ### Returns
 
-  * `adjusted_image` or
+  * `adjusted_image`, or
 
   * raises an exception.
 
@@ -10714,7 +10739,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, inverted_image}` or
+  * `{:ok, inverted_image}`, or
 
   * `{:error, reason}`.
 
@@ -10754,7 +10779,7 @@ defmodule Image do
 
   ### Returns
 
-  * `inverted_image` or
+  * `inverted_image`, or
 
   * raises an exception.
 
@@ -10826,7 +10851,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, modulated_image}` or
+  * `{:ok, modulated_image}`, or
 
   * `{:error, reason}`.
 
@@ -10894,7 +10919,7 @@ defmodule Image do
 
   ### Returns
 
-  * `modulated_image` or
+  * `modulated_image`, or
 
   * raises an exception.
 
@@ -10955,7 +10980,8 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, vignetted_image}` or
+  * `{:ok, vignetted_image}`, or
+
   * `{:error, reason}`.
 
   ### Examples
@@ -11009,7 +11035,8 @@ defmodule Image do
 
   ### Returns
 
-  * `vignetted_image` or
+  * `vignetted_image`, or
+
   * raises an exception.
 
   ### Examples
@@ -11067,7 +11094,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, adjusted_image}` or
+  * `{:ok, adjusted_image}`, or
 
   * `{:error, reason}`.
 
@@ -11210,7 +11237,7 @@ defmodule Image do
 
   ### Returns
 
-  * `adjusted_image` or
+  * `adjusted_image`, or
 
   * raises an exception.
 
@@ -11277,7 +11304,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, enhanced_image}` or
+  * `{:ok, enhanced_image}`, or
 
   * `{:error, reason}`.
 
@@ -11388,7 +11415,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, tone_mapped_image}` or
+  * `{:ok, tone_mapped_image}`, or
 
   * `{:error, reason}`.
 
@@ -11470,7 +11497,7 @@ defmodule Image do
 
   ### Returns
 
-  * `tone_mapped_image` or
+  * `tone_mapped_image`, or
 
   * raises an exception.
 
@@ -11546,7 +11573,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, adjusted_image}` or
+  * `{:ok, adjusted_image}`, or
 
   * `{:error, reason}`.
 
@@ -11605,7 +11632,7 @@ defmodule Image do
 
   ### Returns
 
-  * `adjusted_image` or
+  * `adjusted_image`, or
 
   * raises an exception.
 
@@ -11651,7 +11678,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, adjusted_image}` or
+  * `{:ok, adjusted_image}`, or
 
   * `{:error, reason}`.
 
@@ -11709,7 +11736,7 @@ defmodule Image do
 
   ### Returns
 
-  * `adjusted_image` or
+  * `adjusted_image`, or
 
   * raises an exception.
 
@@ -11754,7 +11781,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, adjusted_image}` or
+  * `{:ok, adjusted_image}`, or
 
   * `{:error, reason}`.
 
@@ -11829,7 +11856,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, sepia_image}` or
+  * `{:ok, sepia_image}`, or
 
   * `{:error, reason}`.
 
@@ -11909,7 +11936,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, tinted_image}` or
+  * `{:ok, tinted_image}`, or
 
   * `{:error, reason}`.
 
@@ -12013,7 +12040,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, faded_image}` or
+  * `{:ok, faded_image}`, or
 
   * `{:error, reason}`.
 
@@ -12219,7 +12246,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image_with_shadow}` or
+  * `{:ok, image_with_shadow}`, or
 
   * `{:error, reason}`.
 
@@ -12437,7 +12464,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, posterized_image}` or
+  * `{:ok, posterized_image}`, or
 
   * `{:error, reason}`.
 
@@ -12532,7 +12559,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, alpha_adjusted_image}` or
+  * `{:ok, alpha_adjusted_image}`, or
 
   * `{:error, reason}`.
 
@@ -12660,7 +12687,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, adjusted_image}` or
+  * `{:ok, adjusted_image}`, or
 
   * `{:error, reason}`.
 
@@ -12739,7 +12766,7 @@ defmodule Image do
 
   ### Returns
 
-  * `adjusted_image` or
+  * `adjusted_image`, or
 
   * raises an exception.
 
@@ -12840,9 +12867,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, reduced_noise_image}` or
+  * `{:ok, reduced_noise_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -12883,7 +12910,7 @@ defmodule Image do
 
   ### Returns
 
-  * `reduced_noise_image` or
+  * `reduced_noise_image`, or
 
   * raises an exception.
 
@@ -12921,7 +12948,7 @@ defmodule Image do
     of pixels and each pixel is a list of numbers. Each pixel will have
     1 to 4 numbers depending on the number of bands in the image.
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -12981,15 +13008,19 @@ defmodule Image do
     Examples:
 
     * Identity: `[1, 0, 0, 1]` (the identity matrix with `:idx`
-      and `:idy` is `Image.translate/4`)
+      and `:idy` is `Image.translate/4`).
+
     * Scale:
-      `(sx, sy)`: `[sx, 0, 0, sy]`
+      `(sx, sy)`: `[sx, 0, 0, sy]`.
+
     * Rotate by theta:
-      `[:math.cos(t), -:math.sin(t), :math.sin(t), :math.cos(t)]`
+      `[:math.cos(t), -:math.sin(t), :math.sin(t), :math.cos(t)]`.
+
     * Shear:
-      `[1, sx, sy, 1]` (this is exactly what `Image.shear/3` builds)
+      `[1, sx, sy, 1]` (this is exactly what `Image.shear/3` builds).
+
     * Horizontal flip:
-      `[-1, 0, 0, 1]`
+      `[-1, 0, 0, 1]`.
 
   * `options` is a keyword list of options.
 
@@ -13068,9 +13099,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, transformed_image}` or
+  * `{:ok, transformed_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -13239,9 +13270,9 @@ defmodule Image do
 
   ### Returns
 
-  * `transformed_image` or
+  * `transformed_image`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Example
 
@@ -13303,9 +13334,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, translated_image}` or
+  * `{:ok, translated_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -13359,9 +13390,9 @@ defmodule Image do
 
   ### Returns
 
-  * `translated_image` or
+  * `translated_image`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Examples
 
@@ -13421,9 +13452,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, sheared_image}` or
+  * `{:ok, sheared_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -13471,9 +13502,9 @@ defmodule Image do
 
   ### Returns
 
-  * `sheared_image` or
+  * `sheared_image`, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Examples
 
@@ -13507,9 +13538,9 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vix.Vips.Image.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
-    * `options` is a keyword list of options
+    * `options` is a keyword list of options.
 
     ### Options
 
@@ -13527,7 +13558,7 @@ defmodule Image do
     ### Returns
 
     * `{:ok, tensor)` where tensor is an `t:Nx.Tensor.t/0` tensor
-      suitable for use in the `Nx` library or
+      suitable for use in the `Nx` library, or
 
     * `{:error, reason}`.
 
@@ -13593,9 +13624,9 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vix.Vips.Image.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
-    * `options` is a keyword list of options
+    * `options` is a keyword list of options.
 
     ### Options
 
@@ -13613,7 +13644,7 @@ defmodule Image do
     ### Returns
 
     * `tensor` where tensor is an `t:Nx.Tensor.t/0` tensor
-      suitable for use in the `Nx` library or
+      suitable for use in the `Nx` library, or
 
     * raises an exception.
 
@@ -13657,9 +13688,9 @@ defmodule Image do
 
     ### Returns
 
-    * `{:ok, image}` or
+    * `{:ok, image}`, or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Notes
 
@@ -13741,9 +13772,9 @@ defmodule Image do
 
     ### Returns
 
-    * `image` or
+    * `image`, or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Notes
 
@@ -13795,7 +13826,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vix.Vips.Image.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -13852,9 +13883,9 @@ defmodule Image do
 
     ### Returns
 
-    * `{:ok, warped_image}` or
+    * `{:ok, warped_image}`, or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Examples
 
@@ -13891,7 +13922,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vix.Vips.Image.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -13905,7 +13936,7 @@ defmodule Image do
 
     ### Returns
 
-    * `warped_image` or
+    * `warped_image`, or
 
     * raises an exception.
 
@@ -13979,9 +14010,9 @@ defmodule Image do
 
     ### Returns
 
-    * `{:ok, destination, straightened_image}` or
+    * `{:ok, destination, straightened_image}`, or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Notes
 
@@ -14049,9 +14080,9 @@ defmodule Image do
 
     ### Returns
 
-    * `straightened_image` or
+    * `straightened_image`, or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Notes
 
@@ -14157,7 +14188,7 @@ defmodule Image do
 
     ### Returns
 
-    * `{:ok, distorted_image}` or
+    * `{:ok, distorted_image}`, or
 
     * `{:error, reason}`.
 
@@ -14226,7 +14257,7 @@ defmodule Image do
 
     ### Arguments
 
-    * `image` is any `t:Vix.Vips.Image.t/0`
+    * `image` is any `t:Vix.Vips.Image.t/0`.
 
     * `source` is a list of four 2-tuples representing the
       four corners of the subject-of-interest in `image`.
@@ -14237,7 +14268,7 @@ defmodule Image do
 
     ### Returns
 
-    * `{:ok, transform_matrix}` or
+    * `{:ok, transform_matrix}`, or
 
     * `{:error, reason}`.
 
@@ -14355,9 +14386,9 @@ defmodule Image do
 
       ### Returns
 
-      * `{:ok, evision_image}`
+      * `{:ok, evision_image}`.
 
-      * `{:error, reason}`
+      * `{:error, reason}`.
 
       ### Notes
 
@@ -14406,7 +14437,7 @@ defmodule Image do
 
       ### Returns
 
-      * `{:ok, image}`
+      * `{:ok, image}`.
 
       ### Notes
 
@@ -14496,7 +14527,7 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
   * `transform_matrix` is a matrix returned by
     `Image.transform_matrix/3`.
@@ -14547,9 +14578,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, mapped_image}` or
+  * `{:ok, mapped_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -14599,7 +14630,7 @@ defmodule Image do
       mean square error. The returned value is conformed to the range of
       the underlying image format. Therefore the returned value is between `0.0`
       (images appear to be the same) and `1.0` (meaning the images appear
-      completely different),
+      completely different).
 
     * [:mse](https://en.wikipedia.org/wiki/Mean_squared_error) which
       is the mean squared error. The returned value is a float
@@ -14650,9 +14681,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, comparison_metric, difference_image}` or
+  * `{:ok, comparison_metric, difference_image}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -14905,9 +14936,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, 64-bit binary}` or
+  * `{:ok, 64-bit binary}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -14992,7 +15023,7 @@ defmodule Image do
   ### Returns
 
   * `{:ok, hamming_distance}` where hamming distance is
-    a positive integer or
+    a positive integer, or
 
   * `{:error, reason}`.
 
@@ -15047,9 +15078,9 @@ defmodule Image do
 
     ### Returns
 
-    * `{:ok, fft_image}` or
+    * `{:ok, fft_image}`, or
 
-    * `{:error, reason}`
+    * `{:error, reason}`.
 
     ### Example
 
@@ -15078,9 +15109,9 @@ defmodule Image do
 
     ### Returns
 
-    * `fft_image` or
+    * `fft_image`, or
 
-    * raises an exception
+    * raises an exception.
 
     ### Example
 
@@ -15184,9 +15215,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, mask}` or
+  * `{:ok, mask}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 
@@ -15223,9 +15254,9 @@ defmodule Image do
 
   ### Returns
 
-  * `mask` image or
+  * `mask` image, or
 
-  * raises an exception
+  * raises an exception.
 
   ### Example
 
@@ -15291,7 +15322,7 @@ defmodule Image do
   ### Returns
 
   * `{:ok, image}` where `image` is created by joining
-    `image_bands` together or
+    `image_bands` together, or
 
   * `{:error, reason}`.
 
@@ -15337,7 +15368,7 @@ defmodule Image do
   ### Returns
 
   * an image created by joining `image_bands`
-    together or
+    together, or
 
   * raises an exception.
 
@@ -15373,7 +15404,7 @@ defmodule Image do
   ### Returns
 
   * `{:ok, and_image}` where `and_image` a single band image that is the
-    result of boolean "and"ing the bands of `image` togther.
+    result of boolean "and"ing the bands of `image` together.
 
   ### Example
 
@@ -15405,7 +15436,7 @@ defmodule Image do
   ### Returns
 
   * `and_image` where `and_image` a single band image that is the
-    result of boolean "and"ing the bands of `image` togther or
+    result of boolean "and"ing the bands of `image` together, or
 
   * raises an exception.
 
@@ -15439,7 +15470,7 @@ defmodule Image do
   ### Returns
 
   * `{:ok, or_image}` where `or_image` a single band image that is the
-    result of boolean "or"ing the bands of `image` togther.
+    result of boolean "or"ing the bands of `image` together.
 
   ### Example
 
@@ -15471,7 +15502,7 @@ defmodule Image do
   ### Returns
 
   * `or_image` where `or_image` a single band image that is the
-    result of boolean "or"ing the bands of `image` togther or
+    result of boolean "or"ing the bands of `image` together, or
 
   * raises an exception.
 
@@ -15505,7 +15536,7 @@ defmodule Image do
   ### Returns
 
   * `{:ok, xor_image}` where `xor_image` a single band image that is the
-    result of boolean "exclusive or"ing the bands of `image` togther.
+    result of boolean "exclusive or"ing the bands of `image` together.
 
   ### Example
 
@@ -15536,7 +15567,7 @@ defmodule Image do
   ### Returns
 
   * `xor_image` where `xor_image` a single band image that is the
-    result of boolean "exclusive or"ing the bands of `image` togther or
+    result of boolean "exclusive or"ing the bands of `image` together, or
 
   * raises an exception.
 
@@ -15573,7 +15604,7 @@ defmodule Image do
 
   ### Returns
 
-  * `true` or `false`
+  * `true` or `false`.
 
   ### Examples
 
@@ -15652,7 +15683,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, cast_image}` or
+  * `{:ok, cast_image}`, or
 
   * `{:error, reason}`.
 
@@ -15690,7 +15721,7 @@ defmodule Image do
 
   ### Returns
 
-  * `cast_image` or
+  * `cast_image`, or
 
   * raises an exception.
 
@@ -15726,7 +15757,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
   * `{:error, reason}`.
 
@@ -15776,7 +15807,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
   * `{:error, reason}`.
 
@@ -15829,7 +15860,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, image}` or
+  * `{:ok, image}`, or
 
   * `{:error, reason}`.
 
@@ -15882,7 +15913,7 @@ defmodule Image do
   ### Returns
 
   * `{:ok, mapped_joined_image}` where all the new pages returned
-    from `fun/1` are assembled into `mapped_image` or
+    from `fun/1` are assembled into `mapped_image`, or
 
   * `{:error, reason}`.
 
@@ -16000,9 +16031,9 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, list_of_images}` or
+  * `{:ok, list_of_images}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Notes
 
@@ -16254,7 +16285,7 @@ defmodule Image do
 
   ### Returns
 
-  * `{:ok, updated_concurrency}`
+  * `{:ok, updated_concurrency}`.
 
   ### Example
 
@@ -16280,9 +16311,9 @@ defmodule Image do
 
   ### Arguments
 
-  * `image` is any `t:Vix.Vips.Image.t/0`
+  * `image` is any `t:Vix.Vips.Image.t/0`.
 
-  * `options` is a keyword list of options
+  * `options` is a keyword list of options.
 
   ### Options
 

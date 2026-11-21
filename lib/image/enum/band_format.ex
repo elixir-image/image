@@ -80,9 +80,9 @@ defmodule Image.BandFormat do
 
   ### Returns
 
-  * `{:ok, validated_foramt}` or
+  * `{:ok, validated_format}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 
@@ -139,7 +139,7 @@ defmodule Image.BandFormat do
 
   ### Returns
 
-  * `{:ok, band_format}` or
+  * `{:ok, band_format}`, or
 
   * `{:error, reason}`.
 
@@ -172,7 +172,7 @@ defmodule Image.BandFormat do
 
   ### Returns
 
-  * `{:ok, band_format}` or
+  * `{:ok, band_format}`, or
 
   * `{:error, reason}`.
 
@@ -222,7 +222,7 @@ defmodule Image.BandFormat do
 
   ### Returns
 
-  * `band_format` or
+  * `band_format`, or
 
   * raises an exception.
 

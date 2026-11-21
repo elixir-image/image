@@ -17,9 +17,11 @@ defmodule Image.Lqip.Css do
 
   The image is resized to a 3x3 thumbnail and three pixels are sampled:
 
-  * the top-left pixel becomes the background color (`--lqip-c0`)
-  * the center pixel becomes the first radial gradient (`--lqip-c1`)
-  * the bottom-right pixel becomes the second radial gradient (`--lqip-c2`)
+  * the top-left pixel becomes the background color (`--lqip-c0`).
+
+  * the center pixel becomes the first radial gradient (`--lqip-c1`).
+
+  * the bottom-right pixel becomes the second radial gradient (`--lqip-c2`).
 
   Each color is quantized ([adjusted for chroma](#module-chroma-aware-packing))
   and bit-packed: the first two into 11 bits (`RRRR GGGG BBB`) and the third
@@ -88,7 +90,7 @@ defmodule Image.Lqip.Css do
 
   * `{:ok, hex}` where `hex` is an 8-digit `#RRGGBBAA` string, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Example
 

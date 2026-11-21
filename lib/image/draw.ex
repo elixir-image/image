@@ -73,7 +73,7 @@ defmodule Image.Draw do
     type as that passed as an argument to the
     function.
 
-  * or `{:error, reason}`
+  * or `{:error, reason}`.
 
   ### Examples
 
@@ -147,7 +147,7 @@ defmodule Image.Draw do
 
   * `image` where `image` is the same
     type as that passed as an argument to the
-    function or
+    function, or
 
   * raises an exception.
 
@@ -197,9 +197,9 @@ defmodule Image.Draw do
     top edge of the image where the rectangle
     will be drawn.
 
-  * `width` is the width of the rectangle
+  * `width` is the width of the rectangle.
 
-  * `height` is the height of the rectangle
+  * `height` is the height of the rectangle.
 
   * `options` is a keyword list of options.
     The default is `color: :black`.
@@ -231,7 +231,7 @@ defmodule Image.Draw do
 
   * `{:ok, image}` where `image` is the same
     type as that passed as an argument to the
-    function or
+    function, or
 
   * `{:error, reason}`.
 
@@ -324,9 +324,9 @@ defmodule Image.Draw do
     top edge of the image where the rectangle
     will be drawn.
 
-  * `width` is the width of the rectangle
+  * `width` is the width of the rectangle.
 
-  * `height` is the height of the rectangle
+  * `height` is the height of the rectangle.
 
   * `options` is a keyword list of options.
     The default is `color: :black`.
@@ -358,7 +358,7 @@ defmodule Image.Draw do
 
   * `image` where `image` is the same
     type as that passed as an argument to the
-    function or
+    function, or
 
   * raises an exception.
 
@@ -444,7 +444,7 @@ defmodule Image.Draw do
     type as that passed as an argument to the
     function.
 
-  * or `{:error, reason}`
+  * or `{:error, reason}`.
 
   ### Examples
 
@@ -552,7 +552,7 @@ defmodule Image.Draw do
 
   * `image` where `image` is the same
     type as that passed as an argument to the
-    function or
+    function, or
 
   * raises an exception.
 
@@ -622,7 +622,7 @@ defmodule Image.Draw do
     type as that passed as an argument to the
     function.
 
-  * or `{:error, reason}`
+  * or `{:error, reason}`.
 
   ### Examples
 
@@ -708,7 +708,7 @@ defmodule Image.Draw do
 
   * `image` where `image` is the same
     type as that passed as an argument to the
-    function or
+    function, or
 
   * raises an exception.
 
@@ -783,7 +783,7 @@ defmodule Image.Draw do
     type as that passed as an argument to the
     function.
 
-  * or `{:error, reason}`
+  * or `{:error, reason}`.
 
   ### Examples
 
@@ -1046,7 +1046,7 @@ defmodule Image.Draw do
 
   * `image` where `image` is the same
     type as that passed as an argument to the
-    function or
+    function, or
 
   * raises an exception.
 
@@ -1151,7 +1151,7 @@ defmodule Image.Draw do
 
   ### Returns
 
-  * `{:ok, smudged_image}` or
+  * `{:ok, smudged_image}`, or
 
   * `{:error, reason}`.
 

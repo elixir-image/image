@@ -14,12 +14,17 @@ defmodule Image.Options.Mapim do
   The interpolators that may be selected with the `:interpolate`
   option (descriptions from `vips -l interpolate`):
 
-  * `:nearest` - nearest-neighbour interpolation
-  * `:bilinear` - bilinear interpolation
-  * `:bicubic` - bicubic interpolation (Catmull-Rom)
-  * `:lbb` - reduced halo bicubic
-  * `:nohalo` - edge sharpening resampler with halo reduction
-  * `:vsqbs` - B-Splines with antialiasing smoothing
+  * `:nearest` - nearest-neighbour interpolation.
+
+  * `:bilinear` - bilinear interpolation.
+
+  * `:bicubic` - bicubic interpolation (Catmull-Rom).
+
+  * `:lbb` - reduced halo bicubic.
+
+  * `:nohalo` - edge sharpening resampler with halo reduction.
+
+  * `:vsqbs` - B-Splines with antialiasing smoothing.
 
   `:bilinear` is the default except for `Image.distort/4`, which
   retains its existing `:bicubic` default.
@@ -46,6 +51,7 @@ defmodule Image.Options.Mapim do
   * `:background` (the default) blends the fringe toward the
     `:background` color. This is correct whenever the transform
     exposes canvas.
+
   * `:copy` clamps to the nearest content pixel. Use it when the
     content fills the whole canvas, where the default would leave a
     faint border along the outermost row and column.

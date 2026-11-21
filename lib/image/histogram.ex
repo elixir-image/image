@@ -73,7 +73,7 @@ defmodule Image.Histogram do
 
   ### Returns
 
-  * `{:ok, svg_string}` or
+  * `{:ok, svg_string}`, or
 
   * `{:error, reason}`.
 
@@ -157,7 +157,7 @@ defmodule Image.Histogram do
 
   ### Returns
 
-  * `svg_string` or
+  * `svg_string`, or
 
   * raises an exception.
 
@@ -221,7 +221,7 @@ defmodule Image.Histogram do
 
   ### Returns
 
-  * `{:ok, histogram_image}` or
+  * `{:ok, histogram_image}`, or
 
   * `{:error, reason}`.
 
@@ -278,7 +278,7 @@ defmodule Image.Histogram do
 
   ### Returns
 
-  * `histogram_image` or
+  * `histogram_image`, or
 
   * raises an exception.
 

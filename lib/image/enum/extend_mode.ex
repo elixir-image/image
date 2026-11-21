@@ -45,7 +45,7 @@ defmodule Image.ExtendMode do
 
   ### Returns
 
-  * `{:ok, normalized_extend_mode}` or
+  * `{:ok, normalized_extend_mode}`, or
 
   * `{:error, reason}`.
 

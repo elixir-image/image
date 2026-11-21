@@ -143,7 +143,7 @@ if Image.xav_configured?() do
 
     ### Returns
 
-    * The result of `fun.(video)` or
+    * The result of `fun.(video)`, or
 
     * `{:error, reason}` if the video could not be opened.
 
@@ -180,14 +180,18 @@ if Image.xav_configured?() do
     * `source` is one of:
 
       * a file path to a video file;
+
       * a URL accepted by FFmpeg (`http://`, `https://`,
         `rtmp://`, `rtsp://`, …);
+
       * the atom `:default_camera` for the system's first webcam.
         Resolves to `/dev/video0` on Linux. On macOS this is
         passed to FFmpeg's AVFoundation input;
+
       * a non-negative integer camera index. Resolves to
         `/dev/videoN` on Linux. Use a device path string on
         other platforms;
+
       * a device path string interpreted by FFmpeg directly.
 
     * `options` is a keyword list. Currently no options are
@@ -196,7 +200,7 @@ if Image.xav_configured?() do
 
     ### Returns
 
-    * `{:ok, %Image.Video{}}` on success or
+    * `{:ok, %Image.Video{}}` on success, or
 
     * `{:error, %Image.Error{}}`.
 
@@ -494,7 +498,7 @@ if Image.xav_configured?() do
 
     ### Returns
 
-    * `{:ok, video}` on success or
+    * `{:ok, video}` on success, or
 
     * `{:error, %Image.Error{}}`.
 
@@ -593,7 +597,7 @@ if Image.xav_configured?() do
 
     ### Returns
 
-    * `{:ok, video}` after advancing or
+    * `{:ok, video}` after advancing, or
 
     * `{:error, %Image.Error{}}`.
 
@@ -631,7 +635,7 @@ if Image.xav_configured?() do
 
     ### Returns
 
-    * `{:ok, image}` or
+    * `{:ok, image}`, or
 
     * `{:error, %Image.Error{}}`.
 

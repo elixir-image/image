@@ -58,34 +58,58 @@ defmodule Image.BlendMode do
 
   * `:over` the image shows what you would expect if you held two
     semi-transparent slides on top of each other. This is the default
-    when composing images
-  * `:clear` where the second image is drawn, the first is removed
-  * `:source` the second image is drawn as if nothing were below
+    when composing images.
+
+  * `:clear` where the second image is drawn, the first is removed.
+
+  * `:source` the second image is drawn as if nothing were below.
+
   * `:in` the first image is removed completely, the second is only
-    drawn where the first was
-  * `:out` the second is drawn only where the first isn't
+    drawn where the first was.
+
+  * `:out` the second is drawn only where the first isn't.
+
   * `:atop` this leaves the first image mostly intact, but mixes
-    both images in the overlapping area
+    both images in the overlapping area.
+
   * `:dest` leaves the first image untouched, the second is discarded
-    completely
-  * `:dest_over` like `:over`, but swaps the arguments
-  * `:dest_in` like `:in`, but swaps the arguments
-  * `:dest_out` like `:out`, but swaps the arguments
-  * `:dest_atop` like `:atop`, but swaps the arguments
-  * `:xor` something like a difference operator
-  * `:add` a bit like adding the two images
-  * `:saturate` a bit like the darker of the two
-  * `:multiply` at least as dark as the darker of the two inputs
-  * `:screen` at least as light as the lighter of the inputs
-  * `:overlay` multiplies or screens colors, depending on the lightness
-  * `:darken` the darker of each component
-  * `:lighten` the lighter of each component
-  * `:colour_dodge` brighten first by a factor second
-  * `:colour_burn` darken first by a factor of second
-  * `:hard_light` multiply or screen, depending on lightness
-  * `:soft_light` darken or lighten, depending on lightness
-  * `:difference` difference of the two
-  * `:exclusion` somewhat like :difference, but lower-contrast
+    completely.
+
+  * `:dest_over` like `:over`, but swaps the arguments.
+
+  * `:dest_in` like `:in`, but swaps the arguments.
+
+  * `:dest_out` like `:out`, but swaps the arguments.
+
+  * `:dest_atop` like `:atop`, but swaps the arguments.
+
+  * `:xor` something like a difference operator.
+
+  * `:add` a bit like adding the two images.
+
+  * `:saturate` a bit like the darker of the two.
+
+  * `:multiply` at least as dark as the darker of the two inputs.
+
+  * `:screen` at least as light as the lighter of the inputs.
+
+  * `:overlay` multiplies or screens colors, depending on the lightness.
+
+  * `:darken` the darker of each component.
+
+  * `:lighten` the lighter of each component.
+
+  * `:colour_dodge` brighten first by a factor second.
+
+  * `:colour_burn` darken first by a factor of second.
+
+  * `:hard_light` multiply or screen, depending on lightness.
+
+  * `:soft_light` darken or lighten, depending on lightness.
+
+  * `:difference` difference of the two.
+
+  * `:exclusion` somewhat like :difference, but lower-contrast.
 
   """
   @type t :: unquote(Enum.reduce(@blend_modes, &{:|, [], [&1, &2]}))
@@ -127,9 +151,9 @@ defmodule Image.BlendMode do
   ### Returns
 
   * `{:ok, atom_blend_mode}` where `atom_blend_mode` is
-    a valid blend mode for `libvips`
+    a valid blend mode for `libvips`.
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 

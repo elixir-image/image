@@ -12,8 +12,6 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 * [ ] **`:font_file` has no effect on macOS** — the precompiled libvips renders text with Pango's CoreText backend, which never sees a font registered through fontconfig, so `Image.meme/3` and `Image.Text` fall back to a system font unless `PANGOCAIRO_BACKEND=fc` is set. Linux is unaffected. Belongs upstream in libvips or vix's precompiled build.
 
-* [ ] **Doc bullet punctuation** — around 480 documentation bullet items do not end in terminal punctuation, against the house rule. Roughly half of those legitimately end in "or", being the `X or` / `Y.` return pattern, so a blanket fix would corrupt them.
-
 ## In progress
 
 * [ ] **Livebook smart cell** — a cell that composes an `Image` pipeline from a form, previews it and writes the equivalent source into the notebook. On `main` since `81980d1` for 0.74.0, awaiting live testing in a notebook before release. Design in [plans/livebook-smart-cell.md](plans/livebook-smart-cell.md), issue [#31](https://github.com/elixir-image/image/issues/31).
@@ -27,6 +25,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **Doc bullet punctuation** — every bullet in `lib` docs ends in a period or `, or`, with a blank line after it; 475 items punctuated and 93 tight items spaced. 2026-11-21, v0.74.0.
 
 * [x] **`Image.Social` returns errors instead of raising** — `image_usages/1` and `default_image_usage/1` return tagged tuples, errors carry atom reasons, `resize/3` has no bang calls. 2026-11-21, v0.74.0.
 

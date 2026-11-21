@@ -530,7 +530,7 @@ defmodule Image.Pixel do
 
   ### Returns
 
-  * `{:ok, number}` or
+  * `{:ok, number}`, or
 
   * `{:error, reason}`.
 

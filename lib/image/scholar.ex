@@ -29,7 +29,7 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
 
     ### Returns
 
-    * `{:ok, {color_count_tensor, unique_colors_tensor}}` or
+    * `{:ok, {color_count_tensor, unique_colors_tensor}}`, or
 
     * `{:error, reason}`.
 
@@ -137,7 +137,7 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
 
     ### Returns
 
-    * `{:ok, count}` or
+    * `{:ok, count}`, or
 
     * `{:error, reason}`.
 
@@ -293,7 +293,7 @@ if match?({:module, _module}, Code.ensure_compiled(Scholar.Cluster.KMeans)) and
     ### Returns
 
     * `{:ok, model}` where `model` is a fitted
-      `Scholar.Cluster.KMeans` or
+      `Scholar.Cluster.KMeans`, or
 
     * `{:error, reason}`.
 

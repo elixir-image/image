@@ -61,9 +61,9 @@ defmodule Image.Interpretation do
 
   ### Returns
 
-  * `{:ok, normalized_interpretation}` or
+  * `{:ok, normalized_interpretation}`, or
 
-  * `{:error, reason}`
+  * `{:error, reason}`.
 
   ### Examples
 

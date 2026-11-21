@@ -270,7 +270,7 @@ defmodule Image.Social do
 
   ### Returns
 
-  * `{:ok, resized_image}` or
+  * `{:ok, resized_image}`, or
 
   * `{:error, reason}`.
 
@@ -340,7 +340,7 @@ defmodule Image.Social do
 
   ### Returns
 
-  * `resized_image` or
+  * `resized_image`, or
 
   * raises an exception.
 
