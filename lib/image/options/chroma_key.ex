@@ -3,6 +3,8 @@ defmodule Image.Options.ChromaKey do
   Options and option validation for `Image.chroma_key/2`.
 
   """
+
+  alias Vix.Vips.Image, as: Vimage
   alias Image.Pixel
 
   @threshold_keys [:color, :threshold]

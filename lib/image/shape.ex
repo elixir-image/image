@@ -239,7 +239,7 @@ defmodule Image.Shape do
   ### Examples
 
   """
-  @spec polygon(points :: path(), options :: Keyword.t()) ::
+  @spec polygon(points :: path(), options :: Keyword.t() | map()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def polygon(points, options \\ [])

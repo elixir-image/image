@@ -128,7 +128,7 @@ defmodule Image.Exif do
       {:error, :invalid_exif}
 
   """
-  @spec extract_exif(binary()) :: t() | {:error, :invalid_exif}
+  @spec extract_exif(binary()) :: map() | {:error, :invalid_exif}
   def extract_exif(exif) do
     # EXIF payloads come from untrusted image files so a truncated or
     # corrupt blob must produce an error, never a crash.

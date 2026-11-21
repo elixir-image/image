@@ -3,6 +3,8 @@ defmodule Image.Options.Compare do
   Options and option validation for `Image.compare/3`.
 
   """
+
+  alias Vix.Vips.Image, as: Vimage
   import Image, only: :macros
   alias Image.Pixel
 

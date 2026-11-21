@@ -129,7 +129,11 @@ defmodule Image.Options.Draw do
       false
 
   """
-  @spec validate_options(image :: Vimage.t(), type :: atom(), options :: Keyword.t()) ::
+  @spec validate_options(
+          image :: Vimage.t() | Vix.Vips.MutableImage.t(),
+          type :: atom(),
+          options :: Keyword.t()
+        ) ::
           {:ok, map()} | {:error, Image.error()}
   def validate_options(image, type, options) when is_list(options) do
     options = Keyword.merge(default_options(type), options)

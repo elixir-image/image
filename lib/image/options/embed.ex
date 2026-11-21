@@ -3,6 +3,8 @@ defmodule Image.Options.Embed do
   Options and option validation for `Image.embed/4`.
 
   """
+
+  alias Vix.Vips.Image, as: Vimage
   alias Image.BackgroundColor
 
   @typedoc """

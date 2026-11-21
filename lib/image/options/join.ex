@@ -3,6 +3,8 @@ defmodule Image.Options.Join do
   Options and option validation for `Image.join/2`.
 
   """
+
+  alias Vix.Vips.Image, as: Vimage
   alias Image.BackgroundColor
 
   @typedoc """

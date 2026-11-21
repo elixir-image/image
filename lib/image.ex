@@ -16325,6 +16325,13 @@ defmodule Image do
   Returns the version of `libvips` in
   operation.
 
+  ### Returns
+
+  * `{:ok, version}` where `version` is a `t:Version.t/0`, or
+
+  * `:error` if the version string reported by `libvips`
+    cannot be parsed.
+
   ### Examples
 
       iex> match?({:ok, %Version{}}, Image.vips_version())
@@ -16333,7 +16340,7 @@ defmodule Image do
   """
   @doc subject: "Configuration"
 
-  @spec vips_version :: {:ok, Version.t()}
+  @spec vips_version :: {:ok, Version.t()} | :error
   def vips_version do
     Vix.Vips.version()
     |> Version.parse()

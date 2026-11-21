@@ -443,7 +443,7 @@ defmodule Image.Text do
       4
 
   """
-  @spec simple_text(Phoenix.HTML.safe() | String.t(), Keyword.t()) ::
+  @spec simple_text(Phoenix.HTML.safe() | String.t(), Keyword.t() | map()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
   def simple_text(string, options \\ [])
 
@@ -599,7 +599,7 @@ defmodule Image.Text do
       {20, 10, 4}
 
   """
-  @spec add_background(Vimage.t(), Keyword.t()) ::
+  @spec add_background(Vimage.t(), Keyword.t() | map()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
   def add_background(image, options \\ [])
 
@@ -725,7 +725,7 @@ defmodule Image.Text do
       {30, 20, 4}
 
   """
-  @spec add_background_padding(Vimage.t(), Keyword.t()) ::
+  @spec add_background_padding(Vimage.t(), Keyword.t() | map()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def add_background_padding(image, options \\ [])
@@ -893,7 +893,7 @@ defmodule Image.Text do
       {30, 20, 4}
 
   """
-  @spec add_background_border(Vimage.t(), Keyword.t()) ::
+  @spec add_background_border(Vimage.t(), Keyword.t() | map()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
   def add_background_border(image, options \\ [])
 

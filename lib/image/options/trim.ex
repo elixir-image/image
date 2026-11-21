@@ -3,6 +3,8 @@ defmodule Image.Options.Trim do
   Options and option validation for `Image.trim/2`.
 
   """
+
+  alias Vix.Vips.Image, as: Vimage
   alias Image.Pixel
 
   @typedoc """
