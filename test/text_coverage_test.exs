@@ -404,6 +404,69 @@ defmodule Image.TextCoverageTest do
     end
   end
 
+  describe "Image.Text text set wider than :width" do
+    @word "Supercalifragilisticexpialidocious words"
+    @persian "سلام دنیا این یک عنوان طولانی است که باید کوتاه شود تا در کارت جا بگیرد و بیشتر"
+
+    test "a word wider than :width is broken between characters" do
+      {:ok, unwrapped} = Image.Text.simple_text(@word, font_size: 30)
+      {:ok, wrapped} = Image.Text.simple_text(@word, font_size: 30, width: 200)
+
+      assert Image.width(unwrapped) > 200
+      assert Image.width(wrapped) <= 200
+      assert Image.height(wrapped) > Image.height(unwrapped)
+    end
+
+    test "a word wider than :width is broken at an integer :x" do
+      assert {:ok, image} = Image.Text.simple_text(@word, font_size: 30, width: 200, x: 0)
+      assert Image.width(image) <= 200
+    end
+
+    test "a word wider than :width is broken on a :width by :height canvas" do
+      assert {:ok, image} = Image.Text.simple_text(@word, font_size: 30, width: 200, height: 150)
+      assert {200, 150, 4} = Image.shape(image)
+    end
+
+    test "text/2 adds its background to text with a broken word" do
+      assert {:ok, image} =
+               Image.Text.text(@word, font_size: 30, width: 200, background_fill_color: :blue)
+
+      assert Image.width(image) <= 200
+    end
+
+    test "right-to-left text is kept within :width" do
+      for options <- [[], [align: :right], [height: 400]] do
+        options = Keyword.merge([font_size: 60, width: 500], options)
+
+        assert {:ok, image} = Image.Text.simple_text(@persian, options)
+        assert Image.width(image) <= 500
+      end
+    end
+
+    test "fitting steps a long word down a size rather than breaking it" do
+      # A width between the long word's width at each size, whatever the font.
+      {:ok, at_30} = Image.Text.simple_text("Supercalifragilisticexpialidocious", font_size: 30)
+      {:ok, at_20} = Image.Text.simple_text("Supercalifragilisticexpialidocious", font_size: 20)
+      width = div(Image.width(at_30) + Image.width(at_20), 2)
+
+      {:ok, fitted} =
+        Image.Text.simple_text(@word, font_size: [30, 20], width: width, max_lines: 2)
+
+      {:ok, at_smaller} = Image.Text.simple_text(@word, font_size: 20, width: width)
+
+      assert Image.shape(fitted) == Image.shape(at_smaller)
+    end
+
+    test "fitting keeps a size whose only excess is a glyph overhang" do
+      {:ok, fitted} =
+        Image.Text.simple_text(@persian, font_size: [60, 44], width: 500, max_lines: 20)
+
+      {:ok, at_largest} = Image.Text.simple_text(@persian, font_size: 60, width: 500)
+
+      assert Image.shape(fitted) == Image.shape(at_largest)
+    end
+  end
+
   # The distinct fully opaque colors in a four band image, read straight from
   # the pixel data. This is what the Pango markup determines.
   defp opaque_colors(image) do

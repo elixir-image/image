@@ -76,8 +76,9 @@ defmodule Image.Text do
     `:font_size` is cut at the end of a word, or between graphemes
     in text written without spaces, and `:ellipsis` is added.
     Markup passed with `Phoenix.HTML.raw/1` is cut to the lines
-    but not shortened. Requires `:width`. The default is `nil`,
-    meaning no limit.
+    but not shortened. Words are kept whole when fitting: a word
+    wider than `:width` steps the text down a size or is cut.
+    Requires `:width`. The default is `nil`, meaning no limit.
 
   * `:ellipsis` is the string added to shortened text. The
     default is `"…"`.
@@ -143,9 +144,10 @@ defmodule Image.Text do
     integer in `0..255` as the same value in 8-bit notation, or
     `:transparent` / `:opaque`. The default is `0.7`.
 
-  * `:width` is the maximum width of the generated text image in pixels. The
-    default is calculated by the rendering engine based upon the font
-    and other options.
+  * `:width` is the maximum width of the generated text image in pixels.
+    Text is wrapped at words to fit, and a word wider than `:width`
+    is broken between characters. The default is calculated by the
+    rendering engine based upon the font and other options.
 
   * `:height` is the maximum height of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
@@ -278,8 +280,9 @@ defmodule Image.Text do
     `:font_size` is cut at the end of a word, or between graphemes
     in text written without spaces, and `:ellipsis` is added.
     Markup passed with `Phoenix.HTML.raw/1` is cut to the lines
-    but not shortened. Requires `:width`. The default is `nil`,
-    meaning no limit.
+    but not shortened. Words are kept whole when fitting: a word
+    wider than `:width` steps the text down a size or is cut.
+    Requires `:width`. The default is `nil`, meaning no limit.
 
   * `:ellipsis` is the string added to shortened text. The
     default is `"…"`.
@@ -345,9 +348,10 @@ defmodule Image.Text do
     integer in `0..255` as the same value in 8-bit notation, or
     `:transparent` / `:opaque`. The default is `0.7`.
 
-  * `:width` is the maximum width of the generated text image in pixels. The
-    default is calculated by the rendering engine based upon the font
-    and other options.
+  * `:width` is the maximum width of the generated text image in pixels.
+    Text is wrapped at words to fit, and a word wider than `:width`
+    is broken between characters. The default is calculated by the
+    rendering engine based upon the font and other options.
 
   * `:height` is the maximum height of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
@@ -424,9 +428,10 @@ defmodule Image.Text do
     allowing text of more than one color. Text with no
     color set in the markup is rendered black.
 
-  * `:width` is the maximum width of the generated text image in pixels. The
-    default is calculated by the rendering engine based upon the font
-    and other options.
+  * `:width` is the maximum width of the generated text image in pixels.
+    Text is wrapped at words to fit, and a word wider than `:width`
+    is broken between characters. The default is calculated by the
+    rendering engine based upon the font and other options.
 
   * `:height` is the maximum height of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
@@ -458,8 +463,9 @@ defmodule Image.Text do
     `:font_size` is cut at the end of a word, or between graphemes
     in text written without spaces, and `:ellipsis` is added.
     Markup passed with `Phoenix.HTML.raw/1` is cut to the lines
-    but not shortened. Requires `:width`. The default is `nil`,
-    meaning no limit.
+    but not shortened. Words are kept whole when fitting: a word
+    wider than `:width` steps the text down a size or is cut.
+    Requires `:width`. The default is `nil`, meaning no limit.
 
   * `:ellipsis` is the string added to shortened text. The
     default is `"…"`.
@@ -540,9 +546,10 @@ defmodule Image.Text do
     allowing text of more than one color. Text with no
     color set in the markup is rendered black.
 
-  * `:width` is the maximum width of the generated text image in pixels. The
-    default is calculated by the rendering engine based upon the font
-    and other options.
+  * `:width` is the maximum width of the generated text image in pixels.
+    Text is wrapped at words to fit, and a word wider than `:width`
+    is broken between characters. The default is calculated by the
+    rendering engine based upon the font and other options.
 
   * `:height` is the maximum height of the generated text image in pixels. The
     default is calculated by the rendering engine based upon the font
@@ -574,8 +581,9 @@ defmodule Image.Text do
     `:font_size` is cut at the end of a word, or between graphemes
     in text written without spaces, and `:ellipsis` is added.
     Markup passed with `Phoenix.HTML.raw/1` is cut to the lines
-    but not shortened. Requires `:width`. The default is `nil`,
-    meaning no limit.
+    but not shortened. Words are kept whole when fitting: a word
+    wider than `:width` steps the text down a size or is cut.
+    Requires `:width`. The default is `nil`, meaning no limit.
 
   * `:ellipsis` is the string added to shortened text. The
     default is `"…"`.
@@ -592,9 +600,9 @@ defmodule Image.Text do
 
   ### Notes
 
-  * There is no text wrapping, justification or kerning
-    applied. This means this function is not a general
-    purpose text layout function and is suitable mostly
+  * Text is wrapped only when `:width` is given, and laid
+    out by Pango with no hyphenation. This function is not a
+    general purpose text layout function and is suitable mostly
     for overlaying text for emphasis over another image.
 
   * Colors may be any valid
@@ -1044,6 +1052,7 @@ defmodule Image.Text do
     width = options[:width]
 
     with {:ok, text_layer} <- rasterize_text(text, options),
+         {:ok, text_layer} <- within_box(text_layer, width, height),
          {:ok, {x, y}} <-
            location_from_options(text_layer, options.x, options.y, width, height) do
       if width && height do
@@ -1054,9 +1063,37 @@ defmodule Image.Text do
     end
   end
 
+  # libvips can set text a pixel or two wider than `:width`, or taller than
+  # `:height`, where a glyph overhangs its advance, as Persian glyphs do.
+  # The overhang is cropped evenly from both sides so that the layer is
+  # within the box it was asked for.
+  defp within_box(layer, width, height) do
+    crop_width = box_size(Image.width(layer), width)
+    crop_height = box_size(Image.height(layer), height)
+
+    if crop_width == Image.width(layer) and crop_height == Image.height(layer) do
+      {:ok, layer}
+    else
+      left = div(Image.width(layer) - crop_width, 2)
+      top = div(Image.height(layer) - crop_height, 2)
+      Image.crop(layer, left, top, crop_width, crop_height)
+    end
+  end
+
+  defp box_size(size, nil) do
+    size
+  end
+
+  defp box_size(size, limit) do
+    min(size, limit)
+  end
+
   # The text drawn and colored, before it is placed: a layer as wide and as
-  # tall as libvips set it, which can be wider than `:width` when a word
-  # cannot be broken or a glyph overhangs.
+  # tall as libvips set it, which can be wider than `:width` where a glyph
+  # overhangs, or where a word cannot be broken when wrapping by words only.
+  # A word wider than `:width` is broken between characters unless the
+  # internal `:wrap` says otherwise; text whose words all fit a line is set
+  # identically either way.
   defp rasterize_text(text, %{text_fill_color: :transparent} = options) do
     rasterize_text(text, Map.put(options, :text_fill_color, :white))
   end
@@ -1068,7 +1105,8 @@ defmodule Image.Text do
       [
         font: font,
         align: options.align,
-        justify: options.justify
+        justify: options.justify,
+        wrap: Map.get(options, :wrap, :VIPS_TEXT_WRAP_WORD_CHAR)
       ]
       |> maybe_add_height(options[:height])
       |> maybe_add_width(options[:width])
@@ -1102,10 +1140,46 @@ defmodule Image.Text do
     end
   end
 
+  # Fitting sets words whole, so that a word too long for a line steps the
+  # text down a size or shortens it rather than being broken.
   defp measure_string(string, options) do
-    with {:ok, escaped} <- escape_html_text(string) do
-      rasterize_text(escaped, options)
+    with {:ok, escaped} <- escape_html_text(string),
+         {:ok, layer} <- rasterize_text(escaped, Map.put(options, :wrap, :VIPS_TEXT_WRAP_WORD)) do
+      crop_overhang(layer, escaped, options)
     end
+  end
+
+  # A layer wider than `:width` is either a word too long for a line, which
+  # does not fit, or a glyph overhanging a line, which does once cropped.
+  # Breaking the words that must be broken tells them apart: an overhang
+  # breaks none, so the text is set pixel for pixel as it was. (Comparing
+  # heights alone is not enough: a broken word can reflow into as many
+  # lines as before.)
+  defp crop_overhang(layer, escaped, %{width: width} = options) when is_integer(width) do
+    if Image.width(layer) <= width do
+      {:ok, layer}
+    else
+      with {:ok, broken} <- rasterize_text(escaped, options) do
+        overhang_or_overflow(layer, broken, width)
+      end
+    end
+  end
+
+  defp crop_overhang(layer, _escaped, _options) do
+    {:ok, layer}
+  end
+
+  defp overhang_or_overflow(layer, broken, width) do
+    if same_pixels?(layer, broken) do
+      within_box(layer, width, nil)
+    else
+      {:ok, layer}
+    end
+  end
+
+  defp same_pixels?(image, other) do
+    Image.shape(image) == Image.shape(other) and
+      Vimage.write_to_binary(image) == Vimage.write_to_binary(other)
   end
 
   # The largest size at which the text fits, else the smallest size with

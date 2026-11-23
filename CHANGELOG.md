@@ -32,6 +32,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 
 ### Changed
 
+* `Image.Text` breaks a word wider than `:width` between characters rather than letting it overflow. Text whose words all fit a line is set exactly as before.
+
 * `Image.squircle/2` draws superellipse corners joined by straight edges, so the shape is the same at every size and aspect ratio. `:radius` is now the corner radius (default 46.2% of the shorter side) and `:exponent` sets the corner's curve (default 3).
 
 * `Image.meme/3` defaults to the bundled Anton font, under the SIL Open Font License 1.1, in place of a copy of Impact whose licence did not allow redistribution. The three Impact font files are no longer in the package.
@@ -61,6 +63,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 * Requires `color` 1.0.0 or later. Image does not call the Color functions whose return values changed in 1.0 (`to_hex/1`, `to_css/1,2`, `to_ansi/1,2`), so code that calls `Image` works unchanged.
 
 ### Fixed
+
+* Fix `Image.Text.text/2` and `Image.Text.simple_text/2` returning a "would place the text outside the image bounds" error when `:width` was given and a glyph overhang (as in Persian) or a long word made the text wider than `:width`.
 
 * Fix `Image.radial_gradient/3` extrapolating past `:finish_color` beyond the radius, which brightened or darkened the corners; pixels beyond the radius are now the finish color.
 
