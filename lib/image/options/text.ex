@@ -9,7 +9,9 @@ defmodule Image.Options.Text do
 
   @type t :: [
           {:font, String.t()}
-          | {:font_size, non_neg_integer()}
+          | {:font_size, non_neg_integer() | [pos_integer(), ...]}
+          | {:max_lines, pos_integer() | nil}
+          | {:ellipsis, String.t()}
           | {:dpi, non_neg_integer()}
           | {:text_fill_color, Pixel.t() | :markup}
           | {:text_stroke_width, pos_integer()}
@@ -34,6 +36,8 @@ defmodule Image.Options.Text do
     [
       font: "Helvetica",
       font_size: 50,
+      max_lines: nil,
+      ellipsis: "…",
       text_fill_color: :white,
       text_stroke_width: 1,
       font_weight: :normal,
@@ -95,6 +99,7 @@ defmodule Image.Options.Text do
         options
         |> Map.new()
         |> ensure_width_if_height_specified()
+        |> ensure_width_if_fitting()
         |> wrap(:ok)
 
       other ->
@@ -163,6 +168,29 @@ defmodule Image.Options.Text do
 
   defp validate_option({:font_size, font_size}, options)
        when is_integer(font_size) and font_size >= 0 do
+    {:cont, options}
+  end
+
+  # A list of sizes is tried largest first, so it is kept sorted that way.
+  defp validate_option({:font_size = option, [_ | _] = font_sizes}, options) do
+    if Enum.all?(font_sizes, &(is_integer(&1) and &1 > 0)) do
+      sizes =
+        font_sizes
+        |> Enum.uniq()
+        |> Enum.sort(:desc)
+
+      {:cont, Keyword.put(options, option, sizes)}
+    else
+      {:halt, {:error, invalid_option(option, font_sizes)}}
+    end
+  end
+
+  defp validate_option({:max_lines, max_lines}, options)
+       when is_nil(max_lines) or (is_integer(max_lines) and max_lines > 0) do
+    {:cont, options}
+  end
+
+  defp validate_option({:ellipsis, ellipsis}, options) when is_binary(ellipsis) do
     {:cont, options}
   end
 
@@ -380,6 +408,41 @@ defmodule Image.Options.Text do
 
   defp ensure_width_if_height_specified(options) do
     options
+  end
+
+  # Fitting text to lines wraps it, and only a width says where to wrap.
+  defp ensure_width_if_fitting({:error, _reason} = error) do
+    error
+  end
+
+  # A size of 0 asks libvips to choose the size, which leaves nothing to fit.
+  defp ensure_width_if_fitting(%{max_lines: max_lines, font_size: 0})
+       when is_integer(max_lines) do
+    message = ":max_lines needs a :font_size, or a list of them, rather than 0"
+    {:error, %Image.Error{reason: :invalid_option, value: 0, message: message}}
+  end
+
+  defp ensure_width_if_fitting(%{width: width} = options) when is_integer(width) and width > 0 do
+    options
+  end
+
+  defp ensure_width_if_fitting(%{font_size: font_sizes} = options) when is_list(font_sizes) do
+    width_required(options, :font_size)
+  end
+
+  defp ensure_width_if_fitting(%{max_lines: max_lines} = options) when is_integer(max_lines) do
+    width_required(options, :max_lines)
+  end
+
+  defp ensure_width_if_fitting(options) do
+    options
+  end
+
+  defp width_required(options, option) do
+    message = "A positive :width must be specified with #{inspect(option)}"
+
+    {:error,
+     %Image.Error{reason: :invalid_option, value: Map.get(options, option), message: message}}
   end
 
   defp convert_color(c) do

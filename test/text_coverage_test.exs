@@ -281,6 +281,129 @@ defmodule Image.TextCoverageTest do
     end
   end
 
+  describe "Image.Text fitting to lines" do
+    @long "The quick brown fox jumps over the lazy dog and keeps on running far beyond the hills"
+
+    test "uses the largest size when the text fits at it" do
+      {:ok, fitted} =
+        Image.Text.simple_text("Short", font_size: [60, 44], width: 600, max_lines: 1)
+
+      {:ok, at_largest} = Image.Text.simple_text("Short", font_size: 60, width: 600)
+
+      assert Image.shape(fitted) == Image.shape(at_largest)
+    end
+
+    test "steps down to the first size at which the text fits" do
+      {:ok, fitted} = Image.Text.simple_text(@long, font_size: [60, 20], width: 600, max_lines: 2)
+      {:ok, at_smaller} = Image.Text.simple_text(@long, font_size: 20, width: 600)
+
+      assert Image.shape(fitted) == Image.shape(at_smaller)
+    end
+
+    test "shortens the text at the smallest size when it fits at none" do
+      {:ok, unfitted} = Image.Text.simple_text(@long, font_size: 30, width: 300)
+      {:ok, one_line} = Image.Text.simple_text(@long, font_size: 30)
+
+      {:ok, fitted} = Image.Text.simple_text(@long, font_size: [30], width: 300, max_lines: 1)
+
+      assert Image.width(fitted) <= 300
+      assert Image.height(fitted) <= Image.height(one_line)
+      assert Image.height(fitted) < Image.height(unfitted)
+    end
+
+    test "a single size with :max_lines is fitted" do
+      {:ok, fitted} = Image.Text.simple_text(@long, font_size: 30, width: 300, max_lines: 2)
+      {:ok, unfitted} = Image.Text.simple_text(@long, font_size: 30, width: 300)
+      {:ok, two_lines} = Image.Text.simple_text(@long <> "\n" <> @long, font_size: 30)
+
+      assert Image.height(fitted) <= Image.height(two_lines)
+      assert Image.height(fitted) < Image.height(unfitted)
+    end
+
+    test "the ellipsis is the one given" do
+      options = [font_size: [30], width: 300, max_lines: 1]
+
+      {:ok, with_ellipsis} = Image.Text.simple_text(@long, options)
+      {:ok, without} = Image.Text.simple_text(@long, Keyword.put(options, :ellipsis, ""))
+
+      assert Image.width(without) < Image.width(with_ellipsis)
+    end
+
+    test "a word wider than :width counts as not fitting" do
+      word = "Supercalifragilisticexpialidocious"
+      {:ok, unfitted} = Image.Text.simple_text(word, font_size: 30)
+      assert Image.width(unfitted) > 150
+
+      {:ok, fitted} = Image.Text.simple_text(word, font_size: [30], width: 150, max_lines: 1)
+      assert Image.width(fitted) <= 150
+    end
+
+    test "fits within :height and is placed on a :width by :height canvas" do
+      {:ok, fitted} =
+        Image.Text.simple_text(@long, font_size: [60, 44, 30], width: 600, height: 100)
+
+      assert {600, 100, 4} = Image.shape(fitted)
+    end
+
+    test "markup is clipped to the lines rather than shortened" do
+      markup = {:safe, "<b>Bold</b> " <> @long}
+      {:ok, one_line} = Image.Text.simple_text(@long, font_size: 30)
+
+      {:ok, fitted} = Image.Text.simple_text(markup, font_size: [30], width: 300, max_lines: 1)
+
+      assert Image.width(fitted) <= 300
+      assert Image.height(fitted) <= Image.height(one_line)
+    end
+
+    test "a box too small for any text is clipped to the box" do
+      {:ok, fitted} = Image.Text.simple_text(@long, font_size: [40], width: 20, max_lines: 1)
+
+      assert Image.width(fitted) <= 20
+    end
+
+    test "text/2 adds its background to fitted text" do
+      assert {:ok, %Vimage{} = image} =
+               Image.Text.text(@long,
+                 font_size: [60, 44],
+                 width: 600,
+                 max_lines: 2,
+                 background_fill_color: :blue,
+                 padding: 10
+               )
+
+      assert Image.width(image) <= 620
+    end
+
+    test "a list of sizes needs a :width" do
+      assert {:error, %Image.Error{reason: :invalid_option}} =
+               Image.Text.simple_text(@long, font_size: [60, 44])
+    end
+
+    test ":max_lines needs a :width" do
+      assert {:error, %Image.Error{reason: :invalid_option}} =
+               Image.Text.simple_text(@long, max_lines: 2)
+    end
+
+    test ":max_lines needs a font size other than 0" do
+      assert {:error, %Image.Error{reason: :invalid_option}} =
+               Image.Text.simple_text(@long, font_size: 0, width: 300, max_lines: 2)
+    end
+
+    test "invalid sizes, line counts and ellipses are errors" do
+      for options <- [
+            [font_size: []],
+            [font_size: [40, 0]],
+            [font_size: [40, 2.5]],
+            [max_lines: 0],
+            [max_lines: :two],
+            [ellipsis: :dots]
+          ] do
+        assert {:error, %Image.Error{}} =
+                 Image.Text.simple_text(@long, Keyword.put(options, :width, 300))
+      end
+    end
+  end
+
   # The distinct fully opaque colors in a four band image, read straight from
   # the pixel data. This is what the Pango markup determines.
   defp opaque_colors(image) do

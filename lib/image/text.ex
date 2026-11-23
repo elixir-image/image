@@ -65,8 +65,22 @@ defmodule Image.Text do
     The default is "Helvetica". The system command `fc-list`
     can typically be used to see what fonts are available.
 
-  * `:font_size` is an integer font size in pixels. The
-    default is `50`.
+  * `:font_size` is an integer font size in pixels, or a list
+    of them. The default is `50`. Given a list, the text is set at
+    the largest size at which it fits in `:max_lines` lines and
+    within `:height`, and at the smallest size, shortened, when it
+    fits at none. A list requires `:width`.
+
+  * `:max_lines` is the most lines the text may take when it is
+    wrapped at `:width`. Text that does not fit at the smallest
+    `:font_size` is cut at the end of a word, or between graphemes
+    in text written without spaces, and `:ellipsis` is added.
+    Markup passed with `Phoenix.HTML.raw/1` is cut to the lines
+    but not shortened. Requires `:width`. The default is `nil`,
+    meaning no limit.
+
+  * `:ellipsis` is the string added to shortened text. The
+    default is `"…"`.
 
   * `:font_weight` is one of `:ultralight`, `:light`, `:normal`, `:bold`,
     `:ultrabold`, `:heavy` or an integer between `1` and `1_000`.
@@ -177,6 +191,11 @@ defmodule Image.Text do
       iex> :ok
       :ok
 
+      iex> title = "A title that is far too long to fit in two lines at the larger size"
+      iex> {:ok, image} = Image.Text.text(title, font_size: [48, 32], width: 400, max_lines: 2)
+      iex> Image.width(image) <= 400
+      true
+
   """
   @spec text(Phoenix.HTML.safe() | String.t(), Options.Text.t()) ::
           {:ok, Vimage.t()} | {:error, Image.error()}
@@ -248,8 +267,22 @@ defmodule Image.Text do
     The default is "Helvetica". The system command `fc-list`
     can typically be used to see what fonts are available.
 
-  * `:font_size` is an integer font size in pixels. The
-    default is `50`.
+  * `:font_size` is an integer font size in pixels, or a list
+    of them. The default is `50`. Given a list, the text is set at
+    the largest size at which it fits in `:max_lines` lines and
+    within `:height`, and at the smallest size, shortened, when it
+    fits at none. A list requires `:width`.
+
+  * `:max_lines` is the most lines the text may take when it is
+    wrapped at `:width`. Text that does not fit at the smallest
+    `:font_size` is cut at the end of a word, or between graphemes
+    in text written without spaces, and `:ellipsis` is added.
+    Markup passed with `Phoenix.HTML.raw/1` is cut to the lines
+    but not shortened. Requires `:width`. The default is `nil`,
+    meaning no limit.
+
+  * `:ellipsis` is the string added to shortened text. The
+    default is `"…"`.
 
   * `:font_file` is a path to any `.ttf` font file. If specified,
     the `:font` parameter is also required. Note that this option
@@ -413,10 +446,23 @@ defmodule Image.Text do
     `:ultrabold`, `:heavy` or an integer between `1` and `1_000`.
     The default is `:normal` which is equivalent to `400`.
 
-  * `:font_size` is an integer font size in pixels. The
-    default is `50`. If set to `0`, the font size will
-    be calculated to fit the text within the specified `:width`
-    and `:height`.
+  * `:font_size` is an integer font size in pixels, or a list
+    of them. The default is `50`. Given a list, the text is set at
+    the largest size at which it fits in `:max_lines` lines and
+    within `:height`, and at the smallest size, shortened, when it
+    fits at none. A list requires `:width`. If set to `0`, libvips chooses
+    the size that fills `:width` and `:height`.
+
+  * `:max_lines` is the most lines the text may take when it is
+    wrapped at `:width`. Text that does not fit at the smallest
+    `:font_size` is cut at the end of a word, or between graphemes
+    in text written without spaces, and `:ellipsis` is added.
+    Markup passed with `Phoenix.HTML.raw/1` is cut to the lines
+    but not shortened. Requires `:width`. The default is `nil`,
+    meaning no limit.
+
+  * `:ellipsis` is the string added to shortened text. The
+    default is `"…"`.
 
   * `:dpi` sets the resolution of the text generation. The
     default `72` which is suitable for screen output. `300`
@@ -458,8 +504,7 @@ defmodule Image.Text do
   end
 
   def simple_text(string, %{} = options) do
-    with {:ok, string} <- escape_html_text(string),
-         {:ok, text_layer} <- render_text(string, options) do
+    with {:ok, text_layer} <- render(string, options) do
       if transparent_text?(options) do
         Image.convert_alpha_to_mask(text_layer)
       else
@@ -517,10 +562,23 @@ defmodule Image.Text do
     `:ultrabold`, `:heavy` or an integer between `1` and `1_000`.
     The default is `:normal` which is equivalent to `400`.
 
-  * `:font_size` is an integer font size in pixels. The
-    default is `50`. If set to `0`, the font size will
-    be calculated to fit the text within the specified `:width`
-    and `:height`.
+  * `:font_size` is an integer font size in pixels, or a list
+    of them. The default is `50`. Given a list, the text is set at
+    the largest size at which it fits in `:max_lines` lines and
+    within `:height`, and at the smallest size, shortened, when it
+    fits at none. A list requires `:width`. If set to `0`, libvips chooses
+    the size that fills `:width` and `:height`.
+
+  * `:max_lines` is the most lines the text may take when it is
+    wrapped at `:width`. Text that does not fit at the smallest
+    `:font_size` is cut at the end of a word, or between graphemes
+    in text written without spaces, and `:ellipsis` is added.
+    Markup passed with `Phoenix.HTML.raw/1` is cut to the lines
+    but not shortened. Requires `:width`. The default is `nil`,
+    meaning no limit.
+
+  * `:ellipsis` is the string added to shortened text. The
+    default is `"…"`.
 
   * `:dpi` sets the resolution of the text generation. The
     default `72` which is suitable for screen output. `300`
@@ -982,9 +1040,29 @@ defmodule Image.Text do
   end
 
   defp render_text(text, options) do
-    font = options.font <> font_size(options)
     height = options[:height]
     width = options[:width]
+
+    with {:ok, text_layer} <- rasterize_text(text, options),
+         {:ok, {x, y}} <-
+           location_from_options(text_layer, options.x, options.y, width, height) do
+      if width && height do
+        Operation.embed(text_layer, x, y, width, height)
+      else
+        {:ok, text_layer}
+      end
+    end
+  end
+
+  # The text drawn and colored, before it is placed: a layer as wide and as
+  # tall as libvips set it, which can be wider than `:width` when a word
+  # cannot be broken or a glyph overhangs.
+  defp rasterize_text(text, %{text_fill_color: :transparent} = options) do
+    rasterize_text(text, Map.put(options, :text_fill_color, :white))
+  end
+
+  defp rasterize_text(text, options) do
+    font = options.font <> font_size(options)
 
     text_options =
       [
@@ -992,21 +1070,210 @@ defmodule Image.Text do
         align: options.align,
         justify: options.justify
       ]
-      |> maybe_add_height(height)
-      |> maybe_add_width(width)
+      |> maybe_add_height(options[:height])
+      |> maybe_add_width(options[:width])
       |> maybe_add_dpi(options[:dpi])
       |> maybe_add_rgba(options.text_fill_color)
       |> Image.maybe_add_fontfile(options[:fontfile])
 
     with {:ok, text} <- maybe_add_pango_span(text, options),
-         {:ok, {rendered, _}} <- Operation.text(text, text_options),
-         {:ok, text_layer} <- colorize_text(rendered, options.text_fill_color),
-         {:ok, {x, y}} <-
-           location_from_options(text_layer, options.x, options.y, width, height) do
-      if width && height do
-        Operation.embed(text_layer, x, y, width, height)
-      else
-        {:ok, text_layer}
+         {:ok, {rendered, _}} <- Operation.text(text, text_options) do
+      colorize_text(rendered, options.text_fill_color)
+    end
+  end
+
+  # Text is fitted when it is given a list of sizes to try or a number of
+  # lines to fit in, and rendered as it is otherwise.
+  defp render(string, %{font_size: font_sizes} = options) when is_list(font_sizes) do
+    fit_text(string, font_sizes, options)
+  end
+
+  defp render(string, %{max_lines: max_lines} = options) when is_integer(max_lines) do
+    fit_text(string, [options.font_size], options)
+  end
+
+  defp render(string, options) do
+    render_string(string, options)
+  end
+
+  defp render_string(string, options) do
+    with {:ok, escaped} <- escape_html_text(string) do
+      render_text(escaped, options)
+    end
+  end
+
+  defp measure_string(string, options) do
+    with {:ok, escaped} <- escape_html_text(string) do
+      rasterize_text(escaped, options)
+    end
+  end
+
+  # The largest size at which the text fits, else the smallest size with
+  # the text shortened until it fits.
+  defp fit_text(string, [font_size | smaller], options) do
+    with {:ok, limits} <- limits(string, font_size, options),
+         {:ok, layer} <- measure_string(string, measuring_options(options, font_size)) do
+      cond do
+        fits?(layer, limits) -> place(layer, options)
+        smaller == [] -> shorten(string, font_size, limits, layer, options)
+        true -> fit_text(string, smaller, options)
+      end
+    end
+  end
+
+  # Measured with no :height, which would have libvips choose its own size,
+  # and from the top, so that the layer is the text and nothing more.
+  defp measuring_options(options, font_size) do
+    Map.merge(options, %{font_size: font_size, height: nil, y: :top})
+  end
+
+  # A layer fits when it is no wider than `:width` (libvips sets a word that
+  # cannot be broken wider) and no taller than every height limit.
+  defp fits?(layer, %{width: width, heights: heights}) do
+    height = Image.height(layer)
+    Image.width(layer) <= width and Enum.all?(heights, &(height <= &1))
+  end
+
+  defp limits(string, font_size, options) do
+    with {:ok, lines_height} <- lines_height(string, font_size, options) do
+      heights = Enum.reject([lines_height, Map.get(options, :height)], &is_nil/1)
+      {:ok, %{width: options.width, heights: heights}}
+    end
+  end
+
+  # How tall `:max_lines` lines are: each line holds every character the text
+  # (and its ellipsis) uses, so the measure is that of the tallest line the
+  # text can have, whatever the fonts its scripts are drawn from.
+  defp lines_height(_string, _font_size, %{max_lines: nil}) do
+    {:ok, nil}
+  end
+
+  defp lines_height(string, font_size, options) do
+    sample = line_sample(string, options.ellipsis)
+
+    lines =
+      sample
+      |> List.duplicate(options.max_lines)
+      |> Enum.join("\n")
+
+    sample_options =
+      options
+      |> measuring_options(font_size)
+      |> Map.merge(%{width: nil, x: :left})
+
+    with {:ok, layer} <- measure_string(lines, sample_options) do
+      {:ok, Image.height(layer)}
+    end
+  end
+
+  defp line_sample(string, ellipsis) do
+    graphemes =
+      (plain_text(string) <> ellipsis)
+      |> String.graphemes()
+      |> Enum.reject(&(String.trim(&1) == ""))
+      |> Enum.uniq()
+
+    case graphemes do
+      [] -> "A"
+      [_ | _] -> Enum.join(graphemes)
+    end
+  end
+
+  defp plain_text({:safe, markup}) do
+    markup
+    |> IO.iodata_to_binary()
+    |> String.replace(~r/<[^>]*>/, "")
+  end
+
+  defp plain_text(string) do
+    string
+  end
+
+  # Markup is not shortened: cutting it at a word could cut through a tag.
+  defp shorten({:safe, _markup}, _font_size, limits, layer, options) do
+    clip(layer, limits, options)
+  end
+
+  defp shorten(string, font_size, limits, layer, options) do
+    tokens = Regex.split(~r/(\s+)/u, String.trim(string), include_captures: true)
+    word_count = div(length(tokens) + 1, 2)
+
+    cut = fn count ->
+      tokens
+      |> Enum.take(2 * count - 1)
+      |> Enum.join()
+      |> measure_cut(font_size, limits, options)
+    end
+
+    case largest_fitting(1, word_count - 1, cut, nil) do
+      {:ok, nil} -> shorten_word(hd(tokens), font_size, limits, layer, options)
+      {:ok, fitted} -> place(fitted, options)
+      {:error, _reason} = error -> error
+    end
+  end
+
+  # When not even the first word fits, as for text written without spaces,
+  # the first word is cut between its graphemes.
+  defp shorten_word(word, font_size, limits, layer, options) do
+    cut = fn count ->
+      word
+      |> String.slice(0, count)
+      |> measure_cut(font_size, limits, options)
+    end
+
+    case largest_fitting(1, String.length(word) - 1, cut, nil) do
+      {:ok, nil} -> clip(layer, limits, options)
+      {:ok, fitted} -> place(fitted, options)
+      {:error, _reason} = error -> error
+    end
+  end
+
+  # Text that fits at no size and no length, in a box too small for even
+  # one grapheme, is cut to the box rather than returned as an error.
+  defp clip(layer, %{width: width, heights: heights}, options) do
+    width = min(Image.width(layer), width)
+    height = Enum.min([Image.height(layer) | heights])
+
+    with {:ok, clipped} <- Image.crop(layer, 0, 0, width, height) do
+      place(clipped, options)
+    end
+  end
+
+  defp measure_cut(text, font_size, limits, options) do
+    shortened = String.replace(text, ~r/[\s\p{Pd},;:]+$/u, "") <> options.ellipsis
+
+    with {:ok, layer} <- measure_string(shortened, measuring_options(options, font_size)) do
+      {:ok, {layer, fits?(layer, limits)}}
+    end
+  end
+
+  # The largest count in `low..high` whose cut fits, searched by halving on
+  # the grounds that a shorter cut fits whenever a longer one does.
+  defp largest_fitting(low, high, _cut, best) when low > high do
+    {:ok, best}
+  end
+
+  defp largest_fitting(low, high, cut, best) do
+    middle = div(low + high, 2)
+
+    case cut.(middle) do
+      {:ok, {layer, true}} -> largest_fitting(middle + 1, high, cut, layer)
+      {:ok, {_layer, false}} -> largest_fitting(low, middle - 1, cut, best)
+      {:error, _reason} = error -> error
+    end
+  end
+
+  # A fitted layer is placed on a `:width` by `:height` canvas when a height
+  # is given, as unfitted text is.
+  defp place(layer, options) do
+    height = Map.get(options, :height)
+
+    if is_nil(height) do
+      {:ok, layer}
+    else
+      with {:ok, {x, y}} <-
+             location_from_options(layer, options.x, options.y, options.width, height) do
+        Operation.embed(layer, x, y, options.width, height)
       end
     end
   end

@@ -26,6 +26,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 
 * Adds `:camera_owner_name`, `:photographer`, `:image_editor`, `:host_computer`, `:camera_serial_number` and the Windows `:xp_author`, `:xp_comment`, `:xp_title`, `:xp_subject` and `:xp_keywords` to `Image.exif/1`. Adds GPS coordinates, the digital source type, document identifiers and editing history, people shown, face region names, creator contact details and IPTC locations to `Image.xmp/1`.
 
+* `Image.Text.text/2` and `Image.Text.simple_text/2` fit text to a box: `:font_size` takes a list of sizes, tried largest first, and `:max_lines` limits the lines. Text that fits at no size is cut at a word, and `:ellipsis` (default `"…"`) is added.
+
 * `Image.radial_gradient/3` takes `:x` and `:y` to place the gradient's centre anywhere, including off the canvas, as a pixel offset, a fraction of the size, or a keyword such as `:right` or `:top`.
 
 ### Changed
