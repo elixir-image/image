@@ -26,6 +26,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 
 * Adds `:camera_owner_name`, `:photographer`, `:image_editor`, `:host_computer`, `:camera_serial_number` and the Windows `:xp_author`, `:xp_comment`, `:xp_title`, `:xp_subject` and `:xp_keywords` to `Image.exif/1`. Adds GPS coordinates, the digital source type, document identifiers and editing history, people shown, face region names, creator contact details and IPTC locations to `Image.xmp/1`.
 
+* `Image.radial_gradient/3` takes `:x` and `:y` to place the gradient's centre anywhere, including off the canvas, as a pixel offset, a fraction of the size, or a keyword such as `:right` or `:top`.
+
 ### Changed
 
 * `Image.squircle/2` draws superellipse corners joined by straight edges, so the shape is the same at every size and aspect ratio. `:radius` is now the corner radius (default 46.2% of the shorter side) and `:exponent` sets the corner's curve (default 3).
@@ -57,6 +59,8 @@ This is the changelog for Image version 0.74.0 released on November 18th, 2026. 
 * Requires `color` 1.0.0 or later. Image does not call the Color functions whose return values changed in 1.0 (`to_hex/1`, `to_css/1,2`, `to_ansi/1,2`), so code that calls `Image` works unchanged.
 
 ### Fixed
+
+* Fix `Image.radial_gradient/3` extrapolating past `:finish_color` beyond the radius, which brightened or darkened the corners; pixels beyond the radius are now the finish color.
 
 * Fix `Image.rounded/2` writing an unvalidated `:radius` into the SVG it renders; an invalid radius now returns an `:invalid_option` error.
 

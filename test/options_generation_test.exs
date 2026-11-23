@@ -54,6 +54,72 @@ defmodule Image.Options.Generation.Test do
     end
   end
 
+  describe "Image.radial_gradient/3 centre" do
+    @start [0, 0, 0, 255]
+    @finish [200, 100, 50, 255]
+
+    defp gradient_pixel(options, x, y) do
+      options = Keyword.merge([start_color: @start, finish_color: @finish], options)
+      {:ok, gradient} = Image.radial_gradient(100, 50, options)
+      {:ok, pixel} = Image.get_pixel(gradient, x, y)
+
+      Enum.map(pixel, &round/1)
+    end
+
+    test "defaults to the middle of the image" do
+      assert gradient_pixel([], 50, 25) == @start
+      assert gradient_pixel([x: :center, y: :middle], 50, 25) == @start
+    end
+
+    test "at a pixel offset" do
+      assert gradient_pixel([x: 10, y: 5], 10, 5) == @start
+    end
+
+    test "at a negative pixel offset from the right and bottom" do
+      assert gradient_pixel([x: -10, y: -5], 90, 45) == @start
+    end
+
+    test "at a fraction of the width and height" do
+      assert gradient_pixel([x: 0.25, y: 0.2], 25, 10) == @start
+    end
+
+    test "at the edges named by keyword" do
+      assert gradient_pixel([x: :left, y: :top], 0, 0) == @start
+
+      assert gradient_pixel([x: :right, y: :bottom], 99, 49) ==
+               gradient_pixel([x: 100, y: 50], 99, 49)
+    end
+
+    test "off the canvas" do
+      assert {:ok, %Vimage{}} = Image.radial_gradient(100, 50, x: -0.5, y: 1.5)
+      assert {:ok, %Vimage{}} = Image.radial_gradient(100, 50, x: 400, y: -400)
+    end
+
+    test "never passes the finish color beyond the radius" do
+      for options <- [[], [x: :right, y: :bottom], [x: -0.5, y: 1.5]] do
+        options = Keyword.merge([start_color: @start, finish_color: @finish], options)
+        {:ok, gradient} = Image.radial_gradient(100, 50, options)
+
+        for band <- 0..2 do
+          {maximum, _extras} = Vix.Vips.Operation.max!(gradient[band])
+          assert maximum <= Enum.at(@finish, band) + 0.001
+        end
+      end
+    end
+
+    test "with an :x keyword for the other axis" do
+      assert {:error, %Image.Error{}} = Image.radial_gradient(20, 20, x: :middle)
+    end
+
+    test "with a :y keyword for the other axis" do
+      assert {:error, %Image.Error{}} = Image.radial_gradient(20, 20, y: :center)
+    end
+
+    test "with a string centre" do
+      assert {:error, %Image.Error{}} = Image.radial_gradient(20, 20, x: "left")
+    end
+  end
+
   describe "Image.linear_gradient/3 options" do
     test "with default options" do
       assert {:ok, %Vimage{}} = Image.linear_gradient(20, 20)

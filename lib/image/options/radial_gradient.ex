@@ -13,6 +13,22 @@ defmodule Image.Options.RadialGradient do
           | {:finish_color, Pixel.t()}
           | {:feather, 1..10}
           | {:radius, number()}
+          | {:x, x_center()}
+          | {:y, y_center()}
+
+  @typedoc """
+  The horizontal centre of a radial gradient: a pixel offset from the
+  left (or, when negative, from the right), a fraction of the width,
+  or one of `:left`, `:center` or `:right`.
+  """
+  @type x_center :: integer() | float() | :left | :center | :right
+
+  @typedoc """
+  The vertical centre of a radial gradient: a pixel offset from the
+  top (or, when negative, from the bottom), a fraction of the height,
+  or one of `:top`, `:middle` or `:bottom`.
+  """
+  @type y_center :: integer() | float() | :top | :middle | :bottom
 
   @typedoc """
   Options list for `Image.radial_gradient/3`.
@@ -23,6 +39,8 @@ defmodule Image.Options.RadialGradient do
   @default_finish_color [0.0, 0.0, 0.0, 255.0]
   @default_feather 1
   @default_radius 2
+  @default_x :center
+  @default_y :middle
 
   @doc """
   Validate the options for `Image.radial_gradient/3`.
@@ -81,6 +99,14 @@ defmodule Image.Options.RadialGradient do
     {:cont, options}
   end
 
+  defp validate_option({:x, x}, options) when is_number(x) or x in [:left, :center, :right] do
+    {:cont, options}
+  end
+
+  defp validate_option({:y, y}, options) when is_number(y) or y in [:top, :middle, :bottom] do
+    {:cont, options}
+  end
+
   defp validate_option(option, _options) do
     {:halt, {:error, invalid_option(option)}}
   end
@@ -113,7 +139,9 @@ defmodule Image.Options.RadialGradient do
       start_color: @default_start_color,
       finish_color: @default_finish_color,
       feather: @default_feather,
-      radius: @default_radius
+      radius: @default_radius,
+      x: @default_x,
+      y: @default_y
     ]
   end
 end

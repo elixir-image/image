@@ -8873,7 +8873,21 @@ defmodule Image do
 
   * `:radius` is the radius of the gradient in the range `1..5`
     where `1` fully fills the space and `5` fills a small section
-    of the center of the space.  The default is `2`.
+    of the center of the space.  The default is `2`. Beyond the
+    radius every pixel is the `:finish_color`.
+
+  * `:x` is the horizontal centre of the gradient. An integer is
+    a pixel offset from the left, or from the right when negative.
+    A float is a fraction of the width, so `0.25` is a quarter of
+    the way across. It may also be one of `:left`, `:center` or
+    `:right`. A value outside the image, such as `-0.2` or `1.5`,
+    places the centre off the canvas. The default is `:center`.
+
+  * `:y` is the vertical centre of the gradient. An integer is a
+    pixel offset from the top, or from the bottom when negative.
+    A float is a fraction of the height. It may also be one of
+    `:top`, `:middle` or `:bottom`, and like `:x` may lie outside
+    the image. The default is `:middle`.
 
   ### Returns
 
@@ -8881,11 +8895,15 @@ defmodule Image do
 
   * `{:error, reason}`.
 
-  ### Example
+  ### Examples
 
       iex> {:ok, gradient} = Image.radial_gradient(30, 20)
       iex> Image.shape(gradient)
       {30, 20, 4}
+
+      iex> {:ok, glow} = Image.radial_gradient(120, 60, x: :right, y: 0.0)
+      iex> Image.shape(glow)
+      {120, 60, 4}
 
   """
   @doc subject: "Generator", since: "0.6.0"
@@ -8902,15 +8920,47 @@ defmodule Image do
 
     with {:ok, options} <- Options.RadialGradient.validate_options(options) do
       max = max(width, height)
-      xyz = Operation.xyz!(width, height) - [width / 2, height / 2]
+      center_x = gradient_center(options.x, width)
+      center_y = gradient_center(options.y, height)
+      xyz = Operation.xyz!(width, height) - [center_x, center_y]
 
-      d =
+      distance =
         (xyz[0] ** 2 + xyz[1] ** 2) ** 0.5 / (2 ** (options.feather * 0.05) * max / options.radius)
+
+      # Beyond the radius the gradient holds its finish color rather than
+      # extrapolating past it. min(distance, 1) is written as
+      # (distance + 1 - |distance - 1|) / 2.
+      d = (distance + 1 - Operation.abs!(distance - 1)) / 2
 
       radial_gradient = d * options.finish_color + (d * -1 + 1) * options.start_color
 
       Operation.copy(radial_gradient, interpretation: :VIPS_INTERPRETATION_sRGB)
     end
+  end
+
+  # The centre of a radial gradient along one axis of `size` pixels.
+  defp gradient_center(location, _size) when location in [:left, :top] do
+    0
+  end
+
+  defp gradient_center(location, size) when location in [:center, :middle] do
+    size / 2
+  end
+
+  defp gradient_center(location, size) when location in [:right, :bottom] do
+    size
+  end
+
+  defp gradient_center(fraction, size) when is_float(fraction) do
+    size * fraction
+  end
+
+  defp gradient_center(offset, size) when is_integer(offset) and offset < 0 do
+    size + offset
+  end
+
+  defp gradient_center(offset, _size) when is_integer(offset) do
+    offset
   end
 
   @doc """
@@ -8955,13 +9005,24 @@ defmodule Image do
 
   * `:radius` is the radius of the gradient in the range `1..5`
     where `1` fully fills the space and `5` fills a small section
-    of the center of the space.  The default is `2`.
+    of the center of the space.  The default is `2`. Beyond the
+    radius every pixel is the `:finish_color`.
+
+  * `:x` is the horizontal centre of the gradient: an integer pixel
+    offset (from the right when negative), a float fraction of the
+    width, or one of `:left`, `:center` or `:right`. The default is
+    `:center`. See `radial_gradient/3`.
+
+  * `:y` is the vertical centre of the gradient: an integer pixel
+    offset (from the bottom when negative), a float fraction of the
+    height, or one of `:top`, `:middle` or `:bottom`. The default is
+    `:middle`.
 
   ### Returns
 
-  * `{:ok, gradient_image}`, or
+  * `gradient_image`, or
 
-  * `{:error, reason}`.
+  * raises an exception.
 
   ### Example
 
