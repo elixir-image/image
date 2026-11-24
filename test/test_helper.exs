@@ -36,5 +36,15 @@ gain_map_excludes =
     [gain_map: true]
   end
 
-ExUnit.configure(exclude: text_excludes ++ gain_map_excludes, timeout: 120_000)
+# The S3 streaming tests need an S3-compatible endpoint (see
+# guides/development.md), so they run only when asked for:
+#
+#   mix test --include s3
+s3_excludes = [s3: true]
+
+ExUnit.configure(
+  exclude: text_excludes ++ gain_map_excludes ++ s3_excludes,
+  timeout: 120_000
+)
+
 ExUnit.start()
