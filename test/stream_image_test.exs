@@ -115,101 +115,19 @@ if match?({:module, _module}, Code.ensure_compiled(Plug)) do
                end)
     end
 
-    if System.find_executable("minio") do
-      # Minimum buffer size for S3 unless it the last
-      # chunk
-      @s3_buffer_size 5 * 1024 * 1024
-
-      test "Streaming from minio", %{dir: dir} do
-        out_path = Temp.path!(suffix: ".jpg", basedir: dir)
-
-        assert {:ok, _image} =
-                 ExAws.S3.download_file("images", "Hong-Kong-2015-07-1998.jpg", :memory)
-                 |> ExAws.stream!()
-                 |> Image.open!()
-                 |> Image.thumbnail!(200)
-                 |> Image.write(out_path)
+    test "Streaming without a :suffix raises" do
+      assert_raise Image.Error, ~r"The option :suffix must be provided", fn ->
+        image_path("Singapore-2016-09-5887.jpg")
+        |> File.stream!(2048, [])
+        |> Image.open!()
+        |> Image.thumbnail!(200)
+        |> Image.stream!()
       end
-
-      test "Streaming from minio into a file stream", %{dir: dir} do
-        out_path = Temp.path!(suffix: ".jpg", basedir: dir)
-        stream = File.stream!(out_path, 2048, [])
-
-        assert {:ok, _image} =
-                 ExAws.S3.download_file("images", "Hong-Kong-2015-07-1998.jpg", :memory)
-                 |> ExAws.stream!()
-                 |> Image.open!()
-                 |> Image.thumbnail!(200)
-                 |> Image.write(stream, suffix: ".jpg")
-      end
-
-      test "Streaming from minio then into non-streamed minio", %{dir: _dir} do
-        out_path = "test/streaming_from_minio_into_non_streamed_minio.jpg"
-
-        {:ok, buffer} =
-          ExAws.S3.download_file("images", "Hong-Kong-2015-07-1998.jpg", :memory)
-          |> ExAws.stream!()
-          |> Image.open!()
-          |> Image.thumbnail!(200)
-          |> Image.write(:memory, suffix: ".jpg")
-
-        assert {:ok, _} =
-                 ExAws.S3.put_object("images", out_path, buffer)
-                 |> ExAws.request()
-      end
-
-      test "Streaming from a file then into streamed minio", %{dir: _dir} do
-        out_path = "test/streaming_from_a_file_then_into_streamed_minio.jpg"
-
-        assert {:ok, _} =
-                 image_path("Singapore-2016-09-5887.jpg")
-                 |> File.stream!(2048, [])
-                 |> Image.open!()
-                 |> Image.thumbnail!(200)
-                 |> Image.stream!(suffix: ".jpg", buffer_size: @s3_buffer_size)
-                 |> ExAws.S3.upload("images", out_path)
-                 |> ExAws.request()
-      end
-
-      test "Streaming from minio then into streamed minio with resize", %{dir: _dir} do
-        out_path = "test/streaming_from_minio_into_streamed_minio_with_resize.jpg"
-
-        assert {:ok, _} =
-                 ExAws.S3.download_file("images", "Hong-Kong-2015-07-1998.jpg", :memory)
-                 |> ExAws.stream!()
-                 |> Image.open!()
-                 |> Image.thumbnail!(200)
-                 |> Image.stream!(suffix: ".jpg", buffer_size: @s3_buffer_size)
-                 |> ExAws.S3.upload("images", out_path)
-                 |> ExAws.request()
-      end
-
-      test "Streaming from minio then into streamed minio", %{dir: _dir} do
-        out_path = "test/streaming_from_minio_into_streamed_minio.jpg"
-
-        assert {:ok, _} =
-                 ExAws.S3.download_file("images", "Hong-Kong-2015-07-1998.jpg", :memory)
-                 |> ExAws.stream!()
-                 |> Image.open!()
-                 |> Image.stream!(suffix: ".jpg", buffer_size: @s3_buffer_size)
-                 |> ExAws.S3.upload("images", out_path)
-                 |> ExAws.request()
-      end
-
-      test "Streaming from a file then into streamed minio with exception" do
-        assert_raise Image.Error, ~r"The option :suffix must be provided", fn ->
-          image_path("Singapore-2016-09-5887.jpg")
-          |> File.stream!(2048, [])
-          |> Image.open!()
-          |> Image.thumbnail!(200)
-          |> Image.stream!()
-        end
-      end
-
-      # test "Streaming from a req async response" do
-      #   url = "https://files.amoi.no/dog.webp"
-      #   assert {:ok, %Vix.Vips.Image{}} = Image.from_req_stream(url)
-      # end
     end
+
+    # test "Streaming from a req async response" do
+    #   url = "https://files.amoi.no/dog.webp"
+    #   assert {:ok, %Vix.Vips.Image{}} = Image.from_req_stream(url)
+    # end
   end
 end

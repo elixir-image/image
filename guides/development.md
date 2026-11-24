@@ -10,7 +10,7 @@ This guide is for contributors working on `Image` itself. Using the library in y
 
 * **ffmpeg** — only to work on `Image.Video`. The `xav` dependency binds to it, so a mismatch between the installed ffmpeg and the version `xav` expects shows up as a compilation failure.
 
-* **minio** — only to run the streaming tests. See "The streaming tests need minio" below.
+* **An S3-compatible server** — only to run the S3 streaming tests, which are excluded by default. See "The S3 streaming tests" below.
 
 `libvips` itself is bundled by `vix`, so there is nothing to install for it. If you want to build against your own libvips, set `VIX_COMPILATION_MODE=PLATFORM_PROVIDED_LIBVIPS` before fetching dependencies.
 
@@ -61,11 +61,26 @@ mix test --exclude text --exclude text_avatar --exclude video --exclude circular
 
 Run that form if a font or codec you do not have is failing tests unrelated to your change.
 
-### The streaming tests need minio
+### The S3 streaming tests
 
-`test/stream_image_test.exs` reads and writes through an S3-compatible endpoint, which is expected to be [minio](https://min.io) running locally. The Elixir side is `ex_aws_s3`, declared `only: [:dev, :test]` in `mix.exs`, using `ExAws.Request.Req` over Image's optional `req` dependency, so nothing extra needs adding. The endpoint and HTTP client are configured in `config/test.exs`: host `127.0.0.1`, port `9000`, bucket `images`, region `local`, with credentials read from the environment.
+`test/stream_image_s3_test.exs` streams images to and from an S3-compatible server. Its tests are tagged `:s3`, and `test/test_helper.exs` excludes them unless they are asked for:
 
-minio ships as a single binary; see [min.io's download page](https://min.io/download) for your platform. Run it against any empty directory, and set the two credential variables first — minio uses them for its root credentials and `config/test.exs` reads the same two names, so exporting them once serves both:
+```bash
+mix test --include s3
+```
+
+The Elixir side is `ex_aws_s3`, declared `only: [:dev, :test]` in `mix.exs`, using `ExAws.Request.Req` over Image's optional `req` dependency, so nothing extra needs adding. The endpoint is configured in `config/test.exs`: host `127.0.0.1`, port `9000`, bucket `images`, region `local`, with credentials read from `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`. The tests create the bucket if it is missing and upload the image they read, so a fresh server needs no seeding.
+
+CI runs [Adobe S3Mock](https://github.com/adobe/S3Mock) as a service container, and the same image is the quickest way to run the tests locally. S3Mock accepts any credentials, but ExAws will not sign a request without them, so export any two values:
+
+```bash
+docker run --rm -d --name image-s3mock -p 9000:9090 adobe/s3mock:5.2.3
+export MINIO_ROOT_USER=s3mock
+export MINIO_ROOT_PASSWORD=s3mock
+mix test --include s3
+```
+
+[minio](https://min.io) works too. It uses the same two variables for its root credentials, so exporting them once serves both:
 
 ```bash
 export MINIO_ROOT_USER=minioadmin
@@ -73,24 +88,7 @@ export MINIO_ROOT_PASSWORD=minioadmin
 minio server ~/.minio-image-dev --console-address :9001
 ```
 
-Then create the bucket and seed the one object the tests read. The tests download `Hong-Kong-2015-07-1998.jpg` from the bucket, so that file has to be in it, and the copy in the repository is the one to upload. This uses the project's own `ex_aws_s3` dependency, so it needs no additional tooling:
-
-```bash
-MIX_ENV=test iex -S mix
-```
-
-```elixir
-ExAws.S3.put_bucket("images", "local") |> ExAws.request()
-
-"test/support/images/Hong-Kong-2015-07-1998.jpg"
-|> ExAws.S3.Upload.stream_file()
-|> ExAws.S3.upload("images", "Hong-Kong-2015-07-1998.jpg")
-|> ExAws.request()
-```
-
-Doing it from `iex` avoids a trap: minio's own command line client is called `mc`, which is also the name of Midnight Commander. If you have the file manager installed, `mc` commands from minio's documentation will fail in confusing ways.
-
-Without a running minio, the credentials exported and that object uploaded, six tests in `StreamImage.Test` fail with `Required key: :secret_access_key is nil in config!` or a connection error. Nothing else in the suite depends on them, so it is reasonable to leave them failing while you work on something unrelated — just do not read them as a regression you introduced.
+Run with `--include s3` and no server, or without the credentials exported, and the six tests are reported invalid with `Required key: :secret_access_key is nil in config!` or a connection error. Nothing else in the suite depends on them.
 
 ## Test images
 

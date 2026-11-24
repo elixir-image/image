@@ -31,6 +31,17 @@ jobs:
   test:
     runs-on: ubuntu-latest
     name: Test on OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
+    # The S3 streaming tests (test/stream_image_s3_test.exs, tagged :s3) run
+    # against Adobe S3Mock. config/test.exs expects an S3 endpoint on
+    # 127.0.0.1:9000, so the container's HTTP port 9090 is published there,
+    # and the bucket the tests use is created when the container starts.
+    services:
+      s3mock:
+        image: adobe/s3mock:5.2.3
+        ports:
+          - 9000:9090
+        env:
+          COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: images
     strategy:
       fail-fast: false
       # Specify the OTP and Elixir versions to use when building
@@ -158,9 +169,18 @@ jobs:
       run: mix format --check-formatted
       if: ${{ matrix.lint }}
 
-    # Step: Execute the tests.
+    # The service container may still be starting when the job reaches here.
+    - name: Wait for S3Mock
+      run: curl --silent --output /dev/null --retry 30 --retry-delay 2 --retry-connrefused http://127.0.0.1:9000/
+
+    # Step: Execute the tests, including the S3 streaming tests. S3Mock
+    # accepts any credentials, but config/test.exs reads them from these
+    # variables and ExAws refuses to sign a request without them.
     - name: Run tests
-      run: mix test
+      run: mix test --include s3
+      env:
+        MINIO_ROOT_USER: s3mock
+        MINIO_ROOT_PASSWORD: s3mock
 
     # Step: Cache the dialyzer PLT. Keyed on both versions for the same
     # reason as the build cache.
