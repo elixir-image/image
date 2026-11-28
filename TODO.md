@@ -28,6 +28,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Done
 
+* [x] **ICO writer** — `Image.to_ico/2` and `.ico` support in `Image.write/3`, PNG entries only; reading ICO is not supported. Mishka gap 20, user's decision. 2026-11-28.
+
 * [x] **`radial_gradient/3` pixel radius and fade curve** — `radius: {:pixels, n}` and `:fade` added; the unitless `:radius` and linear fade remain the defaults. Mishka gap 19. 2026-11-28.
 
 * [x] **Text fitting reports what it chose** — `Image.Text.text_with_fit/2` returns the font size, the text shown and `truncated?`; `shorten_at: :sentence` cuts at whole sentences. Mishka gap 18. 2026-11-28.

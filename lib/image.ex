@@ -1680,6 +1680,12 @@ defmodule Image do
     image as an
     [image pyramid](https://en.wikipedia.org/wiki/Pyramid_(image_processing)).
 
+  ### ICO images
+
+  A path ending in `.ico`, or `suffix: ".ico"`, writes a Windows
+  icon file through `to_ico/2`, since libvips has no ICO saver.
+  `:sizes` is the only option; see `to_ico/2`.
+
   ### Merging image type options
 
   Options can also be grouped under an option key
@@ -1735,7 +1741,15 @@ defmodule Image do
   @doc subject: "Load and save"
   def write(image, image_path, options \\ [])
 
-  def write(%Vimage{} = image, image_path, options) when is_binary(image_path) do
+  def write(%Vimage{} = image, destination, options) do
+    if ico_destination?(destination, options) do
+      write_ico(image, destination, options)
+    else
+      write_image(image, destination, options)
+    end
+  end
+
+  defp write_image(%Vimage{} = image, image_path, options) when is_binary(image_path) do
     with {:ok, options} <- Options.Write.validate_options(image, image_path, options) do
       image_path
       |> String.split("[", parts: 2)
@@ -1744,7 +1758,7 @@ defmodule Image do
   end
 
   if match?({:module, _module}, Code.ensure_compiled(Plug)) do
-    def write(%Vimage{} = image, %Plug.Conn{} = conn, options) do
+    defp write_image(%Vimage{} = image, %Plug.Conn{} = conn, options) do
       with {:ok, options} <- Options.Write.validate_options(image, options, :require_suffix) do
         {suffix, options} = Keyword.pop(options, :suffix)
         options = suffix <> loader_options(options)
@@ -1769,8 +1783,8 @@ defmodule Image do
     end
   end
 
-  def write(%Vimage{} = image, %module{} = stream, options)
-      when module in [File.Stream, Stream] do
+  defp write_image(%Vimage{} = image, %module{} = stream, options)
+       when module in [File.Stream, Stream] do
     options = maybe_infer_suffix(stream, options)
 
     with {:ok, options} <- Options.Write.validate_options(image, options, :require_suffix) do
@@ -1781,7 +1795,7 @@ defmodule Image do
     end
   end
 
-  def write(%Vimage{} = image, :memory, options) do
+  defp write_image(%Vimage{} = image, :memory, options) do
     with {:ok, options} <- Options.Write.validate_options(image, options, :require_suffix) do
       {suffix, options} = Keyword.pop(options, :suffix)
       options = suffix <> loader_options(options)
@@ -1804,6 +1818,70 @@ defmodule Image do
 
   defp maybe_infer_suffix(_stream, options) do
     options
+  end
+
+  # A path ending in `.ico`, or any other destination with an `.ico`
+  # suffix (inferred from a `File.Stream`'s path when not given).
+  defp ico_destination?(destination, _options) when is_binary(destination) do
+    path =
+      destination
+      |> String.split("[", parts: 2)
+      |> hd()
+
+    ico_suffix?(Path.extname(path))
+  end
+
+  defp ico_destination?(destination, options) when is_list(options) do
+    options = maybe_infer_suffix(destination, options)
+    ico_suffix?(Keyword.get(options, :suffix))
+  end
+
+  defp ico_destination?(_destination, _options) do
+    false
+  end
+
+  defp ico_suffix?(suffix) when is_binary(suffix) do
+    String.downcase(suffix) == ".ico"
+  end
+
+  defp ico_suffix?(_suffix) do
+    false
+  end
+
+  defp write_ico(image, destination, options) do
+    options = Keyword.delete(options, :suffix)
+
+    with {:ok, ico} <- to_ico(image, options) do
+      deliver_ico(ico, image, destination)
+    end
+  end
+
+  defp deliver_ico(ico, image, path) when is_binary(path) do
+    case File.write(path, ico) do
+      :ok -> {:ok, image}
+      {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :write, path: path)}
+    end
+  end
+
+  defp deliver_ico(ico, _image, :memory) do
+    {:ok, ico}
+  end
+
+  if match?({:module, _module}, Code.ensure_compiled(Plug)) do
+    defp deliver_ico(ico, _image, %Plug.Conn{} = conn) do
+      case Plug.Conn.chunk(conn, ico) do
+        {:ok, conn} -> {:ok, conn}
+        {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :write)}
+      end
+    end
+  end
+
+  defp deliver_ico(ico, image, stream) do
+    [ico]
+    |> Stream.into(stream)
+    |> Stream.run()
+
+    {:ok, image}
   end
 
   defp write_stream(image, stream, options) do
@@ -2003,6 +2081,100 @@ defmodule Image do
   def write!(%Vimage{} = image, image_path, options \\ []) do
     case write(image, image_path, options) do
       {:ok, image} -> image
+      {:error, %Image.Error{} = error} -> raise error
+    end
+  end
+
+  @doc """
+  Encodes an image as a Windows icon (ICO) file.
+
+  libvips has no ICO saver, so the file is assembled here: one PNG
+  image per size, in the PNG-in-ICO form that every current browser
+  and Windows since Vista reads. A favicon served at `/favicon.ico`
+  is the usual use. `write/3` calls this function for a path ending
+  in `.ico` or for `suffix: ".ico"`.
+
+  Each size is a square. The image is fitted inside it and centred
+  on a transparent background, so nothing is cropped from an image
+  that is not square. An image opened with `pages: :all` contributes
+  its first frame. The icon is written in sRGB with an alpha band,
+  and without metadata.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options.
+
+  ### Options
+
+  * `:sizes` is a list of the icon sizes to include, in pixels, each
+    an integer in `1..256`. The default is `[16, 32, 48]`.
+
+  ### Returns
+
+  * `{:ok, ico_binary}`, or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> image = Image.open!("./test/support/images/Kip_small.jpg")
+      iex> {:ok, ico} = Image.to_ico(image, sizes: [16, 32])
+      iex> <<0::little-16, 1::little-16, count::little-16, _rest::binary>> = ico
+      iex> count
+      2
+
+      iex> Image.to_ico(Image.new!(8, 8), sizes: [512])
+      {:error,
+       %Image.Error{
+         reason: :invalid_option,
+         value: {:sizes, [512]},
+         message: "Invalid option :sizes: [512] must be a list of integers in 1..256"
+       }}
+
+  """
+  @doc subject: "Load and save", since: "0.75.0"
+
+  @spec to_ico(image :: Vimage.t(), options :: [{:sizes, [1..256, ...]}]) ::
+          {:ok, binary()} | {:error, error()}
+
+  def to_ico(image, options \\ []) do
+    Image.Ico.encode(image, options)
+  end
+
+  @doc """
+  Encodes an image as a Windows icon (ICO) file, as `to_ico/2`
+  does, or raises an exception.
+
+  ### Arguments
+
+  * `image` is any `t:Vix.Vips.Image.t/0`.
+
+  * `options` is a keyword list of options. See `to_ico/2`.
+
+  ### Returns
+
+  * `ico_binary`, or
+
+  * raises an exception.
+
+  ### Examples
+
+      iex> image = Image.new!(40, 20, color: :blue)
+      iex> ico = Image.to_ico!(image, sizes: [16])
+      iex> binary_part(ico, 0, 6)
+      <<0, 0, 1, 0, 1, 0>>
+
+  """
+  @doc subject: "Load and save", since: "0.75.0"
+
+  @spec to_ico!(image :: Vimage.t(), options :: [{:sizes, [1..256, ...]}]) ::
+          binary() | no_return()
+
+  def to_ico!(image, options \\ []) do
+    case to_ico(image, options) do
+      {:ok, ico} -> ico
       {:error, %Image.Error{} = error} -> raise error
     end
   end
