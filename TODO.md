@@ -4,10 +4,6 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
-* [ ] **Privacy docs omit re-encoding and frame loss** — the privacy guide and `Image.Privacy.remove/2` do not say that saving re-encodes (lossily for JPEG) or that `Image.open/2` without `pages: :all` drops animation frames. Mishka gap 15.
-
-* [ ] **`:font_file` docs say "not supported on MacOS"** — the working `FONTCONFIG_FILE` alternative, which Mishka's share cards use, is not documented. Mishka gap 16.
-
 * [ ] **Masks need SVG loading** — circle, rounded and squircle masks, and so `Image.avatar/2` and `Image.rounded/2`, are drawn through `svgload_buffer`; add an arithmetic path. Mishka gap 17.
 
 * [ ] **Text fitting does not report what it chose** — `Image.Text.text/2` does not return the font size or the text it kept, and shortens only at a word; add a reporting function and a sentence-boundary option. Mishka gap 18.
@@ -20,7 +16,7 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 * [ ] **`Image.compare/3`'s "Invalid metric" error uses a string `:reason`** — every other error path uses an atom after #231. Changing it is breaking.
 
-* [ ] **`:font_file` has no effect on macOS** — the precompiled libvips renders text with Pango's CoreText backend, which never sees a font registered through fontconfig, so `Image.meme/3` and `Image.Text` fall back to a system font unless `PANGOCAIRO_BACKEND=fc` is set. Linux is unaffected. Belongs upstream in libvips or vix's precompiled build.
+* [ ] **`:font_file` has no effect on macOS** — the precompiled libvips renders text with Pango's CoreText backend, which never sees a font registered through fontconfig, so `Image.meme/3` and `Image.Text` fall back to a system font unless `PANGOCAIRO_BACKEND=fc` is set. Linux is unaffected. Belongs upstream in libvips or vix's precompiled build. The workaround is documented under "Fonts" in `Image.Text`.
 
 ## In progress
 
@@ -37,6 +33,10 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **`:font_file` and `FONTCONFIG_FILE` documented** — `Image.Text` explains both and the `PANGOCAIRO_BACKEND=fc` setting macOS needs. Mishka gap 16. 2026-11-28.
+
+* [x] **Privacy docs cover re-encoding and frame loss** — the guide and `Image.Privacy.remove/2` say saving re-encodes and drops frames without `pages: :all`. Mishka gap 15. 2026-11-28.
 
 * [x] **`Image.Social` sizes and names reviewed** — `:twitter` renamed `:x` with an alias, sizes corrected against current platform guidance, every platform given a default usage. 2026-11-21, v0.74.0.
 

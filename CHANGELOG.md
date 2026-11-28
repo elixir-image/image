@@ -8,6 +8,8 @@ This is the changelog for Image version 0.75.0, not yet released. For older chan
 
 * The privacy guide and `Image.Privacy.remove/2` now say that saving re-encodes the pixels (lossily for JPEG) and drops animation frames unless the image was opened with `pages: :all`.
 
+* The `:font_file` docs no longer say it is unsupported on macOS: `Image.Text` now documents `PANGOCAIRO_BACKEND=fc`, which makes it work there, and a `FONTCONFIG_FILE` configuration as the alternative.
+
 ## Image 0.74.0
 
 This is the changelog for Image version 0.74.0 released on November 18th, 2026. For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

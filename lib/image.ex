@@ -4178,6 +4178,9 @@ defmodule Image do
     If `:font_file` is a string, then it is expected to be a valid
     font file. If `:font_file` is set to a path then the `:font` option
     should also be set to the correct font name.
+    On macOS a font file, the bundled `Anton` included, takes effect
+    only when `PANGOCAIRO_BACKEND=fc` is set; see "Fonts" in
+    `Image.Text`.
 
   * `:weight` is the font weight to be rendered. The options
     are `:ultralight`, `:light`, `:normal`, `:bold`, `:ultrabold`,
@@ -4279,6 +4282,9 @@ defmodule Image do
     If `:font_file` is a string, then it is expected to be a valid
     font file. If `:font_file` is set to a path then the `:font` option
     should also be set to the correct font name.
+    On macOS a font file, the bundled `Anton` included, takes effect
+    only when `PANGOCAIRO_BACKEND=fc` is set; see "Fonts" in
+    `Image.Text`.
 
   * `:weight` is the font weight to be rendered. The options
     are `:ultralight`, `:light`, `:normal`, `:bold`, `:ultrabold`,

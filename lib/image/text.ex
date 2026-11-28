@@ -2,6 +2,51 @@ defmodule Image.Text do
   @moduledoc """
   Functions for the creation of images from text.
 
+  ### Fonts
+
+  Text is drawn by Pango, which finds a font by its family name, the
+  `:font` option. There are two ways to draw with fonts that are not
+  installed on the system:
+
+  * **`:font_file`** loads one font file for a call. Give the font's
+    family name in `:font` too.
+
+  * **A fontconfig configuration** names the folders fonts are found
+    in, so every font in them can be used by family name with no
+    `:font_file`. Write a `fonts.conf` and point the `FONTCONFIG_FILE`
+    environment variable at it. A `<dir prefix="relative">` element
+    is read relative to the `fonts.conf`, so the file can sit beside
+    the fonts in the application's `priv` folder. List the system
+    folders after your own so that scripts your fonts do not cover
+    still have a font:
+
+  ```xml
+  <?xml version="1.0"?>
+  <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+  <fontconfig>
+    <dir prefix="relative">.</dir>
+    <dir>/usr/share/fonts</dir>
+    <dir>/usr/local/share/fonts</dir>
+    <dir>/System/Library/Fonts</dir>
+    <dir>/Library/Fonts</dir>
+    <cachedir prefix="xdg">my_app-fontconfig</cachedir>
+  </fontconfig>
+  ```
+
+  On Linux, Pango uses fontconfig, so both work as they are. On
+  macOS, Pango uses the system's CoreText backend by default, which
+  never sees a font loaded through fontconfig: `:font_file` and
+  `FONTCONFIG_FILE` are both silently ignored and a system font is
+  drawn instead. Set `PANGOCAIRO_BACKEND=fc` as well, and both work
+  on macOS as they do on Linux.
+
+  Both environment variables are read when libvips starts, so set
+  them before the BEAM starts: in the shell, in a release's
+  `rel/env.sh.eex`, or in the service definition. Setting them with
+  `System.put_env/2` at runtime has no effect. `Image.meme/3`'s
+  bundled Anton font is loaded as a `:font_file` and needs the same
+  setting on macOS.
+
   """
 
   alias Vix.Vips.Image, as: Vimage
@@ -88,8 +133,9 @@ defmodule Image.Text do
     The default is `:normal` which is equivalent to `400`.
 
   * `:font_file` is a path to any `.ttf` font file. If specified,
-    the `:font` parameter is also required. Note that this option
-    is not supported on MacOS systems.
+    the `:font` parameter is also required. On macOS it takes effect
+    only when `PANGOCAIRO_BACKEND=fc` is set; see "Fonts" in the
+    module documentation, which also covers `FONTCONFIG_FILE`.
 
   * `:dpi` sets the resolution of the text generation. The
     default `72` which is suitable for screen output. `300`
@@ -288,8 +334,9 @@ defmodule Image.Text do
     default is `"…"`.
 
   * `:font_file` is a path to any `.ttf` font file. If specified,
-    the `:font` parameter is also required. Note that this option
-    is not supported on MacOS systems.
+    the `:font` parameter is also required. On macOS it takes effect
+    only when `PANGOCAIRO_BACKEND=fc` is set; see "Fonts" in the
+    module documentation, which also covers `FONTCONFIG_FILE`.
 
   * `:font_weight` is one of `:ultralight`, `:light`, `:normal`, `:bold`,
     `:ultrabold`, `:heavy` or an integer between `1` and `1_000`.
