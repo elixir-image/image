@@ -115,7 +115,9 @@ defmodule Image.Blurhash do
 
   * `{:ok, image}`, or
 
-  * `{:error, reason}`.
+  * `{:error, %Image.Error{}}` when `blurhash` is not a valid
+    blurhash string, including an empty or truncated one, or when
+    `width` or `height` is not a positive integer.
 
   ### Examples
 
@@ -151,5 +153,26 @@ defmodule Image.Blurhash do
         @blurhash_band_format
       )
     end
+  end
+
+  def decode(blurhash, _width, _height) when not is_binary(blurhash) do
+    invalid_argument(:invalid_blurhash, "blurhash", blurhash, "a blurhash string")
+  end
+
+  def decode(_blurhash, width, _height) when not (is_integer(width) and width > 0) do
+    invalid_argument(:invalid_width, "width", width, "a positive integer")
+  end
+
+  def decode(_blurhash, _width, height) do
+    invalid_argument(:invalid_height, "height", height, "a positive integer")
+  end
+
+  defp invalid_argument(reason, name, value, expected) do
+    {:error,
+     %Image.Error{
+       reason: reason,
+       value: value,
+       message: "Invalid #{name} #{inspect(value)}. Must be #{expected}"
+     }}
   end
 end

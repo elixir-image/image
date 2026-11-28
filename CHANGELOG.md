@@ -24,6 +24,8 @@ This is the changelog for Image version 0.75.0 released on November 28th, 2026. 
 
 * `Image.circle/2`, `Image.rounded/2` and `Image.squircle/2` scale an existing alpha band by the mask instead of keeping it whole up to the edge, so the antialiased edge is no longer lost.
 
+* `Image.Blurhash.decode/3` returns `{:error, %Image.Error{}}` instead of raising `FunctionClauseError` when the blurhash is not a string or the width or height is not a positive integer.
+
 ## Image 0.74.0
 
 This is the changelog for Image version 0.74.0 released on November 18th, 2026. For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
