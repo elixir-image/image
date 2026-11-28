@@ -4,8 +4,6 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
-* [ ] **Text fitting does not report what it chose** — `Image.Text.text/2` does not return the font size or the text it kept, and shortens only at a word; add a reporting function and a sentence-boundary option. Mishka gap 18.
-
 * [ ] **`radial_gradient/3` has no pixel radius or fade curve** — `:radius` is a unitless 1..5 scale and the fade is linear; add both without breaking the current options. Mishka gap 19.
 
 * [ ] **Rule 2 bang sweep** — 173 calls to `!` functions remain inside non-bang functions (84 in `lib/image.ex`, 48 in `Image.Math`, mostly its operators). Each needs judging: a bang on values the library built itself is acceptable, one on caller input is not.
@@ -31,6 +29,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **Text fitting reports what it chose** — `Image.Text.text_with_fit/2` returns the font size, the text shown and `truncated?`; `shorten_at: :sentence` cuts at whole sentences. Mishka gap 18. 2026-11-28.
 
 * [x] **Masks no longer need SVG loading** — circle, rounded and squircle masks, `Image.fade/2` and `Image.Text` backgrounds are computed from pixels; an existing alpha is now scaled by the mask. Mishka gap 17. 2026-11-28.
 

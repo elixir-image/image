@@ -12,6 +12,7 @@ defmodule Image.Options.Text do
           | {:font_size, non_neg_integer() | [pos_integer(), ...]}
           | {:max_lines, pos_integer() | nil}
           | {:ellipsis, String.t()}
+          | {:shorten_at, :word | :sentence}
           | {:dpi, non_neg_integer()}
           | {:text_fill_color, Pixel.t() | :markup}
           | {:text_stroke_width, pos_integer()}
@@ -38,6 +39,7 @@ defmodule Image.Options.Text do
       font_size: 50,
       max_lines: nil,
       ellipsis: "…",
+      shorten_at: :word,
       text_fill_color: :white,
       text_stroke_width: 1,
       font_weight: :normal,
@@ -191,6 +193,10 @@ defmodule Image.Options.Text do
   end
 
   defp validate_option({:ellipsis, ellipsis}, options) when is_binary(ellipsis) do
+    {:cont, options}
+  end
+
+  defp validate_option({:shorten_at, shorten_at}, options) when shorten_at in [:word, :sentence] do
     {:cont, options}
   end
 

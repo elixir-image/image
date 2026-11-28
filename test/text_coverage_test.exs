@@ -404,6 +404,123 @@ defmodule Image.TextCoverageTest do
     end
   end
 
+  describe "Image.Text.text_with_fit/2" do
+    @sentences "One two. Three four five. Six seven eight nine ten eleven twelve."
+
+    test "reports the font size and text of unfitted text" do
+      assert {:ok, {%Vimage{}, fit}} = Image.Text.text_with_fit("Hello", font_size: 24)
+      assert fit == %{font_size: 24, text: "Hello", truncated?: false}
+    end
+
+    test "draws the same image as text/2" do
+      options = [font_size: [40, 20], width: 120, max_lines: 2]
+      {:ok, image} = Image.Text.text(@sentences, options)
+      {:ok, {fitted, _fit}} = Image.Text.text_with_fit(@sentences, options)
+
+      assert Image.shape(image) == Image.shape(fitted)
+      assert Vimage.write_to_binary(image) == Vimage.write_to_binary(fitted)
+    end
+
+    test "reports the largest size from the list at which the text fits" do
+      {:ok, {_image, fit}} =
+        Image.Text.text_with_fit("Hi", font_size: [40, 20], width: 400, max_lines: 1)
+
+      assert fit == %{font_size: 40, text: "Hi", truncated?: false}
+    end
+
+    test "reports a smaller size when the larger one does not fit" do
+      {:ok, {_image, fit}} =
+        Image.Text.text_with_fit("Several words here",
+          font_size: [400, 10],
+          width: 400,
+          max_lines: 1
+        )
+
+      assert fit == %{font_size: 10, text: "Several words here", truncated?: false}
+    end
+
+    test "reports text shortened at a word, with the ellipsis" do
+      {:ok, {_image, fit}} =
+        Image.Text.text_with_fit(@sentences, font_size: 20, width: 150, max_lines: 1)
+
+      assert fit.truncated?
+      assert String.ends_with?(fit.text, "…")
+      kept = String.trim_trailing(fit.text, "…")
+      assert String.starts_with?(@sentences, kept)
+      assert String.at(@sentences, String.length(kept)) in [" ", "."]
+    end
+
+    test ":shorten_at :sentence keeps whole sentences" do
+      {:ok, {_image, fit}} =
+        Image.Text.text_with_fit(@sentences,
+          font_size: 20,
+          width: 400,
+          max_lines: 1,
+          shorten_at: :sentence,
+          ellipsis: ""
+        )
+
+      assert fit.truncated?
+      assert fit.text in ["One two.", "One two. Three four five."]
+    end
+
+    test ":shorten_at :sentence falls back to words when no sentence fits" do
+      text = "One long first sentence with many words in it. Two."
+
+      {:ok, {_image, fit}} =
+        Image.Text.text_with_fit(text,
+          font_size: 20,
+          width: 150,
+          max_lines: 1,
+          shorten_at: :sentence
+        )
+
+      assert fit.truncated?
+      assert String.ends_with?(fit.text, "…")
+      refute String.contains?(fit.text, ".")
+    end
+
+    test "a full stop inside a number does not end a sentence" do
+      text = "Pi is 3.14 or so. More words follow this one."
+
+      {:ok, {_image, fit}} =
+        Image.Text.text_with_fit(text,
+          font_size: 20,
+          width: 250,
+          max_lines: 1,
+          shorten_at: :sentence,
+          ellipsis: ""
+        )
+
+      assert fit.text == "Pi is 3.14 or so."
+    end
+
+    test "reports markup that is cut to the box as truncated and whole" do
+      markup = "<b>Bold</b> text that is long enough to need cutting off"
+
+      {:ok, {image, fit}} =
+        Image.Text.text_with_fit({:safe, markup}, font_size: 20, width: 100, max_lines: 1)
+
+      assert Image.width(image) <= 100
+      assert fit == %{font_size: 20, text: markup, truncated?: true}
+    end
+
+    test "rejects an invalid :shorten_at" do
+      assert {:error, %Image.Error{reason: :invalid_option}} =
+               Image.Text.text_with_fit("Hello", shorten_at: :paragraph)
+    end
+  end
+
+  describe "Image.Text.text_with_fit!/2" do
+    test "returns the image and the fit" do
+      assert {%Vimage{}, %{font_size: 24}} = Image.Text.text_with_fit!("Hello", font_size: 24)
+    end
+
+    test "raises on an invalid option" do
+      assert_raise Image.Error, fn -> Image.Text.text_with_fit!("Hello", shorten_at: :paragraph) end
+    end
+  end
+
   describe "Image.Text text set wider than :width" do
     @word "Supercalifragilisticexpialidocious words"
     @persian "سلام دنیا این یک عنوان طولانی است که باید کوتاه شود تا در کارت جا بگیرد و بیشتر"

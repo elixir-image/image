@@ -53,6 +53,16 @@ defmodule Image.Text do
   alias Image.Vips.Operation
   alias Image.Options
 
+  @typedoc """
+  How `text_with_fit/2` set the text: the font size it chose, the
+  text it shows and whether that text was cut short.
+  """
+  @type fit :: %{
+          font_size: non_neg_integer(),
+          text: String.t(),
+          truncated?: boolean()
+        }
+
   @doc """
   Create a new image from the provided string and
   formatting options.
@@ -118,8 +128,10 @@ defmodule Image.Text do
 
   * `:max_lines` is the most lines the text may take when it is
     wrapped at `:width`. Text that does not fit at the smallest
-    `:font_size` is cut at the end of a word, or between graphemes
-    in text written without spaces, and `:ellipsis` is added.
+    `:font_size` is cut at the end of a word (or a sentence, see
+    `:shorten_at`), or between graphemes in text written without
+    spaces, and `:ellipsis` is added. `text_with_fit/2` reports the
+    size chosen and the text kept.
     Markup passed with `Phoenix.HTML.raw/1` is cut to the lines
     but not shortened. Words are kept whole when fitting: a word
     wider than `:width` steps the text down a size or is cut.
@@ -127,6 +139,14 @@ defmodule Image.Text do
 
   * `:ellipsis` is the string added to shortened text. The
     default is `"…"`.
+
+  * `:shorten_at` is where text that fits at no size is cut:
+    `:word` (the default) or `:sentence`. With `:sentence` the text
+    keeps as many whole sentences as fit, and is cut at a word when
+    not even the first one does. A sentence ends at `.`, `!`, `?`,
+    `…`, `؟` or `۔` followed by a space or the end of the text, or
+    at `。`, `！` or `？`. The `:ellipsis` is added either way; pass
+    `ellipsis: ""` to end at the sentence's own punctuation.
 
   * `:font_weight` is one of `:ultralight`, `:light`, `:normal`, `:bold`,
     `:ultrabold`, `:heavy` or an integer between `1` and `1_000`.
@@ -249,11 +269,8 @@ defmodule Image.Text do
           {:ok, Vimage.t()} | {:error, Image.error()}
 
   def text(string, options \\ []) when is_list(options) do
-    with {:ok, options} <- Options.Text.validate_options(options),
-         {:ok, text_layer} <- simple_text(string, options),
-         {:ok, with_background} <- add_background(text_layer, options),
-         {:ok, with_padding} <- add_background_padding(with_background, options) do
-      add_background_border(with_padding, options)
+    with {:ok, {image, _fit}} <- text_with_fit(string, options) do
+      {:ok, image}
     end
   end
 
@@ -323,8 +340,10 @@ defmodule Image.Text do
 
   * `:max_lines` is the most lines the text may take when it is
     wrapped at `:width`. Text that does not fit at the smallest
-    `:font_size` is cut at the end of a word, or between graphemes
-    in text written without spaces, and `:ellipsis` is added.
+    `:font_size` is cut at the end of a word (or a sentence, see
+    `:shorten_at`), or between graphemes in text written without
+    spaces, and `:ellipsis` is added. `text_with_fit/2` reports the
+    size chosen and the text kept.
     Markup passed with `Phoenix.HTML.raw/1` is cut to the lines
     but not shortened. Words are kept whole when fitting: a word
     wider than `:width` steps the text down a size or is cut.
@@ -332,6 +351,14 @@ defmodule Image.Text do
 
   * `:ellipsis` is the string added to shortened text. The
     default is `"…"`.
+
+  * `:shorten_at` is where text that fits at no size is cut:
+    `:word` (the default) or `:sentence`. With `:sentence` the text
+    keeps as many whole sentences as fit, and is cut at a word when
+    not even the first one does. A sentence ends at `.`, `!`, `?`,
+    `…`, `؟` or `۔` followed by a space or the end of the text, or
+    at `。`, `！` or `？`. The `:ellipsis` is added either way; pass
+    `ellipsis: ""` to end at the sentence's own punctuation.
 
   * `:font_file` is a path to any `.ttf` font file. If specified,
     the `:font` parameter is also required. On macOS it takes effect
@@ -450,6 +477,116 @@ defmodule Image.Text do
   end
 
   @doc """
+  Creates an image from the provided text, as `text/2` does, and
+  reports how the text was fitted.
+
+  When `text/2` is given a list of font sizes or `:max_lines`, it
+  chooses a size and may shorten the text. This function returns
+  that choice with the image, so that a caller can record it or lay
+  out other elements to match.
+
+  ### Arguments
+
+  * `string` is any string, or markup passed with
+    `Phoenix.HTML.raw/1`, as for `text/2`.
+
+  * `options` is a `t:Keyword.t/0` list of options. The options are
+    those of `text/2`.
+
+  ### Returns
+
+  * `{:ok, {image, fit}}` where `fit` is a `t:fit/0` map with these
+    keys:
+
+    * `:font_size` is the size the text was set at: the size chosen
+      from a list, or the `:font_size` given. It is `0` when
+      `:font_size` is `0`, in which case libvips chose the size to
+      fill `:height`.
+
+    * `:text` is the text as it is shown, including the `:ellipsis`
+      when it was shortened. For markup it is the markup as given.
+
+    * `:truncated?` is `true` when the text did not fit at any size
+      and was shortened, or was cut to the box where it could not be
+      shortened (markup, or a box too small for one grapheme). In
+      that last case `:text` is the whole text.
+
+    or
+
+  * `{:error, reason}`.
+
+  ### Examples
+
+      iex> {:ok, {_image, fit}} = Image.Text.text_with_fit("Hello", font_size: 24)
+      iex> fit
+      %{font_size: 24, text: "Hello", truncated?: false}
+
+      iex> text = "The first sentence is short. The second one is much longer than that."
+      iex> {:ok, {image, fit}} =
+      ...>   Image.Text.text_with_fit(text,
+      ...>     font_size: [40, 30],
+      ...>     width: 400,
+      ...>     max_lines: 1,
+      ...>     shorten_at: :sentence,
+      ...>     ellipsis: ""
+      ...>   )
+      iex> Image.width(image) <= 400
+      true
+      iex> fit
+      %{font_size: 30, text: "The first sentence is short.", truncated?: true}
+
+  """
+  @doc since: "0.75.0"
+  @spec text_with_fit(Phoenix.HTML.safe() | String.t(), Options.Text.t()) ::
+          {:ok, {Vimage.t(), fit()}} | {:error, Image.error()}
+
+  def text_with_fit(string, options \\ []) when is_list(options) do
+    with {:ok, options} <- Options.Text.validate_options(options),
+         {:ok, {text_layer, fit}} <- simple_text_with_fit(string, options),
+         {:ok, with_background} <- add_background(text_layer, options),
+         {:ok, with_padding} <- add_background_padding(with_background, options),
+         {:ok, image} <- add_background_border(with_padding, options) do
+      {:ok, {image, fit}}
+    end
+  end
+
+  @doc """
+  Creates an image from the provided text and reports how the text
+  was fitted, as `text_with_fit/2` does, or raises an exception.
+
+  ### Arguments
+
+  * `string` is any string, or markup passed with
+    `Phoenix.HTML.raw/1`, as for `text/2`.
+
+  * `options` is a `t:Keyword.t/0` list of options. The options are
+    those of `text/2`.
+
+  ### Returns
+
+  * `{image, fit}` as described in `text_with_fit/2`, or
+
+  * raises an exception.
+
+  ### Examples
+
+      iex> {_image, fit} = Image.Text.text_with_fit!("Hello", font_size: 24)
+      iex> fit.font_size
+      24
+
+  """
+  @doc since: "0.75.0"
+  @spec text_with_fit!(Phoenix.HTML.safe() | String.t(), Options.Text.t()) ::
+          {Vimage.t(), fit()} | no_return()
+
+  def text_with_fit!(string, options \\ []) do
+    case text_with_fit(string, options) do
+      {:ok, result} -> result
+      {:error, reason} -> raise Image.Error, reason
+    end
+  end
+
+  @doc """
   Creates an image from the provided text.
 
   This function creates an image from the text
@@ -507,8 +644,10 @@ defmodule Image.Text do
 
   * `:max_lines` is the most lines the text may take when it is
     wrapped at `:width`. Text that does not fit at the smallest
-    `:font_size` is cut at the end of a word, or between graphemes
-    in text written without spaces, and `:ellipsis` is added.
+    `:font_size` is cut at the end of a word (or a sentence, see
+    `:shorten_at`), or between graphemes in text written without
+    spaces, and `:ellipsis` is added. `text_with_fit/2` reports the
+    size chosen and the text kept.
     Markup passed with `Phoenix.HTML.raw/1` is cut to the lines
     but not shortened. Words are kept whole when fitting: a word
     wider than `:width` steps the text down a size or is cut.
@@ -516,6 +655,14 @@ defmodule Image.Text do
 
   * `:ellipsis` is the string added to shortened text. The
     default is `"…"`.
+
+  * `:shorten_at` is where text that fits at no size is cut:
+    `:word` (the default) or `:sentence`. With `:sentence` the text
+    keeps as many whole sentences as fit, and is cut at a word when
+    not even the first one does. A sentence ends at `.`, `!`, `?`,
+    `…`, `؟` or `۔` followed by a space or the end of the text, or
+    at `。`, `！` or `？`. The `:ellipsis` is added either way; pass
+    `ellipsis: ""` to end at the sentence's own punctuation.
 
   * `:dpi` sets the resolution of the text generation. The
     default `72` which is suitable for screen output. `300`
@@ -557,12 +704,23 @@ defmodule Image.Text do
   end
 
   def simple_text(string, %{} = options) do
-    with {:ok, text_layer} <- render(string, options) do
-      if transparent_text?(options) do
-        Image.convert_alpha_to_mask(text_layer)
-      else
-        {:ok, text_layer}
-      end
+    with {:ok, {text_layer, _fit}} <- simple_text_with_fit(string, options) do
+      {:ok, text_layer}
+    end
+  end
+
+  defp simple_text_with_fit(string, options) do
+    with {:ok, {text_layer, fit}} <- render(string, options),
+         {:ok, text_layer} <- maybe_convert_to_mask(text_layer, options) do
+      {:ok, {text_layer, fit}}
+    end
+  end
+
+  defp maybe_convert_to_mask(text_layer, options) do
+    if transparent_text?(options) do
+      Image.convert_alpha_to_mask(text_layer)
+    else
+      {:ok, text_layer}
     end
   end
 
@@ -625,8 +783,10 @@ defmodule Image.Text do
 
   * `:max_lines` is the most lines the text may take when it is
     wrapped at `:width`. Text that does not fit at the smallest
-    `:font_size` is cut at the end of a word, or between graphemes
-    in text written without spaces, and `:ellipsis` is added.
+    `:font_size` is cut at the end of a word (or a sentence, see
+    `:shorten_at`), or between graphemes in text written without
+    spaces, and `:ellipsis` is added. `text_with_fit/2` reports the
+    size chosen and the text kept.
     Markup passed with `Phoenix.HTML.raw/1` is cut to the lines
     but not shortened. Words are kept whole when fitting: a word
     wider than `:width` steps the text down a size or is cut.
@@ -634,6 +794,14 @@ defmodule Image.Text do
 
   * `:ellipsis` is the string added to shortened text. The
     default is `"…"`.
+
+  * `:shorten_at` is where text that fits at no size is cut:
+    `:word` (the default) or `:sentence`. With `:sentence` the text
+    keeps as many whole sentences as fit, and is cut at a word when
+    not even the first one does. A sentence ends at `.`, `!`, `?`,
+    `…`, `؟` or `۔` followed by a space or the end of the text, or
+    at `。`, `！` or `？`. The `:ellipsis` is added either way; pass
+    `ellipsis: ""` to end at the sentence's own punctuation.
 
   * `:dpi` sets the resolution of the text generation. The
     default `72` which is suitable for screen output. `300`
@@ -1168,17 +1336,32 @@ defmodule Image.Text do
   end
 
   # Text is fitted when it is given a list of sizes to try or a number of
-  # lines to fit in, and rendered as it is otherwise.
+  # lines to fit in, and rendered as it is otherwise. Either way the layer
+  # comes with a report of the size it was set at and the text it shows.
   defp render(string, %{font_size: font_sizes} = options) when is_list(font_sizes) do
-    fit_text(string, font_sizes, options)
+    fit_sizes(string, font_sizes, options)
   end
 
   defp render(string, %{max_lines: max_lines} = options) when is_integer(max_lines) do
-    fit_text(string, [options.font_size], options)
+    fit_sizes(string, [options.font_size], options)
   end
 
   defp render(string, options) do
-    render_string(string, options)
+    with {:ok, layer} <- render_string(string, options) do
+      {:ok, {layer, fit_report(options.font_size, string, false)}}
+    end
+  end
+
+  defp fit_report(font_size, text, truncated?) do
+    %{font_size: font_size, text: text_binary(text), truncated?: truncated?}
+  end
+
+  defp text_binary({:safe, markup}) do
+    IO.iodata_to_binary(markup)
+  end
+
+  defp text_binary(string) do
+    string
   end
 
   defp render_string(string, options) do
@@ -1231,14 +1414,20 @@ defmodule Image.Text do
 
   # The largest size at which the text fits, else the smallest size with
   # the text shortened until it fits.
-  defp fit_text(string, [font_size | smaller], options) do
+  defp fit_sizes(string, [font_size | smaller], options) do
     with {:ok, limits} <- limits(string, font_size, options),
          {:ok, layer} <- measure_string(string, measuring_options(options, font_size)) do
       cond do
-        fits?(layer, limits) -> place(layer, options)
+        fits?(layer, limits) -> place_fitted(layer, font_size, string, false, options)
         smaller == [] -> shorten(string, font_size, limits, layer, options)
-        true -> fit_text(string, smaller, options)
+        true -> fit_sizes(string, smaller, options)
       end
+    end
+  end
+
+  defp place_fitted(layer, font_size, text, truncated?, options) do
+    with {:ok, placed} <- place(layer, options) do
+      {:ok, {placed, fit_report(font_size, text, truncated?)}}
     end
   end
 
@@ -1311,52 +1500,76 @@ defmodule Image.Text do
   end
 
   # Markup is not shortened: cutting it at a word could cut through a tag.
-  defp shorten({:safe, _markup}, _font_size, limits, layer, options) do
-    clip(layer, limits, options)
+  defp shorten({:safe, _markup} = markup, font_size, limits, layer, options) do
+    clip(markup, font_size, limits, layer, options)
   end
 
   defp shorten(string, font_size, limits, layer, options) do
-    tokens = Regex.split(~r/(\s+)/u, String.trim(string), include_captures: true)
-    word_count = div(length(tokens) + 1, 2)
+    cuts = shortening_cuts(String.trim(string), options.shorten_at)
 
+    case first_fitting_cut(cuts, font_size, limits, options) do
+      {:ok, nil} -> clip(string, font_size, limits, layer, options)
+      {:ok, {fitted, shortened}} -> place_fitted(fitted, font_size, shortened, true, options)
+      {:error, _reason} = error -> error
+    end
+  end
+
+  # The ways text is shortened, in the order they are tried: at a sentence
+  # when asked for, at a word, then between the first word's graphemes for
+  # text written without spaces. Each is a list of pieces whose first
+  # `count`, joined, are the text cut short.
+  defp shortening_cuts(text, :sentence) do
+    [sentences(text) | shortening_cuts(text, :word)]
+  end
+
+  defp shortening_cuts(text, :word) do
+    words = List.flatten(Regex.scan(~r/\S+\s*/u, text))
+
+    first_word =
+      words
+      |> List.first("")
+      |> String.trim_trailing()
+
+    [words, String.graphemes(first_word)]
+  end
+
+  # A sentence ends at a full stop, question or exclamation mark or an
+  # ellipsis followed by a space or the end of the text (so that "3.14"
+  # does not end one), or at a CJK full stop or mark, which no space
+  # follows. Closing quotes and brackets stay with their sentence.
+  defp sentences(text) do
+    ~r/.*?(?:[.!?…؟۔।]+["'”’»)\]]*(?=\s|\z)|[。！？]+["'”’」』）)\]]*|\z)\s*/us
+    |> Regex.scan(text)
+    |> List.flatten()
+    |> Enum.reject(&(&1 == ""))
+  end
+
+  defp first_fitting_cut([], _font_size, _limits, _options) do
+    {:ok, nil}
+  end
+
+  defp first_fitting_cut([pieces | rest], font_size, limits, options) do
     cut = fn count ->
-      tokens
-      |> Enum.take(2 * count - 1)
+      pieces
+      |> Enum.take(count)
       |> Enum.join()
       |> measure_cut(font_size, limits, options)
     end
 
-    case largest_fitting(1, word_count - 1, cut, nil) do
-      {:ok, nil} -> shorten_word(hd(tokens), font_size, limits, layer, options)
-      {:ok, fitted} -> place(fitted, options)
-      {:error, _reason} = error -> error
-    end
-  end
-
-  # When not even the first word fits, as for text written without spaces,
-  # the first word is cut between its graphemes.
-  defp shorten_word(word, font_size, limits, layer, options) do
-    cut = fn count ->
-      word
-      |> String.slice(0, count)
-      |> measure_cut(font_size, limits, options)
-    end
-
-    case largest_fitting(1, String.length(word) - 1, cut, nil) do
-      {:ok, nil} -> clip(layer, limits, options)
-      {:ok, fitted} -> place(fitted, options)
-      {:error, _reason} = error -> error
+    case largest_fitting(1, length(pieces) - 1, cut, nil) do
+      {:ok, nil} -> first_fitting_cut(rest, font_size, limits, options)
+      result -> result
     end
   end
 
   # Text that fits at no size and no length, in a box too small for even
   # one grapheme, is cut to the box rather than returned as an error.
-  defp clip(layer, %{width: width, heights: heights}, options) do
+  defp clip(text, font_size, %{width: width, heights: heights}, layer, options) do
     width = min(Image.width(layer), width)
     height = Enum.min([Image.height(layer) | heights])
 
     with {:ok, clipped} <- Image.crop(layer, 0, 0, width, height) do
-      place(clipped, options)
+      place_fitted(clipped, font_size, text, true, options)
     end
   end
 
@@ -1364,7 +1577,7 @@ defmodule Image.Text do
     shortened = String.replace(text, ~r/[\s\p{Pd},;:]+$/u, "") <> options.ellipsis
 
     with {:ok, layer} <- measure_string(shortened, measuring_options(options, font_size)) do
-      {:ok, {layer, fits?(layer, limits)}}
+      {:ok, {{layer, shortened}, fits?(layer, limits)}}
     end
   end
 
@@ -1378,8 +1591,8 @@ defmodule Image.Text do
     middle = div(low + high, 2)
 
     case cut.(middle) do
-      {:ok, {layer, true}} -> largest_fitting(middle + 1, high, cut, layer)
-      {:ok, {_layer, false}} -> largest_fitting(low, middle - 1, cut, best)
+      {:ok, {candidate, true}} -> largest_fitting(middle + 1, high, cut, candidate)
+      {:ok, {_candidate, false}} -> largest_fitting(low, middle - 1, cut, best)
       {:error, _reason} = error -> error
     end
   end

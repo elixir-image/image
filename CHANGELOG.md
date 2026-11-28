@@ -4,6 +4,12 @@
 
 This is the changelog for Image version 0.75.0, not yet released. For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)
 
+### Added
+
+* `Image.Text.text_with_fit/2` returns the image with the font size chosen, the text shown and whether it was truncated.
+
+* `Image.Text` takes `shorten_at: :sentence` to shorten text that fits at no size to whole sentences, falling back to a word.
+
 ### Fixed
 
 * The privacy guide and `Image.Privacy.remove/2` now say that saving re-encodes the pixels (lossily for JPEG) and drops animation frames unless the image was opened with `pages: :all`.
