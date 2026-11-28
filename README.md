@@ -10,11 +10,11 @@ Documentation can be found at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 ## Features
 
-* **Image processing** — open, write, resize, thumbnail, crop, embed, rotate, flip, flatten, trim, replace colour, chroma key, warp perspective, distort, blur (Gaussian, box, bilateral), sharpen, modulate, vibrance, tone map, local contrast, equalize, blend, composite, mask, dilate / erode, edge detect.
+* **Image processing** — open, write (including `.ico` icons), resize, thumbnail, crop, embed, rotate, flip, flatten, trim, replace colour, chroma key, warp perspective, distort, blur (Gaussian, box, bilateral), sharpen, modulate, vibrance, tone map, local contrast, equalize, blend, composite, mask, dilate / erode, edge detect.
 
 * **Drawing** — `Image.Draw` provides points, rectangles, circles, lines, masks, flood fill, image overlay, smudge.
 
-* **Text rendering** — `Image.Text` produces antialiased text overlays with full Pango markup support, font selection, alignment, background fills, stroke, and per-character control.
+* **Text rendering** — `Image.Text` produces antialiased text overlays with full Pango markup support, font selection, alignment, background fills, stroke, and per-character control. Text can be fitted to a box from a list of font sizes and a line limit, shortened at a word or a sentence, and `Image.Text.text_with_fit/2` reports the size and text chosen.
 
 * **Colour management** — colour arguments accept atoms, hex strings, CSS named colours, hex shorthand, `#RRGGBBAA`, `Color.*` structs, CSS Color 4 / 5 functions (`rgb()`, `hsl()`, `lab()`, `oklch()`, `color-mix()`, relative colour syntax via `from`, `none` keyword, `calc()`), and are converted to the **target image's interpretation** via `Image.Pixel.to_pixel/3`. The same colour string draws correctly on sRGB, Lab, scRGB, CMYK, 16-bit, and greyscale images.
 
@@ -78,7 +78,7 @@ Add `:image` to your dependencies:
 ```elixir
 def deps do
   [
-    {:image, "~> 0.74"}
+    {:image, "~> 0.75"}
   ]
 end
 ```
@@ -303,4 +303,4 @@ The full API reference is at [hexdocs.pm/image](https://hexdocs.pm/image).
 
 ## License
 
-Apache 2.0, with the bundled Anton font under the SIL Open Font License 1.1. See [LICENSE.md](https://github.com/elixir-image/image/blob/v0.74.0/LICENSE.md) for the full text.
+Apache 2.0, with the bundled Anton font under the SIL Open Font License 1.1. See [LICENSE.md](https://github.com/elixir-image/image/blob/v0.75.0/LICENSE.md) for the full text.
