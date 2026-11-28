@@ -7741,6 +7741,11 @@ defmodule Image do
   Note that `.jpg` files do not support
   alpha transparency.
 
+  An existing alpha band is scaled by the mask, so the image's
+  own transparency and the circle's antialiased edge are both
+  kept. The mask is computed rather than drawn as SVG, so it
+  works where libvips' SVG loader is unavailable or blocked.
+
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
@@ -7763,8 +7768,6 @@ defmodule Image do
 
   @spec circle(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def circle(%Vimage{} = image, _options \\ []) do
-    use Image.Math
-
     width = width(image)
     height = height(image)
     size = min(width, height)
@@ -7773,14 +7776,7 @@ defmodule Image do
     # mask and the image have the same dimensions.
     with {:ok, image} <- crop(image, :center, :middle, size, size),
          {:ok, mask} <- mask(:circle, size, size) do
-      case split_alpha(image) do
-        {base_image, nil} ->
-          Operation.bandjoin([base_image, mask])
-
-        {base_image, alpha} ->
-          alpha = if_then_else!(mask == 0, mask, alpha)
-          Operation.bandjoin([base_image, alpha])
-      end
+      apply_shape_mask(image, mask)
     end
   end
 
@@ -7830,6 +7826,11 @@ defmodule Image do
   @doc """
   Apply rounded corners to an image.
 
+  An existing alpha band is scaled by the mask, so the image's
+  own transparency and the corners' antialiased edges are both
+  kept. The mask is computed rather than drawn as SVG, so it
+  works where libvips' SVG loader is unavailable or blocked.
+
   ### Arguments
 
   * `image` is any `t:Vix.Vips.Image.t/0`.
@@ -7862,27 +7863,10 @@ defmodule Image do
 
   @spec rounded(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def rounded(%Vimage{} = image, options \\ []) do
-    use Image.Math
-
     options = Keyword.put_new(options, :radius, @default_round_corner_radius)
 
     with {:ok, mask} <- mask(:rounded_corners, width(image), height(image), options) do
-      image
-      |> split_alpha()
-      |> join_rounded_mask(mask)
-    end
-  end
-
-  defp join_rounded_mask({base_image, nil}, mask) do
-    Operation.bandjoin([base_image, mask])
-  end
-
-  # An existing alpha is kept inside the mask and cleared outside it.
-  defp join_rounded_mask({base_image, alpha}, mask) do
-    use Image.Math
-
-    with {:ok, alpha} <- if_then_else(mask == 0, mask, alpha) do
-      Operation.bandjoin([base_image, alpha])
+      apply_shape_mask(image, mask)
     end
   end
 
@@ -7941,10 +7925,14 @@ defmodule Image do
   closest match to the Apple icon shape, equivalent to the CSS
   `border-radius: 46.2%; corner-shape: superellipse(1.585)`.
 
-  The curve is traced exactly rather than approximated with Bézier
-  curves, and the mask is anti-aliased. Because the default radius
-  is proportional to the image, the shape is the same at every
-  size.
+  The curve is computed exactly rather than approximated with
+  Bézier curves, and the mask is anti-aliased. Because the default
+  radius is proportional to the image, the shape is the same at
+  every size. The mask is computed rather than drawn as SVG, so it
+  works where libvips' SVG loader is unavailable or blocked.
+
+  An existing alpha band is scaled by the mask, so the image's own
+  transparency and the curve's antialiased edge are both kept.
 
   ### Arguments
 
@@ -7989,20 +7977,8 @@ defmodule Image do
 
   @spec squircle(Vimage.t(), Keyword.t()) :: {:ok, Vimage.t()} | {:error, error()}
   def squircle(%Vimage{} = image, options \\ []) do
-    use Image.Math
-
-    width = width(image)
-    height = height(image)
-
-    with {:ok, mask} <- mask(:squircle, width, height, options) do
-      case split_alpha(image) do
-        {base_image, nil} ->
-          Operation.bandjoin([base_image, mask])
-
-        {base_image, alpha} ->
-          alpha = if_then_else!(mask == 0, mask, alpha)
-          Operation.bandjoin([base_image, alpha])
-      end
+    with {:ok, mask} <- mask(:squircle, width(image), height(image), options) do
+      apply_shape_mask(image, mask)
     end
   end
 
@@ -8054,6 +8030,24 @@ defmodule Image do
     end
   end
 
+  # Applies an 8-bit shape mask as the image's alpha. An image without
+  # alpha takes the mask as it is. An existing alpha is scaled by the
+  # mask, so the shape's antialiased edge is kept and so is the image's
+  # own transparency, in the alpha's own format.
+  defp apply_shape_mask(image, mask) do
+    case split_alpha(image) do
+      {base_image, nil} ->
+        Operation.bandjoin([base_image, mask])
+
+      {base_image, alpha} ->
+        with {:ok, product} <- Math.multiply(alpha, mask),
+             {:ok, scaled} <- Operation.linear(product, [1 / 255], [0.5]),
+             {:ok, alpha} <- Operation.cast(scaled, Vimage.format(alpha)) do
+          Operation.bandjoin([base_image, alpha])
+        end
+    end
+  end
+
   # Create an image mask (alpha transparency) that can
   # then be applied to an image.
 
@@ -8062,33 +8056,17 @@ defmodule Image do
   defp mask(type, width, height, options \\ [])
 
   defp mask(:circle, diameter, diameter, _options) do
-    centre = div(diameter, 2)
-
-    svg = """
-    <svg viewBox="0 0 #{diameter} #{diameter}">
-      <circle style="fill: black; stroke: none" cx="#{centre}" cy="#{centre}" r="#{centre}"/>
-    </svg>
-    """
-
-    with {:ok, {circle, _flags}} <- Operation.svgload_buffer(svg) do
-      Operation.extract_band(circle, alpha_band(circle))
-    end
+    shape_mask(diameter, diameter, diameter / 2, 2)
   end
 
   defp mask(:rounded_corners, width, height, options) do
     radius = Keyword.get(options, :radius, @default_round_corner_radius)
 
-    with {:ok, radius} <- corner_radius(radius, min(width, height)),
-         {:ok, {mask, _flags}} <-
-           Operation.svgload_buffer(rounded_corners_svg(width, height, radius)) do
-      Operation.extract_band(mask, alpha_band(mask))
+    with {:ok, radius} <- corner_radius(radius, min(width, height)) do
+      shape_mask(width, height, radius, 2)
     end
   end
 
-  # Each corner is the quadrant of a superellipse |x|^n + |y|^n = 1
-  # scaled to the corner radius, joined to the next corner by a straight
-  # edge. The curve is traced as a polygon rather than approximated with
-  # Bézier curves, since the mask is rasterised anyway.
   defp mask(:squircle, width, height, options) do
     shorter = min(width, height)
     default_radius = @default_squircle_radius_percent / 100 * shorter
@@ -8097,18 +8075,7 @@ defmodule Image do
 
     with {:ok, radius} <- corner_radius(radius, shorter),
          {:ok, exponent} <- squircle_exponent(exponent) do
-      points = squircle_points(width, height, radius, exponent)
-
-      svg = """
-      <svg viewBox="0 0 #{width} #{height}">
-        <polygon points="#{points}" fill="black" />
-      </svg>
-      """
-
-      case Operation.svgload_buffer(svg) do
-        {:ok, {mask, _flags}} -> Operation.extract_band(mask, alpha_band(mask))
-        {:error, reason} -> {:error, Image.Error.wrap(reason, operation: :squircle)}
-      end
+      shape_mask(width, height, radius, exponent)
     end
   end
 
@@ -8127,14 +8094,6 @@ defmodule Image do
      }}
   end
 
-  defp rounded_corners_svg(width, height, radius) do
-    """
-    <svg viewBox="0 0 #{width} #{height}">
-      <rect rx="#{radius}" ry="#{radius}" x="0" y="0" width="#{width}" height="#{height}" fill="black" />
-    </svg>
-    """
-  end
-
   defp squircle_exponent(exponent) when is_number(exponent) and exponent > 0 do
     {:ok, exponent}
   end
@@ -8148,48 +8107,66 @@ defmodule Image do
      }}
   end
 
-  # The corners clockwise from the top right: the centre of each corner's
-  # curve, the direction it bulges in, and whether its points run from the
-  # vertical edge to the horizontal one or the other way round.
-  defp squircle_points(width, height, radius, exponent) do
-    right = width - radius
-    bottom = height - radius
-    angles = squircle_angles(radius)
-    reversed = Enum.reverse(angles)
-
-    [
-      {right, radius, 1, -1, reversed},
-      {right, bottom, 1, 1, angles},
-      {radius, bottom, -1, 1, reversed},
-      {radius, radius, -1, -1, angles}
-    ]
-    |> Enum.flat_map(&squircle_corner(&1, radius, 2 / exponent))
-    |> Enum.map_join(" ", fn {x, y} -> "#{svg_coordinate(x)},#{svg_coordinate(y)}" end)
-  end
-
-  # One point per pixel of radius traces the curve to well under a pixel.
-  defp squircle_angles(radius) do
-    steps =
-      radius
-      |> ceil()
-      |> max(8)
-      |> min(512)
-
-    for step <- 0..steps do
-      step * :math.pi() / (2 * steps)
+  # The coverage of a rectangle whose corners are quadrants of the
+  # superellipse |x|^n + |y|^n = r^n, antialiased over about a pixel.
+  # Each pixel's value comes from the signed distance from its centre
+  # to the edge, measured in the Lp norm for p = n: exact for a circle
+  # and rounded corners (n = 2), close for a squircle. The mask is
+  # computed with arithmetic rather than drawn as SVG so that it works
+  # where SVG loading is unavailable or disabled, and it uses only
+  # operations every supported libvips has.
+  defp shape_mask(width, height, radius, exponent) do
+    with {:ok, xyz} <- Operation.xyz(width, height),
+         {:ok, x} <- Operation.extract_band(xyz, 0),
+         {:ok, y} <- Operation.extract_band(xyz, 1),
+         {:ok, offset_x} <- edge_offset(x, width, radius),
+         {:ok, offset_y} <- edge_offset(y, height, radius),
+         {:ok, outside} <- corner_distance(offset_x, offset_y, exponent),
+         {:ok, inside} <- edge_distance(offset_x, offset_y),
+         {:ok, distance} <- Math.add(outside, inside),
+         {:ok, coverage} <- Operation.linear(distance, [-255.0], [255.0 * (radius + 0.5)]) do
+      Operation.cast(coverage, :VIPS_FORMAT_UCHAR)
     end
   end
 
-  defp squircle_corner({centre_x, centre_y, sign_x, sign_y, angles}, radius, power) do
-    for angle <- angles do
-      x = centre_x + sign_x * radius * :math.pow(abs(:math.cos(angle)), power)
-      y = centre_y + sign_y * radius * :math.pow(abs(:math.sin(angle)), power)
-      {x, y}
+  # How far a pixel centre lies beyond the straight part of the edges
+  # along one axis: negative between the corners, positive in them.
+  defp edge_offset(coordinate, length, radius) do
+    with {:ok, centred} <- Operation.linear(coordinate, [1.0], [-(length - 1) / 2]),
+         {:ok, distance} <- Operation.abs(centred) do
+      Operation.linear(distance, [1.0], [radius - length / 2])
     end
   end
 
-  defp svg_coordinate(value) do
-    :erlang.float_to_binary(value * 1.0, decimals: 3)
+  # In a corner, the distance from the corner's centre; zero elsewhere.
+  defp corner_distance(offset_x, offset_y, exponent) do
+    with {:ok, x} <- positive_part(offset_x),
+         {:ok, y} <- positive_part(offset_y),
+         {:ok, x} <- Math.pow(x, exponent),
+         {:ok, y} <- Math.pow(y, exponent),
+         {:ok, sum} <- Math.add(x, y) do
+      Math.pow(sum, 1 / exponent)
+    end
+  end
+
+  # Between the corners, the distance to the nearer straight edge as a
+  # negative number; zero elsewhere.
+  defp edge_distance(offset_x, offset_y) do
+    with {:ok, difference} <- Math.subtract(offset_y, offset_x),
+         {:ok, excess} <- positive_part(difference),
+         {:ok, larger} <- Math.add(offset_x, excess),
+         {:ok, positive} <- positive_part(larger) do
+      Math.subtract(larger, positive)
+    end
+  end
+
+  # The image where it is positive and zero where it is not.
+  defp positive_part(image) do
+    with {:ok, positive} <-
+           Operation.relational_const(image, :VIPS_OPERATION_RELATIONAL_MORE, [0.0]),
+         {:ok, unit} <- Operation.linear(positive, [1 / 255], [0.0]) do
+      Math.multiply(image, unit)
+    end
   end
 
   @doc """
@@ -12218,57 +12195,39 @@ defmodule Image do
   defp fade_length(_edge, length, _width, _height) when is_integer(length) and length > 0,
     do: length
 
-  # Render a single SVG gradient that's white in the body and
-  # ramps to black on the requested edge. Returns a 1-band
-  # u8 image the same size as the source.
+  # A 1-band 8-bit mask that is 255 in the body of the image and
+  # falls linearly to 0 at the requested edge over `length_px`,
+  # measured at pixel centres. It is computed with arithmetic rather
+  # than drawn as SVG so that it works where SVG loading is
+  # unavailable or disabled.
   defp build_fade_edge_mask(width, height, edge, length_px) do
-    {x1, y1, x2, y2, stop} = fade_gradient_geometry(edge, width, height, length_px)
+    {band, scale, offset} = fade_axis(edge, width, height)
+    gain = 255 / max(length_px, 1)
 
-    svg = """
-    <svg xmlns="http://www.w3.org/2000/svg" width="#{width}" height="#{height}" viewBox="0 0 #{width} #{height}">
-      <defs>
-        <linearGradient id="g" gradientUnits="userSpaceOnUse"
-          x1="#{x1}" y1="#{y1}" x2="#{x2}" y2="#{y2}">
-          <stop offset="0" stop-color="black"/>
-          <stop offset="#{stop}" stop-color="white"/>
-          <stop offset="1" stop-color="white"/>
-        </linearGradient>
-      </defs>
-      <rect width="#{width}" height="#{height}" fill="url(#g)"/>
-    </svg>
-    """
-
-    with {:ok, {svg_image, _flags}} <- Operation.svgload_buffer(svg) do
-      # SVG render emits an RGBA image; collapse to a 1-band
-      # luminance mask so the per-pixel `min` combine across
-      # edges is straightforward.
-      to_colorspace(Operation.extract_band!(svg_image, 0, n: 3), :bw)
+    with {:ok, xyz} <- Operation.xyz(width, height),
+         {:ok, coordinate} <- Operation.extract_band(xyz, band),
+         {:ok, ramp} <- Operation.linear(coordinate, [scale * gain], [offset * gain + 0.5]) do
+      Operation.cast(ramp, :VIPS_FORMAT_UCHAR)
     end
   end
 
-  # Geometry of the gradient axis. The gradient runs *into* the
-  # image perpendicular to the edge, length `length_px`, and
-  # the inner stop is `length_px / dim` of the way along the
-  # full SVG axis (which spans the whole image).
-  defp fade_gradient_geometry(:top, width, height, length_px) do
-    {div(width, 2), 0, div(width, 2), height, safe_stop(length_px, height)}
+  # The band of the coordinate image that runs across the edge, and
+  # the distance from the edge to a pixel centre as
+  # `scale * coordinate + offset`.
+  defp fade_axis(:top, _width, _height) do
+    {1, 1, 0.5}
   end
 
-  defp fade_gradient_geometry(:bottom, width, height, length_px) do
-    {div(width, 2), height, div(width, 2), 0, safe_stop(length_px, height)}
+  defp fade_axis(:bottom, _width, height) do
+    {1, -1, height - 0.5}
   end
 
-  defp fade_gradient_geometry(:left, width, height, length_px) do
-    {0, div(height, 2), width, div(height, 2), safe_stop(length_px, width)}
+  defp fade_axis(:left, _width, _height) do
+    {0, 1, 0.5}
   end
 
-  defp fade_gradient_geometry(:right, width, height, length_px) do
-    {width, div(height, 2), 0, div(height, 2), safe_stop(length_px, width)}
-  end
-
-  defp safe_stop(length_px, dim) do
-    fraction = length_px / max(dim, 1)
-    fraction |> max(0.0) |> min(1.0) |> Float.round(6)
+  defp fade_axis(:right, width, _height) do
+    {0, -1, width - 0.5}
   end
 
   @doc """

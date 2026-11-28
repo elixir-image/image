@@ -16,6 +16,13 @@ defmodule Image.Shape do
 
   * Line.
 
+  Shapes are drawn by rendering SVG, so these functions need libvips'
+  SVG loader and return an error where it is unavailable or blocked,
+  for example with `VIPS_BLOCK_UNTRUSTED` set. `Image.Draw` draws
+  rectangles, circles and lines without it, and `Image.circle/2`,
+  `Image.rounded/2`, `Image.squircle/2` and `Image.avatar/2` do not
+  use it either.
+
   """
 
   alias Vix.Vips.Image, as: Vimage

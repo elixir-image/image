@@ -10,6 +10,10 @@ This is the changelog for Image version 0.75.0, not yet released. For older chan
 
 * The `:font_file` docs no longer say it is unsupported on macOS: `Image.Text` now documents `PANGOCAIRO_BACKEND=fc`, which makes it work there, and a `FONTCONFIG_FILE` configuration as the alternative.
 
+* `Image.circle/2`, `Image.rounded/2`, `Image.squircle/2`, `Image.avatar/2`, `Image.fade/2` and `Image.Text` backgrounds and borders no longer need libvips' SVG loader, so they work with `VIPS_BLOCK_UNTRUSTED` set.
+
+* `Image.circle/2`, `Image.rounded/2` and `Image.squircle/2` scale an existing alpha band by the mask instead of keeping it whole up to the edge, so the antialiased edge is no longer lost.
+
 ## Image 0.74.0
 
 This is the changelog for Image version 0.74.0 released on November 18th, 2026. For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-image/image/tags)

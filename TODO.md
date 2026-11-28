@@ -4,8 +4,6 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
-* [ ] **Masks need SVG loading** — circle, rounded and squircle masks, and so `Image.avatar/2` and `Image.rounded/2`, are drawn through `svgload_buffer`; add an arithmetic path. Mishka gap 17.
-
 * [ ] **Text fitting does not report what it chose** — `Image.Text.text/2` does not return the font size or the text it kept, and shortens only at a word; add a reporting function and a sentence-boundary option. Mishka gap 18.
 
 * [ ] **`radial_gradient/3` has no pixel radius or fade curve** — `:radius` is a unitless 1..5 scale and the fade is linear; add both without breaking the current options. Mishka gap 19.
@@ -33,6 +31,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **Masks no longer need SVG loading** — circle, rounded and squircle masks, `Image.fade/2` and `Image.Text` backgrounds are computed from pixels; an existing alpha is now scaled by the mask. Mishka gap 17. 2026-11-28.
 
 * [x] **`:font_file` and `FONTCONFIG_FILE` documented** — `Image.Text` explains both and the `PANGOCAIRO_BACKEND=fc` setting macOS needs. Mishka gap 16. 2026-11-28.
 

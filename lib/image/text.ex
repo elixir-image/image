@@ -1029,7 +1029,7 @@ defmodule Image.Text do
   end
 
   def add_background_border(image, %{} = options) do
-    with {:ok, {border, _flags}} <- render_background_border(image, options) do
+    with {:ok, border} <- render_background_border(image, options) do
       Operation.composite2(image, border, :VIPS_BLEND_MODE_OVER)
     end
   end
@@ -1583,19 +1583,11 @@ defmodule Image.Text do
   defp render_background(image, %{} = options) do
     width = Map.get(options, :background_width, Image.width(image))
     height = Map.get(options, :background_height, Image.height(image))
+    color = options.background_fill_color
+    opacity = options.background_fill_opacity
 
-    svg = """
-    <svg width="#{width}px" height="#{height}px">
-      <rect
-        fill="#{options.background_fill_color}"
-        opacity="#{options.background_fill_opacity}"
-        width="100%"
-        height="100%"
-      />
-    </svg>
-    """
-
-    with {:ok, {rectangle, _flags}} <- Operation.svgload_buffer(svg) do
+    with {:ok, color} <- background_rgba(color, opacity),
+         {:ok, rectangle} <- Image.new(width, height, color: color) do
       if transparent_text?(options) do
         Operation.extract_band(rectangle, 0, n: 3)
       else
@@ -1604,34 +1596,49 @@ defmodule Image.Text do
     end
   end
 
-  # Render a background border. The fill will be
-  # transparent so the border cam be composed over
-  # another layer.
+  # Render a background border with a transparent interior so it can
+  # be composed over another layer. The border lies inside the
+  # background's bounds: a filled rectangle with its interior cleared.
 
   defp render_background_border(image, %{} = options) do
     width = Map.get(options, :background_width, Image.width(image))
     height = Map.get(options, :background_height, Image.height(image))
+    stroke_width = options.background_stroke_width
+    color = options.background_stroke_color
+    opacity = options.background_stroke_opacity
 
-    # This because the stroke is along the centre line and therefore
-    # 50% of it is clipped outside the background. We are after the
-    # equivalent of the stroke inside the bounding box.
+    with {:ok, color} <- background_rgba(color, opacity),
+         {:ok, frame} <- Image.new(width, height, color: color) do
+      clear_interior(frame, width - 2 * stroke_width, height - 2 * stroke_width, stroke_width)
+    end
+  end
 
-    stroke_width = options.background_stroke_width * 2
+  defp clear_interior(frame, inner_width, inner_height, stroke_width)
+       when inner_width > 0 and inner_height > 0 do
+    with {:ok, interior} <- Image.new(inner_width, inner_height, color: [0, 0, 0, 0]) do
+      Operation.insert(frame, interior, stroke_width, stroke_width)
+    end
+  end
 
-    svg = """
-    <svg width="#{width}px" height="#{height}px">
-      <rect
-        fill="transparent"
-        stroke="#{options.background_stroke_color}"
-        stroke-width="#{stroke_width}"
-        opacity="#{options.background_stroke_opacity}"
-        width="100%"
-        height="100%"
-      />
-    </svg>
-    """
+  defp clear_interior(frame, _inner_width, _inner_height, _stroke_width) do
+    {:ok, frame}
+  end
 
-    Operation.svgload_buffer(svg)
+  # The 8-bit RGBA of a background color drawn at an opacity. The
+  # backgrounds are built from pixels rather than drawn as SVG so that
+  # they work where SVG loading is unavailable or disabled.
+  defp background_rgba(color, opacity) do
+    with {:ok, pixel} <- Image.Pixel.to_srgb(color) do
+      {:ok, apply_background_opacity(pixel, opacity)}
+    end
+  end
+
+  defp apply_background_opacity([red, green, blue], opacity) do
+    [red, green, blue, round(255 * opacity)]
+  end
+
+  defp apply_background_opacity([red, green, blue, alpha], opacity) do
+    [red, green, blue, round(alpha * opacity)]
   end
 
   defp apply_opacity(image, options) do
