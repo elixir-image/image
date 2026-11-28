@@ -60,31 +60,31 @@ jobs:
           - elixir: "1.17.3-otp-26"
             otp: "26.2.5.21"
           - elixir: "1.17.3-otp-27"
-            otp: "27.3.4.19"
+            otp: "27.3.4.20"
 
           # Elixir 1.18 — supports OTP 25–27
           - elixir: "1.18.6-otp-26"
             otp: "26.2.5.21"
           - elixir: "1.18.6-otp-27"
-            otp: "27.3.4.19"
+            otp: "27.3.4.20"
 
           # Elixir 1.19 — supports OTP 26–28
           - elixir: "1.19.7-otp-26"
             otp: "26.2.5.21"
           - elixir: "1.19.7-otp-27"
-            otp: "27.3.4.19"
+            otp: "27.3.4.20"
           - elixir: "1.19.7-otp-28"
-            otp: "28.5.0.8"
+            otp: "28.5.0.9"
 
           # Elixir 1.20 — supports OTP 27–29. The 1.20.5-otp-29 entry is the
           # canonical toolchain and the lint entry (format, credo,
           # warnings-as-errors, dialyzer, docs).
           - elixir: "1.20.5-otp-27"
-            otp: "27.3.4.19"
+            otp: "27.3.4.20"
           - elixir: "1.20.5-otp-28"
-            otp: "28.5.0.8"
+            otp: "28.5.0.9"
           - elixir: "1.20.5-otp-29"
-            otp: "29.1.2"
+            otp: "29.1.3"
             lint: true
     steps:
     # Step: Setup Elixir + Erlang image as the base.
