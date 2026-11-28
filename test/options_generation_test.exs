@@ -5,6 +5,70 @@ defmodule Image.Options.Generation.Test do
 
   alias Vix.Vips.Image, as: Vimage
 
+  @white [255, 255, 255, 255]
+  @black [0, 0, 0, 255]
+
+  describe "Image.radial_gradient/3 :radius in pixels and :fade" do
+    # The first band along the top row of a gradient centred on the
+    # top-left pixel, from white at the centre to black at 100 pixels.
+    defp row(options) do
+      options = Keyword.merge([start_color: @white, finish_color: @black, x: 0, y: 0], options)
+      {:ok, gradient} = Image.radial_gradient(260, 1, options)
+
+      for x <- [0, 25, 50, 100, 150] do
+        gradient
+        |> Image.get_pixel!(x, 0)
+        |> hd()
+      end
+    end
+
+    test "a radius in pixels reaches the finish color at that distance" do
+      assert row(radius: {:pixels, 100}) == [255.0, 191.25, 127.5, 0.0, 0.0]
+    end
+
+    test "each fade curve mixes in the finish color at its own rate" do
+      assert row(radius: {:pixels, 100}, fade: :ease_in) ==
+               [255.0, 239.0625, 191.25, 0.0, 0.0]
+
+      assert row(radius: {:pixels, 100}, fade: :ease_out) ==
+               [255.0, 143.4375, 63.75, 0.0, 0.0]
+
+      assert row(radius: {:pixels, 100}, fade: :smooth) ==
+               [255.0, 215.15625, 127.5, 0.0, 0.0]
+    end
+
+    test "the default :fade is :linear, so a scaled radius is unchanged" do
+      {:ok, default} = Image.radial_gradient(40, 30)
+      {:ok, linear} = Image.radial_gradient(40, 30, fade: :linear)
+
+      assert Vimage.write_to_binary(default) == Vimage.write_to_binary(linear)
+    end
+
+    test "a fade curve applies to a scaled radius too" do
+      {:ok, linear} = Image.radial_gradient(40, 30)
+      {:ok, eased} = Image.radial_gradient(40, 30, fade: :ease_out)
+
+      refute Vimage.write_to_binary(linear) == Vimage.write_to_binary(eased)
+    end
+
+    test ":feather cannot be combined with a radius in pixels" do
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:feather, 3}}} =
+               Image.radial_gradient(20, 20, radius: {:pixels, 10}, feather: 3)
+    end
+
+    test "rejects a radius that is not positive" do
+      for radius <- [0, -1, {:pixels, 0}, {:pixels, -5}, {:pixels, :ten}] do
+        assert {:error, %Image.Error{reason: :invalid_option}} =
+                 Image.radial_gradient(20, 20, radius: radius)
+      end
+    end
+
+    test "rejects an unknown :fade" do
+      assert {:error, %Image.Error{reason: :invalid_option, value: {:fade, :bouncy}}} =
+               Image.radial_gradient(20, 20, fade: :bouncy)
+    end
+  end
+
   describe "Image.radial_gradient/3 options" do
     test "with default options" do
       assert {:ok, %Vimage{}} = Image.radial_gradient(20, 20)

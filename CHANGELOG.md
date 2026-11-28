@@ -10,6 +10,8 @@ This is the changelog for Image version 0.75.0, not yet released. For older chan
 
 * `Image.Text` takes `shorten_at: :sentence` to shorten text that fits at no size to whole sentences, falling back to a word.
 
+* `Image.radial_gradient/3` takes `radius: {:pixels, n}` for a radius in pixels and `:fade` (`:linear`, `:ease_in`, `:ease_out` or `:smooth`) for the curve. A `:radius` that is not positive is now an error.
+
 ### Fixed
 
 * The privacy guide and `Image.Privacy.remove/2` now say that saving re-encodes the pixels (lossily for JPEG) and drops animation frames unless the image was opened with `pages: :all`.

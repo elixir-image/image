@@ -4,8 +4,6 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
-* [ ] **`radial_gradient/3` has no pixel radius or fade curve** — `:radius` is a unitless 1..5 scale and the fade is linear; add both without breaking the current options. Mishka gap 19.
-
 * [ ] **Rule 2 bang sweep** — 173 calls to `!` functions remain inside non-bang functions (84 in `lib/image.ex`, 48 in `Image.Math`, mostly its operators). Each needs judging: a bang on values the library built itself is acceptable, one on caller input is not.
 
 * [ ] **Value attributes defined between functions** — 33 module attributes such as `@max_rgb_band_value` sit after the first function definition (20 in `lib/image.ex`, the rest across nine files), against the house rule that they go in one block at the top.
@@ -29,6 +27,8 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 * [ ] **`Image.compare/3` returns sRGB for `:lab`, `:lch` and `:cmyk`** — `composite2/3` composites outside the sRGB family in 8-bit sRGB and returns its result there, so the composed difference cannot stay in those interpretations. Fixing it means hand-rolling the OVER blend with `Image.Math` instead of calling libvips.
 
 ## Done
+
+* [x] **`radial_gradient/3` pixel radius and fade curve** — `radius: {:pixels, n}` and `:fade` added; the unitless `:radius` and linear fade remain the defaults. Mishka gap 19. 2026-11-28.
 
 * [x] **Text fitting reports what it chose** — `Image.Text.text_with_fit/2` returns the font size, the text shown and `truncated?`; `shorten_at: :sentence` cuts at whole sentences. Mishka gap 18. 2026-11-28.
 

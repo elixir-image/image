@@ -8854,10 +8854,19 @@ defmodule Image do
     (harshest transition) to the largest amount of
     feather (smoothest transition). The default is `1`.
 
-  * `:radius` is the radius of the gradient in the range `1..5`
-    where `1` fully fills the space and `5` fills a small section
-    of the center of the space.  The default is `2`. Beyond the
-    radius every pixel is the `:finish_color`.
+  * `:radius` is the radius of the gradient: either a positive
+    number, a scale in which `1` fully fills the space and `5`
+    fills a small section of the center of the space, or
+    `{:pixels, n}`, the distance in pixels from the centre at which
+    the `:finish_color` is reached. The default is `2`. Beyond the
+    radius every pixel is the `:finish_color`. `:feather` cannot be
+    combined with a radius in pixels.
+
+  * `:fade` is how the gradient moves from `:start_color` to
+    `:finish_color` with the distance from the centre: `:linear`
+    (the default), `:ease_in` (slowly near the centre), `:ease_out`
+    (quickly near the centre, a soft-edged glow) or `:smooth` (slowly
+    at both ends). See `t:Image.Options.RadialGradient.fade/0`.
 
   * `:x` is the horizontal centre of the gradient. An integer is
     a pixel offset from the left, or from the right when negative.
@@ -8888,6 +8897,16 @@ defmodule Image do
       iex> Image.shape(glow)
       {120, 60, 4}
 
+      iex> {:ok, glow} =
+      ...>   Image.radial_gradient(120, 60,
+      ...>     start_color: [124, 77, 255, 140],
+      ...>     finish_color: [124, 77, 255, 0],
+      ...>     radius: {:pixels, 50},
+      ...>     fade: :ease_out
+      ...>   )
+      iex> Image.get_pixel!(glow, 0, 0)
+      [124.0, 77.0, 255.0, 0.0]
+
   """
   @doc subject: "Generator", since: "0.6.0"
 
@@ -8902,23 +8921,56 @@ defmodule Image do
     use Image.Math
 
     with {:ok, options} <- Options.RadialGradient.validate_options(options) do
-      max = max(width, height)
       center_x = gradient_center(options.x, width)
       center_y = gradient_center(options.y, height)
       xyz = Operation.xyz!(width, height) - [center_x, center_y]
-
-      distance =
-        (xyz[0] ** 2 + xyz[1] ** 2) ** 0.5 / (2 ** (options.feather * 0.05) * max / options.radius)
+      extent = gradient_extent(options, width, height)
+      distance = (xyz[0] ** 2 + xyz[1] ** 2) ** 0.5 / extent
 
       # Beyond the radius the gradient holds its finish color rather than
       # extrapolating past it. min(distance, 1) is written as
       # (distance + 1 - |distance - 1|) / 2.
       d = (distance + 1 - Operation.abs!(distance - 1)) / 2
+      weight = fade_weight(d, options.fade)
 
-      radial_gradient = d * options.finish_color + (d * -1 + 1) * options.start_color
+      radial_gradient = weight * options.finish_color + (weight * -1 + 1) * options.start_color
 
       Operation.copy(radial_gradient, interpretation: :VIPS_INTERPRETATION_sRGB)
     end
+  end
+
+  # The distance from the centre, in pixels, at which the gradient
+  # reaches its finish color.
+  defp gradient_extent(%{radius: {:pixels, pixels}}, _width, _height) do
+    pixels
+  end
+
+  defp gradient_extent(%{radius: radius, feather: feather}, width, height) do
+    2 ** (feather * 0.05) * max(width, height) / radius
+  end
+
+  # How much of the finish color is mixed in at distance `d`, which runs
+  # from 0 at the centre to 1 at the radius.
+  defp fade_weight(d, :linear) do
+    d
+  end
+
+  defp fade_weight(d, :ease_in) do
+    use Image.Math
+
+    d * d
+  end
+
+  defp fade_weight(d, :ease_out) do
+    use Image.Math
+
+    d * (d * -1 + 2)
+  end
+
+  defp fade_weight(d, :smooth) do
+    use Image.Math
+
+    d * d * (d * -2 + 3)
   end
 
   # The centre of a radial gradient along one axis of `size` pixels.
@@ -8986,10 +9038,19 @@ defmodule Image do
     (harshest transition) to the largest amount of
     feather (smoothest transition). The default is `1`.
 
-  * `:radius` is the radius of the gradient in the range `1..5`
-    where `1` fully fills the space and `5` fills a small section
-    of the center of the space.  The default is `2`. Beyond the
-    radius every pixel is the `:finish_color`.
+  * `:radius` is the radius of the gradient: either a positive
+    number, a scale in which `1` fully fills the space and `5`
+    fills a small section of the center of the space, or
+    `{:pixels, n}`, the distance in pixels from the centre at which
+    the `:finish_color` is reached. The default is `2`. Beyond the
+    radius every pixel is the `:finish_color`. `:feather` cannot be
+    combined with a radius in pixels.
+
+  * `:fade` is how the gradient moves from `:start_color` to
+    `:finish_color` with the distance from the centre: `:linear`
+    (the default), `:ease_in` (slowly near the centre), `:ease_out`
+    (quickly near the centre, a soft-edged glow) or `:smooth` (slowly
+    at both ends). See `t:Image.Options.RadialGradient.fade/0`.
 
   * `:x` is the horizontal centre of the gradient: an integer pixel
     offset (from the right when negative), a float fraction of the

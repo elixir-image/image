@@ -12,9 +12,28 @@ defmodule Image.Options.RadialGradient do
           {:start_color, Pixel.t()}
           | {:finish_color, Pixel.t()}
           | {:feather, 1..10}
-          | {:radius, number()}
+          | {:radius, number() | {:pixels, number()}}
+          | {:fade, fade()}
           | {:x, x_center()}
           | {:y, y_center()}
+
+  @typedoc """
+  How a radial gradient moves from its start color to its finish
+  color as the distance from the centre grows:
+
+  * `:linear` changes at an even rate.
+
+  * `:ease_in` changes slowly near the centre and quickly near the
+    radius.
+
+  * `:ease_out` changes quickly near the centre and slowly near the
+    radius: the start color falls off as the square of the distance
+    left, a soft-edged glow.
+
+  * `:smooth` changes slowly at both ends (a smoothstep curve).
+
+  """
+  @type fade :: :linear | :ease_in | :ease_out | :smooth
 
   @typedoc """
   The horizontal centre of a radial gradient: a pixel offset from the
@@ -41,6 +60,8 @@ defmodule Image.Options.RadialGradient do
   @default_radius 2
   @default_x :center
   @default_y :middle
+  @default_fade :linear
+  @fades [:linear, :ease_in, :ease_out, :smooth]
 
   @doc """
   Validate the options for `Image.radial_gradient/3`.
@@ -66,14 +87,32 @@ defmodule Image.Options.RadialGradient do
   @spec validate_options(options :: radial_gradient_options()) ::
           {:ok, map()} | {:error, Image.error()}
   def validate_options(options) when is_list(options) do
-    options = Keyword.merge(default_options(), options)
+    with :ok <- validate_feather_with_radius(options) do
+      options = Keyword.merge(default_options(), options)
 
-    case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
-      {:error, value} ->
-        {:error, value}
+      case Enum.reduce_while(options, options, &validate_option(&1, &2)) do
+        {:error, value} ->
+          {:error, value}
 
-      options ->
-        {:ok, Map.new(options)}
+        options ->
+          {:ok, Map.new(options)}
+      end
+    end
+  end
+
+  # `:feather` stretches a scaled radius, so it would make a radius in
+  # pixels inexact. Asking for both is an error rather than one being
+  # silently ignored.
+  defp validate_feather_with_radius(options) do
+    if match?({:pixels, _}, Keyword.get(options, :radius)) and Keyword.has_key?(options, :feather) do
+      {:error,
+       %Image.Error{
+         reason: :invalid_option,
+         value: {:feather, Keyword.get(options, :feather)},
+         message: ":feather cannot be combined with a radius in pixels; use :fade instead"
+       }}
+    else
+      :ok
     end
   end
 
@@ -91,7 +130,16 @@ defmodule Image.Options.RadialGradient do
     resolve_gradient_color(key, color, options)
   end
 
-  defp validate_option({:radius, angle}, options) when is_number(angle) do
+  defp validate_option({:radius, radius}, options) when is_number(radius) and radius > 0 do
+    {:cont, options}
+  end
+
+  defp validate_option({:radius, {:pixels, pixels}}, options)
+       when is_number(pixels) and pixels > 0 do
+    {:cont, options}
+  end
+
+  defp validate_option({:fade, fade}, options) when fade in @fades do
     {:cont, options}
   end
 
@@ -140,6 +188,7 @@ defmodule Image.Options.RadialGradient do
       finish_color: @default_finish_color,
       feather: @default_feather,
       radius: @default_radius,
+      fade: @default_fade,
       x: @default_x,
       y: @default_y
     ]
