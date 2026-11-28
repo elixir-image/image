@@ -263,6 +263,12 @@ defmodule Image.Privacy do
     EXIF host computer, camera serial number, photographer and image
     editor are likewise dropped by every save.
 
+  * Saving re-encodes the pixels. JPEG and lossy WebP lose quality at
+    each save (`Image.write/3` writes JPEG at quality 75 by default),
+    and an animated image keeps its frames only if it was opened with
+    `pages: :all`. Rewrite a file only when `scan/1` has findings to
+    remove, and choose the `:quality` deliberately when you do.
+
   ### Examples
 
       iex> image = Image.open!("./test/support/images/gain_map.jpg")

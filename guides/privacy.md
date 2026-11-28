@@ -121,6 +121,27 @@ Every finding can be removed on its own; the rest of the metadata is kept byte f
 
 Any image `Image` writes leaves out JPEG comments and data after the end of the image, because libvips never reads them. To check the result of a clean-up, scan the file that was written, as the examples do, rather than the image in memory.
 
+## Saving re-encodes the image
+
+Every way of removing metadata above takes effect when the image is saved, and saving decodes and encodes the pixels again. Nothing edits the metadata of a file in place.
+
+* **JPEG and lossy WebP lose quality** with each save. `Image.write/3` writes JPEG at quality 75 by default, so the file is usually smaller than the camera's but visibly softer; at a higher quality it can be larger than the original. The 57 KB `gain_map.jpg` comes back at 46 KB at the default quality and at 69 KB at `quality: 92`.
+
+* **Animation frames are dropped** unless the image was opened with `pages: :all`. `Image.open/2` reads only the first frame by default, so a cleaned animated WebP or GIF is a still image:
+
+```elixir
+iex> image = Image.open!("test/support/images/animated.webp")
+iex> {:ok, webp} = Image.write(image, :memory, suffix: ".webp")
+iex> Image.pages(Image.open!(webp, pages: :all))
+1
+iex> image = Image.open!("test/support/images/animated.webp", pages: :all)
+iex> {:ok, webp} = Image.write(image, :memory, suffix: ".webp")
+iex> Image.pages(Image.open!(webp, pages: :all))
+12
+```
+
+So scan first, and rewrite a file only when `Image.Privacy.scan/1` has findings you want removed. A file with no findings can be served as it is. When you do rewrite, open it with `pages: :all` and choose the `:quality` deliberately rather than relying on the default.
+
 ## What the scan cannot find
 
 * **Invisible watermarks** — marks hidden in the pixels, such as Google SynthID, Meta's Video Seal and Digimarc, can only be read with the vendor's own decoder. A scan with no findings is not evidence that an image carries no watermark.

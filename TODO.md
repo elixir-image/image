@@ -4,6 +4,16 @@ Work tracking for `Image`. Design documents live under [plans/](plans/), and any
 
 ## Open
 
+* [ ] **Privacy docs omit re-encoding and frame loss** — the privacy guide and `Image.Privacy.remove/2` do not say that saving re-encodes (lossily for JPEG) or that `Image.open/2` without `pages: :all` drops animation frames. Mishka gap 15.
+
+* [ ] **`:font_file` docs say "not supported on MacOS"** — the working `FONTCONFIG_FILE` alternative, which Mishka's share cards use, is not documented. Mishka gap 16.
+
+* [ ] **Masks need SVG loading** — circle, rounded and squircle masks, and so `Image.avatar/2` and `Image.rounded/2`, are drawn through `svgload_buffer`; add an arithmetic path. Mishka gap 17.
+
+* [ ] **Text fitting does not report what it chose** — `Image.Text.text/2` does not return the font size or the text it kept, and shortens only at a word; add a reporting function and a sentence-boundary option. Mishka gap 18.
+
+* [ ] **`radial_gradient/3` has no pixel radius or fade curve** — `:radius` is a unitless 1..5 scale and the fade is linear; add both without breaking the current options. Mishka gap 19.
+
 * [ ] **Rule 2 bang sweep** — 173 calls to `!` functions remain inside non-bang functions (84 in `lib/image.ex`, 48 in `Image.Math`, mostly its operators). Each needs judging: a bang on values the library built itself is acceptable, one on caller input is not.
 
 * [ ] **Value attributes defined between functions** — 33 module attributes such as `@max_rgb_band_value` sit after the first function definition (20 in `lib/image.ex`, the rest across nine files), against the house rule that they go in one block at the top.
